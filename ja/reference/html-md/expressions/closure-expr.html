@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<h1>Closure expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>ClosureExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>move</code><sup>?</sup>\
+&amp;nbsp;&amp;nbsp; ( <code>||</code> | <code>|</code> <a class="notranslate" href="#4_FunctionParameters_">_FunctionParameters_</a><sup>?</sup> <code>|</code> )\
+&amp;nbsp;&amp;nbsp; (<a class="notranslate" href="#4_Expression_">_Expression_</a> | <code>-&gt;</code> <a class="notranslate" href="#4_TypeNoBounds_">_TypeNoBounds_</a>&amp;nbsp;<a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>)</p></blockquote>
+<br>
+<p>A <s>closure expression</s> defines a closure and denotes it as a value, in a single
+expression. A closure expression is a pipe-symbol-delimited (<code>|</code>) list of
+patterns followed by an expression. Type annotations may optionally be added
+for the type of the parameters or for the return type. If there is a return
+type, the expression used for the body of the closure must be a normal
+<a class="notranslate" href="#4block">block</a>. A closure expression also may begin with the
+<code>move</code> keyword before the initial <code>|</code>.</p>
+<br>
+<p>A closure expression denotes a function that maps a list of parameters
+(<code>ident_list</code>) onto the expression that follows the <code>ident_list</code>. The patterns
+in the <code>ident_list</code> are the parameters to the closure. If a parameter's types
+is not specified, then the compiler infers it from context. Each closure
+expression has a unique anonymous type.</p>
+<br>
+<p>Closure expressions are most useful when passing functions as arguments to other
+functions, as an abbreviation for defining and capturing a separate function.</p>
+<br>
+<p>Significantly, closure expressions <s>capture their environment</s>, which regular
+<a class="notranslate" href="#4function definitions">function definitions</a> do not. Without the <code>move</code> keyword, the closure expression
+<a href="#2types.html#capture-modes">infers how it captures each variable from its environment</a>,
+preferring to capture by shared reference, effectively borrowing
+all outer variables mentioned inside the closure's body. If needed the compiler
+will infer that instead mutable references should be taken, or that the values
+should be moved or copied (depending on their type) from the environment. A
+closure can be forced to capture its environment by copying or moving values by
+prefixing it with the <code>move</code> keyword. This is often used to ensure that the
+closure's type is <code>'static</code>.</p>
+<br>
+<p>The compiler will determine which of the <a class="notranslate" href="#2types.html#call-traits-and-coercions">closure
+traits</a> the closure's type will implement by how it
+acts on its captured variables. The closure will also implement
+<a class="notranslate" href="#2special-types-and-traits.html#send"><code>Send</code></a> and/or
+<a class="notranslate" href="#2special-types-and-traits.html#sync"><code>Sync</code></a> if all of its captured types do.
+These traits allow functions to accept closures using generics, even though the
+exact types can't be named.</p>
+<br>
+<p>In this example, we define a function <code>ten_times</code> that takes a higher-order
+function argument, and we then call it with a closure expression as an argument,
+followed by a closure expression that moves values from its environment.</p>
+<br>
+<div data-lang="rust"><div data-l="fn ten_times&lt;F&gt;(f: F) where F: Fn(i32) {"></div><div data-l="    for index in 0..10 {"></div><div data-l="        f(index);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="ten_times(|j| println!(&quot;hello, {}&quot;, j));"></div><div data-l="#// With type annotations"></div><div data-l="// ">With type annotations</div><div data-l="ten_times(|j: i32| -&gt; () { println!(&quot;hello, {}&quot;, j) });"></div><div data-l=""></div><div data-l="let word = &quot;konnichiwa&quot;.to_owned();"></div><div data-l="ten_times(move |j| println!(&quot;{}, {}&quot;, word, j));"></div></div>
+<br>
+<a class="notranslate" href="#1expressions/block-expr.html">block</a>
+<a class="notranslate" href="#1items/functions.html">function definitions</a>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1expressions/block-expr.html">_BlockExpression_</a>
+<a class="notranslate" href="#1types.html">_TypeNoBounds_</a>
+<a class="notranslate" href="#1items/functions.html">_FunctionParameters_</a>

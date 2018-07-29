@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h2>Verify and extract login from an email address</h2>
+<br>
+<p><a href="#3regex">!<a class="notranslate" href="#4regex-badge">regex-badge</a></a> <a href="#3lazy_static">!<a class="notranslate" href="#4lazy_static-badge">lazy_static-badge</a></a> <a href="#3cat-text-processing">!<a class="notranslate" href="#4cat-text-processing-badge">cat-text-processing-badge</a></a></p>
+<br>
+<p>Validates that an email address is formatted correctly, and extracts everything
+before the @ symbol.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate lazy_static;"></div><div data-l="extern crate regex;"></div><div data-l=""></div><div data-l="use regex::Regex;"></div><div data-l=""></div><div data-l="fn extract_login(input: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="    lazy_static! {"></div><div data-l="        static ref RE: Regex = Regex::new(r&quot;(?x)"></div><div data-l="            ^(?P&lt;login&gt;[^@\s]+)@"></div><div data-l="            ([[:word:]]+\.)*"></div><div data-l="            [[:word:]]+$"></div><div data-l="            &quot;).unwrap();"></div><div data-l="    }"></div><div data-l="    RE.captures(input).and_then(|cap| {"></div><div data-l="        cap.name(&quot;login&quot;).map(|login| login.as_str())"></div><div data-l="    })"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(extract_login(r&quot;I❤email@example.com&quot;), Some(r&quot;I❤email&quot;));"></div><div data-l="    assert_eq!("></div><div data-l="        extract_login(r&quot;sdf+sdsfsd.as.sdsd@jhkk.d.rl&quot;),"></div><div data-l="        Some(r&quot;sdf+sdsfsd.as.sdsd&quot;)"></div><div data-l="    );"></div><div data-l="    assert_eq!(extract_login(r&quot;More@Than@One@at.com&quot;), None);"></div><div data-l="    assert_eq!(extract_login(r&quot;Not an email@email&quot;), None);"></div><div data-l="}"></div></div>

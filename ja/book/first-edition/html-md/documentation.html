@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<h1>Documentation</h1>
+<br>
+<p>Documentation is an important part of any software project, and it's
+first-class in Rust. Let's talk about the tooling Rust gives you to
+document your project.</p>
+<br>
+<h2>About <code>rustdoc</code></h2>
+<br>
+<p>The Rust distribution includes a tool, <code>rustdoc</code>, that generates documentation.
+<code>rustdoc</code> is also used by Cargo through <code>cargo doc</code>.</p>
+<br>
+<p>Documentation can be generated in two ways: from source code, and from
+standalone Markdown files.</p>
+<br>
+<h2>Documenting source code</h2>
+<br>
+<p>The primary way of documenting a Rust project is through annotating the source
+code. You can use documentation comments for this purpose:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// Constructs a new `Rc&lt;T&gt;`."></div><div data-l="/// ">Constructs a new <code>Rc&lt;T&gt;</code>.</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::rc::Rc;"></div><div data-l="/// ">use std::rc::Rc;</div><div data-l="///"></div><div data-l="#///// let five = Rc::new(5);"></div><div data-l="/// ">let five = Rc::new(5);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="pub fn new(value: T) -&gt; Rc&lt;T&gt; {"></div><div data-l="#    // Implementation goes here."></div><div data-l="    // ">Implementation goes here.</div><div data-l="}"></div></div>
+<br>
+<p>This code generates documentation that looks <a href="#3rc-new">like this</a>. I've left the
+implementation out, with a regular comment in its place.</p>
+<br>
+<p>The first thing to notice about this annotation is that it uses
+<code>///</code> instead of <code>//</code>. The triple slash
+indicates a documentation comment.</p>
+<br>
+<p>Documentation comments are written in Markdown.</p>
+<br>
+<p>Rust keeps track of these comments, and uses them when generating
+documentation. This is important when documenting things like enums:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// The `Option` type. See [the module level documentation](index.html) for more."></div><div data-l="/// ">The <code>Option</code> type. See <a href="#2index.html">the module level documentation</a> for more.</div><div data-l="enum Option&lt;T&gt; {"></div><div data-l="#//    /// No value"></div><div data-l="    /// ">No value</div><div data-l="    None,"></div><div data-l="#//    /// Some value `T`"></div><div data-l="    /// ">Some value <code>T</code></div><div data-l="    Some(T),"></div><div data-l="}"></div></div>
+<br>
+<p>The above works, but this does not:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// The `Option` type. See [the module level documentation](index.html) for more."></div><div data-l="/// ">The <code>Option</code> type. See <a href="#2index.html">the module level documentation</a> for more.</div><div data-l="enum Option&lt;T&gt; {"></div><div data-l="#//    None, /// No value"></div><div data-l="    None, /// ">No value</div><div data-l="#//    Some(T), /// Some value `T`"></div><div data-l="    Some(T), /// ">Some value <code>T</code></div><div data-l="}"></div></div>
+<br>
+<p>You'll get an error:</p>
+<br>
+<div data-lang="text"><div data-l="hello.rs:4:1: 4:2 error: expected ident, found `}`"></div><div data-l="hello.rs:4 }"></div><div data-l="           ^"></div></div>
+<br>
+<p>This <a href="#2https://github.com/rust-lang/rust/issues/22547">unfortunate error</a> is
+correct; documentation comments apply to the thing after them, and there's
+nothing after that last comment.</p>
+<br>
+<a class="notranslate" href="#1../../std/rc/struct.Rc.html#method.new">rc-new</a>
+<br>
+<h3>Writing documentation comments</h3>
+<br>
+<p>Anyway, let's cover each part of this comment in detail:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Constructs a new `Rc&lt;T&gt;`."></div><div data-l="/// ">Constructs a new <code>Rc&lt;T&gt;</code>.</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>The first line of a documentation comment should be a short summary of its
+functionality. One sentence. Just the basics. High level.</p>
+<br>
+<div data-lang="rust"><div data-l="///"></div><div data-l="#///// Other details about constructing `Rc&lt;T&gt;`s, maybe describing complicated"></div><div data-l="/// ">Other details about constructing <code>Rc&lt;T&gt;</code>s, maybe describing complicated</div><div data-l="#///// semantics, maybe additional options, all kinds of stuff."></div><div data-l="/// ">semantics, maybe additional options, all kinds of stuff.</div><div data-l="///"></div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>Our original example had just a summary line, but if we had more things to say,
+we could have added more explanation in a new paragraph.</p>
+<br>
+<h4>Special sections</h4>
+<br>
+<p>Next, are special sections. These are indicated with a header, <code>#</code>. There
+are four kinds of headers that are commonly used. They aren't special syntax,
+just convention, for now.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Panics"></div><div data-l="/// "># Panics</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>Unrecoverable misuses of a function (i.e. programming errors) in Rust are
+usually indicated by panics, which kill the whole current thread at the very
+least. If your function has a non-trivial contract like this, that is
+detected/enforced by panics, documenting it is very important.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Errors"></div><div data-l="/// "># Errors</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>If your function or method returns a <code>Result&lt;T, E&gt;</code>, then describing the
+conditions under which it returns <code>Err(E)</code> is a nice thing to do. This is
+slightly less important than <code>Panics</code>, because failure is encoded into the type
+system, but it's still a good thing to do.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Safety"></div><div data-l="/// "># Safety</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>If your function is <code>unsafe</code>, you should explain which invariants the caller is
+responsible for upholding.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::rc::Rc;"></div><div data-l="/// ">use std::rc::Rc;</div><div data-l="///"></div><div data-l="#///// let five = Rc::new(5);"></div><div data-l="/// ">let five = Rc::new(5);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>Fourth, <code>Examples</code>. Include one or more examples of using your function or
+method, and your users will love you for it. These examples go inside of
+code block annotations, which we'll talk about in a moment, and can have
+more than one section:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// Simple `&amp;str` patterns:"></div><div data-l="/// ">Simple <code>&amp;str</code> patterns:</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// let v: Vec&lt;&amp;str&gt; = &quot;Mary had a little lamb&quot;.split(' ').collect();"></div><div data-l="/// ">let v: Vec<&str> = &quot;Mary had a little lamb&quot;.split(' ').collect();</div><div data-l="#///// assert_eq!(v, vec![&quot;Mary&quot;, &quot;had&quot;, &quot;a&quot;, &quot;little&quot;, &quot;lamb&quot;]);"></div><div data-l="/// ">assert_eq!(v, vec!<a class="notranslate" href="#4"Mary", "had", "a", "little", "lamb"">"Mary", "had", "a", "little", "lamb"</a>);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="///"></div><div data-l="#///// More complex patterns with a lambda:"></div><div data-l="/// ">More complex patterns with a lambda:</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// let v: Vec&lt;&amp;str&gt; = &quot;abc1def2ghi&quot;.split(|c: char| c.is_numeric()).collect();"></div><div data-l="/// ">let v: Vec<&str> = &quot;abc1def2ghi&quot;.split(|c: char| c.is_numeric()).collect();</div><div data-l="#///// assert_eq!(v, vec![&quot;abc&quot;, &quot;def&quot;, &quot;ghi&quot;]);"></div><div data-l="/// ">assert_eq!(v, vec!<a class="notranslate" href="#4"abc", "def", "ghi"">"abc", "def", "ghi"</a>);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<h4>Code block annotations</h4>
+<br>
+<p>To write some Rust code in a comment, use the triple graves:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// println!(&quot;Hello, world&quot;);"></div><div data-l="/// ">println!(&quot;Hello, world&quot;);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>This will add code highlighting. If you are only showing plain text, put <code>text</code>
+instead of <code>rust</code> after the triple graves (see below).</p>
+<br>
+<h2>Documentation as tests</h2>
+<br>
+<p>Let's discuss our sample example documentation:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// println!(&quot;Hello, world&quot;);"></div><div data-l="/// ">println!(&quot;Hello, world&quot;);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>You'll notice that you don't need a <code>fn main()</code> or anything here. <code>rustdoc</code> will
+automatically add a <code>main()</code> wrapper around your code, using heuristics to attempt
+to put it in the right place. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::rc::Rc;"></div><div data-l="/// ">use std::rc::Rc;</div><div data-l="///"></div><div data-l="#///// let five = Rc::new(5);"></div><div data-l="/// ">let five = Rc::new(5);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>This will end up testing:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    use std::rc::Rc;"></div><div data-l="    let five = Rc::new(5);"></div><div data-l="}"></div></div>
+<br>
+<p>Here's the full algorithm rustdoc uses to preprocess examples:</p>
+<br>
+<div data-b="1.">Any leading <code>#€[foo]</code> attributes are left intact as crate attributes.</div>
+<div data-b="2.">Some common <code>allow</code> attributes are inserted, including
+ <code>unused_variables</code>, <code>unused_assignments</code>, <code>unused_mut</code>,
+ <code>unused_attributes</code>, and <code>dead_code</code>. Small examples often trigger
+ these lints.</div>
+<div data-b="3.">If the example does not contain <code>extern crate</code>, then <code>extern crate
+   &lt;mycrate&gt;;</code> is inserted (note the lack of <code>#[macro_use]</code>).</div>
+<div data-b="4.">Finally, if the example does not contain <code>fn main</code>, the remainder of the
+ text is wrapped in <code>fn main() { your_code }</code>.</div>
+<br>
+<p>This generated <code>fn main</code> can be a problem! If you have <code>extern crate</code> or a <code>mod</code>
+statements in the example code that are referred to by <code>use</code> statements, they will
+fail to resolve unless you include at least <code>fn main() {}</code> to inhibit step 4.
+<code>#[macro_use] extern crate</code> also does not work except at the crate root, so when
+testing macros an explicit <code>main</code> is always required. It doesn't have to clutter
+up your docs, though -- keep reading!</p>
+<br>
+<p>Sometimes this algorithm isn't enough, though. For example, all of these code samples
+with <code>///</code> we've been talking about? The raw text:</p>
+<br>
+<div data-lang="text"><div data-l="#///// Some documentation."></div><div data-l="/// ">Some documentation.</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>looks different than the output:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Some documentation."></div><div data-l="/// ">Some documentation.</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>Yes, that's right: you can add lines that start with <code># </code>, and they will
+be hidden from the output, but will be used when compiling your code. You
+can use this to your advantage. In this case, documentation comments need
+to apply to some kind of function, so if I want to show you just a
+documentation comment, I need to add a little function definition below
+it. At the same time, it's only there to satisfy the compiler, so hiding
+it makes the example more clear. You can use this technique to explain
+longer examples in detail, while still preserving the testability of your
+documentation.</p>
+<br>
+<p>For example, imagine that we wanted to document this code:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l="let y = 6;"></div><div data-l="println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>We might want the documentation to end up looking like this:</p>
+<br>
+<blockquote><p>First, we set <code>x</code> to five:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>Next, we set <code>y</code> to six:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 5;"></div><div data-l="let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>Finally, we print the sum of <code>x</code> and <code>y</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="println!(&quot;{}&quot;, x + y);"></div></div></blockquote>
+<br>
+<p>To keep each code block testable, we want the whole program in each block, but
+we don't want the reader to see every line every time.  Here's what we put in
+our source code:</p>
+<br>
+<div data-lang="text"><div data-l="    First, we set `x` to five:"></div><div data-l=""></div><div data-l="    ```rust"></div><div data-l="    let x = 5;"></div><div data-l="    # let y = 6;"></div><div data-l="    # println!(&quot;{}&quot;, x + y);"></div><div data-l="    ```"></div><div data-l=""></div><div data-l="    Next, we set `y` to six:"></div><div data-l=""></div><div data-l="    ```rust"></div><div data-l="    # let x = 5;"></div><div data-l="    let y = 6;"></div><div data-l="    # println!(&quot;{}&quot;, x + y);"></div><div data-l="    ```"></div><div data-l=""></div><div data-l="    Finally, we print the sum of `x` and `y`:"></div><div data-l=""></div><div data-l="    ```rust"></div><div data-l="    # let x = 5;"></div><div data-l="    # let y = 6;"></div><div data-l="    println!(&quot;{}&quot;, x + y);"></div><div data-l="    ```"></div></div>
+<br>
+<p>By repeating all parts of the example, you can ensure that your example still
+compiles, while only showing the parts that are relevant to that part of your
+explanation.</p>
+<br>
+<h3>Documenting macros</h3>
+<br>
+<p>Here’s an example of documenting a macro:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Panic with a given message unless an expression evaluates to true."></div><div data-l="/// ">Panic with a given message unless an expression evaluates to true.</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// # #[macro_use] extern crate foo;"></div><div data-l="/// "># #<a class="notranslate" href="#4macro_use">macro_use</a> extern crate foo;</div><div data-l="#///// # fn main() {"></div><div data-l="/// "># fn main() {</div><div data-l="#///// panic_unless!(1 + 1 == 2, “Math is broken.”);"></div><div data-l="/// ">panic_unless!(1 + 1 == 2, “Math is broken.”);</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="///"></div><div data-l="#///// ```rust,should_panic"></div><div data-l="/// ">```rust,should_panic</div><div data-l="#///// # #[macro_use] extern crate foo;"></div><div data-l="/// "># #<a class="notranslate" href="#4macro_use">macro_use</a> extern crate foo;</div><div data-l="#///// # fn main() {"></div><div data-l="/// "># fn main() {</div><div data-l="#///// panic_unless!(true == false, “I’m broken.”);"></div><div data-l="/// ">panic_unless!(true == false, “I’m broken.”);</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#[macro_export]"></div><div data-l="macro_rules! panic_unless {"></div><div data-l="    ($condition:expr, $($rest:expr),+) =&gt; ({ if ! $condition { panic!($($rest),+); } });"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>You’ll note three things: we need to add our own <code>extern crate</code> line, so that
+we can add the <code>#[macro_use]</code> attribute. Second, we’ll need to add our own
+<code>main()</code> as well (for reasons discussed above). Finally, a judicious use of
+<code>#</code> to comment out those two things, so they don’t show up in the output.</p>
+<br>
+<p>Another case where the use of <code>#</code> is handy is when you want to ignore
+error handling. Lets say you want the following,</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// use std::io;"></div><div data-l="/// ">use std::io;</div><div data-l="#///// let mut input = String::new();"></div><div data-l="/// ">let mut input = String::new();</div><div data-l="#///// try!(io::stdin().read_line(&amp;mut input));"></div><div data-l="/// ">try!(io::stdin().read_line(&amp;mut input));</div></div>
+<br>
+<p>The problem is that <code>try€</code> returns a <code>Result&lt;T, E&gt;</code> and test functions
+don't return anything so this will give a mismatched types error.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// A doc test using try!"></div><div data-l="/// ">A doc test using try!</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::io;"></div><div data-l="/// ">use std::io;</div><div data-l="#///// # fn foo() -&gt; io::Result&lt;()&gt; {"></div><div data-l="/// "># fn foo() -&gt; io::Result<()> {</div><div data-l="#///// let mut input = String::new();"></div><div data-l="/// ">let mut input = String::new();</div><div data-l="#///// try!(io::stdin().read_line(&amp;mut input));"></div><div data-l="/// ">try!(io::stdin().read_line(&amp;mut input));</div><div data-l="#///// # Ok(())"></div><div data-l="/// "># Ok(())</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>You can get around this by wrapping the code in a function. This catches
+and swallows the <code>Result&lt;T, E&gt;</code> when running tests on the docs. This
+pattern appears regularly in the standard library.</p>
+<br>
+<h3>Running documentation tests</h3>
+<br>
+<p>To run the tests, either:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustdoc --test path/to/my/crate/root.rs"></div><div data-l="# or"></div><div data-l="$ cargo test"></div></div>
+<br>
+<p>That's right, <code>cargo test</code> tests embedded documentation too. <b>However,
+`cargo test` will not test binary crates, only library ones.</b> This is
+due to the way <code>rustdoc</code> works: it links against the library to be tested,
+but with a binary, there’s nothing to link to.</p>
+<br>
+<p>There are a few more annotations that are useful to help <code>rustdoc</code> do the right
+thing when testing your code:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```rust,ignore"></div><div data-l="/// ">```rust,ignore</div><div data-l="#///// fn foo() {"></div><div data-l="/// ">fn foo() {</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>The <code>ignore</code> directive tells Rust to ignore your code. This is almost never
+what you want, as it's the most generic. Instead, consider annotating it
+with <code>text</code> if it's not code, or using <code>#</code>s to get a working example that
+only shows the part you care about.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```rust,should_panic"></div><div data-l="/// ">```rust,should_panic</div><div data-l="#///// assert!(false);"></div><div data-l="/// ">assert!(false);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p><code>should_panic</code> tells <code>rustdoc</code> that the code should compile correctly, but
+not actually pass as a test.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```rust,no_run"></div><div data-l="/// ">```rust,no_run</div><div data-l="#///// loop {"></div><div data-l="/// ">loop {</div><div data-l="#/////     println!(&quot;Hello, world&quot;);"></div><div data-l="/// ">    println!(&quot;Hello, world&quot;);</div><div data-l="#///// }"></div><div data-l="/// ">}</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>The <code>no_run</code> attribute will compile your code, but not run it. This is
+important for examples such as &quot;Here's how to retrieve a web page,&quot;
+which you would want to ensure compiles, but might be run in a test
+environment that has no network access.</p>
+<br>
+<h3>Documenting modules</h3>
+<br>
+<p>Rust has another kind of doc comment, <code>//€</code>. This comment doesn't document the next item, but the enclosing item. In other words:</p>
+<br>
+<div data-lang="rust"><div data-l="mod foo {"></div><div data-l="    //! This is documentation for the `foo` module."></div><div data-l="    //!"></div><div data-l="    //! # Examples"></div><div data-l=""></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div></div>
+<br>
+<p>This is where you'll see <code>//€</code> used most often: for module documentation. If
+you have a module in <code>foo.rs</code>, you'll often open its code and see this:</p>
+<br>
+<div data-lang="rust"><div data-l="//! A module for using `foo`s."></div><div data-l="//!"></div><div data-l="//! The `foo` module contains a lot of useful functionality blah blah blah..."></div></div>
+<br>
+<h3>Crate documentation</h3>
+<br>
+<p>Crates can be documented by placing an inner doc comment (<code>//€</code>) at the
+beginning of the crate root, aka <code>lib.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="//! This is documentation for the `foo` crate."></div><div data-l="//!"></div><div data-l="//! The foo crate is meant to be used for bar."></div></div>
+<br>
+<h3>Documentation comment style</h3>
+<br>
+<p>Check out <a href="#3rfc505">RFC 505</a> for full conventions around the style and format of
+documentation.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0505-api-comment-conventions.md">rfc505</a>
+<br>
+<h2>Other documentation</h2>
+<br>
+<p>All of this behavior works in non-Rust source files too. Because comments
+are written in Markdown, they're often <code>.md</code> files.</p>
+<br>
+<p>When you write documentation in Markdown files, you don't need to prefix
+the documentation with comments. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::rc::Rc;"></div><div data-l="/// ">use std::rc::Rc;</div><div data-l="///"></div><div data-l="#///// let five = Rc::new(5);"></div><div data-l="/// ">let five = Rc::new(5);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>is:</p>
+<br>
+<p>~~~markdown
+# Examples</p>
+<br>
+<div data-lang=""><div data-l="use std::rc::Rc;"></div><div data-l=""></div><div data-l="let five = Rc::new(5);"></div></div>
+<p>~~~</p>
+<br>
+<p>when it's in a Markdown file. There is one wrinkle though: Markdown files need
+to have a title like this:</p>
+<br>
+<div data-lang="markdown"><div data-l="% The title"></div><div data-l=""></div><div data-l="This is the example documentation."></div></div>
+<br>
+<p>This <code>%</code> line needs to be the very first line of the file.</p>
+<br>
+<h2><code>doc</code> attributes</h2>
+<br>
+<p>At a deeper level, documentation comments are syntactic sugar for documentation
+attributes:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// this"></div><div data-l="/// ">this</div><div data-l="# fn foo() {}"></div><div data-l=""></div><div data-l="#[doc=&quot;this&quot;]"></div><div data-l="# fn bar() {}"></div></div>
+<br>
+<p>are the same, as are these:</p>
+<br>
+<div data-lang="rust"><div data-l="//! this"></div><div data-l=""></div><div data-l="#![doc=&quot;this&quot;]"></div></div>
+<br>
+<p>You won't often see this attribute used for writing documentation, but it
+can be useful when changing some options, or when writing a macro.</p>
+<br>
+<h3>Re-exports</h3>
+<br>
+<p><code>rustdoc</code> will show the documentation for a public re-export in both places:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate foo;"></div><div data-l=""></div><div data-l="pub use foo::bar;"></div></div>
+<br>
+<p>This will create documentation for <code>bar</code> both inside the documentation for the
+crate <code>foo</code>, as well as the documentation for your crate. It will use the same
+documentation in both places.</p>
+<br>
+<p>This behavior can be suppressed with <code>no_inline</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate foo;"></div><div data-l=""></div><div data-l="#[doc(no_inline)]"></div><div data-l="pub use foo::bar;"></div></div>
+<br>
+<h2>Missing documentation</h2>
+<br>
+<p>Sometimes you want to make sure that every single public thing in your project
+is documented, especially when you are working on a library. Rust allows you to
+to generate warnings or errors, when an item is missing documentation.
+To generate warnings you use <code>warn</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![warn(missing_docs)]"></div></div>
+<br>
+<p>And to generate errors you use <code>deny</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![deny(missing_docs)]"></div></div>
+<br>
+<p>There are cases where you want to disable these warnings/errors to explicitly
+leave something undocumented. This is done by using <code>allow</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="#[allow(missing_docs)]"></div><div data-l="struct Undocumented;"></div></div>
+<br>
+<p>You might even want to hide items from the documentation completely:</p>
+<br>
+<div data-lang="rust"><div data-l="#[doc(hidden)]"></div><div data-l="struct Hidden;"></div></div>
+<br>
+<h3>Controlling HTML</h3>
+<br>
+<p>You can control a few aspects of the HTML that <code>rustdoc</code> generates through the
+<code>#€[doc]</code> version of the attribute:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![doc(html_logo_url = &quot;https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png&quot;,"></div><div data-l="       html_favicon_url = &quot;https://www.rust-lang.org/favicon.ico&quot;,"></div><div data-l="       html_root_url = &quot;https://doc.rust-lang.org/&quot;)]"></div></div>
+<br>
+<p>This sets a few different options, with a logo, favicon, and a root URL.</p>
+<br>
+<h3>Configuring documentation tests</h3>
+<br>
+<p>You can also configure the way that <code>rustdoc</code> tests your documentation examples
+through the <code>#€[doc(test(..))]</code> attribute.</p>
+<br>
+<div data-lang="rust"><div data-l="#![doc(test(attr(allow(unused_variables), deny(warnings))))]"></div></div>
+<br>
+<p>This allows unused variables within the examples, but will fail the test for any
+other lint warning thrown.</p>
+<br>
+<h2>Generation options</h2>
+<br>
+<p><code>rustdoc</code> also contains a few other options on the command line, for further customization:</p>
+<br>
+<div data-b="-"><code>--html-in-header FILE</code>: includes the contents of FILE at the end of the
+<code>&lt;head&gt;...&lt;/head&gt;</code> section.</div>
+<div data-b="-"><code>--html-before-content FILE</code>: includes the contents of FILE directly after
+<code>&lt;body&gt;</code>, before the rendered content (including the search bar).</div>
+<div data-b="-"><code>--html-after-content FILE</code>: includes the contents of FILE after all the rendered content.</div>
+<br>
+<h2>Security note</h2>
+<br>
+<p>The Markdown in documentation comments is placed without processing into
+the final webpage. Be careful with literal HTML:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// &lt;script&gt;alert(document.cookie)&lt;/script&gt;"></div><div data-l="/// "><script>alert(document.cookie)</script></div><div data-l="# fn foo() {}"></div></div>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h2>Parse the MIME type of a HTTP response</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3mime">!<a class="notranslate" href="#4mime-badge">mime-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>When receiving a HTTP reponse from <i>reqwest</i> the <a class="notranslate" href="#4MIME type">MIME type</a> or media type may be
+found in the <a class="notranslate" href="#4Content-Type">Content-Type</a> header. <a class="notranslate" href="#4`reqwest::Headers::get`">`reqwest::Headers::get`</a> retrieves the
+header with the generic type <a class="notranslate" href="#4`reqwest::header::ContentType`">`reqwest::header::ContentType`</a>. Because
+<code>ContentType</code> implements Deref with <a class="notranslate" href="#4`mime::Mime`">`mime::Mime`</a> as a target, parts of the
+MIME type can be obtained directly.</p>
+<br>
+<p>The <i>Mime</i> crate also has some, commonly used, predefined MIME types for
+comparing and matching. <i>Reqwest</i> also exports the <i>mime</i>
+crate, which can be found in the <code>reqwest::mime</code> module.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate mime;"></div><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="use reqwest::header::ContentType;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#    foreign_links {"></div><div data-l="#        Reqwest(reqwest::Error);"></div><div data-l="#    }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let response = reqwest::get(&quot;https://www.rust-lang.org/logos/rust-logo-32x32.png&quot;)?;"></div><div data-l="    let headers = response.headers();"></div><div data-l=""></div><div data-l="    match headers.get::&lt;ContentType&gt;() {"></div><div data-l="        None =&gt; {"></div><div data-l="            println!(&quot;The response does not contain a Content-Type header.&quot;);"></div><div data-l="        }"></div><div data-l="        Some(content_type) =&gt; {"></div><div data-l="            let media_type = match (content_type.type_(), content_type.subtype()) {"></div><div data-l="                (mime::TEXT, mime::HTML) =&gt; &quot;a HTML document&quot;,"></div><div data-l="                (mime::TEXT, _) =&gt; &quot;a text document&quot;,"></div><div data-l="                (mime::IMAGE, mime::PNG) =&gt; &quot;a PNG image&quot;,"></div><div data-l="                (mime::IMAGE, _) =&gt; &quot;an image&quot;,"></div><div data-l="                _ =&gt; &quot;neither text nor image&quot;,"></div><div data-l="            };"></div><div data-l=""></div><div data-l="            println!(&quot;The reponse contains {}.&quot;, media_type);"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/mime/*/mime/struct.Mime.html">`mime::Mime`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/header/struct.ContentType.html">`reqwest::header::ContentType`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/header/struct.Headers.html#method.get">`reqwest::Headers::get`</a>
+<br>
+<a class="notranslate" href="#1https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type">Content-Type</a>
+<a class="notranslate" href="#1https://developer.mozilla.org/docs/Web/HTTP/Basics_of_HTTP/MIME_types">MIME type</a>

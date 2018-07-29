@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<h1>Syntax Index</h1>
+<br>
+<h2>Keywords</h2>
+<br>
+<div data-b="*"><code>as</code>: primitive casting, or disambiguating the specific trait containing an item.  See <a class="notranslate" href="#4Casting Between Types (`as`)">Casting Between Types (`as`)</a>, <a class="notranslate" href="#4Universal Function Call Syntax (Angle-bracket Form)">Universal Function Call Syntax (Angle-bracket Form)</a>, <a class="notranslate" href="#4Associated Types">Associated Types</a>.</div>
+<div data-b="*"><code>break</code>: break out of loop.  See <a class="notranslate" href="#4Loops (Ending Iteration Early)">Loops (Ending Iteration Early)</a>.</div>
+<div data-b="*"><code>const</code>: constant items and constant raw pointers.  See <a class="notranslate" href="#4`const` and `static`">`const` and `static`</a>, <a class="notranslate" href="#4Raw Pointers">Raw Pointers</a>.</div>
+<div data-b="*"><code>continue</code>: continue to next loop iteration.  See <a class="notranslate" href="#4Loops (Ending Iteration Early)">Loops (Ending Iteration Early)</a>.</div>
+<div data-b="*"><code>crate</code>: external crate linkage.  See <a class="notranslate" href="#4Crates and Modules (Importing External Crates)">Crates and Modules (Importing External Crates)</a>.</div>
+<div data-b="*"><code>else</code>: fallback for <code>if</code> and <code>if let</code> constructs.  See <a class="notranslate" href="#4`if`">`if`</a>, <a class="notranslate" href="#4`if let`">`if let`</a>.</div>
+<div data-b="*"><code>enum</code>: defining enumeration.  See <a class="notranslate" href="#4Enums">Enums</a>.</div>
+<div data-b="*"><code>extern</code>: external crate, function, and variable linkage.  See <a class="notranslate" href="#4Crates and Modules (Importing External Crates)">Crates and Modules (Importing External Crates)</a>, <a class="notranslate" href="#4Foreign Function Interface">Foreign Function Interface</a>.</div>
+<div data-b="*"><code>false</code>: boolean false literal.  See <a class="notranslate" href="#4Primitive Types (Booleans)">Primitive Types (Booleans)</a>.</div>
+<div data-b="*"><code>fn</code>: function definition and function pointer types.  See <a class="notranslate" href="#4Functions">Functions</a>.</div>
+<div data-b="*"><code>for</code>: iterator loop, part of trait <code>impl</code> syntax, and higher-ranked lifetime syntax.  See <a class="notranslate" href="#4Loops (`for`)">Loops (`for`)</a>, <a class="notranslate" href="#4Method Syntax">Method Syntax</a>.</div>
+<div data-b="*"><code>if</code>: conditional branching.  See <a class="notranslate" href="#4`if`">`if`</a>, <a class="notranslate" href="#4`if let`">`if let`</a>.</div>
+<div data-b="*"><code>impl</code>: inherent and trait implementation blocks.  See <a class="notranslate" href="#4Method Syntax">Method Syntax</a>.</div>
+<div data-b="*"><code>in</code>: part of <code>for</code> loop syntax.  See <a class="notranslate" href="#4Loops (`for`)">Loops (`for`)</a>.</div>
+<div data-b="*"><code>let</code>: variable binding.  See <a class="notranslate" href="#4Variable Bindings">Variable Bindings</a>.</div>
+<div data-b="*"><code>loop</code>: unconditional, infinite loop.  See <a class="notranslate" href="#4Loops (`loop`)">Loops (`loop`)</a>.</div>
+<div data-b="*"><code>match</code>: pattern matching.  See <a class="notranslate" href="#4Match">Match</a>.</div>
+<div data-b="*"><code>mod</code>: module declaration.  See <a class="notranslate" href="#4Crates and Modules (Defining Modules)">Crates and Modules (Defining Modules)</a>.</div>
+<div data-b="*"><code>move</code>: part of closure syntax.  See <a class="notranslate" href="#4Closures (`move` closures)">Closures (`move` closures)</a>.</div>
+<div data-b="*"><code>mut</code>: denotes mutability in pointer types and pattern bindings.  See <a class="notranslate" href="#4Mutability">Mutability</a>.</div>
+<div data-b="*"><code>pub</code>: denotes public visibility in <code>struct</code> fields, <code>impl</code> blocks, and modules.  See <a class="notranslate" href="#4Crates and Modules (Exporting a Public Interface)">Crates and Modules (Exporting a Public Interface)</a>.</div>
+<div data-b="*"><code>ref</code>: by-reference binding.  See <a class="notranslate" href="#4Patterns (`ref` and `ref mut`)">Patterns (`ref` and `ref mut`)</a>.</div>
+<div data-b="*"><code>return</code>: return from function.  See <a class="notranslate" href="#4Functions (Early Returns)">Functions (Early Returns)</a>.</div>
+<div data-b="*"><code>Self</code>: implementor type alias.  See <a class="notranslate" href="#4Traits">Traits</a>.</div>
+<div data-b="*"><code>self</code>: method subject.  See <a class="notranslate" href="#4Method Syntax (Method Calls)">Method Syntax (Method Calls)</a>.</div>
+<div data-b="*"><code>static</code>: global variable.  See <a class="notranslate" href="#4`const` and `static` (`static`)">`const` and `static` (`static`)</a>.</div>
+<div data-b="*"><code>struct</code>: structure definition.  See <a class="notranslate" href="#4Structs">Structs</a>.</div>
+<div data-b="*"><code>trait</code>: trait definition.  See <a class="notranslate" href="#4Traits">Traits</a>.</div>
+<div data-b="*"><code>true</code>: boolean true literal.  See <a class="notranslate" href="#4Primitive Types (Booleans)">Primitive Types (Booleans)</a>.</div>
+<div data-b="*"><code>type</code>: type alias, and associated type definition.  See <a class="notranslate" href="#4`type` Aliases">`type` Aliases</a>, <a class="notranslate" href="#4Associated Types">Associated Types</a>.</div>
+<div data-b="*"><code>unsafe</code>: denotes unsafe code, functions, traits, and implementations.  See <a class="notranslate" href="#4Unsafe">Unsafe</a>.</div>
+<div data-b="*"><code>use</code>: import symbols into scope.  See <a class="notranslate" href="#4Crates and Modules (Importing Modules with `use`)">Crates and Modules (Importing Modules with `use`)</a>.</div>
+<div data-b="*"><code>where</code>: type constraint clauses.  See <a class="notranslate" href="#4Traits (`where` clause)">Traits (`where` clause)</a>.</div>
+<div data-b="*"><code>while</code>: conditional loop.  See <a class="notranslate" href="#4Loops (`while`)">Loops (`while`)</a>.</div>
+<br>
+<h2>Operators and Symbols</h2>
+<br>
+<div data-b="*"><code>€</code> (<code>ident€(…)</code>, <code>ident€{…}</code>, <code>ident€[…]</code>): denotes macro expansion.  See <a class="notranslate" href="#4Macros">Macros</a>.</div>
+<div data-b="*"><code>€</code> (<code>€expr</code>): bitwise or logical complement.  Overloadable (<code>Not</code>).</div>
+<div data-b="*"><code>€=</code> (<code>var €= expr</code>): nonequality comparison.  Overloadable (<code>PartialEq</code>).</div>
+<div data-b="*"><code>%</code> (<code>expr % expr</code>): arithmetic remainder.  Overloadable (<code>Rem</code>).</div>
+<div data-b="*"><code>%=</code> (<code>var %= expr</code>): arithmetic remainder &amp; assignment. Overloadable (<code>RemAssign</code>).</div>
+<div data-b="*"><code>&amp;</code> (<code>expr &amp; expr</code>): bitwise and.  Overloadable (<code>BitAnd</code>).</div>
+<div data-b="*"><code>&amp;</code> (<code>&amp;expr</code>, <code>&amp;mut expr</code>): borrow.  See <a class="notranslate" href="#4References and Borrowing">References and Borrowing</a>.</div>
+<div data-b="*"><code>&amp;</code> (<code>&amp;type</code>, <code>&amp;mut type</code>, <code>&amp;'a type</code>, <code>&amp;'a mut type</code>): borrowed pointer type.  See <a class="notranslate" href="#4References and Borrowing">References and Borrowing</a>.</div>
+<div data-b="*"><code>&amp;=</code> (<code>var &amp;= expr</code>): bitwise and &amp; assignment. Overloadable (<code>BitAndAssign</code>).</div>
+<div data-b="*"><code>&amp;&amp;</code> (<code>expr &amp;&amp; expr</code>): logical and.</div>
+<div data-b="*"><code>*</code> (<code>expr * expr</code>): arithmetic multiplication.  Overloadable (<code>Mul</code>).</div>
+<div data-b="*"><code>*</code> (<code>*expr</code>): dereference.</div>
+<div data-b="*"><code>*</code> (<code>*const type</code>, <code>*mut type</code>): raw pointer.  See <a class="notranslate" href="#4Raw Pointers">Raw Pointers</a>.</div>
+<div data-b="*"><code>*=</code> (<code>var *= expr</code>): arithmetic multiplication &amp; assignment. Overloadable (<code>MulAssign</code>).</div>
+<div data-b="*"><code>+</code> (<code>expr + expr</code>): arithmetic addition.  Overloadable (<code>Add</code>).</div>
+<div data-b="*"><code>+</code> (<code>trait + trait</code>, <code>'a + trait</code>): compound type constraint.  See <a class="notranslate" href="#4Traits (Multiple Trait Bounds)">Traits (Multiple Trait Bounds)</a>.</div>
+<div data-b="*"><code>+=</code> (<code>var += expr</code>): arithmetic addition &amp; assignment. Overloadable (<code>AddAssign</code>).</div>
+<div data-b="*"><code>,</code>: argument and element separator.  See <a class="notranslate" href="#4Attributes">Attributes</a>, <a class="notranslate" href="#4Functions">Functions</a>, <a class="notranslate" href="#4Structs">Structs</a>, <a class="notranslate" href="#4Generics">Generics</a>, <a class="notranslate" href="#4Match">Match</a>, <a class="notranslate" href="#4Closures">Closures</a>, <a class="notranslate" href="#4Crates and Modules (Importing Modules with `use`)">Crates and Modules (Importing Modules with `use`)</a>.</div>
+<div data-b="*"><code>-</code> (<code>expr - expr</code>): arithmetic subtraction.  Overloadable (<code>Sub</code>).</div>
+<div data-b="*"><code>-</code> (<code>- expr</code>): arithmetic negation.  Overloadable (<code>Neg</code>).</div>
+<div data-b="*"><code>-=</code> (<code>var -= expr</code>): arithmetic subtraction &amp; assignment. Overloadable (<code>SubAssign</code>).</div>
+<div data-b="*"><code>-&gt;</code> (<code>fn(…) -&gt; type</code>, <code>|…| -&gt; type</code>): function and closure return type.  See <a class="notranslate" href="#4Functions">Functions</a>, <a class="notranslate" href="#4Closures">Closures</a>.</div>
+<div data-b="*"><code>.</code> (<code>expr.ident</code>): member access.  See <a class="notranslate" href="#4Structs">Structs</a>, <a class="notranslate" href="#4Method Syntax">Method Syntax</a>.</div>
+<div data-b="*"><code>..</code> (<code>..</code>, <code>expr..</code>, <code>..expr</code>, <code>expr..expr</code>): right-exclusive range literal.</div>
+<div data-b="*"><code>..</code> (<code>..expr</code>): struct literal update syntax.  See <a class="notranslate" href="#4Structs (Update syntax)">Structs (Update syntax)</a>.</div>
+<div data-b="*"><code>..</code> (<code>variant(x, ..)</code>, <code>struct_type { x, .. }</code>): &quot;and the rest&quot; pattern binding.  See <a class="notranslate" href="#4Patterns (Ignoring bindings)">Patterns (Ignoring bindings)</a>.</div>
+<div data-b="*"><code>...</code> (<code>...expr</code>, <code>expr...expr</code>) <i>in an expression</i>: inclusive range expression. See <a class="notranslate" href="#4Iterators">Iterators</a>.</div>
+<div data-b="*"><code>...</code> (<code>expr...expr</code>) <i>in a pattern</i>: inclusive range pattern.  See <a class="notranslate" href="#4Patterns (Ranges)">Patterns (Ranges)</a>.</div>
+<div data-b="*"><code>/</code> (<code>expr / expr</code>): arithmetic division.  Overloadable (<code>Div</code>).</div>
+<div data-b="*"><code>/=</code> (<code>var /= expr</code>): arithmetic division &amp; assignment. Overloadable (<code>DivAssign</code>).</div>
+<div data-b="*"><code>:</code> (<code>pat: type</code>, <code>ident: type</code>): constraints.  See <a class="notranslate" href="#4Variable Bindings">Variable Bindings</a>, <a class="notranslate" href="#4Functions">Functions</a>, <a class="notranslate" href="#4Structs">Structs</a>, <a class="notranslate" href="#4Traits">Traits</a>.</div>
+<div data-b="*"><code>:</code> (<code>ident: expr</code>): struct field initializer.  See <a class="notranslate" href="#4Structs">Structs</a>.</div>
+<div data-b="*"><code>:</code> (<code>'a: loop {…}</code>): loop label.  See <a class="notranslate" href="#4Loops (Loops Labels)">Loops (Loops Labels)</a>.</div>
+<div data-b="*"><code>;</code>: statement and item terminator.</div>
+<div data-b="*"><code>;</code> (<code>[…; len]</code>): part of fixed-size array syntax.  See <a class="notranslate" href="#4Primitive Types (Arrays)">Primitive Types (Arrays)</a>.</div>
+<div data-b="*"><code>&lt;&lt;</code> (<code>expr &lt;&lt; expr</code>): left-shift.  Overloadable (<code>Shl</code>).</div>
+<div data-b="*"><code>&lt;&lt;=</code> (<code>var &lt;&lt;= expr</code>): left-shift &amp; assignment. Overloadable (<code>ShlAssign</code>).</div>
+<div data-b="*"><code>&lt;</code> (<code>expr &lt; expr</code>): less-than comparison.  Overloadable (<code>PartialOrd</code>).</div>
+<div data-b="*"><code>&lt;=</code> (<code>var &lt;= expr</code>): less-than or equal-to comparison.  Overloadable (<code>PartialOrd</code>).</div>
+<div data-b="*"><code>=</code> (<code>var = expr</code>, <code>ident = type</code>): assignment/equivalence.  See <a class="notranslate" href="#4Variable Bindings">Variable Bindings</a>, <a class="notranslate" href="#4`type` Aliases">`type` Aliases</a>, generic parameter defaults.</div>
+<div data-b="*"><code>==</code> (<code>var == expr</code>): equality comparison.  Overloadable (<code>PartialEq</code>).</div>
+<div data-b="*"><code>=&gt;</code> (<code>pat =&gt; expr</code>): part of match arm syntax.  See <a class="notranslate" href="#4Match">Match</a>.</div>
+<div data-b="*"><code>&gt;</code> (<code>expr &gt; expr</code>): greater-than comparison.  Overloadable (<code>PartialOrd</code>).</div>
+<div data-b="*"><code>&gt;=</code> (<code>var &gt;= expr</code>): greater-than or equal-to comparison.  Overloadable (<code>PartialOrd</code>).</div>
+<div data-b="*"><code>&gt;&gt;</code> (<code>expr &gt;&gt; expr</code>): right-shift.  Overloadable (<code>Shr</code>).</div>
+<div data-b="*"><code>&gt;&gt;=</code> (<code>var &gt;&gt;= expr</code>): right-shift &amp; assignment. Overloadable (<code>ShrAssign</code>).</div>
+<div data-b="*"><code>@</code> (<code>ident @ pat</code>): pattern binding.  See <a class="notranslate" href="#4Patterns (Bindings)">Patterns (Bindings)</a>.</div>
+<div data-b="*"><code>^</code> (<code>expr ^ expr</code>): bitwise exclusive or.  Overloadable (<code>BitXor</code>).</div>
+<div data-b="*"><code>^=</code> (<code>var ^= expr</code>): bitwise exclusive or &amp; assignment. Overloadable (<code>BitXorAssign</code>).</div>
+<div data-b="*"><code>|</code> (<code>expr | expr</code>): bitwise or.  Overloadable (<code>BitOr</code>).</div>
+<div data-b="*"><code>|</code> (<code>pat | pat</code>): pattern alternatives.  See <a class="notranslate" href="#4Patterns (Multiple patterns)">Patterns (Multiple patterns)</a>.</div>
+<div data-b="*"><code>|</code> (<code>|…| expr</code>): closures.  See <a class="notranslate" href="#4Closures">Closures</a>.</div>
+<div data-b="*"><code>|=</code> (<code>var |= expr</code>): bitwise or &amp; assignment. Overloadable (<code>BitOrAssign</code>).</div>
+<div data-b="*"><code>||</code> (<code>expr || expr</code>): logical or.</div>
+<div data-b="*"><code>_</code>: &quot;ignored&quot; pattern binding (see <a class="notranslate" href="#4Patterns (Ignoring bindings)">Patterns (Ignoring bindings)</a>). Also used to make integer-literals readable (see <a class="notranslate" href="#4Reference (Integer literals)">Reference (Integer literals)</a>).</div>
+<div data-b="*"><code>?</code> (<code>expr?</code>): Error propagation. Returns early when <code>Err(_)</code> is encountered, unwraps otherwise. Similar to the <a class="notranslate" href="#4`try!` macro">`try!` macro</a>.</div>
+<br>
+<h2>Other Syntax</h2>
+<br>
+<p><!-- Various bits of standalone stuff. --></p>
+<br>
+<div data-b="*"><code>'ident</code>: named lifetime or loop label.  See <a class="notranslate" href="#4Lifetimes">Lifetimes</a>, <a class="notranslate" href="#4Loops (Loops Labels)">Loops (Loops Labels)</a>.</div>
+<div data-b="*"><code>…u8</code>, <code>…i32</code>, <code>…f64</code>, <code>…usize</code>, …: numeric literal of specific type.</div>
+<div data-b="*"><code>&quot;…&quot;</code>: string literal.  See <a class="notranslate" href="#4Strings">Strings</a>.</div>
+<div data-b="*"><code>r&quot;…&quot;</code>, <code>r#&quot;…&quot;#</code>, <code>r##&quot;…&quot;##</code>, …: raw string literal, escape characters are not processed. See <a class="notranslate" href="#4Reference (Raw String Literals)">Reference (Raw String Literals)</a>.</div>
+<div data-b="*"><code>b&quot;…&quot;</code>: byte string literal, constructs a <code>[u8]</code> instead of a string. See <a class="notranslate" href="#4Reference (Byte String Literals)">Reference (Byte String Literals)</a>.</div>
+<div data-b="*"><code>br&quot;…&quot;</code>, <code>br#&quot;…&quot;#</code>, <code>br##&quot;…&quot;##</code>, …: raw byte string literal, combination of raw and byte string literal. See <a class="notranslate" href="#4Reference (Raw Byte String Literals)">Reference (Raw Byte String Literals)</a>.</div>
+<div data-b="*"><code>'…'</code>: character literal.  See <a class="notranslate" href="#4Primitive Types (`char`)">Primitive Types (`char`)</a>.</div>
+<div data-b="*"><code>b'…'</code>: ASCII byte literal.</div>
+<div data-b="*"><code>|…| expr</code>: closure.  See <a class="notranslate" href="#4Closures">Closures</a>.</div>
+<br>
+<p><!-- Path-related syntax --></p>
+<br>
+<div data-b="*"><code>ident::ident</code>: path.  See <a class="notranslate" href="#4Crates and Modules (Defining Modules)">Crates and Modules (Defining Modules)</a>.</div>
+<div data-b="*"><code>::path</code>: path relative to the crate root (<i>i.e.</i> an explicitly absolute path).  See <a class="notranslate" href="#4Crates and Modules (Re-exporting with `pub use`)">Crates and Modules (Re-exporting with `pub use`)</a>.</div>
+<div data-b="*"><code>self::path</code>: path relative to the current module (<i>i.e.</i> an explicitly relative path).  See <a class="notranslate" href="#4Crates and Modules (Re-exporting with `pub use`)">Crates and Modules (Re-exporting with `pub use`)</a>.</div>
+<div data-b="*"><code>super::path</code>: path relative to the parent of the current module.  See <a class="notranslate" href="#4Crates and Modules (Re-exporting with `pub use`)">Crates and Modules (Re-exporting with `pub use`)</a>.</div>
+<div data-b="*"><code>type::ident</code>, <code>&lt;type as trait&gt;::ident</code>: associated constants, functions, and types.  See <a class="notranslate" href="#4Associated Types">Associated Types</a>.</div>
+<div data-b="*"><code>&lt;type&gt;::…</code>: associated item for a type which cannot be directly named (<i>e.g.</i> <code>&lt;&amp;T&gt;::…</code>, <code>&lt;[T]&gt;::…</code>, <i>etc.</i>).  See <a class="notranslate" href="#4Associated Types">Associated Types</a>.</div>
+<div data-b="*"><code>trait::method(…)</code>: disambiguating a method call by naming the trait which defines it. See <a class="notranslate" href="#4Universal Function Call Syntax">Universal Function Call Syntax</a>.</div>
+<div data-b="*"><code>type::method(…)</code>: disambiguating a method call by naming the type for which it's defined. See <a class="notranslate" href="#4Universal Function Call Syntax">Universal Function Call Syntax</a>.</div>
+<div data-b="*"><code>&lt;type as trait&gt;::method(…)</code>: disambiguating a method call by naming the trait <s>and</s> type. See <a class="notranslate" href="#4Universal Function Call Syntax (Angle-bracket Form)">Universal Function Call Syntax (Angle-bracket Form)</a>.</div>
+<br>
+<p><!-- Generics --></p>
+<br>
+<div data-b="*"><code>path&lt;…&gt;</code> (<i>e.g.</i> <code>Vec&lt;u8&gt;</code>): specifies parameters to generic type <i>in a type</i>.  See <a class="notranslate" href="#4Generics">Generics</a>.</div>
+<div data-b="*"><code>path::&lt;…&gt;</code>, <code>method::&lt;…&gt;</code> (<i>e.g.</i> <code>&quot;42&quot;.parse::&lt;i32&gt;()</code>): specifies parameters to generic type, function, or method <i>in an expression</i>.  See <a href="#2generics.html#resolving-ambiguities">Generics § Resolving ambiguities</a>.</div>
+<div data-b="*"><code>fn ident&lt;…&gt; …</code>: define generic function.  See <a class="notranslate" href="#4Generics">Generics</a>.</div>
+<div data-b="*"><code>struct ident&lt;…&gt; …</code>: define generic structure.  See <a class="notranslate" href="#4Generics">Generics</a>.</div>
+<div data-b="*"><code>enum ident&lt;…&gt; …</code>: define generic enumeration.  See <a class="notranslate" href="#4Generics">Generics</a>.</div>
+<div data-b="*"><code>impl&lt;…&gt; …</code>: define generic implementation.</div>
+<div data-b="*"><code>for&lt;…&gt; type</code>: higher-ranked lifetime bounds.</div>
+<div data-b="*"><code>type&lt;ident=type&gt;</code> (<i>e.g.</i> <code>Iterator&lt;Item=T&gt;</code>): a generic type where one or more associated types have specific assignments.  See <a class="notranslate" href="#4Associated Types">Associated Types</a>.</div>
+<br>
+<p><!-- Constraints --></p>
+<br>
+<div data-b="*"><code>T: U</code>: generic parameter <code>T</code> constrained to types that implement <code>U</code>.  See <a class="notranslate" href="#4Traits">Traits</a>.</div>
+<div data-b="*"><code>T: 'a</code>: generic type <code>T</code> must outlive lifetime <code>'a</code>. When we say that a type 'outlives' the lifetime, we mean that it cannot transitively contain any references with lifetimes shorter than <code>'a</code>.</div>
+<div data-b="*"><code>T : 'static</code>: The generic type <code>T</code> contains no borrowed references other than <code>'static</code> ones.</div>
+<div data-b="*"><code>'b: 'a</code>: generic lifetime <code>'b</code> must outlive lifetime <code>'a</code>.</div>
+<div data-b="*"><code>T: ?Sized</code>: allow generic type parameter to be a dynamically-sized type.  See <a class="notranslate" href="#4Unsized Types (`?Sized`)">Unsized Types (`?Sized`)</a>.</div>
+<div data-b="*"><code>'a + trait</code>, <code>trait + trait</code>: compound type constraint.  See <a class="notranslate" href="#4Traits (Multiple Trait Bounds)">Traits (Multiple Trait Bounds)</a>.</div>
+<br>
+<p><!-- Macros and attributes --></p>
+<br>
+<div data-b="*"><code>#[meta]</code>: outer attribute.  See <a class="notranslate" href="#4Attributes">Attributes</a>.</div>
+<div data-b="*"><code>#€[meta]</code>: inner attribute.  See <a class="notranslate" href="#4Attributes">Attributes</a>.</div>
+<div data-b="*"><code>$ident</code>: macro substitution.  See <a class="notranslate" href="#4Macros">Macros</a>.</div>
+<div data-b="*"><code>$ident:kind</code>: macro capture.  See <a class="notranslate" href="#4Macros">Macros</a>.</div>
+<div data-b="*"><code>$(…)…</code>: macro repetition.  See <a class="notranslate" href="#4Macros">Macros</a>.</div>
+<br>
+<p><!-- Comments --></p>
+<br>
+<div data-b="*"><code>//</code>: line comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<div data-b="*"><code>//€</code>: inner line doc comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<div data-b="*"><code>///</code>: outer line doc comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<div data-b="*"><code>/*…*/</code>: block comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<div data-b="*"><code>/*€…*/</code>: inner block doc comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<div data-b="*"><code>/**…*/</code>: outer block doc comment.  See <a class="notranslate" href="#4Comments">Comments</a>.</div>
+<br>
+<p><!-- Special types --></p>
+<br>
+<div data-b="*"><code>€</code>: always empty Never type.  See <a class="notranslate" href="#4Diverging Functions">Diverging Functions</a>.</div>
+<br>
+<p><!-- Various things involving parens and tuples --></p>
+<br>
+<div data-b="*"><code>()</code>: empty tuple (<i>a.k.a.</i> unit), both literal and type.</div>
+<div data-b="*"><code>(expr)</code>: parenthesized expression.</div>
+<div data-b="*"><code>(expr,)</code>: single-element tuple expression.  See <a class="notranslate" href="#4Primitive Types (Tuples)">Primitive Types (Tuples)</a>.</div>
+<div data-b="*"><code>(type,)</code>: single-element tuple type.  See <a class="notranslate" href="#4Primitive Types (Tuples)">Primitive Types (Tuples)</a>.</div>
+<div data-b="*"><code>(expr, …)</code>: tuple expression.  See <a class="notranslate" href="#4Primitive Types (Tuples)">Primitive Types (Tuples)</a>.</div>
+<div data-b="*"><code>(type, …)</code>: tuple type.  See <a class="notranslate" href="#4Primitive Types (Tuples)">Primitive Types (Tuples)</a>.</div>
+<div data-b="*"><code>expr(expr, …)</code>: function call expression.  Also used to initialize tuple <code>struct</code>s and tuple <code>enum</code> variants.  See <a class="notranslate" href="#4Functions">Functions</a>.</div>
+<div data-b="*"><code>ident€(…)</code>, <code>ident€{…}</code>, <code>ident€[…]</code>: macro invocation.  See <a class="notranslate" href="#4Macros">Macros</a>.</div>
+<div data-b="*"><code>expr.0</code>, <code>expr.1</code>, …: tuple indexing.  See <a class="notranslate" href="#4Primitive Types (Tuple Indexing)">Primitive Types (Tuple Indexing)</a>.</div>
+<br>
+<p><!-- Bracey things --></p>
+<br>
+<div data-b="*"><code>{…}</code>: block expression.</div>
+<div data-b="*"><code>Type {…}</code>: <code>struct</code> literal.  See <a class="notranslate" href="#4Structs">Structs</a>.</div>
+<br>
+<p><!-- Brackety things --></p>
+<br>
+<div data-b="*"><code>[…]</code>: array literal.  See <a class="notranslate" href="#4Primitive Types (Arrays)">Primitive Types (Arrays)</a>.</div>
+<div data-b="*"><code>[expr; len]</code>: array literal containing <code>len</code> copies of <code>expr</code>.  See <a class="notranslate" href="#4Primitive Types (Arrays)">Primitive Types (Arrays)</a>.</div>
+<div data-b="*"><code>[type; len]</code>: array type containing <code>len</code> instances of <code>type</code>.  See <a class="notranslate" href="#4Primitive Types (Arrays)">Primitive Types (Arrays)</a>.</div>
+<div data-b="*"><code>expr[expr]</code>: collection indexing.  Overloadable (<code>Index</code>, <code>IndexMut</code>).</div>
+<div data-b="*"><code>expr[..]</code>, <code>expr[a..]</code>, <code>expr[..b]</code>, <code>expr[a..b]</code>: collection indexing pretending to be collection slicing, using <code>Range</code>, <code>RangeFrom</code>, <code>RangeTo</code>, <code>RangeFull</code> as the &quot;index&quot;.</div>
+<br>
+<a class="notranslate" href="#1const-and-static.html#static">`const` and `static` (`static`)</a>
+<a class="notranslate" href="#1const-and-static.html">`const` and `static`</a>
+<a class="notranslate" href="#1if-let.html">`if let`</a>
+<a class="notranslate" href="#1if.html">`if`</a>
+<a class="notranslate" href="#1type-aliases.html">`type` Aliases</a>
+<a class="notranslate" href="#1associated-types.html">Associated Types</a>
+<a class="notranslate" href="#1attributes.html">Attributes</a>
+<a class="notranslate" href="#1casting-between-types.html#as">Casting Between Types (`as`)</a>
+<a class="notranslate" href="#1closures.html#move-closures">Closures (`move` closures)</a>
+<a class="notranslate" href="#1closures.html">Closures</a>
+<a class="notranslate" href="#1comments.html">Comments</a>
+<a class="notranslate" href="#1crates-and-modules.html#defining-modules">Crates and Modules (Defining Modules)</a>
+<a class="notranslate" href="#1crates-and-modules.html#exporting-a-public-interface">Crates and Modules (Exporting a Public Interface)</a>
+<a class="notranslate" href="#1crates-and-modules.html#importing-external-crates">Crates and Modules (Importing External Crates)</a>
+<a class="notranslate" href="#1crates-and-modules.html#importing-modules-with-use">Crates and Modules (Importing Modules with `use`)</a>
+<a class="notranslate" href="#1crates-and-modules.html#re-exporting-with-pub-use">Crates and Modules (Re-exporting with `pub use`)</a>
+<a class="notranslate" href="#1functions.html#diverging-functions">Diverging Functions</a>
+<a class="notranslate" href="#1enums.html">Enums</a>
+<a class="notranslate" href="#1ffi.html">Foreign Function Interface</a>
+<a class="notranslate" href="#1functions.html#early-returns">Functions (Early Returns)</a>
+<a class="notranslate" href="#1functions.html">Functions</a>
+<a class="notranslate" href="#1generics.html">Generics</a>
+<a class="notranslate" href="#1iterators.html">Iterators</a>
+<a class="notranslate" href="#1error-handling.html#the-try-macro">`try!` macro</a>
+<a class="notranslate" href="#1lifetimes.html">Lifetimes</a>
+<a class="notranslate" href="#1loops.html#for">Loops (`for`)</a>
+<a class="notranslate" href="#1loops.html#loop">Loops (`loop`)</a>
+<a class="notranslate" href="#1loops.html#while">Loops (`while`)</a>
+<a class="notranslate" href="#1loops.html#ending-iteration-early">Loops (Ending Iteration Early)</a>
+<a class="notranslate" href="#1loops.html#loop-labels">Loops (Loops Labels)</a>
+<a class="notranslate" href="#1macros.html">Macros</a>
+<a class="notranslate" href="#1match.html">Match</a>
+<a class="notranslate" href="#1method-syntax.html#method-calls">Method Syntax (Method Calls)</a>
+<a class="notranslate" href="#1method-syntax.html">Method Syntax</a>
+<a class="notranslate" href="#1mutability.html">Mutability</a>
+<a class="notranslate" href="#1operators-and-overloading.html">Operators and Overloading</a>
+<a class="notranslate" href="#1patterns.html#ref-and-ref-mut">Patterns (`ref` and `ref mut`)</a>
+<a class="notranslate" href="#1patterns.html#bindings">Patterns (Bindings)</a>
+<a class="notranslate" href="#1patterns.html#ignoring-bindings">Patterns (Ignoring bindings)</a>
+<a class="notranslate" href="#1patterns.html#multiple-patterns">Patterns (Multiple patterns)</a>
+<a class="notranslate" href="#1patterns.html#ranges">Patterns (Ranges)</a>
+<a class="notranslate" href="#1primitive-types.html#char">Primitive Types (`char`)</a>
+<a class="notranslate" href="#1primitive-types.html#arrays">Primitive Types (Arrays)</a>
+<a class="notranslate" href="#1primitive-types.html#booleans">Primitive Types (Booleans)</a>
+<a class="notranslate" href="#1primitive-types.html#tuple-indexing">Primitive Types (Tuple Indexing)</a>
+<a class="notranslate" href="#1primitive-types.html#tuples">Primitive Types (Tuples)</a>
+<a class="notranslate" href="#1raw-pointers.html">Raw Pointers</a>
+<a class="notranslate" href="#1../../reference/tokens.html#byte-and-byte-string-literals">Reference (Byte String Literals)</a>
+<a class="notranslate" href="#1../../reference/tokens.html#integer-literals">Reference (Integer literals)</a>
+<a class="notranslate" href="#1../../reference/tokens.html#raw-byte-string-literals">Reference (Raw Byte String Literals)</a>
+<a class="notranslate" href="#1../../reference/tokens.html#raw-string-literals">Reference (Raw String Literals)</a>
+<a class="notranslate" href="#1references-and-borrowing.html">References and Borrowing</a>
+<a class="notranslate" href="#1strings.html">Strings</a>
+<a class="notranslate" href="#1structs.html#update-syntax">Structs (Update syntax)</a>
+<a class="notranslate" href="#1structs.html">Structs</a>
+<a class="notranslate" href="#1traits.html#where-clause">Traits (`where` clause)</a>
+<a class="notranslate" href="#1traits.html#multiple-trait-bounds">Traits (Multiple Trait Bounds)</a>
+<a class="notranslate" href="#1traits.html">Traits</a>
+<a class="notranslate" href="#1ufcs.html">Universal Function Call Syntax</a>
+<a class="notranslate" href="#1ufcs.html#angle-bracket-form">Universal Function Call Syntax (Angle-bracket Form)</a>
+<a class="notranslate" href="#1unsafe.html">Unsafe</a>
+<a class="notranslate" href="#1unsized-types.html#sized">Unsized Types (`?Sized`)</a>
+<a class="notranslate" href="#1variable-bindings.html">Variable Bindings</a>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h1>Variable Bindings</h1>
+<br>
+<p>Rust provides type safety via static typing. Variable bindings can be type
+annotated when declared. However, in most cases, the compiler will be able
+to infer the type of the variable from the context, heavily reducing the
+annotation burden.</p>
+<br>
+<p>Values (like literals) can be bound to variables, using the <code>let</code> binding.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let an_integer = 1u32;"></div><div data-l="    let a_boolean = true;"></div><div data-l="    let unit = ();"></div><div data-l=""></div><div data-l="#    // copy `an_integer` into `copied_integer`"></div><div data-l="    // ">copy <code>an_integer</code> into <code>copied_integer</code></div><div data-l="    let copied_integer = an_integer;"></div><div data-l=""></div><div data-l="    println!(&quot;An integer: {:?}&quot;, copied_integer);"></div><div data-l="    println!(&quot;A boolean: {:?}&quot;, a_boolean);"></div><div data-l="    println!(&quot;Meet the unit value: {:?}&quot;, unit);"></div><div data-l=""></div><div data-l="#    // The compiler warns about unused variable bindings; these warnings can"></div><div data-l="#    // be silenced by prefixing the variable name with an underscore"></div><div data-l="    // ">The compiler warns about unused variable bindings; these warnings can be silenced by prefixing the variable name with an underscore</div><div data-l="    let _unused_variable = 3u32;"></div><div data-l=""></div><div data-l="    let noisy_unused_variable = 2u32;"></div><div data-l="#    // FIXME ^ Prefix with an underscore to suppress the warning"></div><div data-l="    // ">FIXME ^ Prefix with an underscore to suppress the warning</div><div data-l="}"></div></div>

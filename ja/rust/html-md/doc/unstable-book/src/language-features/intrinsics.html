@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h1><code>intrinsics</code></h1>
+<br>
+<p>The tracking issue for this feature is: None.</p>
+<br>
+<p>Intrinsics are never intended to be stable directly, but intrinsics are often
+exported in some sort of stable manner. Prefer using the stable interfaces to
+the intrinsic directly when you can.</p>
+<br>
+<p>------------------------</p>
+<br>
+<br>
+<p>These are imported as if they were FFI functions, with the special
+<code>rust-intrinsic</code> ABI. For example, if one was in a freestanding
+context, but wished to be able to <code>transmute</code> between types, and
+perform efficient pointer arithmetic, one would import those functions
+via a declaration like</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(intrinsics)]"></div><div data-l="# fn main() {}"></div><div data-l=""></div><div data-l="extern &quot;rust-intrinsic&quot; {"></div><div data-l="    fn transmute&lt;T, U&gt;(x: T) -&gt; U;"></div><div data-l=""></div><div data-l="    fn offset&lt;T&gt;(dst: *const T, offset: isize) -&gt; *const T;"></div><div data-l="}"></div></div>
+<br>
+<p>As with any other FFI functions, these are always <code>unsafe</code> to call.</p>
+<br>

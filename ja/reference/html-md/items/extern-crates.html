@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<h1>Extern crate declarations</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax:&lt;sup&gt;</b>\
+<s>ExternCrate</s> :\
+&amp;nbsp;&amp;nbsp; <code>extern</code> <code>crate</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;(<code>as</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>)<sup>?</sup> <code>;</code></p></blockquote>
+<br>
+<p>An <s>`extern crate` declaration</s> specifies a dependency on an external crate.
+The external crate is then bound into the declaring scope as the <code>ident</code>
+provided in the <code>extern_crate_decl</code>.</p>
+<br>
+<p>The external crate is resolved to a specific <code>soname</code> at compile time, and a
+runtime linkage requirement to that <code>soname</code> is passed to the linker for
+loading at runtime. The <code>soname</code> is resolved at compile time by scanning the
+compiler's library path and matching the optional <code>crateid</code> provided against
+the <code>crateid</code> attributes that were declared on the external crate when it was
+compiled. If no <code>crateid</code> is provided, a default <code>name</code> attribute is assumed,
+equal to the <code>ident</code> given in the <code>extern_crate_decl</code>.</p>
+<br>
+<p>Three examples of <code>extern crate</code> declarations:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate pcre;"></div><div data-l=""></div><div data-l="#//extern crate std; // equivalent to: extern crate std as std;"></div><div data-l="extern crate std; // ">equivalent to: extern crate std as std;</div><div data-l=""></div><div data-l="#//extern crate std as ruststd; // linking to 'std' under another name"></div><div data-l="extern crate std as ruststd; // ">linking to 'std' under another name</div></div>
+<br>
+<p>When naming Rust crates, hyphens are disallowed. However, Cargo packages may
+make use of them. In such case, when <code>Cargo.toml</code> doesn't specify a crate name,
+Cargo will transparently replace <code>-</code> with <code>_</code> (Refer to <a class="notranslate" href="#4RFC 940">RFC 940</a> for more
+details).</p>
+<br>
+<p>Here is an example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Importing the Cargo package hello-world"></div><div data-l="// ">Importing the Cargo package hello-world</div><div data-l="#//extern crate hello_world; // hyphen replaced with an underscore"></div><div data-l="extern crate hello_world; // ">hyphen replaced with an underscore</div></div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0940-hyphens-considered-harmful.md">RFC 940</a>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>

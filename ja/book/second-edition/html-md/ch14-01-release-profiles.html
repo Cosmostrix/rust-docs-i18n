@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<h2>Customizing Builds with Release Profiles</h2>
+<br>
+<p>In Rust, <i>release profiles</i> are predefined and customizable profiles with
+different configurations that allow a programmer to have more control over
+various options for compiling code. Each profile is configured independently of
+the others.</p>
+<br>
+<p>Cargo has two main profiles: the <code>dev</code> profile Cargo uses when you run <code>cargo
+build</code> and the <code>release</code> profile Cargo uses when you run <code>cargo build
+--release</code>. The <code>dev</code> profile is defined with good defaults for development,
+and the <code>release</code> profile has good defaults for release builds.</p>
+<br>
+<p>These profile names might be familiar from the output of your builds:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo build"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="$ cargo build --release"></div><div data-l="    Finished release [optimized] target(s) in 0.0 secs"></div></div>
+<br>
+<p>The <code>dev</code> and <code>release</code> shown in this build output indicate that the compiler
+is using different profiles.</p>
+<br>
+<p>Cargo has default settings for each of the profiles that apply when there
+aren’t any <code>[profile.*]</code> sections in the project’s <i>Cargo.toml</i> file. By adding
+<code>[profile.*]</code> sections for any profile you want to customize, you can override
+any subset of the default settings. For example, here are the default values
+for the <code>opt-level</code> setting for the <code>dev</code> and <code>release</code> profiles:</p>
+<br>
+<p><span class="filename">Filename: Cargo.toml</span></p>
+<br>
+<div data-lang="toml"><div data-l="[profile.dev]"></div><div data-l="opt-level = 0"></div><div data-l=""></div><div data-l="[profile.release]"></div><div data-l="opt-level = 3"></div></div>
+<br>
+<p>The <code>opt-level</code> setting controls the number of optimizations Rust will apply to
+your code, with a range of 0 to 3. Applying more optimizations extends
+compiling time, so if you’re in development and compiling your code often,
+you’ll want faster compiling even if the resulting code runs slower. That is
+the reason the default <code>opt-level</code> for <code>dev</code> is <code>0</code>. When you’re ready to
+release your code, it’s best to spend more time compiling. You’ll only compile
+in release mode once, but you’ll run the compiled program many times, so
+release mode trades longer compile time for code that runs faster. That is why
+the default <code>opt-level</code> for the <code>release</code> profile is <code>3</code>.</p>
+<br>
+<p>You can override any default setting by adding a different value for it in
+<i>Cargo.toml</i>. For example, if we want to use optimization level 1 in the
+development profile, we can add these two lines to our project’s <i>Cargo.toml</i>
+file:</p>
+<br>
+<p><span class="filename">Filename: Cargo.toml</span></p>
+<br>
+<div data-lang="toml"><div data-l="[profile.dev]"></div><div data-l="opt-level = 1"></div></div>
+<br>
+<p>This code overrides the default setting of <code>0</code>. Now when we run <code>cargo build</code>,
+Cargo will use the defaults for the <code>dev</code> profile plus our customization to
+<code>opt-level</code>. Because we set <code>opt-level</code> to <code>1</code>, Cargo will apply more
+optimizations than the default, but not as many as in a release build.</p>
+<br>
+<p>For the full list of configuration options and defaults for each profile, see
+<a href="#2https://doc.rust-lang.org/cargo/">Cargo’s documentation</a>.</p>

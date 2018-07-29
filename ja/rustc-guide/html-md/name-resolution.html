@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<h1>Name resolution</h1>
+<br>
+<p>The name resolution is a separate pass in the compiler. Its input is the syntax
+tree, produced by parsing input files. It produces links from all the names in
+the source to relevant places where the name was introduced. It also generates
+helpful error messages, like typo suggestions, traits to import or lints about
+unused items.</p>
+<br>
+<p>A successful run of the name resolution (<code>Resolver::resolve_crate</code>) creates kind
+of an index the rest of the compilation may use to ask about the present names
+(through the <code>hir::lowering::Resolver</code> interface).</p>
+<br>
+<p>The name resolution lives in the <code>librustc_resolve</code> crate, with the meat in
+<code>lib.rs</code> and some helpers or symbol-type specific logic in the other modules.</p>
+<br>
+<h2>Namespaces</h2>
+<br>
+<p>Different kind of symbols live in different namespaces ‒ eg. types don't
+clash with variables. This usually doesn't happen, because variables start with
+lower-case letter while types with upper case one, but this is only a
+convention. This is legal Rust code that'll compile (with warnings):</p>
+<br>
+<div data-lang="rust"><div data-l="type x = u32;"></div><div data-l="let x: x = 1;"></div><div data-l="#//let y: x = 2; // See? x is still a type here."></div><div data-l="let y: x = 2; // ">See? x is still a type here.</div></div>
+<br>
+<p>To cope with this, and with slightly different scoping rules for these
+namespaces, the resolver keeps them separated and builds separate structures for
+them.</p>
+<br>
+<p>In other words, when the code talks about namespaces, it doesn't mean the module
+hierarchy, it's types vs. values vs. macros.</p>
+<br>
+<h2>Scopes and ribs</h2>
+<br>
+<p>A name is visible only in certain area in the source code. This forms a
+hierarchical structure, but not necessarily a simple one ‒ if one scope is
+part of another, it doesn't mean the name visible in the outer one is also
+visible in the inner one, or that it refers to the same thing.</p>
+<br>
+<p>To cope with that, the compiler introduces the concept of Ribs. This is
+abstraction of a scope. Every time the set of visible names potentially changes,
+a new rib is pushed onto a stack. The places where this can happen includes for
+example:</p>
+<br>
+<div data-b="*">The obvious places ‒ curly braces enclosing a block, function boundaries,
+modules.</div>
+<div data-b="*">Introducing a let binding ‒ this can shadow another binding with the same
+name.</div>
+<div data-b="*">Macro expansion border ‒ to cope with macro hygiene.</div>
+<br>
+<p>When searching for a name, the stack of ribs is traversed from the innermost
+outwards. This helps to find the closest meaning of the name (the one not
+shadowed by anything else). The transition to outer rib may also change the
+rules what names are usable ‒ if there are nested functions (not closures),
+the inner one can't access parameters and local bindings of the outer one,
+even though they should be visible by ordinary scoping rules. An example:</p>
+<br>
+<div data-lang="rust"><div data-l="#//fn do_something&lt;T: Default&gt;(val: T) { // &lt;- New rib in both types and values (1)"></div><div data-l="fn do_something&lt;T: Default&gt;(val: T) { // ">&lt;- New rib in both types and values (1)</div><div data-l="#    // `val` is accessible, as is the helper function"></div><div data-l="#    // `T` is accessible"></div><div data-l="    // "><code>val</code> is accessible, as is the helper function <code>T</code> is accessible</div><div data-l="#//    let helper = || { // New rib on `helper` (2) and another on the block (3)"></div><div data-l="    let helper = || { // ">New rib on <code>helper</code> (2) and another on the block (3)</div><div data-l="#        // `val` is accessible here"></div><div data-l="        // "><code>val</code> is accessible here</div><div data-l="#//    }; // End of (3)"></div><div data-l="    }; // ">End of (3)</div><div data-l="#    // `val` is accessible, `helper` variable shadows `helper` function"></div><div data-l="    // "><code>val</code> is accessible, <code>helper</code> variable shadows <code>helper</code> function</div><div data-l="#//    fn helper() { // &lt;- New rib in both types and values (4)"></div><div data-l="    fn helper() { // ">&lt;- New rib in both types and values (4)</div><div data-l="#        // `val` is not accessible here, (4) is not transparent for locals)"></div><div data-l="#        // `T` is not accessible here"></div><div data-l="        // "><code>val</code> is not accessible here, (4) is not transparent for locals) <code>T</code> is not accessible here</div><div data-l="#//    } // End of (4)"></div><div data-l="    } // ">End of (4)</div><div data-l="#//    let val = T::default(); // New rib (5)"></div><div data-l="    let val = T::default(); // ">New rib (5)</div><div data-l="#    // `val` is the variable, not the parameter here"></div><div data-l="    // "><code>val</code> is the variable, not the parameter here</div><div data-l="#//} // End of (5), (2) and (1)"></div><div data-l="} // ">End of (5), (2) and (1)</div></div>
+<br>
+<p>Because the rules for different namespaces are a bit different, each namespace
+has its own independent rib stack that is constructed in parallel to the others.
+In addition, there's also a rib stack for local labels (eg. names of loops or
+blocks), which isn't a full namespace in its own right.</p>
+<br>
+<h2>Overall strategy</h2>
+<br>
+<p>To perform the name resolution of the whole crate, the syntax tree is traversed
+top-down and every encountered name is resolved. This works for most kinds of
+names, because at the point of use of a name it is already introduced in the Rib
+hierarchy.</p>
+<br>
+<p>There are some exceptions to this. Items are bit tricky, because they can be
+used even before encountered ‒ therefore every block needs to be first scanned
+for items to fill in its Rib.</p>
+<br>
+<p>Other, even more problematic ones, are imports which need recursive fixed-point
+resolution and macros, that need to be resolved and expanded before the rest of
+the code can be processed.</p>
+<br>
+<p>Therefore, the resolution is performed in multiple stages.</p>
+<br>
+<h2>TODO:</h2>
+<br>
+<p>This is a result of the first pass of learning the code. It is definitely
+incomplete and not detailed enough. It also might be inaccurate in places.
+Still, it probably provides useful first guidepost to what happens in there.</p>
+<br>
+<div data-b="*">What exactly does it link to and how is that published and consumed by
+following stages of compilation?</div>
+<div data-b="*">Who calls it and how it is actually used.</div>
+<div data-b="*">Is it a pass and then the result is only used, or can it be computed
+incrementally (eg. for RLS)?</div>
+<div data-b="*">The overall strategy description is a bit vague.</div>
+<div data-b="*">Where does the name <code>Rib</code> come from?</div>
+<div data-b="*">Does this thing have its own tests, or is it tested only as part of some e2e
+testing?</div>

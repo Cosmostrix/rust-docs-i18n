@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h1>Wait</h1>
+<br>
+<p>If you'd like to wait for a <code>process::Child</code> to finish, you must call
+<code>Child::wait</code>, which will return a <code>process::ExitStatus</code>.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::process::Command;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut child = Command::new(&quot;sleep&quot;).arg(&quot;5&quot;).spawn().unwrap();"></div><div data-l="    let _result = child.wait().unwrap();"></div><div data-l=""></div><div data-l="    println!(&quot;reached end of main&quot;);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="$ rustc wait.rs &amp;&amp; ./wait"></div><div data-l="# `wait` keeps running for 5 seconds until the `sleep 5` command finishes"></div><div data-l="reached end of main"></div></div>

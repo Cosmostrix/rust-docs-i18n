@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<h1><code>infer_outlives_requirements</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44493">#44493</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44493">#44493</a>
+<br>
+<p>------------------------
+The <code>infer_outlives_requirements</code> feature indicates that certain
+outlives requirements can be infered by the compiler rather than
+stating them explicitly.</p>
+<br>
+<p>For example, currently generic struct definitions that contain
+references, require where-clauses of the form T: 'a. By using
+this feature the outlives predicates will be infered, although
+they may still be written explicitly.</p>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="struct Foo&lt;'a, T&gt;"></div><div data-l="#//  where T: 'a // &lt;-- currently required"></div><div data-l="  where T: 'a // ">&lt;-- currently required</div><div data-l="  {"></div><div data-l="      bar: &amp;'a T,"></div><div data-l="  }"></div></div>
+<br>
+<br>
+<h2>Examples:</h2>
+<br>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#![feature(infer_outlives_requirements)]"></div><div data-l=""></div><div data-l="#// Implicitly infer T: 'a"></div><div data-l="// ">Implicitly infer T: 'a</div><div data-l="struct Foo&lt;'a, T&gt; {"></div><div data-l="    bar: &amp;'a T,"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#![feature(infer_outlives_requirements)]"></div><div data-l=""></div><div data-l="#// Implicitly infer `U: 'b`"></div><div data-l="// ">Implicitly infer <code>U: 'b</code></div><div data-l="struct Foo&lt;'b, U&gt; {"></div><div data-l="    bar: Bar&lt;'b, U&gt;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Bar&lt;'a, T&gt; where T: 'a {"></div><div data-l="    x: &amp;'a (),"></div><div data-l="    y: T,"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#![feature(infer_outlives_requirements)]"></div><div data-l=""></div><div data-l="#// Implicitly infer `b': 'a`"></div><div data-l="// ">Implicitly infer <code>b': 'a</code></div><div data-l="struct Foo&lt;'a, 'b, T&gt; {"></div><div data-l="    x: &amp;'a &amp;'b T"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#![feature(infer_outlives_requirements)]"></div><div data-l=""></div><div data-l="#// Implicitly infer `&lt;T as std::iter::Iterator&gt;::Item : 'a`"></div><div data-l="// ">Implicitly infer <code>&lt;T as std::iter::Iterator&gt;::Item : 'a</code></div><div data-l="struct Foo&lt;'a, T: Iterator&gt; {"></div><div data-l="    bar: &amp;'a T::Item"></div></div>

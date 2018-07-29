@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h1>Testcase: empty bounds</h1>
+<br>
+<p>A consequence of how bounds work is that even if a <code>trait</code> doesn't
+include any functionality, you can still use it as a bound. <code>Eq</code> and
+<code>Ord</code> are examples of such <code>trait</code>s from the <code>std</code> library.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="struct Cardinal;"></div><div data-l="struct BlueJay;"></div><div data-l="struct Turkey;"></div><div data-l=""></div><div data-l="trait Red {}"></div><div data-l="trait Blue {}"></div><div data-l=""></div><div data-l="impl Red for Cardinal {}"></div><div data-l="impl Blue for BlueJay {}"></div><div data-l=""></div><div data-l="#// These functions are only valid for types which implement these"></div><div data-l="#// traits. The fact that the traits are empty is irrelevant."></div><div data-l="// ">These functions are only valid for types which implement these traits. The fact that the traits are empty is irrelevant.</div><div data-l="fn red&lt;T: Red&gt;(_: &amp;T)   -&gt; &amp;'static str { &quot;red&quot; }"></div><div data-l="fn blue&lt;T: Blue&gt;(_: &amp;T) -&gt; &amp;'static str { &quot;blue&quot; }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let cardinal = Cardinal;"></div><div data-l="    let blue_jay = BlueJay;"></div><div data-l="    let _turkey   = Turkey;"></div><div data-l=""></div><div data-l="#    // `red()` won't work on a blue jay nor vice versa"></div><div data-l="#    // because of the bounds."></div><div data-l="    // "><code>red()</code> won't work on a blue jay nor vice versa because of the bounds.</div><div data-l="    println!(&quot;A cardinal is {}&quot;, red(&amp;cardinal));"></div><div data-l="    println!(&quot;A blue jay is {}&quot;, blue(&amp;blue_jay));"></div><div data-l="    //println!(&quot;A turkey is {}&quot;, red(&amp;_turkey));"></div><div data-l="#    // ^ TODO: Try uncommenting this line."></div><div data-l="    // ">^ TODO: Try uncommenting this line.</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3eq"><code>std::cmp::Eq</code></a>, <a class="notranslate" href="#3ord"><code>std::cmp::Ord</code>s</a>, and <a class="notranslate" href="#3traits"><code>trait</code>s</a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.Eq.html">eq</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.Ord.html">ord</a>
+<a class="notranslate" href="#1trait.html">traits</a>

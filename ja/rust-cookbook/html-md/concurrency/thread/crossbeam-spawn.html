@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Spawn a short-lived thread</h2>
+<br>
+<p><a href="#3crossbeam">!<a class="notranslate" href="#4crossbeam-badge">crossbeam-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>The example uses the <a class="notranslate" href="#4crossbeam">crossbeam</a> crate, which provides data structures and functions
+for concurrent and parallel programming. <a class="notranslate" href="#4`Scope::spawn`">`Scope::spawn`</a> spawns a new scoped thread that is guaranteed
+to terminate before returning from the closure that passed into <a class="notranslate" href="#4`crossbeam::scope`">`crossbeam::scope`</a> function, meaning that
+you can reference data from the calling function.</p>
+<br>
+<p>This example splits the array in half and performs the work in separate threads.  </p>
+<br>
+<div data-lang="rust"><div data-l="extern crate crossbeam;"></div><div data-l=""></div><div data-l="use std::cmp;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let arr = &amp;[-4, 1, 10, 25];"></div><div data-l="    let max = find_max(arr, 0, arr.len());"></div><div data-l="    assert_eq!(25, max);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn find_max(arr: &amp;[i32], start: usize, end: usize) -&gt; i32 {"></div><div data-l="    const THRESHOLD: usize = 2;"></div><div data-l="    if end - start &lt;= THRESHOLD {"></div><div data-l="        return *arr.iter().max().unwrap();"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let mid = start + (end - start) / 2;"></div><div data-l="    crossbeam::scope(|scope| {"></div><div data-l="        let left = scope.spawn(|| find_max(arr, start, mid));"></div><div data-l="        let right = scope.spawn(|| find_max(arr, mid, end));"></div><div data-l=""></div><div data-l="        cmp::max(left.join(), right.join())"></div><div data-l="    })"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/crossbeam/*/crossbeam/fn.scope.html">`crossbeam::scope`</a>
+<a class="notranslate" href="#1https://docs.rs/crossbeam/*/crossbeam/struct.Scope.html#method.spawn">`Scope::spawn`</a>

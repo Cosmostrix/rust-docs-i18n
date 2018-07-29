@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h2>Extending Cargo with Custom Commands</h2>
+<br>
+<p>Cargo is designed so you can extend it with new subcommands without having to
+modify Cargo. If a binary in your <code>$PATH</code> is named <code>cargo-something</code>, you can
+run it as if it was a Cargo subcommand by running <code>cargo something</code>. Custom
+commands like this are also listed when you run <code>cargo --list</code>. Being able to
+use <code>cargo install</code> to install extensions and then run them just like the
+built-in Cargo tools is a super convenient benefit of Cargo’s design!</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>Sharing code with Cargo and <a class="notranslate" href="#2https://crates.io">crates.io</a><!-- ignore --> is
+part of what makes the Rust ecosystem useful for many different tasks. Rust’s
+standard library is small and stable, but crates are easy to share, use, and
+improve on a timeline different from that of the language. Don’t be shy about
+sharing code that’s useful to you on <a class="notranslate" href="#2https://crates.io">crates.io</a><!-- ignore
+-->; it’s likely that it will be useful to someone else as well!</p>

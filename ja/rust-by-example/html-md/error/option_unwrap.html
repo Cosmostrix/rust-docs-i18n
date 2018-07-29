@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<h1><code>Option</code> &amp; <code>unwrap</code></h1>
+<br>
+<p>In the last example, we showed that we can induce program failure at will. 
+We told our program to <code>panic</code> if the princess received an inappropriate 
+gift - a snake. But what if the princess expected a gift and didn't receive 
+one? That case would be just as bad, so it needs to be handled!</p>
+<br>
+<p>We <i>could</i> test this against the null string (<code>&quot;&quot;</code>) as we do with a snake. 
+Since we're using Rust, let's instead have the compiler point out cases 
+where there's no gift.</p>
+<br>
+<p>An <code>enum</code> called <code>Option&lt;T&gt;</code> in the <code>std</code> library is used when absence is a 
+possibility. It manifests itself as one of two &quot;options&quot;:</p>
+<br>
+<div data-b="*"><code>Some(T)</code>: An element of type <code>T</code> was found</div>
+<div data-b="*"><code>None</code>: No element was found</div>
+<br>
+<p>These cases can either be explicitly handled via <code>match</code> or implicitly with 
+<code>unwrap</code>. Implicit handling will either return the inner element or <code>panic</code>.</p>
+<br>
+<p>Note that it's possible to manually customize <code>panic</code> with <a class="notranslate" href="#3expect">expect</a>, 
+but <code>unwrap</code> otherwise leaves us with a less meaningful output than explicit 
+handling. In the following example, explicit handling yields a more 
+controlled result while retaining the option to <code>panic</code> if desired.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#// The commoner has seen it all, and can handle any gift well."></div><div data-l="#// All gifts are handled explicitly using `match`."></div><div data-l="// ">The commoner has seen it all, and can handle any gift well. All gifts are handled explicitly using <code>match</code>.</div><div data-l="fn give_commoner(gift: Option&lt;&amp;str&gt;) {"></div><div data-l="#    // Specify a course of action for each case."></div><div data-l="    // ">Specify a course of action for each case.</div><div data-l="    match gift {"></div><div data-l="        Some(&quot;snake&quot;) =&gt; println!(&quot;Yuck! I'm throwing that snake in a fire.&quot;),"></div><div data-l="        Some(inner)   =&gt; println!(&quot;{}? How nice.&quot;, inner),"></div><div data-l="        None          =&gt; println!(&quot;No gift? Oh well.&quot;),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Our sheltered princess will `panic` at the sight of snakes."></div><div data-l="#// All gifts are handled implicitly using `unwrap`."></div><div data-l="// ">Our sheltered princess will <code>panic</code> at the sight of snakes. All gifts are handled implicitly using <code>unwrap</code>.</div><div data-l="fn give_princess(gift: Option&lt;&amp;str&gt;) {"></div><div data-l="#    // `unwrap` returns a `panic` when it receives a `None`."></div><div data-l="    // "><code>unwrap</code> returns a <code>panic</code> when it receives a <code>None</code>.</div><div data-l="    let inside = gift.unwrap();"></div><div data-l="    if inside == &quot;snake&quot; { panic!(&quot;AAAaaaaa!!!!&quot;); }"></div><div data-l=""></div><div data-l="    println!(&quot;I love {}s!!!!!&quot;, inside);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let food  = Some(&quot;cabbage&quot;);"></div><div data-l="    let snake = Some(&quot;snake&quot;);"></div><div data-l="    let void  = None;"></div><div data-l=""></div><div data-l="    give_commoner(food);"></div><div data-l="    give_commoner(snake);"></div><div data-l="    give_commoner(void);"></div><div data-l=""></div><div data-l="    let bird = Some(&quot;robin&quot;);"></div><div data-l="    let nothing = None;"></div><div data-l=""></div><div data-l="    give_princess(bird);"></div><div data-l="    give_princess(nothing);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/option/enum.Option.html#method.expect">expect</a>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<h1>The MIR (Mid-level IR)</h1>
+<br>
+<p>MIR is Rust's <s>Mid-level Intermediate Representation</s>. It is
+constructed from <a class="notranslate" href="#2./hir.html">HIR</a>. MIR was introduced in
+<a class="notranslate" href="#4RFC 1211">RFC 1211</a>. It is a radically simplified form of Rust that is used for
+certain flow-sensitive safety checks – notably the borrow checker! –
+and also for optimization and code generation.</p>
+<br>
+<p>If you'd like a very high-level introduction to MIR, as well as some
+of the compiler concepts that it relies on (such as control-flow
+graphs and desugaring), you may enjoy the
+<a href="#3blog">rust-lang blog post that introduced MIR</a>.</p>
+<br>
+<a class="notranslate" href="#1https://blog.rust-lang.org/2016/04/19/MIR.html">blog</a>
+<br>
+<h2>Introduction to MIR</h2>
+<br>
+<p>MIR is defined in the <a class="notranslate" href="#3mir"><code>src/librustc/mir/</code></a> module, but much of the code
+that manipulates it is found in <a class="notranslate" href="#3mirmanip"><code>src/librustc_mir</code></a>.</p>
+<br>
+<a class="notranslate" href="#1http://rust-lang.github.io/rfcs/1211-mir.html">RFC 1211</a>
+<br>
+<p>Some of the key characteristics of MIR are:</p>
+<br>
+<div data-b="-">It is based on a <a href="#3cfg">control-flow graph</a>.</div>
+<div data-b="-">It does not have nested expressions.</div>
+<div data-b="-">All types in MIR are fully explicit.</div>
+<br>
+<a class="notranslate" href="#1./appendix/background.html#cfg">cfg</a>
+<br>
+<h2>Key MIR vocabulary</h2>
+<br>
+<p>This section introduces the key concepts of MIR, summarized here:</p>
+<br>
+<div data-b="-"><b>Basic blocks</b>: units of the control-flow graph, consisting of:</div>
+<div data-b="  -"><b>statements:</b> actions with one successor</div>
+<div data-b="  -"><b>terminators:</b> actions with potentially multiple successors; always at
+the end of a block</div>
+<div data-b="  -">(if you're not familiar with the term <i>basic block</i>, see the <a href="#3cfg">background
+    chapter</a>)</div>
+<div data-b="-"><b>Locals:</b> Memory locations alloated on the stack (conceptually, at
+least), such as function arguments, local variables, and
+temporaries. These are identified by an index, written with a
+leading underscore, like <code>_1</code>. There is also a special &quot;local&quot;
+(<code>_0</code>) allocated to store the return value.</div>
+<div data-b="-"><b>Places:</b> expressions that identify a location in memory, like <code>_1</code> or
+<code>_1.f</code>.</div>
+<div data-b="-"><b>Rvalues:</b> expressions that produce a value. The &quot;R&quot; stands for
+the fact that these are the &quot;right-hand side&quot; of an assignment.</div>
+<div data-b="  -"><b>Operands:</b> the arguments to an rvalue, which can either be a
+constant (like <code>22</code>) or a place (like <code>_1</code>).</div>
+<br>
+<p>You can get a feeling for how MIR is structed by translating simple
+programs into MIR and reading the pretty printed output. In fact, the
+playground makes this easy, since it supplies a MIR button that will
+show you the MIR for your program. Try putting this program into play
+(or <a href="#3sample-play">clicking on this link</a>), and then clicking the &quot;MIR&quot;
+button on the top:</p>
+<br>
+<a class="notranslate" href="#1https://play.rust-lang.org/?gist=30074856e62e74e91f06abd19bd72ece&version=stable">sample-play</a>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut vec = Vec::new();"></div><div data-l="    vec.push(1);"></div><div data-l="    vec.push(2);"></div><div data-l="}"></div></div>
+<br>
+<p>You should see something like:</p>
+<br>
+<div data-lang="mir"><div data-l="#// WARNING: This output format is intended for human consumers only"></div><div data-l="#// and is subject to change without notice. Knock yourself out."></div><div data-l="// ">WARNING: This output format is intended for human consumers only and is subject to change without notice. Knock yourself out.</div><div data-l="fn main() -&gt; () {"></div><div data-l="    ..."></div><div data-l="}"></div></div>
+<br>
+<p>This is the MIR format for the <code>main</code> function.</p>
+<br>
+<p><b>Variable declarations.</b> If we drill in a bit, we'll see it begins
+with a bunch of variable declarations. They look like this:</p>
+<br>
+<div data-lang="mir"><div data-l="#//let mut _0: ();                      // return place"></div><div data-l="let mut _0: ();                      // ">return place</div><div data-l="scope 1 {"></div><div data-l="#//    let mut _1: std::vec::Vec&lt;i32&gt;;  // &quot;vec&quot; in scope 1 at src/main.rs:2:9: 2:16"></div><div data-l="    let mut _1: std::vec::Vec&lt;i32&gt;;  // ">&quot;vec&quot; in scope 1 at src/main.rs:2:9: 2:16</div><div data-l="}"></div><div data-l="scope 2 {"></div><div data-l="}"></div><div data-l="let mut _2: ();"></div><div data-l="let mut _3: &amp;mut std::vec::Vec&lt;i32&gt;;"></div><div data-l="let mut _4: ();"></div><div data-l="let mut _5: &amp;mut std::vec::Vec&lt;i32&gt;;"></div></div>
+<br>
+<p>You can see that variables in MIR don't have names, they have indices,
+like <code>_0</code> or <code>_1</code>.  We also intermingle the user's variables (e.g.,
+<code>_1</code>) with temporary values (e.g., <code>_2</code> or <code>_3</code>). You can tell the
+difference between user-defined variables have a comment that gives
+you their original name (<code>// &quot;vec&quot; in scope 1...</code>). The &quot;scope&quot; blocks
+(e.g., <code>scope 1 { .. }</code>) describe the lexical structure of the source
+program (which names were in scope when).</p>
+<br>
+<p><b>Basic blocks.</b> Reading further, we see our first <b>basic block</b> (naturally
+it may look slightly different when you view it, and I am ignoring some of the
+comments):</p>
+<br>
+<div data-lang="mir"><div data-l="bb0: {"></div><div data-l="    StorageLive(_1);"></div><div data-l="    _1 = const &lt;std::vec::Vec&lt;T&gt;&gt;::new() -&gt; bb2;"></div><div data-l="}"></div></div>
+<br>
+<p>A basic block is defined by a series of <b>statements</b> and a final
+<b>terminator</b>.  In this case, there is one statement:</p>
+<br>
+<div data-lang="mir"><div data-l="StorageLive(_1);"></div></div>
+<br>
+<p>This statement indicates that the variable <code>_1</code> is &quot;live&quot;, meaning
+that it may be used later – this will persist until we encounter a
+<code>StorageDead(_1)</code> statement, which indicates that the variable <code>_1</code> is
+done being used. These &quot;storage statements&quot; are used by LLVM to
+allocate stack space.</p>
+<br>
+<p>The <b>terminator</b> of the block <code>bb0</code> is the call to <code>Vec::new</code>:</p>
+<br>
+<div data-lang="mir"><div data-l="_1 = const &lt;std::vec::Vec&lt;T&gt;&gt;::new() -&gt; bb2;"></div></div>
+<br>
+<p>Terminators are different from statements because they can have more
+than one successor – that is, control may flow to different
+places. Function calls like the call to <code>Vec::new</code> are always
+terminators because of the possibility of unwinding, although in the
+case of <code>Vec::new</code> we are able to see that indeed unwinding is not
+possible, and hence we list only one succssor block, <code>bb2</code>.</p>
+<br>
+<p>If we look ahead to <code>bb2</code>, we will see it looks like this:</p>
+<br>
+<div data-lang="mir"><div data-l="bb2: {"></div><div data-l="    StorageLive(_3);"></div><div data-l="    _3 = &amp;mut _1;"></div><div data-l="    _2 = const &lt;std::vec::Vec&lt;T&gt;&gt;::push(move _3, const 1i32) -&gt; [return: bb3, unwind: bb4];"></div><div data-l="}"></div></div>
+<br>
+<p>Here there are two statements: another <code>StorageLive</code>, introducing the <code>_3</code>
+temporary, and then an assignment:</p>
+<br>
+<div data-lang="mir"><div data-l="_3 = &amp;mut _1;"></div></div>
+<br>
+<p>Assignments in general have the form:</p>
+<br>
+<div data-lang="text"><div data-l="&lt;Place&gt; = &lt;Rvalue&gt;"></div></div>
+<br>
+<p>A place is an expression like <code>_3</code>, <code>_3.f</code> or <code>*_3</code> – it denotes a
+location in memory.  An <b>Rvalue</b> is an expression that creates a
+value: in this case, the rvalue is a mutable borrow expression, which
+looks like <code>&amp;mut &lt;Place&gt;</code>. So we can kind of define a grammar for
+rvalues like so:</p>
+<br>
+<div data-lang="text"><div data-l="&lt;Rvalue&gt;  = &amp; (mut)? &lt;Place&gt;"></div><div data-l="          | &lt;Operand&gt; + &lt;Operand&gt;"></div><div data-l="          | &lt;Operand&gt; - &lt;Operand&gt;"></div><div data-l="          | ..."></div><div data-l=""></div><div data-l="&lt;Operand&gt; = Constant"></div><div data-l="          | copy Place"></div><div data-l="          | move Place"></div></div>
+<br>
+<p>As you can see from this grammar, rvalues cannot be nested – they can
+only reference places and constants. Moreover, when you use a place,
+we indicate whether we are <b>copying it</b> (which requires that the
+place have a type <code>T</code> where <code>T: Copy</code>) or <b>moving it</b> (which works
+for a place of any type). So, for example, if we had the expression <code>x
+= a + b + c</code> in Rust, that would get compile to two statements and a
+temporary:</p>
+<br>
+<div data-lang="mir"><div data-l="TMP1 = a + b"></div><div data-l="x = TMP1 + c"></div></div>
+<br>
+<p>(<a href="#3play-abc">Try it and see</a>, though you may want to do release mode to skip
+over the overflow checks.)</p>
+<br>
+<a class="notranslate" href="#1https://play.rust-lang.org/?gist=1751196d63b2a71f8208119e59d8a5b6&version=stable">play-abc</a>
+<br>
+<h2>MIR data types</h2>
+<br>
+<p>The MIR data types are defined in the <a class="notranslate" href="#3mir"><code>src/librustc/mir/</code></a>
+module.  Each of the key concepts mentioned in the previous section
+maps in a fairly straightforward way to a Rust type.</p>
+<br>
+<p>The main MIR data type is <code>Mir</code>. It contains the data for a single
+function (along with sub-instances of Mir for &quot;promoted constants&quot;,
+but <a href="#2#promoted">you can read about those below</a>).</p>
+<br>
+<div data-b="-"><b>Basic blocks</b>: The basic blocks are stored in the field
+<code>basic_blocks</code>; this is a vector of <code>BasicBlockData</code>
+structures. Nobody ever references a basic block directly: instead,
+we pass around <code>BasicBlock</code> values, which are
+<a class="notranslate" href="#4newtype'd">newtype'd</a> indices into this vector.</div>
+<div data-b="-"><b>Statements</b> are represented by the type <code>Statement</code>.</div>
+<div data-b="-"><b>Terminators</b> are represented by the <code>Terminator</code>.</div>
+<div data-b="-"><b>Locals</b> are represented by a <a class="notranslate" href="#4newtype'd">newtype'd</a> index type <code>Local</code>. The
+data for a local variable is found in the <code>Mir</code> (the <code>local_decls</code>
+vector). There is also a special constant <code>RETURN_PLACE</code> identifying
+the special &quot;local&quot; representing the return value.</div>
+<div data-b="-"><b>Places</b> are identified by the enum <code>Place</code>. There are a few variants:</div>
+<div data-b="  -">Local variables like <code>_1</code></div>
+<div data-b="  -">Static variables <code>FOO</code></div>
+<div data-b="  -"><b>Projections</b>, which are fields or other things that &quot;project
+out&quot; from a base place. So e.g. the place <code>_1.f</code> is a projection,
+with <code>f</code> being the &quot;projection element and <code>_1</code> being the base
+path. <code>*_1</code> is also a projection, with the <code>*</code> being represented
+by the <code>ProjectionElem::Deref</code> element.</div>
+<div data-b="-"><b>Rvalues</b> are represented by the enum <code>Rvalue</code>.</div>
+<div data-b="-"><b>Operands</b> are represented by the enum <code>Operand</code>.</div>
+<br>
+<h2>Representing constants</h2>
+<br>
+<p><i>to be written</i></p>
+<br>
+<p><a name="promoted"></a></p>
+<br>
+<h3>Promoted constants</h3>
+<br>
+<p><i>to be written</i></p>
+<br>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc/mir">mir</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc_mir">mirmanip</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc/mir">mir</a>
+<a class="notranslate" href="#1appendix/glossary.html">newtype'd</a>

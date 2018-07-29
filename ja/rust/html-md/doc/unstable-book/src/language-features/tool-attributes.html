@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>tool_attributes</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44690">#44690</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44690">#44690</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>Tool attributes let you use scoped attributes to control the behavior
+of certain tools.</p>
+<br>
+<p>Currently tool names which can be appear in scoped attributes are restricted to
+<code>clippy</code> and <code>rustfmt</code>.</p>
+<br>
+<h2>An example</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(tool_attributes)]"></div><div data-l=""></div><div data-l="#[rustfmt::skip]"></div><div data-l="fn foo() { println!(&quot;hello, world&quot;); }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo();"></div><div data-l="}"></div></div>

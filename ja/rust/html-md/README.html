@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<h1>The Rust Programming Language</h1>
+<br>
+<p>This is the main source code repository for <a class="notranslate" href="#4Rust">Rust</a>. It contains the compiler,
+standard library, and documentation.</p>
+<br>
+<a class="notranslate" href="#1https://www.rust-lang.org">Rust</a>
+<br>
+<h2>Quick Start</h2>
+<a class="notranslate" href="#1#quick-start">quick-start</a>
+<br>
+<p>Read <a class="notranslate" href="#4"Installation"">"Installation"</a> from <a class="notranslate" href="#4The Book">The Book</a>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/second-edition/ch01-01-installation.html">&quot;Installation&quot;</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/index.html">The Book</a>
+<br>
+<h2>Building from Source</h2>
+<a class="notranslate" href="#1#building-from-source">building-from-source</a>
+<br>
+<h3>Building on <i>nix
+1. Make sure you have installed the dependencies:
+
+   </i> <code>g++</code> 4.7 or later or <code>clang++</code> 3.x or later</h3>
+<div data-b="   *"><code>python</code> 2.7 (but not 3.x)</div>
+<div data-b="   *">GNU <code>make</code> 3.81 or later</div>
+<div data-b="   *"><code>cmake</code> 3.4.3 or later</div>
+<div data-b="   *"><code>curl</code></div>
+<div data-b="   *"><code>git</code></div>
+<br>
+<div data-b="2.">Clone the <a class="notranslate" href="#4source">source</a> with <code>git</code>:</div>
+<br>
+<p>   `<code class=2>sh
+   $ git clone https://github.com/rust-lang/rust.git
+   $ cd rust
+   </code>`</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust">source</a>
+<br>
+<div data-b="3.">Build and install:</div>
+<br>
+<p>    `<code class=2>sh
+    $ git submodule update --init --recursive --progress
+    $ ./x.py build &amp;&amp; sudo ./x.py install
+    </code>`</p>
+<br>
+<p>    &gt; *<b>Note:</b>* Install locations can be adjusted by copying the config file
+    &gt; from <code>./config.toml.example</code> to <code>./config.toml</code>, and
+    &gt; adjusting the <code>prefix</code> option under <code>[install]</code>. Various other options, such
+    &gt; as enabling debug information, are also supported, and are documented in
+    &gt; the config file.</p>
+<br>
+<p>    When complete, <code>sudo ./x.py install</code> will place several programs into
+    <code>/usr/local/bin</code>: <code>rustc</code>, the Rust compiler, and <code>rustdoc</code>, the
+    API-documentation tool. This install does not include <a class="notranslate" href="#4Cargo">Cargo</a>,
+    Rust's package manager, which you may also want to build.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/cargo">Cargo</a>
+<br>
+<h3>Building on Windows</h3>
+<a class="notranslate" href="#1#building-on-windows">building-on-windows</a>
+<br>
+<p>There are two prominent ABIs in use on Windows: the native (MSVC) ABI used by
+Visual Studio, and the GNU ABI used by the GCC toolchain. Which version of Rust
+you need depends largely on what C/C++ libraries you want to interoperate with:
+for interop with software produced by Visual Studio use the MSVC build of Rust;
+for interop with GNU software built using the MinGW/MSYS2 toolchain use the GNU
+build.</p>
+<br>
+<h4>MinGW</h4>
+<a class="notranslate" href="#1#windows-mingw">windows-mingw</a>
+<br>
+<p><a class="notranslate" href="#3msys2">MSYS2</a> can be used to easily build Rust on Windows:</p>
+<br>
+<a class="notranslate" href="#1https://msys2.github.io/">msys2</a>
+<br>
+<div data-b="1.">Grab the latest <a href="#3msys2">MSYS2 installer</a> and go through the installer.</div>
+<br>
+<div data-b="2.">Run <code>mingw32_shell.bat</code> or <code>mingw64_shell.bat</code> from wherever you installed
+ MSYS2 (i.e. <code>C:\msys64</code>), depending on whether you want 32-bit or 64-bit
+ Rust. (As of the latest version of MSYS2 you have to run <code>msys2_shell.cmd
+   -mingw32</code> or <code>msys2_shell.cmd -mingw64</code> from the command line instead)</div>
+<br>
+<div data-b="3.">From this terminal, install the required tools:</div>
+<br>
+<p>   `<code class=2>sh
+   # Update package mirrors (may be needed if you have a fresh install of MSYS2)
+   $ pacman -Sy pacman-mirrors
+
+   # Install build tools needed for Rust. If you're building a 32-bit compiler,
+   # then replace &quot;x86_64&quot; below with &quot;i686&quot;. If you've already got git, python,
+   # or CMake installed and in PATH you can remove them from this list. Note
+   # that it is important that you do **not** use the 'python2' and 'cmake'
+   # packages from the 'msys2' subsystem. The build has historically been known
+   # to fail with these packages.
+   $ pacman -S git \
+               make \
+               diffutils \
+               tar \
+               mingw-w64-x86_64-python2 \
+               mingw-w64-x86_64-cmake \
+               mingw-w64-x86_64-gcc
+   </code>`</p>
+<br>
+<div data-b="4.">Navigate to Rust's source code (or clone it), then build it:</div>
+<br>
+<p>   `<code class=2>sh
+   $ ./x.py build &amp;&amp; ./x.py install
+   </code>`</p>
+<br>
+<h4>MSVC</h4>
+<a class="notranslate" href="#1#windows-msvc">windows-msvc</a>
+<br>
+<p>MSVC builds of Rust additionally require an installation of Visual Studio 2013
+(or later) so <code>rustc</code> can use its linker. Make sure to check the “C++ tools”
+option.</p>
+<br>
+<p>With these dependencies installed, you can build the compiler in a <code>cmd.exe</code>
+shell with:</p>
+<br>
+<div data-lang="sh"><div data-l="&gt; python x.py build"></div></div>
+<br>
+<p>Currently, building Rust only works with some known versions of Visual Studio. If
+you have a more recent version installed the build system doesn't understand
+then you may need to force rustbuild to use an older version. This can be done
+by manually calling the appropriate vcvars file before running the bootstrap.</p>
+<br>
+<div data-lang=""><div data-l="CALL &quot;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat&quot;"></div><div data-l="python x.py build"></div></div>
+<br>
+<h4>Specifying an ABI</h4>
+<a class="notranslate" href="#1#specifying-an-abi">specifying-an-abi</a>
+<br>
+<p>Each specific ABI can also be used from either environment (for example, using
+the GNU ABI in PowerShell) by using an explicit build triple. The available
+Windows build triples are:
+- GNU ABI (using GCC)
+    - <code>i686-pc-windows-gnu</code>
+    - <code>x86_64-pc-windows-gnu</code>
+- The MSVC ABI
+    - <code>i686-pc-windows-msvc</code>
+    - <code>x86_64-pc-windows-msvc</code></p>
+<br>
+<p>The build triple can be specified by either specifying <code>--build=&lt;triple&gt;</code> when
+invoking <code>x.py</code> commands, or by copying the <code>config.toml</code> file (as described
+in Building From Source), and modifying the <code>build</code> option under the <code>[build]</code>
+section.</p>
+<br>
+<h3>Configure and Make</h3>
+<a class="notranslate" href="#1#configure-and-make">configure-and-make</a>
+<br>
+<p>While it's not the recommended build system, this project also provides a
+configure script and makefile (the latter of which just invokes <code>x.py</code>).</p>
+<br>
+<div data-lang="sh"><div data-l="$ ./configure"></div><div data-l="$ make &amp;&amp; sudo make install"></div></div>
+<br>
+<p>When using the configure script, the generated <code>config.mk</code> file may override the
+<code>config.toml</code> file. To go back to the <code>config.toml</code> file, delete the generated
+<code>config.mk</code> file.</p>
+<br>
+<h2>Building Documentation</h2>
+<a class="notranslate" href="#1#building-documentation">building-documentation</a>
+<br>
+<p>If you’d like to build the documentation, it’s almost the same:</p>
+<br>
+<div data-lang="sh"><div data-l="$ ./x.py doc"></div></div>
+<br>
+<p>The generated documentation will appear under <code>doc</code> in the <code>build</code> directory for
+the ABI used. I.e., if the ABI was <code>x86_64-pc-windows-msvc</code>, the directory will be
+<code>build\x86_64-pc-windows-msvc\doc</code>.</p>
+<br>
+<h2>Notes</h2>
+<a class="notranslate" href="#1#notes">notes</a>
+<br>
+<p>Since the Rust compiler is written in Rust, it must be built by a
+precompiled &quot;snapshot&quot; version of itself (made in an earlier stage of
+development). As such, source builds require a connection to the Internet, to
+fetch snapshots, and an OS that can execute the available snapshot binaries.</p>
+<br>
+<p>Snapshot binaries are currently built and tested on several platforms:</p>
+<br>
+<div data-tbl><div> Platform / Architecture        </div><div> x86 </div><div> x86_64 </div></div>
+<div data-tbl><div>--------------------------------</div><div>-----</div><div>--------</div></div>
+<div data-tbl><div> Windows (7, 8, Server 2008 R2) </div><div> ✓   </div><div> ✓      </div></div>
+<div data-tbl><div> Linux (2.6.18 or later)        </div><div> ✓   </div><div> ✓      </div></div>
+<div data-tbl><div> OSX (10.7 Lion or later)       </div><div> ✓   </div><div> ✓      </div></div>
+<br>
+<p>You may find that other platforms work, but these are our officially
+supported build environments that are most likely to work.</p>
+<br>
+<p>Rust currently needs between 600MiB and 1.5GiB of RAM to build, depending on platform.
+If it hits swap, it will take a very long time to build.</p>
+<br>
+<p>There is more advice about hacking on Rust in <a class="notranslate" href="#4CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/CONTRIBUTING.md">CONTRIBUTING.md</a>
+<br>
+<h2>Getting Help</h2>
+<a class="notranslate" href="#1#getting-help">getting-help</a>
+<br>
+<p>The Rust community congregates in a few places:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Stack Overflow">Stack Overflow</a> - Direct questions about using the language.</div>
+<div data-b="*"><a class="notranslate" href="#4users.rust-lang.org">users.rust-lang.org</a> - General discussion and broader questions.</div>
+<div data-b="*"><a class="notranslate" href="#4/r/rust">/r/rust</a> - News and general discussion.</div>
+<br>
+<a class="notranslate" href="#1https://stackoverflow.com/questions/tagged/rust">Stack Overflow</a>
+<a class="notranslate" href="#1https://reddit.com/r/rust">/r/rust</a>
+<a class="notranslate" href="#1https://users.rust-lang.org/">users.rust-lang.org</a>
+<br>
+<h2>Contributing</h2>
+<a class="notranslate" href="#1#contributing">contributing</a>
+<br>
+<p>To contribute to Rust, please see <a class="notranslate" href="#2CONTRIBUTING.md">CONTRIBUTING</a>.</p>
+<br>
+<p>Rust has an <a class="notranslate" href="#4IRC">IRC</a> culture and most real-time collaboration happens in a
+variety of channels on Mozilla's IRC network, irc.mozilla.org. The
+most popular channel is <a class="notranslate" href="#4#rust">#rust</a>, a venue for general discussion about
+Rust. And a good place to ask for help would be <a class="notranslate" href="#4#rust-beginners">#rust-beginners</a>.</p>
+<br>
+<p>The <a class="notranslate" href="#4rustc guide">rustc guide</a> might be a good place to start if you want to find out how
+various parts of the compiler work.</p>
+<br>
+<p>Also, you may find the <a href="#3rustdocs">rustdocs for the compiler itself</a> useful.</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Internet_Relay_Chat">IRC</a>
+<a class="notranslate" href="#1irc://irc.mozilla.org/rust">#rust</a>
+<a class="notranslate" href="#1irc://irc.mozilla.org/rust-beginners">#rust-beginners</a>
+<a class="notranslate" href="#1https://rust-lang-nursery.github.io/rustc-guide/about-this-guide.html">rustc guide</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc/">rustdocs</a>
+<br>
+<h2>License</h2>
+<a class="notranslate" href="#1#license">license</a>
+<br>
+<p>Rust is primarily distributed under the terms of both the MIT license
+and the Apache License (Version 2.0), with portions covered by various
+BSD-like licenses.</p>
+<br>
+<p>See <a class="notranslate" href="#2LICENSE-APACHE">LICENSE-APACHE</a>, <a class="notranslate" href="#2LICENSE-MIT">LICENSE-MIT</a>, and
+<a class="notranslate" href="#2COPYRIGHT">COPYRIGHT</a> for details.</p>

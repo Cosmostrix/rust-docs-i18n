@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<h2>Concise Control Flow with <code>if let</code></h2>
+<br>
+<p>The <code>if let</code> syntax lets you combine <code>if</code> and <code>let</code> into a less verbose way to
+handle values that match one pattern while ignoring the rest. Consider the
+program in Listing 6-6 that matches on an <code>Option&lt;u8&gt;</code> value but only wants to
+execute code if the value is 3.</p>
+<br>
+<div data-lang="rust"><div data-l="let some_u8_value = Some(0u8);"></div><div data-l="match some_u8_value {"></div><div data-l="    Some(3) =&gt; println!(&quot;three&quot;),"></div><div data-l="    _ =&gt; (),"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 6-6: A <code>match</code> that only cares about executing
+code when the value is <code>Some(3)</code></span></p>
+<br>
+<p>We want to do something with the <code>Some(3)</code> match but do nothing with any other
+<code>Some&lt;u8&gt;</code> value or the <code>None</code> value. To satisfy the <code>match</code> expression, we
+have to add <code>_ =&gt; ()</code> after processing just one variant, which is a lot of
+boilerplate code to add.</p>
+<br>
+<p>Instead, we could write this in a shorter way using <code>if let</code>. The following
+code behaves the same as the <code>match</code> in Listing 6-6:</p>
+<br>
+<div data-lang="rust"><div data-l="# let some_u8_value = Some(0u8);"></div><div data-l="if let Some(3) = some_u8_value {"></div><div data-l="    println!(&quot;three&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>The syntax <code>if let</code> takes a pattern and an expression separated by an equal
+sign. It works the same way as a <code>match</code>, where the expression is given to the
+<code>match</code> and the pattern is its first arm.</p>
+<br>
+<p>Using <code>if let</code> means less typing, less indentation, and less boilerplate code.
+However, you lose the exhaustive checking that <code>match</code> enforces. Choosing
+between <code>match</code> and <code>if let</code> depends on what you’re doing in your particular
+situation and whether gaining conciseness is an appropriate trade-off for
+losing exhaustive checking.</p>
+<br>
+<p>In other words, you can think of <code>if let</code> as syntax sugar for a <code>match</code> that
+runs code when the value matches one pattern and then ignores all other values.</p>
+<br>
+<p>We can include an <code>else</code> with an <code>if let</code>. The block of code that goes with the
+<code>else</code> is the same as the block of code that would go with the <code>_</code> case in the
+<code>match</code> expression that is equivalent to the <code>if let</code> and <code>else</code>. Recall the
+<code>Coin</code> enum definition in Listing 6-4, where the <code>Quarter</code> variant also held a
+<code>UsState</code> value. If we wanted to count all non-quarter coins we see while also
+announcing the state of the quarters, we could do that with a <code>match</code>
+expression like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Debug)]"></div><div data-l="# enum UsState {"></div><div data-l="#    Alabama,"></div><div data-l="#    Alaska,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# enum Coin {"></div><div data-l="#    Penny,"></div><div data-l="#    Nickel,"></div><div data-l="#    Dime,"></div><div data-l="#    Quarter(UsState),"></div><div data-l="# }"></div><div data-l="# let coin = Coin::Penny;"></div><div data-l="let mut count = 0;"></div><div data-l="match coin {"></div><div data-l="    Coin::Quarter(state) =&gt; println!(&quot;State quarter from {:?}!&quot;, state),"></div><div data-l="    _ =&gt; count += 1,"></div><div data-l="}"></div></div>
+<br>
+<p>Or we could use an <code>if let</code> and <code>else</code> expression like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Debug)]"></div><div data-l="# enum UsState {"></div><div data-l="#    Alabama,"></div><div data-l="#    Alaska,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# enum Coin {"></div><div data-l="#    Penny,"></div><div data-l="#    Nickel,"></div><div data-l="#    Dime,"></div><div data-l="#    Quarter(UsState),"></div><div data-l="# }"></div><div data-l="# let coin = Coin::Penny;"></div><div data-l="let mut count = 0;"></div><div data-l="if let Coin::Quarter(state) = coin {"></div><div data-l="    println!(&quot;State quarter from {:?}!&quot;, state);"></div><div data-l="} else {"></div><div data-l="    count += 1;"></div><div data-l="}"></div></div>
+<br>
+<p>If you have a situation in which your program has logic that is too verbose to
+express using a <code>match</code>, remember that <code>if let</code> is in your Rust toolbox as well.</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>We’ve now covered how to use enums to create custom types that can be one of a
+set of enumerated values. We’ve shown how the standard library’s <code>Option&lt;T&gt;</code>
+type helps you use the type system to prevent errors. When enum values have
+data inside them, you can use <code>match</code> or <code>if let</code> to extract and use those
+values, depending on how many cases you need to handle.</p>
+<br>
+<p>Your Rust programs can now express concepts in your domain using structs and
+enums. Creating custom types to use in your API ensures type safety: the
+compiler will make certain your functions get only values of the type each
+function expects.</p>
+<br>
+<p>In order to provide a well-organized API to your users that is straightforward
+to use and only exposes exactly what your users will need, let’s now turn to
+Rust’s modules.</p>

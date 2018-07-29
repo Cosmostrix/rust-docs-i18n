@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Recursively find all files with given predicate</h2>
+<br>
+<p><a href="#3walkdir">!<a class="notranslate" href="#4walkdir-badge">walkdir-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Find JSON files modified within the last day in the current directory.
+Using <a class="notranslate" href="#4`follow_links`">`follow_links`</a> ensures symbolic links are followed like they were
+normal directories and files.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate walkdir;"></div><div data-l=""></div><div data-l="use walkdir::WalkDir;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         WalkDir(walkdir::Error);"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         SystemTime(std::time::SystemTimeError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    for entry in WalkDir::new(&quot;.&quot;)"></div><div data-l="            .follow_links(true)"></div><div data-l="            .into_iter()"></div><div data-l="            .filter_map(|e| e.ok()) {"></div><div data-l="        let f_name = entry.file_name().to_string_lossy();"></div><div data-l="        let sec = entry.metadata()?.modified()?;"></div><div data-l=""></div><div data-l="        if f_name.ends_with(&quot;.json&quot;) &amp;&amp; sec.elapsed()?.as_secs() &lt; 86400 {"></div><div data-l="            println!(&quot;{}&quot;, f_name);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.WalkDir.html#method.follow_links">`follow_links`</a>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1>Early returns</h1>
+<br>
+<p>In the previous example, we explicitly handled the errors using combinators.
+Another way to deal with this case analysis is to use a combination of
+<code>match</code> statements and <i>early returns</i>.</p>
+<br>
+<p>That is, we can simply stop executing the function and return the error if
+one occurs. For some, this form of code can be easier to both read and
+write. Consider this version of the previous example, rewritten using early returns:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn multiply(first_number_str: &amp;str, second_number_str: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {"></div><div data-l="    let first_number = match first_number_str.parse::&lt;i32&gt;() {"></div><div data-l="        Ok(first_number)  =&gt; first_number,"></div><div data-l="        Err(e) =&gt; return Err(e),"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let second_number = match second_number_str.parse::&lt;i32&gt;() {"></div><div data-l="        Ok(second_number)  =&gt; second_number,"></div><div data-l="        Err(e) =&gt; return Err(e),"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    Ok(first_number * second_number)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(result: Result&lt;i32, ParseIntError&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;n is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    print(multiply(&quot;10&quot;, &quot;2&quot;));"></div><div data-l="    print(multiply(&quot;t&quot;, &quot;2&quot;));"></div><div data-l="}"></div></div>
+<br>
+<p>At this point, we've learned to explicitly handle errors using combinators
+and early returns. While we generally want to avoid panicking, explicitly
+handling all of our errors is cumbersome.</p>
+<br>
+<p>In the next section, we'll introduce <code>?</code> for the cases where we simply
+need to <code>unwrap</code> without possibly inducing <code>panic</code>.</p>

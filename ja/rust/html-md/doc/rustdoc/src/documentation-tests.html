@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<h1>Documentation tests</h1>
+<br>
+<p><code>rustdoc</code> supports executing your documentation examples as tests. This makes sure
+that your tests are up to date and working.</p>
+<br>
+<p>The basic idea is this:</p>
+<br>
+<div data-lang="ignore"><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// let x = 5;"></div><div data-l="/// ">let x = 5;</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<p>The triple backticks start and end code blocks. If this were in a file named <code>foo.rs</code>,
+running <code>rustdoc --test foo.rs</code> will extract this example, and then run it as a test.</p>
+<br>
+<p>Please note that by default, if no language is set for the block code, <code>rustdoc</code>
+assumes it is <code>Rust</code> code. So the following:</p>
+<br>
+<div data-lang="markdown" data-n=3><div data-l="```rust"></div><div data-l="let x = 5;"></div><div data-l="```"></div></div>
+<br>
+<p>is strictly equivalent to:</p>
+<br>
+<div data-lang="markdown" data-n=3><div data-l="```"></div><div data-l="let x = 5;"></div><div data-l="```"></div></div>
+<br>
+<p>There's some subtlety though! Read on for more details.</p>
+<br>
+<h2>Passing or failing a doctest</h2>
+<br>
+<p>Like regular unit tests, regular doctests are considered to &quot;pass&quot;
+if they compile and run without panicking.
+So if you want to demonstrate that some computation gives a certain result,
+the <code>assert€</code> family of macros works the same as other Rust code:</p>
+<br>
+<div data-lang="rust"><div data-l="let foo = &quot;foo&quot;;"></div><div data-l=""></div><div data-l="assert_eq!(foo, &quot;foo&quot;);"></div></div>
+<br>
+<p>This way, if the computation ever returns something different,
+the code panics and the doctest fails.</p>
+<br>
+<h2>Pre-processing examples</h2>
+<br>
+<p>In the example above, you'll note something strange: there's no <code>main</code>
+function! Forcing you to write <code>main</code> for every example, no matter how small,
+adds friction. So <code>rustdoc</code> processes your examples slightly before
+running them. Here's the full algorithm rustdoc uses to preprocess examples:</p>
+<br>
+<div data-b="1.">Some common <code>allow</code> attributes are inserted, including
+ <code>unused_variables</code>, <code>unused_assignments</code>, <code>unused_mut</code>,
+ <code>unused_attributes</code>, and <code>dead_code</code>. Small examples often trigger
+ these lints.</div>
+<div data-b="2.">Any attributes specified with <code>#€[doc(test(attr(...)))]</code> are added.</div>
+<div data-b="3.">Any leading <code>#€[foo]</code> attributes are left intact as crate attributes.</div>
+<div data-b="4.">If the example does not contain <code>extern crate</code>, and
+ <code>#€[doc(test(no_crate_inject))]</code> was not specified, then <code>extern crate
+   &lt;mycrate&gt;;</code> is inserted (note the lack of <code>#[macro_use]</code>).</div>
+<div data-b="5.">Finally, if the example does not contain <code>fn main</code>, the remainder of the
+ text is wrapped in <code>fn main() { your_code }</code>.</div>
+<br>
+<p>For more about that caveat in rule 4, see &quot;Documenting Macros&quot; below.</p>
+<br>
+<h2>Hiding portions of the example</h2>
+<br>
+<p>Sometimes, you need some setup code, or other things that would distract
+from your example, but are important to make the tests work. Consider
+an example block that looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="#///// /// Some documentation."></div><div data-l="/// ">/// Some documentation.</div><div data-l="#///// # fn foo() {} // this function will be hidden"></div><div data-l="/// "># fn foo() {} // this function will be hidden</div><div data-l="#///// println!(&quot;Hello, World!&quot;);"></div><div data-l="/// ">println!(&quot;Hello, World!&quot;);</div></div>
+<br>
+<p>It will render like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Some documentation."></div><div data-l="/// ">Some documentation.</div><div data-l="# fn foo() {}"></div><div data-l="println!(&quot;Hello, World!&quot;);"></div></div>
+<br>
+<p>Yes, that's right: you can add lines that start with <code># </code>, and they will
+be hidden from the output, but will be used when compiling your code. You
+can use this to your advantage. In this case, documentation comments need
+to apply to some kind of function, so if I want to show you just a
+documentation comment, I need to add a little function definition below
+it. At the same time, it's only there to satisfy the compiler, so hiding
+it makes the example more clear. You can use this technique to explain
+longer examples in detail, while still preserving the testability of your
+documentation.</p>
+<br>
+<p>For example, imagine that we wanted to document this code:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l="let y = 6;"></div><div data-l="println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>We might want the documentation to end up looking like this:</p>
+<br>
+<blockquote><p>First, we set <code>x</code> to five:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>Next, we set <code>y</code> to six:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 5;"></div><div data-l="let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div></div>
+<br>
+<p>Finally, we print the sum of <code>x</code> and <code>y</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="println!(&quot;{}&quot;, x + y);"></div></div></blockquote>
+<br>
+<p>To keep each code block testable, we want the whole program in each block, but
+we don't want the reader to see every line every time.  Here's what we put in
+our source code:</p>
+<br>
+<div data-lang="markdown" data-n=3><div data-l="First, we set `x` to five:"></div><div data-l=""></div><div data-l="```"></div><div data-l="let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div><div data-l="```"></div><div data-l=""></div><div data-l="Next, we set `y` to six:"></div><div data-l=""></div><div data-l="```"></div><div data-l="# let x = 5;"></div><div data-l="let y = 6;"></div><div data-l="# println!(&quot;{}&quot;, x + y);"></div><div data-l="```"></div><div data-l=""></div><div data-l="Finally, we print the sum of `x` and `y`:"></div><div data-l=""></div><div data-l="```"></div><div data-l="# let x = 5;"></div><div data-l="# let y = 6;"></div><div data-l="println!(&quot;{}&quot;, x + y);"></div><div data-l="```"></div></div>
+<br>
+<p>By repeating all parts of the example, you can ensure that your example still
+compiles, while only showing the parts that are relevant to that part of your
+explanation.</p>
+<br>
+<p>The <code>#</code>-hiding of lines can be prevented by using two consecutive hashes
+<code>##</code>. This only needs to be done with with the first <code>#</code> which would've
+otherwise caused hiding. If we have a string literal like the following,
+which has a line that starts with a <code>#</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let s = &quot;foo"></div><div data-l="## bar # baz&quot;;"></div></div>
+<br>
+<p>We can document it by escaping the initial <code>#</code>:</p>
+<br>
+<div data-lang="text"><div data-l="#///// let s = &quot;foo"></div><div data-l="/// ">let s = &quot;foo</div><div data-l="#///// ## bar # baz&quot;;"></div><div data-l="/// ">## bar # baz&quot;;</div></div>
+<br>
+<br>
+<h2>Using <code>?</code> in doc tests</h2>
+<br>
+<p>When writing an example, it is rarely useful to include a complete error
+handling, as it would add significant amounts of boilerplate code. Instead, you
+may want the following:</p>
+<br>
+<div data-lang="ignore"><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::io;"></div><div data-l="/// ">use std::io;</div><div data-l="#///// let mut input = String::new();"></div><div data-l="/// ">let mut input = String::new();</div><div data-l="#///// io::stdin().read_line(&amp;mut input)?;"></div><div data-l="/// ">io::stdin().read_line(&amp;mut input)?;</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<p>The problem is that <code>?</code> returns a <code>Result&lt;T, E&gt;</code> and test functions don't
+return anything, so this will give a mismatched types error.</p>
+<br>
+<p>You can get around this limitation by manually adding a <code>main</code> that returns
+<code>Result&lt;T, E&gt;</code>, because <code>Result&lt;T, E&gt;</code> implements the <code>Termination</code> trait:</p>
+<br>
+<div data-lang="ignore"><div data-l="#///// A doc test using ?"></div><div data-l="/// ">A doc test using ?</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::io;"></div><div data-l="/// ">use std::io;</div><div data-l="///"></div><div data-l="#///// fn main() -&gt; io::Result&lt;()&gt; {"></div><div data-l="/// ">fn main() -&gt; io::Result<()> {</div><div data-l="#/////     let mut input = String::new();"></div><div data-l="/// ">    let mut input = String::new();</div><div data-l="#/////     io::stdin().read_line(&amp;mut input)?;"></div><div data-l="/// ">    io::stdin().read_line(&amp;mut input)?;</div><div data-l="#/////     Ok(())"></div><div data-l="/// ">    Ok(())</div><div data-l="#///// }"></div><div data-l="/// ">}</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<p>Together with the <code># </code> from the section above, you arrive at a solution that
+appears to the reader as the initial idea but works with doc tests:</p>
+<br>
+<div data-lang="ignore"><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use std::io;"></div><div data-l="/// ">use std::io;</div><div data-l="#///// # fn main() -&gt; io::Result&lt;()&gt; {"></div><div data-l="/// "># fn main() -&gt; io::Result<()> {</div><div data-l="#///// let mut input = String::new();"></div><div data-l="/// ">let mut input = String::new();</div><div data-l="#///// io::stdin().read_line(&amp;mut input)?;"></div><div data-l="/// ">io::stdin().read_line(&amp;mut input)?;</div><div data-l="#///// # Ok(())"></div><div data-l="/// "># Ok(())</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<h2>Documenting macros</h2>
+<br>
+<p>Here’s an example of documenting a macro:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Panic with a given message unless an expression evaluates to true."></div><div data-l="/// ">Panic with a given message unless an expression evaluates to true.</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// # #[macro_use] extern crate foo;"></div><div data-l="/// "># #<a class="notranslate" href="#4macro_use">macro_use</a> extern crate foo;</div><div data-l="#///// # fn main() {"></div><div data-l="/// "># fn main() {</div><div data-l="#///// panic_unless!(1 + 1 == 2, “Math is broken.”);"></div><div data-l="/// ">panic_unless!(1 + 1 == 2, “Math is broken.”);</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="///"></div><div data-l="#///// ```should_panic"></div><div data-l="/// ">```should_panic</div><div data-l="#///// # #[macro_use] extern crate foo;"></div><div data-l="/// "># #<a class="notranslate" href="#4macro_use">macro_use</a> extern crate foo;</div><div data-l="#///// # fn main() {"></div><div data-l="/// "># fn main() {</div><div data-l="#///// panic_unless!(true == false, “I’m broken.”);"></div><div data-l="/// ">panic_unless!(true == false, “I’m broken.”);</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#[macro_export]"></div><div data-l="macro_rules! panic_unless {"></div><div data-l="    ($condition:expr, $($rest:expr),+) =&gt; ({ if ! $condition { panic!($($rest),+); } });"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>You’ll note three things: we need to add our own <code>extern crate</code> line, so that
+we can add the <code>#[macro_use]</code> attribute. Second, we’ll need to add our own
+<code>main()</code> as well (for reasons discussed above). Finally, a judicious use of
+<code>#</code> to comment out those two things, so they don’t show up in the output.</p>
+<br>
+<h2>Attributes</h2>
+<br>
+<p>There are a few annotations that are useful to help <code>rustdoc</code> do the right
+thing when testing your code:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```ignore"></div><div data-l="/// ">```ignore</div><div data-l="#///// fn foo() {"></div><div data-l="/// ">fn foo() {</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>The <code>ignore</code> directive tells Rust to ignore your code. This is almost never
+what you want, as it's the most generic. Instead, consider annotating it
+with <code>text</code> if it's not code, or using <code>#</code>s to get a working example that
+only shows the part you care about.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// ```should_panic"></div><div data-l="/// ">```should_panic</div><div data-l="#///// assert!(false);"></div><div data-l="/// ">assert!(false);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p><code>should_panic</code> tells <code>rustdoc</code> that the code should compile correctly, but
+not actually pass as a test.</p>
+<br>
+<div data-lang="text"><div data-l="#///// ```no_run"></div><div data-l="/// ">```no_run</div><div data-l="#///// loop {"></div><div data-l="/// ">loop {</div><div data-l="#/////     println!(&quot;Hello, world&quot;);"></div><div data-l="/// ">    println!(&quot;Hello, world&quot;);</div><div data-l="#///// }"></div><div data-l="/// ">}</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>The <code>no_run</code> attribute will compile your code, but not run it. This is
+important for examples such as &quot;Here's how to retrieve a web page,&quot;
+which you would want to ensure compiles, but might be run in a test
+environment that has no network access.</p>
+<br>
+<div data-lang="text"><div data-l="#///// ```compile_fail"></div><div data-l="/// ">```compile_fail</div><div data-l="#///// let x = 5;"></div><div data-l="/// ">let x = 5;</div><div data-l="#///// x += 2; // shouldn't compile!"></div><div data-l="/// ">x += 2; // shouldn't compile!</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<p><code>compile_fail</code> tells <code>rustdoc</code> that the compilation should fail. If it
+compiles, then the test will fail. However please note that code failing
+with the current Rust release may work in a future release, as new features
+are added.</p>
+<br>
+<h2>Syntax reference</h2>
+<br>
+<p>The <i>exact</i> syntax for code blocks, including the edge cases, can be found
+in the <a href="#2https://spec.commonmark.org/0.28/#fenced-code-blocks">Fenced Code Blocks</a>
+section of the CommonMark specification.</p>
+<br>
+<p>Rustdoc also accepts <i>indented</i> code blocks as an alternative to fenced
+code blocks: instead of surrounding your code with three backticks, you
+can indent each line by four or more spaces.</p>
+<br>
+<div data-lang="markdown" data-n=3><div data-l="    let foo = &quot;foo&quot;;"></div><div data-l="    assert_eq!(foo, &quot;foo&quot;);"></div></div>
+<br>
+<p>These, too, are documented in the CommonMark specification, in the
+<a href="#2https://spec.commonmark.org/0.28/#indented-code-blocks">Indented Code Blocks</a>
+section.</p>
+<br>
+<p>However, it's preferable to use fenced code blocks over indented code blocks.
+Not only are fenced code blocks considered more idiomatic for Rust code,
+but there is no way to use directives such as <code>ignore</code> or <code>should_panic</code> with
+indented code blocks.</p>

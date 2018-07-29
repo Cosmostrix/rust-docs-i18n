@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h1>structs</h1>
+<br>
+<p>Similarly, a <code>struct</code> can be destructured as shown:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    struct Foo { x: (u32, u32), y: u32 }"></div><div data-l=""></div><div data-l="#    // destructure members of the struct"></div><div data-l="    // ">destructure members of the struct</div><div data-l="    let foo = Foo { x: (1, 2), y: 3 };"></div><div data-l="    let Foo { x: (a, b), y } = foo;"></div><div data-l=""></div><div data-l="    println!(&quot;a = {}, b = {},  y = {} &quot;, a, b, y);"></div><div data-l=""></div><div data-l="#    // you can destructure structs and rename the variables,"></div><div data-l="#    // the order is not important"></div><div data-l="    // ">you can destructure structs and rename the variables, the order is not important</div><div data-l=""></div><div data-l="    let Foo { y: i, x: j } = foo;"></div><div data-l="    println!(&quot;i = {:?}, j = {:?}&quot;, i, j);"></div><div data-l=""></div><div data-l="#    // and you can also ignore some variables:"></div><div data-l="    // ">and you can also ignore some variables:</div><div data-l="    let Foo { y, .. } = foo;"></div><div data-l="    println!(&quot;y = {}&quot;, y);"></div><div data-l=""></div><div data-l="#    // this will give an error: pattern does not mention field `x`"></div><div data-l="#    // let Foo { y } = foo;"></div><div data-l="    // ">this will give an error: pattern does not mention field <code>x</code> let Foo { y } = foo;</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#2custom_types/structs.html">Structs</a>, <a href="#2scope/borrow/ref.html">The ref pattern</a></p>

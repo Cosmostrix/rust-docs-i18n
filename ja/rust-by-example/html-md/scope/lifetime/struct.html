@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h1>Structs</h1>
+<br>
+<p>Annotation of lifetimes in structures are also similar to functions:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// A type `Borrowed` which houses a reference to an"></div><div data-l="#// `i32`. The reference to `i32` must outlive `Borrowed`."></div><div data-l="// ">A type <code>Borrowed</code> which houses a reference to an <code>i32</code>. The reference to <code>i32</code> must outlive <code>Borrowed</code>.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct Borrowed&lt;'a&gt;(&amp;'a i32);"></div><div data-l=""></div><div data-l="#// Similarly, both references here must outlive this structure."></div><div data-l="// ">Similarly, both references here must outlive this structure.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct NamedBorrowed&lt;'a&gt; {"></div><div data-l="    x: &amp;'a i32,"></div><div data-l="    y: &amp;'a i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// An enum which is either an `i32` or a reference to one."></div><div data-l="// ">An enum which is either an <code>i32</code> or a reference to one.</div><div data-l="#[derive(Debug)]"></div><div data-l="enum Either&lt;'a&gt; {"></div><div data-l="    Num(i32),"></div><div data-l="    Ref(&amp;'a i32),"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 18;"></div><div data-l="    let y = 15;"></div><div data-l=""></div><div data-l="    let single = Borrowed(&amp;x);"></div><div data-l="    let double = NamedBorrowed { x: &amp;x, y: &amp;y };"></div><div data-l="    let reference = Either::Ref(&amp;x);"></div><div data-l="    let number    = Either::Num(y);"></div><div data-l=""></div><div data-l="    println!(&quot;x is borrowed in {:?}&quot;, single);"></div><div data-l="    println!(&quot;x and y are borrowed in {:?}&quot;, double);"></div><div data-l="    println!(&quot;x is borrowed in {:?}&quot;, reference);"></div><div data-l="    println!(&quot;y is *not* borrowed in {:?}&quot;, number);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3structs"><code>struct</code>s</a></p>
+<br>
+<br>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>

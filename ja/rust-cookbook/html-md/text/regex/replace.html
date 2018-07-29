@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Replace all occurrences of one text pattern with another pattern.</h2>
+<br>
+<p><a href="#3regex">!<a class="notranslate" href="#4regex-badge">regex-badge</a></a> <a href="#3lazy_static">!<a class="notranslate" href="#4lazy_static-badge">lazy_static-badge</a></a> <a href="#3cat-text-processing">!<a class="notranslate" href="#4cat-text-processing-badge">cat-text-processing-badge</a></a></p>
+<br>
+<p>Replaces all occurrences of the standard ISO 8601 <i>YYYY-MM-DD</i> date pattern
+with the equivalent American English date with slashes.
+For example <code>2013-01-15</code> becomes <code>01/15/2013</code>.</p>
+<br>
+<p>The method <a class="notranslate" href="#4`Regex::replace_all`">`Regex::replace_all`</a> replaces all occurrences of the whole regex.
+<code>&amp;str</code> implements the <code>Replacer</code> trait which allows variables like <code>$abcde</code> to
+refer to corresponding named capture groups <code>(?P&lt;abcde&gt;REGEX)</code> from the search
+regex. See the <a class="notranslate" href="#4replacement string syntax">replacement string syntax</a> for examples and escaping detail.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate regex;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate lazy_static;"></div><div data-l=""></div><div data-l="use std::borrow::Cow;"></div><div data-l="use regex::Regex;"></div><div data-l=""></div><div data-l="fn reformat_dates(before: &amp;str) -&gt; Cow&lt;str&gt; {"></div><div data-l="    lazy_static! {"></div><div data-l="        static ref ISO8601_DATE_REGEX : Regex = Regex::new("></div><div data-l="            r&quot;(?P&lt;y&gt;\d{4})-(?P&lt;m&gt;\d{2})-(?P&lt;d&gt;\d{2})&quot;"></div><div data-l="            ).unwrap();"></div><div data-l="    }"></div><div data-l="    ISO8601_DATE_REGEX.replace_all(before, &quot;$m/$d/$y&quot;)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let before = &quot;2012-03-14, 2013-01-15 and 2014-07-05&quot;;"></div><div data-l="    let after = reformat_dates(before);"></div><div data-l="    assert_eq!(after, &quot;03/14/2012, 01/15/2013 and 07/05/2014&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/regex/*/regex/struct.Regex.html#method.replace_all">`Regex::replace_all`</a>
+<br>
+<a class="notranslate" href="#1https://docs.rs/regex/*/regex/struct.Regex.html#replacement-string-syntax">replacement string syntax</a>

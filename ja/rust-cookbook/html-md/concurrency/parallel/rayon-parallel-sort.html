@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Sort a vector in parallel</h2>
+<br>
+<p><a href="#3rayon">!<a class="notranslate" href="#4rayon-badge">rayon-badge</a></a> <a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>This example will sort in parallel a vector of Strings.</p>
+<br>
+<p>Allocate a vector of empty Strings. <code>par_iter_mut().for_each</code> populates random
+values in parallel.  Although <a class="notranslate" href="#4multiple options">multiple options</a>
+exist to sort an enumerable data type, <a class="notranslate" href="#4`par_sort_unstable`">`par_sort_unstable`</a>
+is usually faster than <a class="notranslate" href="#4stable sorting">stable sorting</a> algorithms.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l="extern crate rayon;"></div><div data-l=""></div><div data-l="use rand::{Rng, thread_rng};"></div><div data-l="use rand::distributions::Alphanumeric;"></div><div data-l="use rayon::prelude::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="  let mut vec = vec![String::new(); 100_000];"></div><div data-l="  vec.par_iter_mut().for_each(|p| {"></div><div data-l="    let mut rng = thread_rng();"></div><div data-l="    *p = (0..5).map(|_| rng.sample(&amp;Alphanumeric)).collect()"></div><div data-l="  });"></div><div data-l="  vec.par_sort_unstable();"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/slice/trait.ParallelSliceMut.html#method.par_sort_unstable">`par_sort_unstable`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/slice/trait.ParallelSliceMut.html">multiple options</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/slice/trait.ParallelSliceMut.html#method.par_sort">stable sorting</a>

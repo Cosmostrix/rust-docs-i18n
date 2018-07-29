@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h1>Testcase: List</h1>
+<br>
+<p>Implementing <code>fmt::Display</code> for a structure where the elements must each be
+handled sequentially is tricky. The problem is that each <code>write€</code> generates a
+<code>fmt::Result</code>. Proper handling of this requires dealing with <i>all</i> the
+results. Rust provides the <code>?</code> operator for exactly this purpose.</p>
+<br>
+<p>Using <code>?</code> on <code>write€</code> looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Try `write!` to see if it errors. If it errors, return"></div><div data-l="#// the error. Otherwise continue."></div><div data-l="// ">Try <code>write€</code> to see if it errors. If it errors, return the error. Otherwise continue.</div><div data-l="write!(f, &quot;{}&quot;, value)?;"></div></div>
+<br>
+<p>Alternatively, you can also use the <code>try€</code> macro, which works the same way. 
+This is a bit more verbose and no longer recommended, but you may still see it in
+older Rust code. Using <code>try€</code> looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="try!(write!(f, &quot;{}&quot;, value));"></div></div>
+<br>
+<p>With <code>?</code> available, implementing <code>fmt::Display</code> for a <code>Vec</code> is
+straightforward:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#//use std::fmt; // Import the `fmt` module."></div><div data-l="use std::fmt; // ">Import the <code>fmt</code> module.</div><div data-l=""></div><div data-l="#// Define a structure named `List` containing a `Vec`."></div><div data-l="// ">Define a structure named <code>List</code> containing a <code>Vec</code>.</div><div data-l="struct List(Vec&lt;i32&gt;);"></div><div data-l=""></div><div data-l="impl fmt::Display for List {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="#        // Extract the value using tuple indexing"></div><div data-l="#        // and create a reference to `vec`."></div><div data-l="        // ">Extract the value using tuple indexing and create a reference to <code>vec</code>.</div><div data-l="        let vec = &amp;self.0;"></div><div data-l=""></div><div data-l="        write!(f, &quot;[&quot;)?;"></div><div data-l=""></div><div data-l="#        // Iterate over `vec` in `v` while enumerating the iteration"></div><div data-l="#        // count in `count`."></div><div data-l="        // ">Iterate over <code>vec</code> in <code>v</code> while enumerating the iteration count in <code>count</code>.</div><div data-l="        for (count, v) in vec.iter().enumerate() {"></div><div data-l="#            // For every element except the first, add a comma."></div><div data-l="#            // Use the ? operator, or try!, to return on errors."></div><div data-l="            // ">For every element except the first, add a comma. Use the ? operator, or try!, to return on errors.</div><div data-l="            if count != 0 { write!(f, &quot;, &quot;)?; }"></div><div data-l="            write!(f, &quot;{}&quot;, v)?;"></div><div data-l="        }"></div><div data-l=""></div><div data-l="#        // Close the opened bracket and return a fmt::Result value"></div><div data-l="        // ">Close the opened bracket and return a fmt::Result value</div><div data-l="        write!(f, &quot;]&quot;)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v = List(vec![1, 2, 3]);"></div><div data-l="    println!(&quot;{}&quot;, v);"></div><div data-l="}"></div></div>
+<br>
+<h3>Activity</h3>
+<br>
+<p>Try changing the program so that the index of each element in the vector is also printed. The new output should look like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="[0: 1, 1: 2, 2: 3]"></div></div>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3for"><code>for</code></a>, <a class="notranslate" href="#3ref"><code>ref</code></a>, <a class="notranslate" href="#3result"><code>Result</code></a>, <a class="notranslate" href="#3struct"><code>struct</code></a>,
+<a class="notranslate" href="#3q_mark"><code>?</code></a>, and <a class="notranslate" href="#3vec"><code>vec€</code></a></p>
+<br>
+<a class="notranslate" href="#1flow_control/for.html">for</a>
+<a class="notranslate" href="#1std/result.html">result</a>
+<a class="notranslate" href="#1scope/borrow/ref.html">ref</a>
+<a class="notranslate" href="#1custom_types/structs.html">struct</a>
+<a class="notranslate" href="#1std/result/question_mark.html">q_mark</a>
+<a class="notranslate" href="#1std/vec.html">vec</a>

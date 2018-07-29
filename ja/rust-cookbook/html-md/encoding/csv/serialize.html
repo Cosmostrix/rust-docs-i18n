@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Serialize records to CSV</h2>
+<br>
+<p><a href="#3csv">!<a class="notranslate" href="#4csv-badge">csv-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>This example shows how to serialize a Rust tuple. <a class="notranslate" href="#4`csv::writer`">`csv::writer`</a> supports automatic
+serialization from Rust types into CSV records. <a class="notranslate" href="#4`write_record`">`write_record`</a> writes
+a simple record containing string data only. Data with more complex values
+such as numbers, floats, and options use <a class="notranslate" href="#4`serialize`">`serialize`</a>. Since CSV
+writer uses internal buffer, always explicitly <a class="notranslate" href="#4`flush`">`flush`</a> when done.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate csv;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         CSVError(csv::Error);"></div><div data-l="#         IOError(std::io::Error);"></div><div data-l="#    }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let mut wtr = csv::Writer::from_writer(io::stdout());"></div><div data-l=""></div><div data-l="    wtr.write_record(&amp;[&quot;Name&quot;, &quot;Place&quot;, &quot;ID&quot;])?;"></div><div data-l=""></div><div data-l="    wtr.serialize((&quot;Mark&quot;, &quot;Sydney&quot;, 87))?;"></div><div data-l="    wtr.serialize((&quot;Ashley&quot;, &quot;Dublin&quot;, 32))?;"></div><div data-l="    wtr.serialize((&quot;Akshat&quot;, &quot;Delhi&quot;, 11))?;"></div><div data-l=""></div><div data-l="    wtr.flush()?;"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/csv/*/csv/struct.Writer.html">`csv::Writer`</a>
+<a class="notranslate" href="#1https://docs.rs/csv/*/csv/struct.Writer.html#method.flush">`flush`</a>
+<a class="notranslate" href="#1https://docs.rs/csv/*/csv/struct.Writer.html#method.serialize">`serialize`</a>
+<a class="notranslate" href="#1https://docs.rs/csv/*/csv/struct.Writer.html#method.write_record">`write_record`</a>

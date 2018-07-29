@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<h1>Drop Flags</h1>
+<br>
+<p>The examples in the previous section introduce an interesting problem for Rust.
+We have seen that it's possible to conditionally initialize, deinitialize, and
+reinitialize locations of memory totally safely. For Copy types, this isn't
+particularly notable since they're just a random pile of bits. However types
+with destructors are a different story: Rust needs to know whether to call a
+destructor whenever a variable is assigned to, or a variable goes out of scope.
+How can it do this with conditional initialization?</p>
+<br>
+<p>Note that this is not a problem that all assignments need worry about. In
+particular, assigning through a dereference unconditionally drops, and assigning
+in a <code>let</code> unconditionally doesn't drop:</p>
+<br>
+<div data-lang=""><div data-l="#//let mut x = Box::new(0); // let makes a fresh variable, so never need to drop"></div><div data-l="let mut x = Box::new(0); // ">let makes a fresh variable, so never need to drop</div><div data-l="let y = &amp;mut x;"></div><div data-l="#//*y = Box::new(1); // Deref assumes the referent is initialized, so always drops"></div><div data-l="*y = Box::new(1); // ">Deref assumes the referent is initialized, so always drops</div></div>
+<br>
+<p>This is only a problem when overwriting a previously initialized variable or
+one of its subfields.</p>
+<br>
+<p>It turns out that Rust actually tracks whether a type should be dropped or not
+<i>at runtime</i>. As a variable becomes initialized and uninitialized, a <i>drop flag</i>
+for that variable is toggled. When a variable might need to be dropped, this
+flag is evaluated to determine if it should be dropped.</p>
+<br>
+<p>Of course, it is often the case that a value's initialization state can be
+statically known at every point in the program. If this is the case, then the
+compiler can theoretically generate more efficient code! For instance, straight-
+line code has such <i>static drop semantics</i>:</p>
+<br>
+<div data-lang="rust"><div data-l="#//let mut x = Box::new(0); // x was uninit; just overwrite."></div><div data-l="let mut x = Box::new(0); // ">x was uninit; just overwrite.</div><div data-l="#//let mut y = x;           // y was uninit; just overwrite and make x uninit."></div><div data-l="let mut y = x;           // ">y was uninit; just overwrite and make x uninit.</div><div data-l="#//x = Box::new(0);         // x was uninit; just overwrite."></div><div data-l="x = Box::new(0);         // ">x was uninit; just overwrite.</div><div data-l="#//y = x;                   // y was init; Drop y, overwrite it, and make x uninit!"></div><div data-l="#                         // y goes out of scope; y was init; Drop y!"></div><div data-l="#                         // x goes out of scope; x was uninit; do nothing."></div><div data-l="y = x;                   // ">y was init; Drop y, overwrite it, and make x uninit! y goes out of scope; y was init; Drop y! x goes out of scope; x was uninit; do nothing.</div></div>
+<br>
+<p>Similarly, branched code where all branches have the same behavior with respect
+to initialization has static drop semantics:</p>
+<br>
+<div data-lang="rust"><div data-l="# let condition = true;"></div><div data-l="#//let mut x = Box::new(0);    // x was uninit; just overwrite."></div><div data-l="let mut x = Box::new(0);    // ">x was uninit; just overwrite.</div><div data-l="if condition {"></div><div data-l="#//    drop(x)                 // x gets moved out; make x uninit."></div><div data-l="    drop(x)                 // ">x gets moved out; make x uninit.</div><div data-l="} else {"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="#//    drop(x)                 // x gets moved out; make x uninit."></div><div data-l="    drop(x)                 // ">x gets moved out; make x uninit.</div><div data-l="}"></div><div data-l="#//x = Box::new(0);            // x was uninit; just overwrite."></div><div data-l="#                            // x goes out of scope; x was init; Drop x!"></div><div data-l="x = Box::new(0);            // ">x was uninit; just overwrite. x goes out of scope; x was init; Drop x!</div></div>
+<br>
+<p>However code like this <i>requires</i> runtime information to correctly Drop:</p>
+<br>
+<div data-lang="rust"><div data-l="# let condition = true;"></div><div data-l="let x;"></div><div data-l="if condition {"></div><div data-l="#//    x = Box::new(0);        // x was uninit; just overwrite."></div><div data-l="    x = Box::new(0);        // ">x was uninit; just overwrite.</div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div><div data-l="#                            // x goes out of scope; x might be uninit;"></div><div data-l="#                            // check the flag!"></div><div data-l="                            // ">x goes out of scope; x might be uninit; check the flag!</div></div>
+<br>
+<p>Of course, in this case it's trivial to retrieve static drop semantics:</p>
+<br>
+<div data-lang="rust"><div data-l="# let condition = true;"></div><div data-l="if condition {"></div><div data-l="    let x = Box::new(0);"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>The drop flags are tracked on the stack and no longer stashed in types that
+implement drop.</p>

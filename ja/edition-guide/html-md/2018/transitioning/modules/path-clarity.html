@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<h1>Path clarity</h1>
+<br>
+<p>The module system is often one of the hardest things for people new to Rust. Everyone
+has their own things that take time to master, of course, but there's a root
+cause for why it's so confusing to many: while there are simple and
+consistent rules defining the module system, their consequences can feel
+inconsistent, counterintuitive and mysterious.</p>
+<br>
+<p>As such, the 2018 edition of Rust introduces a few new module system
+features, but they end up <i>simplifying</i> the module system, to make it more
+clear as to what is going on.</p>
+<br>
+<p>Here's a brief summary:</p>
+<br>
+<div data-b="*"><code>extern crate</code> is no longer needed</div>
+<div data-b="*">Absolute paths begin with a crate name, where the keyword <code>crate</code>
+refers to the current crate.</div>
+<div data-b="*">The <code>crate</code> keyword also acts as a visibility modifier, equivalent to today's <code>pub(crate)</code>.</div>
+<div data-b="*">A <code>foo.rs</code> and <code>foo/</code> subdirectory may coexist; <code>mod.rs</code> is no longer needed
+when placing submodules in a subdirectory.</div>
+<br>
+<p>These may seem like arbitrary new rules when put this way, but the mental
+model is now significantly simplified overall. Read on for more details!</p>
+<br>
+<h2>More details</h2>
+<br>
+<p>Let's talk about each new feature in turn.</p>
+<br>
+<h3>No more <code>extern crate</code></h3>
+<br>
+<p>This one is quite straightforward: you no longer need to write <code>extern crate</code> to
+import a crate into your project. Before:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="extern crate futures;"></div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="    use futures::Future;"></div><div data-l="}"></div></div>
+<br>
+<p>After:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="    use futures::Future;"></div><div data-l="}"></div></div>
+<br>
+<p>Now, to add a new crate to your project, you can add it to your <code>Cargo.toml</code>,
+and then there is no step two. If you're not using Cargo, you already had to pass
+<code>--extern</code> flags to give <code>rustc</code> the location of external crates, so you'd just
+keep doing what you were doing there as well.</p>
+<br>
+<p>One other use for <code>extern crate</code> was to import macros; that's no longer needed.
+Check <a href="#22018/transitioning/modules/macros.html">the macro section</a> for more.</p>
+<br>
+<h3>Absolute paths begin with <code>crate</code> or the crate name</h3>
+<br>
+<p>In Rust 2018, paths in <code>use</code> statements <i>must</i> begin with one of:</p>
+<br>
+<div data-b="-">A crate name</div>
+<div data-b="-"><code>crate</code> for the current crate's root</div>
+<div data-b="-"><code>self</code> for the current module's root</div>
+<div data-b="-"><code>super</code> for the current module's parent</div>
+<br>
+<p>Code that looked like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="extern crate futures;"></div><div data-l=""></div><div data-l="use futures::Future;"></div><div data-l=""></div><div data-l="mod foo {"></div><div data-l="    struct Bar;"></div><div data-l="}"></div><div data-l=""></div><div data-l="use foo::Bar;"></div></div>
+<br>
+<p>Now looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="#// 'futures' is the name of a crate"></div><div data-l="// ">'futures' is the name of a crate</div><div data-l="use futures::Future;"></div><div data-l=""></div><div data-l="mod foo {"></div><div data-l="    struct Bar;"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// 'crate' means the current crate"></div><div data-l="// ">'crate' means the current crate</div><div data-l="use crate::foo::Bar;"></div></div>
+<br>
+<p>In addition, all of these path forms are available outside of <code>use</code> statements
+as well, which eliminates many sources of confusion. Consider this code in Rust
+2015:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="extern crate futures;"></div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="#    // this works!"></div><div data-l="    // ">this works!</div><div data-l="    use futures::Future;"></div><div data-l=""></div><div data-l="#    // so why doesn't this work?"></div><div data-l="    // ">so why doesn't this work?</div><div data-l="    fn my_poll() -&gt; futures::Poll { ... }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // this works"></div><div data-l="    // ">this works</div><div data-l="    let five = std::sync::Arc::new(5);"></div><div data-l="}"></div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="    fn function() {"></div><div data-l="#        // ... so why doesn't this work"></div><div data-l="        // ">... so why doesn't this work</div><div data-l="        let five = std::sync::Arc::new(5);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In the <code>futures</code> example, the <code>my_poll</code> function signature is incorrect, because <code>submodule</code>
+contains no items named <code>futures</code>; that is, this path is considered relative. But because
+<code>use</code> is absolute, <code>use futures::</code> works even though a lone <code>futures::</code> doesn't! With <code>std</code>
+it can be even more confusing, as you never wrote the <code>extern crate std;</code> line at all. So
+why does it work in <code>main</code> but not in a submodule? Same thing: it's a relative path because
+it's not in a <code>use</code> declaration. <code>extern crate std;</code> is inserted at the crate root, so
+it's fine in <code>main</code>, but it doesn't exist in the submodule at all.</p>
+<br>
+<p>Let's look at how this change affects things:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="#// no more `extern crate futures;`"></div><div data-l="// ">no more <code>extern crate futures;</code></div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="#    // 'futures' is the name of a crate, so this is absolute and works"></div><div data-l="    // ">'futures' is the name of a crate, so this is absolute and works</div><div data-l="    use futures::Future;"></div><div data-l=""></div><div data-l="#    // 'futures' is the name of a crate, so this is absolute and works"></div><div data-l="    // ">'futures' is the name of a crate, so this is absolute and works</div><div data-l="    fn my_poll() -&gt; futures::Poll { ... }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // 'std' is the name of a crate, so this is absolute and works"></div><div data-l="    // ">'std' is the name of a crate, so this is absolute and works</div><div data-l="    let five = std::sync::Arc::new(5);"></div><div data-l="}"></div><div data-l=""></div><div data-l="mod submodule {"></div><div data-l="    fn function() {"></div><div data-l="#        // 'std' is the name of a crate, so this is absolute and works"></div><div data-l="        // ">'std' is the name of a crate, so this is absolute and works</div><div data-l="        let five = std::sync::Arc::new(5);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Much more straightforward.</p>
+<br>
+<p><b>Note</b>: an alternative syntax is also under consideration: writing <code>::some::Local</code> rather than <code>crate::some::Local</code>. If you have thoughts about this alternative, please leave a comment on <a href="#2https://github.com/rust-lang/rust/issues/44660">the tracking issue</a> or start a thread on the <a href="#2https://internals.rust-lang.org/c/edition-2018-feedback">edition feedback category</a>.</p>
+<br>
+<h3>The <code>crate</code> visibility modifier</h3>
+<br>
+<p>In Rust 2015, you can use <code>pub(crate)</code> to make something visible
+to your entire crate, but not exported publicly:</p>
+<br>
+<div data-lang="rust"><div data-l="mod foo {"></div><div data-l="    pub mod bar {"></div><div data-l="        pub(crate) struct Foo;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="use foo::bar::Foo;"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>In Rust 2018, the <code>crate</code> keyword is a synonym for this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod foo {"></div><div data-l="    pub mod bar {"></div><div data-l="        crate struct Foo;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="use foo::bar::Foo;"></div><div data-l="#fn main() {}"></div></div>
+<br>
+<p>This is a minor bit of syntax sugar, but makes using it feel much more
+natural.</p>
+<br>
+<h3>No more <code>mod.rs</code></h3>
+<br>
+<p>In Rust 2015, if you have a submodule:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod foo;"></div></div>
+<br>
+<p>It can live in <code>foo.rs</code> or <code>foo/mod.rs</code>. If it has submodules of its own, it
+<i>must</i> be <code>foo/mod.rs</code>. So a <code>bar</code> submodule of <code>foo</code> would live at
+<code>foo/bar.rs</code>.</p>
+<br>
+<p>In Rust 2018, <code>mod.rs</code> is no longer needed. <code>foo.rs</code> can just be <code>foo.rs</code>,
+and the submodule is still <code>foo/bar.rs</code>. This eliminates the special
+name, and if you have a bunch of files open in your editor, you can clearly
+see their names, instead of having a bunch of tabs named <code>mod.rs</code>.</p>

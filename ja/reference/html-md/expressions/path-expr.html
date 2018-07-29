@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Path expressions</h1>
+<br>
+<p>A <a class="notranslate" href="#4path">path</a> used as an expression context denotes either a local
+variable or an item. Path expressions that resolve to local or static variables
+are <a class="notranslate" href="#4place expressions">place expressions</a>, other paths are <a class="notranslate" href="#4value expressions">value expressions</a>. Using a
+<a class="notranslate" href="#4`static mut`">`static mut`</a> variable requires an <a class="notranslate" href="#4`unsafe` block">`unsafe` block</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="# mod globals {"></div><div data-l="#     pub static STATIC_VAR: i32 = 5;"></div><div data-l="#     pub static mut STATIC_MUT_VAR: i32 = 7;"></div><div data-l="# }"></div><div data-l="# let local_var = 3;"></div><div data-l="local_var;"></div><div data-l="globals::STATIC_VAR;"></div><div data-l="unsafe { globals::STATIC_MUT_VAR };"></div><div data-l="let some_constructor = Some::&lt;i32&gt;;"></div><div data-l="let push_integer = Vec::&lt;i32&gt;::push;"></div><div data-l="let slice_reverse = &lt;[i32]&gt;::reverse;"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">place expressions</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">value expressions</a>
+<a class="notranslate" href="#1paths.html">path</a>
+<a class="notranslate" href="#1items/static-items.html#mutable-statics">`static mut`</a>
+<a class="notranslate" href="#1expressions/block-expr.html#unsafe-blocks">`unsafe` block</a>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h2>Avoid discarding errors during error conversions</h2>
+<br>
+<p><a href="#3error-chain">!<a class="notranslate" href="#4error-chain-badge">error-chain-badge</a></a> <a href="#3cat-rust-patterns">!<a class="notranslate" href="#4cat-rust-patterns-badge">cat-rust-patterns-badge</a></a></p>
+<br>
+<p>The  <a class="notranslate" href="#4error-chain">error-chain</a> crate makes <a class="notranslate" href="#4matching">matching</a> on different error types returned by
+a function possible and relatively compact. <a class="notranslate" href="#4`ErrorKind`">`ErrorKind`</a> determines the error
+type.</p>
+<br>
+<p>Uses <a class="notranslate" href="#4reqwest">reqwest</a> to query a random integer generator web service.  Converts
+the string response into an integer. The Rust standard library,
+<a class="notranslate" href="#4reqwest">reqwest</a>, and the web service can all generate errors. Well defined Rust errors
+use <a class="notranslate" href="#4`foreign_links`">`foreign_links`</a>. An additional <a class="notranslate" href="#4`ErrorKind`">`ErrorKind`</a> variant for the web service
+error uses <code>errors</code> block of the <code>error_chain€</code> macro.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="use std::io::Read;"></div><div data-l=""></div><div data-l="error_chain! {"></div><div data-l="    foreign_links {"></div><div data-l="        Io(std::io::Error);"></div><div data-l="        Reqwest(reqwest::Error);"></div><div data-l="        ParseIntError(std::num::ParseIntError);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    errors { RandomResponseError(t: String) }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn parse_response(mut response: reqwest::Response) -&gt; Result&lt;u32&gt; {"></div><div data-l="    let mut body = String::new();"></div><div data-l="    response.read_to_string(&amp;mut body)?;"></div><div data-l="    body.pop();"></div><div data-l="    body.parse::&lt;u32&gt;()"></div><div data-l="        .chain_err(|| ErrorKind::RandomResponseError(body))"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let url ="></div><div data-l="        format!(&quot;https://www.random.org/integers/?num=1&amp;min=0&amp;max=10&amp;col=1&amp;base=10&amp;format=plain&quot;);"></div><div data-l="    let response = reqwest::get(&amp;url)?;"></div><div data-l="    let random_value: u32 = parse_response(response)?;"></div><div data-l=""></div><div data-l="    println!(&quot;a random number between 0 and 10: {}&quot;, random_value);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    if let Err(error) = run() {"></div><div data-l="        match *error.kind() {"></div><div data-l="            ErrorKind::Io(_) =&gt; println!(&quot;Standard IO error: {:?}&quot;, error),"></div><div data-l="            ErrorKind::Reqwest(_) =&gt; println!(&quot;Reqwest error: {:?}&quot;, error),"></div><div data-l="            ErrorKind::ParseIntError(_) =&gt; println!(&quot;Standard parse int error: {:?}&quot;, error),"></div><div data-l="            ErrorKind::RandomResponseError(_) =&gt; println!(&quot;User defined error: {:?}&quot;, error),"></div><div data-l="            _ =&gt; println!(&quot;Other error: {:?}&quot;, error),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/example_generated/enum.ErrorKind.html">`ErrorKind`</a>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/#foreign-links">`foreign_links`</a>
+<br>
+<p><a class="notranslate" href="#4Matching">Matching</a>:https://docs.rs/error-chain/*/error_chain/#matching-errors</p>

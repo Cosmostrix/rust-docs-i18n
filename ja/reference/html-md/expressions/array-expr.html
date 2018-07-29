@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<h1>Array and array index expressions</h1>
+<br>
+<h2>Array expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>ArrayExpression</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <code>[</code>  <code>]</code>\
+&amp;nbsp;&amp;nbsp; | <code>[</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> ( <code>,</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> )<sup>\*</sup> <code>,</code><sup>?</sup> <code>]</code>\
+&amp;nbsp;&amp;nbsp; | <code>[</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>;</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>]</code></p></blockquote>
+<br>
+<p>An <s>[array](types.html#array-and-slice-types) expression</s> can be written by
+enclosing zero or more comma-separated expressions of uniform type in square
+brackets. This produces and array containing each of these values in the
+order they are written.</p>
+<br>
+<p>Alternatively there can be exactly two expressions inside the brackets,
+separated by a semi-colon. The expression after the <code>;</code> must be a have type
+<code>usize</code> and be a <a href="#2expressions.html#constant-expressions">constant expression</a>,
+such as a <a class="notranslate" href="#2tokens.html#literals">literal</a> or a <a class="notranslate" href="#2items/constant-items.html">constant
+item</a>. <code>[a; b]</code> creates an array containing <code>b</code>
+copies of the value of <code>a</code>. If the expression after the semi-colon has a value
+greater than 1 then this requires that the type of <code>a</code> is
+<a class="notranslate" href="#2special-types-and-traits.html#copy"><code>Copy</code></a>.</p>
+<br>
+<div data-lang="rust"><div data-l="[1, 2, 3, 4];"></div><div data-l="[&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;];"></div><div data-l="#//[0; 128];              // array with 128 zeros"></div><div data-l="[0; 128];              // ">array with 128 zeros</div><div data-l="[0u8, 0u8, 0u8, 0u8,];"></div><div data-l="#//[[1, 0, 0], [0, 1, 0], [0, 0, 1]]; // 2D array"></div><div data-l="[[1, 0, 0], [0, 1, 0], [0, 0, 1]]; // ">2D array</div></div>
+<br>
+<h2>Array and slice indexing expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>IndexExpression</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>[</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>]</code></p></blockquote>
+<br>
+<p><a href="#2types.html#array-and-slice-types">Array and slice</a>-typed expressions can be
+indexed by writing a square-bracket-enclosed expression of type <code>usize</code> (the
+index) after them. When the array is mutable, the resulting <a class="notranslate" href="#4memory location">memory location</a>
+can be assigned to.</p>
+<br>
+<p>For other types an index expression <code>a[b]</code> is equivalent to
+<code>*std::ops::Index::index(&amp;a, b)</code>, or
+<code>*std::ops::IndexMut::index_mut(&amp;mut a, b)</code> in a mutable place expression
+context. Just as with methods, Rust will also insert dereference operations on
+<code>a</code> repeatedly to find an implementation.</p>
+<br>
+<p>Indices are zero-based for arrays and slices. Array access is a <a class="notranslate" href="#4constant
+expression">constant
+expression</a>, so bounds can be checked at compile-time with a constant index
+value. Otherwise a check will be performed at run-time that will put the thread
+in a <s>panicked state</s> if it fails.</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="#// lint is deny by default."></div><div data-l="// ">lint is deny by default.</div><div data-l="#![warn(const_err)]"></div><div data-l=""></div><div data-l="#//([1, 2, 3, 4])[2];        // Evaluates to 3"></div><div data-l="([1, 2, 3, 4])[2];        // ">Evaluates to 3</div><div data-l=""></div><div data-l="let b = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];"></div><div data-l="#//b[1][2];                  // multidimensional array indexing"></div><div data-l="b[1][2];                  // ">multidimensional array indexing</div><div data-l=""></div><div data-l="#//let x = ([&quot;a&quot;, &quot;b&quot;])[10]; // warning: index out of bounds"></div><div data-l="let x = ([&quot;a&quot;, &quot;b&quot;])[10]; // ">warning: index out of bounds</div><div data-l=""></div><div data-l="let n = 10;"></div><div data-l="#//let y = ([&quot;a&quot;, &quot;b&quot;])[n];  // panics"></div><div data-l="let y = ([&quot;a&quot;, &quot;b&quot;])[n];  // ">panics</div><div data-l=""></div><div data-l="let arr = [&quot;a&quot;, &quot;b&quot;];"></div><div data-l="#//arr[10];                  // warning: index out of bounds"></div><div data-l="arr[10];                  // ">warning: index out of bounds</div></div>
+<br>
+<p>The array index expression can be implemented for types other than arrays and slices
+by implementing the <a class="notranslate" href="#4Index">Index</a> and <a class="notranslate" href="#4IndexMut">IndexMut</a> traits.</p>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">memory location</a>
+<a class="notranslate" href="#1../std/ops/trait.Index.html">Index</a>
+<a class="notranslate" href="#1../std/ops/trait.IndexMut.html">IndexMut</a>
+<a class="notranslate" href="#1expressions.html#constant-expressions">constant expression</a>

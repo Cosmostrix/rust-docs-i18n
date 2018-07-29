@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h1><code>tool_lints</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44690">#44690</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44690">#44690</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>Tool lints let you use scoped lints, to <code>allow</code>, <code>warn</code>, <code>deny</code> or <code>forbid</code> lints of
+certain tools.</p>
+<br>
+<p>Currently <code>clippy</code> is the only available lint tool.</p>
+<br>
+<p>It is recommended for lint tools to implement the scoped lints like this:</p>
+<br>
+<div data-b="-"><code>#[_(TOOL_NAME::lintname)]</code>: for lint names</div>
+<div data-b="-"><code>#[_(TOOL_NAME::lintgroup)]</code>: for groups of lints</div>
+<div data-b="-"><code>#[_(TOOL_NAME::all)]</code>: for (almost<a class="notranslate" href="#4^1">^1</a>) all lints</div>
+<br>
+<h2>An example</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(tool_lints)]"></div><div data-l=""></div><div data-l="#![warn(clippy::pedantic)]"></div><div data-l=""></div><div data-l="#[allow(clippy::filter_map)]"></div><div data-l="fn main() {"></div><div data-l="    let v = vec![0; 10];"></div><div data-l="    let _ = v.into_iter().filter(|&amp;x| x &lt; 1).map(|x| x + 1).collect::&lt;Vec&lt;_&gt;&gt;();"></div><div data-l="    println!(&quot;No filter_map()!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1Some defined lint groups can be excluded here.">^1</a>

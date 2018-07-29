@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<h1>Crates and Modules</h1>
+<br>
+<p>When a project starts getting large, it’s considered good software
+engineering practice to split it up into a bunch of smaller pieces, and then
+fit them together. It is also important to have a well-defined interface, so
+that some of your functionality is private, and some is public. To facilitate
+these kinds of things, Rust has a module system.</p>
+<br>
+<h1>Basic terminology: Crates and Modules</h1>
+<br>
+<p>Rust has two distinct terms that relate to the module system: ‘crate’ and
+‘module’. A crate is synonymous with a ‘library’ or ‘package’ in other
+languages. Hence “Cargo” as the name of Rust’s package management tool: you
+ship your crates to others with Cargo. Crates can produce an executable or a
+library, depending on the project.</p>
+<br>
+<p>Each crate has an implicit <i>root module</i> that contains the code for that crate.
+You can then define a tree of sub-modules under that root module. Modules allow
+you to partition your code within the crate itself.</p>
+<br>
+<p>As an example, let’s make a <i>phrases</i> crate, which will give us various phrases
+in different languages. To keep things simple, we’ll stick to ‘greetings’ and
+‘farewells’ as two kinds of phrases, and use English and Japanese (日本語) as
+two languages for those phrases to be in. We’ll use this module layout:</p>
+<br>
+<div data-lang="text"><div data-l="                                    +-----------+"></div><div data-l="                                +---| greetings |"></div><div data-l="                  +---------+   |   +-----------+"></div><div data-l="              +---| english |---+"></div><div data-l="              |   +---------+   |   +-----------+"></div><div data-l="              |                 +---| farewells |"></div><div data-l="+---------+   |                     +-----------+"></div><div data-l="| phrases |---+"></div><div data-l="+---------+   |                     +-----------+"></div><div data-l="              |                 +---| greetings |"></div><div data-l="              |   +----------+  |   +-----------+"></div><div data-l="              +---| japanese |--+"></div><div data-l="                  +----------+  |   +-----------+"></div><div data-l="                                +---| farewells |"></div><div data-l="                                    +-----------+"></div></div>
+<br>
+<p>In this example, <code>phrases</code> is the name of our crate. All of the rest are
+modules.  You can see that they form a tree, branching out from the crate
+<i>root</i>, which is the root of the tree: <code>phrases</code> itself.</p>
+<br>
+<p>Now that we have a plan, let’s define these modules in code. To start,
+generate a new crate with Cargo:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo new phrases"></div><div data-l="$ cd phrases"></div></div>
+<br>
+<p>If you remember, this generates a simple project for us:</p>
+<br>
+<div data-lang="bash"><div data-l="$ tree ."></div><div data-l="."></div><div data-l="├── Cargo.toml"></div><div data-l="└── src"></div><div data-l="    └── lib.rs"></div><div data-l=""></div><div data-l="1 directory, 2 files"></div></div>
+<br>
+<p><code>src/lib.rs</code> is our crate root, corresponding to the <code>phrases</code> in our diagram
+above.</p>
+<br>
+<h1>Defining Modules</h1>
+<br>
+<p>To define each of our modules, we use the <code>mod</code> keyword. Let’s make our
+<code>src/lib.rs</code> look like this:</p>
+<br>
+<div data-lang="rust"><div data-l="mod english {"></div><div data-l="    mod greetings {"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    mod farewells {"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="mod japanese {"></div><div data-l="    mod greetings {"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    mod farewells {"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>After the <code>mod</code> keyword, you give the name of the module. Module names follow
+the conventions for other Rust identifiers: <code>lower_snake_case</code>. The contents of
+each module are within curly braces (<code>{}</code>).</p>
+<br>
+<p>Within a given <code>mod</code>, you can declare sub-<code>mod</code>s. We can refer to sub-modules
+with double-colon (<code>::</code>) notation: our four nested modules are
+<code>english::greetings</code>, <code>english::farewells</code>, <code>japanese::greetings</code>, and
+<code>japanese::farewells</code>. Because these sub-modules are namespaced under their
+parent module, the names don’t conflict: <code>english::greetings</code> and
+<code>japanese::greetings</code> are distinct, even though their names are both
+<code>greetings</code>.</p>
+<br>
+<p>Because this crate does not have a <code>main()</code> function, and is called <code>lib.rs</code>,
+Cargo will build this crate as a library:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="   Compiling phrases v0.0.1 (file:///home/you/projects/phrases)"></div><div data-l="$ ls target/debug"></div><div data-l="build  deps  examples  libphrases-a7448e02a0468eaa.rlib  native"></div></div>
+<br>
+<p><code>libphrases-&lt;hash&gt;.rlib</code> is the compiled crate. Before we see how to use this
+crate from another crate, let’s break it up into multiple files.</p>
+<br>
+<h1>Multiple File Crates</h1>
+<br>
+<p>If each crate were just one file, these files would get very large. It’s often
+easier to split up crates into multiple files, and Rust supports this in two
+ways.</p>
+<br>
+<p>Instead of declaring a module like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod english {"></div><div data-l="#    // Contents of our module go here."></div><div data-l="    // ">Contents of our module go here.</div><div data-l="}"></div></div>
+<br>
+<p>We can instead declare our module like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod english;"></div></div>
+<br>
+<p>If we do that, Rust will expect to find either a <code>english.rs</code> file, or a
+<code>english/mod.rs</code> file with the contents of our module.</p>
+<br>
+<p>Note that in these files, you don’t need to re-declare the module: that’s
+already been done with the initial <code>mod</code> declaration.</p>
+<br>
+<p>Using these two techniques, we can break up our crate into two directories and
+seven files:</p>
+<br>
+<div data-lang="bash"><div data-l="$ tree ."></div><div data-l="."></div><div data-l="├── Cargo.lock"></div><div data-l="├── Cargo.toml"></div><div data-l="├── src"></div><div data-l="│   ├── english"></div><div data-l="│   │   ├── farewells.rs"></div><div data-l="│   │   ├── greetings.rs"></div><div data-l="│   │   └── mod.rs"></div><div data-l="│   ├── japanese"></div><div data-l="│   │   ├── farewells.rs"></div><div data-l="│   │   ├── greetings.rs"></div><div data-l="│   │   └── mod.rs"></div><div data-l="│   └── lib.rs"></div><div data-l="└── target"></div><div data-l="    └── debug"></div><div data-l="        ├── build"></div><div data-l="        ├── deps"></div><div data-l="        ├── examples"></div><div data-l="        ├── libphrases-a7448e02a0468eaa.rlib"></div><div data-l="        └── native"></div></div>
+<br>
+<p><code>src/lib.rs</code> is our crate root, and looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod english;"></div><div data-l="mod japanese;"></div></div>
+<br>
+<p>These two declarations tell Rust to look for</p>
+<br>
+<div data-b="-">either <code>src/english.rs</code> or <code>src/english/mod.rs</code>, and</div>
+<div data-b="-">either <code>src/japanese.rs</code> or <code>src/japanese/mod.rs</code>,</div>
+<br>
+<p>depending on our preference. In this case, because our modules have sub-modules,
+we’ve chosen the <code>mod.rs</code> approach. Both <code>src/english/mod.rs</code> and
+<code>src/japanese/mod.rs</code> look like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod greetings;"></div><div data-l="mod farewells;"></div></div>
+<br>
+<p>Again, these declarations tell Rust to look for</p>
+<br>
+<div data-b="-"><code>src/english/greetings.rs</code> or <code>src/english/greetings/mod.rs</code>,</div>
+<div data-b="-"><code>src/english/farewells.rs</code> or <code>src/english/farewells/mod.rs</code>,</div>
+<div data-b="-"><code>src/japanese/greetings.rs</code> or <code>src/japanese/greetings/mod.rs</code>,</div>
+<div data-b="-">and <code>src/japanese/farewells.rs</code> or <code>src/japanese/farewells/mod.rs</code>.</div>
+<br>
+<p>Because these sub-modules don’t have
+their own sub-modules, we’ve chosen to make them
+<code>src/english/greetings.rs</code>, <code>src/english/farewells.rs</code>,
+<code>src/japanese/greetings.rs</code> and <code>src/japanese/farewells.rs</code>. Whew!</p>
+<br>
+<p>The contents of <code>src/english/greetings.rs</code>,
+<code>src/english/farewells.rs</code>, <code>src/japanese/greetings.rs</code> and
+<code>src/japanese/farewells.rs</code> are all empty at the moment. Let’s add
+some functions.</p>
+<br>
+<p>Put this in <code>src/english/greetings.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn hello() -&gt; String {"></div><div data-l="    &quot;Hello!&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>Put this in <code>src/english/farewells.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn goodbye() -&gt; String {"></div><div data-l="    &quot;Goodbye.&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>Put this in <code>src/japanese/greetings.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn hello() -&gt; String {"></div><div data-l="    &quot;こんにちは&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>Of course, you can copy and paste this from this web page, or type
+something else. It’s not important that you actually put ‘konnichiwa’ to learn
+about the module system.</p>
+<br>
+<p>Put this in <code>src/japanese/farewells.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn goodbye() -&gt; String {"></div><div data-l="    &quot;さようなら&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>(This is ‘Sayōnara’, if you’re curious.)</p>
+<br>
+<p>Now that we have some functionality in our crate, let’s try to use it from
+another crate.</p>
+<br>
+<h1>Importing External Crates</h1>
+<br>
+<p>We have a library crate. Let’s make an executable crate that imports and uses
+our library.</p>
+<br>
+<p>Make a <code>src/main.rs</code> and put this in it (it won’t quite compile yet):</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, phrases::english::greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, phrases::english::farewells::goodbye());"></div><div data-l=""></div><div data-l="    println!(&quot;Hello in Japanese: {}&quot;, phrases::japanese::greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in Japanese: {}&quot;, phrases::japanese::farewells::goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>extern crate</code> declaration tells Rust that we need to compile and link to
+the <code>phrases</code> crate. We can then use <code>phrases</code>’ modules in this one. As we
+mentioned earlier, you can use double colons to refer to sub-modules and the
+functions inside of them.</p>
+<br>
+<p>(Note: when importing a crate that has dashes in its name &quot;like-this&quot;, which is
+not a valid Rust identifier, it will be converted by changing the dashes to
+underscores, so you would write <code>extern crate like_this;</code>.)</p>
+<br>
+<p>Also, Cargo assumes that <code>src/main.rs</code> is the crate root of a binary crate,
+rather than a library crate. Our package now has two crates: <code>src/lib.rs</code> and
+<code>src/main.rs</code>. This pattern is quite common for executable crates: most
+functionality is in a library crate, and the executable crate uses that
+library. This way, other programs can also use the library crate, and it’s also
+a nice separation of concerns.</p>
+<br>
+<p>This doesn’t quite work yet, though. We get four errors that look similar to
+this:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="   Compiling phrases v0.0.1 (file:///home/you/projects/phrases)"></div><div data-l="src/main.rs:4:38: 4:72 error: function `hello` is private"></div><div data-l="src/main.rs:4     println!(&quot;Hello in English: {}&quot;, phrases::english::greetings::hello());"></div><div data-l="                                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"></div><div data-l="note: in expansion of format_args!"></div><div data-l="&lt;std macros&gt;:2:25: 2:58 note: expansion site"></div><div data-l="&lt;std macros&gt;:1:1: 2:62 note: in expansion of print!"></div><div data-l="&lt;std macros&gt;:3:1: 3:54 note: expansion site"></div><div data-l="&lt;std macros&gt;:1:1: 3:58 note: in expansion of println!"></div><div data-l="phrases/src/main.rs:4:5: 4:76 note: expansion site"></div></div>
+<br>
+<p>By default, everything is private in Rust. Let’s talk about this in some more
+depth.</p>
+<br>
+<h1>Exporting a Public Interface</h1>
+<br>
+<p>Rust allows you to precisely control which aspects of your interface are
+public, and so private is the default. To make things public, you use the <code>pub</code>
+keyword. Let’s focus on the <code>english</code> module first, so let’s reduce our <code>src/main.rs</code>
+to only this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, phrases::english::greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, phrases::english::farewells::goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>In our <code>src/lib.rs</code>, let’s add <code>pub</code> to the <code>english</code> module declaration:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub mod english;"></div><div data-l="mod japanese;"></div></div>
+<br>
+<p>And in our <code>src/english/mod.rs</code>, let’s make both <code>pub</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub mod greetings;"></div><div data-l="pub mod farewells;"></div></div>
+<br>
+<p>In our <code>src/english/greetings.rs</code>, let’s add <code>pub</code> to our <code>fn</code> declaration:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn hello() -&gt; String {"></div><div data-l="    &quot;Hello!&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>And also in <code>src/english/farewells.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn goodbye() -&gt; String {"></div><div data-l="    &quot;Goodbye.&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>Now, our crate compiles, albeit with warnings about not using the <code>japanese</code>
+functions:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling phrases v0.0.1 (file:///home/you/projects/phrases)"></div><div data-l="src/japanese/greetings.rs:1:1: 3:2 warning: function is never used: `hello`, #[warn(dead_code)] on by default"></div><div data-l="src/japanese/greetings.rs:1 fn hello() -&gt; String {"></div><div data-l="src/japanese/greetings.rs:2     &quot;こんにちは&quot;.to_string()"></div><div data-l="src/japanese/greetings.rs:3 }"></div><div data-l="src/japanese/farewells.rs:1:1: 3:2 warning: function is never used: `goodbye`, #[warn(dead_code)] on by default"></div><div data-l="src/japanese/farewells.rs:1 fn goodbye() -&gt; String {"></div><div data-l="src/japanese/farewells.rs:2     &quot;さようなら&quot;.to_string()"></div><div data-l="src/japanese/farewells.rs:3 }"></div><div data-l="     Running `target/debug/phrases`"></div><div data-l="Hello in English: Hello!"></div><div data-l="Goodbye in English: Goodbye."></div></div>
+<br>
+<p><code>pub</code> also applies to <code>struct</code>s and their member fields. In keeping with Rust’s
+tendency toward safety, simply making a <code>struct</code> public won't automatically
+make its members public: you must mark the fields individually with <code>pub</code>.</p>
+<br>
+<p>Now that our functions are public, we can use them. Great! However, typing out
+<code>phrases::english::greetings::hello()</code> is very long and repetitive. Rust has
+another keyword for importing names into the current scope, so that you can
+refer to them with shorter names. Let’s talk about <code>use</code>.</p>
+<br>
+<h1>Importing Modules with <code>use</code></h1>
+<br>
+<p>Rust has a <code>use</code> keyword, which allows us to import names into our local scope.
+Let’s change our <code>src/main.rs</code> to look like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="use phrases::english::greetings;"></div><div data-l="use phrases::english::farewells;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, farewells::goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>The two <code>use</code> lines import each module into the local scope, so we can refer to
+the functions by a much shorter name. By convention, when importing functions, it’s
+considered best practice to import the module, rather than the function directly. In
+other words, you <s>can</s> do this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="use phrases::english::greetings::hello;"></div><div data-l="use phrases::english::farewells::goodbye;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>But it is not idiomatic. This is significantly more likely to introduce a
+naming conflict. In our short program, it’s not a big deal, but as it grows, it
+becomes a problem. If we have conflicting names, Rust will give a compilation
+error. For example, if we made the <code>japanese</code> functions public, and tried to do
+this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="use phrases::english::greetings::hello;"></div><div data-l="use phrases::japanese::greetings::hello;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, hello());"></div><div data-l="    println!(&quot;Hello in Japanese: {}&quot;, hello());"></div><div data-l="}"></div></div>
+<br>
+<p>Rust will give us a compile-time error:</p>
+<br>
+<div data-lang="text"><div data-l="   Compiling phrases v0.0.1 (file:///home/you/projects/phrases)"></div><div data-l="src/main.rs:4:5: 4:40 error: a value named `hello` has already been imported in this module [E0252]"></div><div data-l="src/main.rs:4 use phrases::japanese::greetings::hello;"></div><div data-l="                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"></div><div data-l="error: aborting due to previous error"></div><div data-l="Could not compile `phrases`."></div></div>
+<br>
+<p>If we’re importing multiple names from the same module, we don’t have to type it out
+twice. Instead of this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use phrases::english::greetings;"></div><div data-l="use phrases::english::farewells;"></div></div>
+<br>
+<p>We can use this shortcut:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use phrases::english::{greetings, farewells};"></div></div>
+<br>
+<h2>Re-exporting with <code>pub use</code></h2>
+<br>
+<p>You don’t only use <code>use</code> to shorten identifiers. You can also use it inside of your crate
+to re-export a function inside another module. This allows you to present an external
+interface that may not directly map to your internal code organization.</p>
+<br>
+<p>Let’s look at an example. Modify your <code>src/main.rs</code> to read like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases;"></div><div data-l=""></div><div data-l="use phrases::english::{greetings,farewells};"></div><div data-l="use phrases::japanese;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English: {}&quot;, greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, farewells::goodbye());"></div><div data-l=""></div><div data-l="    println!(&quot;Hello in Japanese: {}&quot;, japanese::hello());"></div><div data-l="    println!(&quot;Goodbye in Japanese: {}&quot;, japanese::goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>Then, modify your <code>src/lib.rs</code> to make the <code>japanese</code> mod public:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub mod english;"></div><div data-l="pub mod japanese;"></div></div>
+<br>
+<p>Next, make the two functions public, first in <code>src/japanese/greetings.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn hello() -&gt; String {"></div><div data-l="    &quot;こんにちは&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>And then in <code>src/japanese/farewells.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn goodbye() -&gt; String {"></div><div data-l="    &quot;さようなら&quot;.to_string()"></div><div data-l="}"></div></div>
+<br>
+<p>Finally, modify your <code>src/japanese/mod.rs</code> to read like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub use self::greetings::hello;"></div><div data-l="pub use self::farewells::goodbye;"></div><div data-l=""></div><div data-l="mod greetings;"></div><div data-l="mod farewells;"></div></div>
+<br>
+<p>The <code>pub use</code> declaration brings the function into scope at this part of our
+module hierarchy. Because we’ve <code>pub use</code>d this inside of our <code>japanese</code>
+module, we now have a <code>phrases::japanese::hello()</code> function and a
+<code>phrases::japanese::goodbye()</code> function, even though the code for them lives in
+<code>phrases::japanese::greetings::hello()</code> and
+<code>phrases::japanese::farewells::goodbye()</code>. Our internal organization doesn’t
+define our external interface.</p>
+<br>
+<p>Here we have a <code>pub use</code> for each function we want to bring into the
+<code>japanese</code> scope. We could alternatively use the wildcard syntax to include
+everything from <code>greetings</code> into the current scope: <code>pub use self::greetings::*</code>.</p>
+<br>
+<p>What about the <code>self</code>? Well, by default, <code>use</code> declarations are absolute paths,
+starting from your crate root. <code>self</code> makes that path relative to your current
+place in the hierarchy instead. There’s one more special form of <code>use</code>: you can
+<code>use super::</code> to reach one level up the tree from your current location. Some
+people like to think of <code>self</code> as <code>.</code> and <code>super</code> as <code>..</code>, from many shells’
+display for the current directory and the parent directory.</p>
+<br>
+<p>Outside of <code>use</code>, paths are relative: <code>foo::bar()</code> refers to a function inside
+of <code>foo</code> relative to where we are. If that’s prefixed with <code>::</code>, as in
+<code>::foo::bar()</code>, it refers to a different <code>foo</code>, an absolute path from your
+crate root.</p>
+<br>
+<p>This will build and run:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling phrases v0.0.1 (file:///home/you/projects/phrases)"></div><div data-l="     Running `target/debug/phrases`"></div><div data-l="Hello in English: Hello!"></div><div data-l="Goodbye in English: Goodbye."></div><div data-l="Hello in Japanese: こんにちは"></div><div data-l="Goodbye in Japanese: さようなら"></div></div>
+<br>
+<h2>Complex imports</h2>
+<br>
+<p>Rust offers several advanced options that can add compactness and
+convenience to your <code>extern crate</code> and <code>use</code> statements. Here is an example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate phrases as sayings;"></div><div data-l=""></div><div data-l="use sayings::japanese::greetings as ja_greetings;"></div><div data-l="use sayings::japanese::farewells::*;"></div><div data-l="use sayings::english::{self, greetings as en_greetings, farewells as en_farewells};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello in English; {}&quot;, en_greetings::hello());"></div><div data-l="    println!(&quot;And in Japanese: {}&quot;, ja_greetings::hello());"></div><div data-l="    println!(&quot;Goodbye in English: {}&quot;, english::farewells::goodbye());"></div><div data-l="    println!(&quot;Again: {}&quot;, en_farewells::goodbye());"></div><div data-l="    println!(&quot;And in Japanese: {}&quot;, goodbye());"></div><div data-l="}"></div></div>
+<br>
+<p>What's going on here?</p>
+<br>
+<p>First, both <code>extern crate</code> and <code>use</code> allow renaming the thing that is being
+imported. So the crate is still called &quot;phrases&quot;, but here we will refer
+to it as &quot;sayings&quot;. Similarly, the first <code>use</code> statement pulls in the
+<code>japanese::greetings</code> module from the crate, but makes it available as
+<code>ja_greetings</code> as opposed to simply <code>greetings</code>. This can help to avoid
+ambiguity when importing similarly-named items from different places.</p>
+<br>
+<p>The second <code>use</code> statement uses a star glob to bring in all public symbols from
+the <code>sayings::japanese::farewells</code> module. As you can see we can later refer to
+the Japanese <code>goodbye</code> function with no module qualifiers. This kind of glob
+should be used sparingly. It’s worth noting that it only imports the public
+symbols, even if the code doing the globbing is in the same module.</p>
+<br>
+<p>The third <code>use</code> statement bears more explanation. It's using &quot;brace expansion&quot;
+globbing to compress three <code>use</code> statements into one (this sort of syntax
+may be familiar if you've written Linux shell scripts before). The
+uncompressed form of this statement would be:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use sayings::english;"></div><div data-l="use sayings::english::greetings as en_greetings;"></div><div data-l="use sayings::english::farewells as en_farewells;"></div></div>
+<br>
+<p>As you can see, the curly brackets compress <code>use</code> statements for several items
+under the same path, and in this context <code>self</code> refers back to that path.
+Note: The curly brackets cannot be nested or mixed with star globbing.</p>

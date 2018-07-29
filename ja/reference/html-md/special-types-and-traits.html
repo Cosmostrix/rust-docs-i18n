@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<h1>Special types and traits</h1>
+<br>
+<p>Certain types and traits that exist in <a class="notranslate" href="#4the standard library">the standard library</a> are known to the
+Rust compiler. This chapter documents the special features of these types and
+traits.</p>
+<br>
+<h2><code>Box&lt;T&gt;</code></h2>
+<br>
+<p><a class="notranslate" href="#4`Box<T>`">`Box<T>`</a> has a few special features that Rust doesn't currently allow for user
+defined types.</p>
+<br>
+<div data-b="*">The <a class="notranslate" href="#4dereference operator">dereference operator</a> for <code>Box&lt;T&gt;</code> produces a place which can be moved
+from. This means that the <code>*</code> operator and the destructor of <code>Box&lt;T&gt;</code> are
+built-in to the language.</div>
+<div data-b="*"><a class="notranslate" href="#4Methods">Methods</a> can take <code>Box&lt;Self&gt;</code> as a receiver.</div>
+<div data-b="*">A trait may be implemented for <code>Box&lt;T&gt;</code> in the same crate as <code>T</code>, which the
+<a class="notranslate" href="#4orphan rules">orphan rules</a> prevent for other generic types.</div>
+<br>
+<h2><code>UnsafeCell&lt;T&gt;</code></h2>
+<br>
+<p><a class="notranslate" href="#4`std::cell::UnsafeCell<T>`">`std::cell::UnsafeCell<T>`</a> is used for <a class="notranslate" href="#4interior mutability">interior mutability</a>. It ensures that
+the compiler doesn't perform optimisations that are incorrect for such types.
+It also ensures that <a class="notranslate" href="#4`static` items">`static` items</a> which have a type with interior
+mutability aren't placed in memory marked as read only.</p>
+<br>
+<h2><code>PhantomData&lt;T&gt;</code></h2>
+<br>
+<p><a class="notranslate" href="#4`std::marker::PhantomData<T>`">`std::marker::PhantomData<T>`</a> is a zero-sized, minimum alignment, type that
+is considered to own a <code>T</code> for the purposes of <a class="notranslate" href="#4variance">variance</a>, <a class="notranslate" href="#4drop check">drop check</a> and
+<a href="#2#auto-traits">auto traits</a>.</p>
+<br>
+<h2>Operator Traits</h2>
+<br>
+<p>The traits in <a class="notranslate" href="#4`std::ops`">`std::ops`</a> and <a class="notranslate" href="#4`std::cmp`">`std::cmp`</a> are used to overload <a class="notranslate" href="#4operators">operators</a>,
+<a class="notranslate" href="#4indexing expressions">indexing expressions</a> and <a class="notranslate" href="#4call expressions">call expressions</a>.</p>
+<br>
+<h2><code>Deref</code> and <code>DerefMut</code></h2>
+<br>
+<p>As well as overloading the unary <code>*</code> operator, <a class="notranslate" href="#4`Deref`">`Deref`</a> and <a class="notranslate" href="#4`DerefMut`">`DerefMut`</a> are
+also used in <a class="notranslate" href="#4method resolution">method resolution</a> and <a class="notranslate" href="#4deref coercions">deref coercions</a>.</p>
+<br>
+<h2><code>Drop</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Drop`">`Drop`</a> trait provides a <a class="notranslate" href="#4destructor">destructor</a>, to be run whenever a value of this
+type is to be destroyed.</p>
+<br>
+<h2><code>Copy</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Copy`">`Copy`</a> trait changes the semantics of a type implementing it. Values
+whose type implements <code>Copy</code> are copied rather than moved upon assignment.
+<code>Copy</code> cannot be implemented for types which implement <code>Drop</code>, or which have
+fields that are not <code>Copy</code>. <code>Copy</code> is implemented by the compiler for</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Numeric types">Numeric types</a></div>
+<div data-b="*"><code>char</code>, <code>bool</code> and <a class="notranslate" href="#4`!`">`!`</a></div>
+<div data-b="*"><a class="notranslate" href="#4Tuples">Tuples</a> of <code>Copy</code> types</div>
+<div data-b="*"><a class="notranslate" href="#4Arrays">Arrays</a> of <code>Copy</code> types</div>
+<div data-b="*"><a class="notranslate" href="#4Shared references">Shared references</a></div>
+<div data-b="*"><a class="notranslate" href="#4Raw pointers">Raw pointers</a></div>
+<div data-b="*"><a class="notranslate" href="#4Function pointers">Function pointers</a> and <a class="notranslate" href="#4function item types">function item types</a></div>
+<br>
+<h2><code>Clone</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Clone`">`Clone`</a> trait is a supertrait of <code>Copy</code>, so it also needs compiler
+generated implementations. It is implemented by the compiler for the following
+types:</p>
+<br>
+<div data-b="*">Types with a built-in <code>Copy</code> implementation (see above)</div>
+<div data-b="*"><a class="notranslate" href="#4Tuples">Tuples</a> of <code>Clone</code> types</div>
+<div data-b="*"><a class="notranslate" href="#4Arrays">Arrays</a> of <code>Clone</code> types</div>
+<br>
+<h2><code>Send</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Send`">`Send`</a> trait indicates that a value of this type is safe to send from one
+thread to another.</p>
+<br>
+<h2><code>Sync</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Sync`">`Sync`</a> trait indicates that a value of this type is safe to share between
+multiple threads. This trait must be implemented for all types used in
+immutable <a class="notranslate" href="#4`static` items">`static` items</a>.</p>
+<br>
+<h2>Auto traits</h2>
+<br>
+<p>The <a class="notranslate" href="#4`Send`">`Send`</a>, <a class="notranslate" href="#4`Sync`">`Sync`</a>, <a class="notranslate" href="#4`UnwindSafe`">`UnwindSafe`</a> and <a class="notranslate" href="#4`RefUnwindSafe`">`RefUnwindSafe`</a> traits are <s>auto
+traits</s>. Auto traits have special properties.</p>
+<br>
+<p>If no explicit implementation or negative implementation is written out for an
+auto trait for a given type, then the compiler implements it automatically
+according to the following rules:</p>
+<br>
+<div data-b="*"><code>&amp;T</code>, <code>&amp;mut T</code>, <code>*const T</code>, <code>*mut T</code>, <code>[T; n]</code> and <code>[T]</code> implement the trait
+if <code>T</code> does.</div>
+<div data-b="*">Function item types and function pointers automatically implement the trait.</div>
+<div data-b="*">Structs, enums, unions and tuples implement the trait if all of their fields
+do.</div>
+<div data-b="*">Closures implement the trait if the types of all of their captures do. A
+closure that captures a <code>T</code> by shared reference and a <code>U</code> by value implements
+any auto traits that both <code>&amp;T</code> and <code>U</code> do.</div>
+<br>
+<p>For generic types (counting the built-in types above as generic over <code>T</code>), if an
+generic implementation is available, then the compiler does not automatically
+implement it for types that could use the implementation except that they do not
+meet the requisite trait bounds. For instance, the standard library implements
+<code>Send</code> for all <code>&amp;T</code> where <code>T</code> is <code>Sync</code>; this means that the compiler will not
+implement <code>Send</code> for <code>&amp;T</code> if <code>T</code> is <code>Send</code> but not <code>Sync</code>.</p>
+<br>
+<p>Auto traits can also have negative implementations, shown as <code>impl €AutoTrait
+for T</code> in the standard library documentation, that override the automatic
+implementations. For example <code>*mut T</code> has a negative implementation of <code>Send</code>,
+and so <code>*mut T</code> is not <code>Send</code>, even if <code>T</code> is. There is currently no stable way
+to specify additional negative implementations; they exist only in the standard
+library.</p>
+<br>
+<p>Auto traits may be added as an additional bound to any <a class="notranslate" href="#4trait object">trait object</a>, even
+though normally only one trait is allowed. For instance, <code>Box&lt;dyn Debug + Send +
+UnwindSafe&gt;</code> is a valid type.</p>
+<br>
+<h2><code>Sized</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Sized`">`Sized`</a> trait indicates that the size of this type is known at
+compile-time; that is, it's not a <a class="notranslate" href="#4dynamically sized type">dynamically sized type</a>. <a class="notranslate" href="#4Type parameters">Type parameters</a>
+are <code>Sized</code> by default. <code>Sized</code> is always implemented automatically by the
+compiler, not by <a class="notranslate" href="#4implementation items">implementation items</a>.</p>
+<br>
+<a class="notranslate" href="#1../std/boxed/struct.Box.html">`Box&lt;T&gt;`</a>
+<a class="notranslate" href="#1../std/clone/trait.Clone.html">`Clone`</a>
+<a class="notranslate" href="#1../std/marker/trait.Copy.html">`Copy`</a>
+<a class="notranslate" href="#1../std/ops/trait.Deref.html">`Deref`</a>
+<a class="notranslate" href="#1../std/ops/trait.DerefMut.html">`DerefMut`</a>
+<a class="notranslate" href="#1../std/ops/trait.Drop.html">`Drop`</a>
+<a class="notranslate" href="#1../std/panic/trait.RefUnwindSafe.html">`RefUnwindSafe`</a>
+<a class="notranslate" href="#1../std/marker/trait.Send.html">`Send`</a>
+<a class="notranslate" href="#1../std/marker/trait.Sized.html">`Sized`</a>
+<a class="notranslate" href="#1../std/cell/struct.UnsafeCell.html">`std::cell::UnsafeCell&lt;T&gt;`</a>
+<a class="notranslate" href="#1../std/cmp/index.html">`std::cmp`</a>
+<a class="notranslate" href="#1../std/marker/struct.PhantomData.html">`std::marker::PhantomData&lt;T&gt;`</a>
+<a class="notranslate" href="#1../std/ops/index.html">`std::ops`</a>
+<a class="notranslate" href="#1../std/panic/trait.UnwindSafe.html">`UnwindSafe`</a>
+<a class="notranslate" href="#1../std/marker/trait.Sync.html">`Sync`</a>
+<br>
+<a class="notranslate" href="#1types.html#array-and-slice-types">Arrays</a>
+<a class="notranslate" href="#1expressions/call-expr.html">call expressions</a>
+<a class="notranslate" href="#1type-coercions.html#coercion-types">deref coercions</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#the-dereference-operator">dereference operator</a>
+<a class="notranslate" href="#1destructors.html">destructor</a>
+<a class="notranslate" href="#1../nomicon/dropck.html">drop check</a>
+<a class="notranslate" href="#1dynamically-sized-types.html">dynamically sized type</a>
+<a class="notranslate" href="#1types.html#function-pointer-types">Function pointers</a>
+<a class="notranslate" href="#1types.html#function-item-types">function item types</a>
+<a class="notranslate" href="#1items/implementations.html">implementation items</a>
+<a class="notranslate" href="#1expressions/array-expr.html#array-and-slice-indexing-expressions">indexing expressions</a>
+<a class="notranslate" href="#1interior-mutability.html">interior mutability</a>
+<a class="notranslate" href="#1types.html#numeric-types">Numeric types</a>
+<a class="notranslate" href="#1items/associated-items.html#associated-functions-and-methods">Methods</a>
+<a class="notranslate" href="#1expressions/method-call-expr.html">method resolution</a>
+<a class="notranslate" href="#1expressions/operator-expr.html">operators</a>
+<a class="notranslate" href="#1items/implementations.html#trait-implementation-coherence">orphan rules</a>
+<a class="notranslate" href="#1types.html#raw-pointers-const-and-mut">Raw pointers</a>
+<a class="notranslate" href="#1items/static-items.html">`static` items</a>
+<a class="notranslate" href="#1types.html#shared-references-">Shared references</a>
+<a class="notranslate" href="#1../std/index.html">the standard library</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait object</a>
+<a class="notranslate" href="#1types.html#tuple-types">Tuples</a>
+<a class="notranslate" href="#1types.html#type-parameters">Type parameters</a>
+<a class="notranslate" href="#1subtyping.html#variance">variance</a>
+<a class="notranslate" href="#1types.html#never-type">`!`</a>

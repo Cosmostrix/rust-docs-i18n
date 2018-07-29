@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<h1>Code generation</h1>
+<br>
+<p>Code generation or &quot;codegen&quot; is the part of the compiler that actually
+generates an executable binary. rustc uses LLVM for code generation.</p>
+<br>
+<blockquote><p>NOTE: If you are looking for hints on how to debug code generation bugs,
+please see <a href="#3debug">this section of the debugging chapter</a>.</p></blockquote>
+<br>
+<a class="notranslate" href="#1compiler-debugging.html#debugging-llvm">debug</a>
+<br>
+<h2>What is LLVM?</h2>
+<br>
+<p>All of the preceeding chapters of this guide have one thing in common: we never
+generated any executable machine code at all! With this chapter, all of that
+changes.</p>
+<br>
+<p>Like most compilers, rustc is composed of a &quot;frontend&quot; and a &quot;backend&quot;. The
+&quot;frontend&quot; is responsible for taking raw source code, checking it for
+correctness, and getting it into a format <code>X</code> from which we can generate
+executable machine code. The &quot;backend&quot; then takes that format <code>X</code> and produces
+(possibly optimized) executable machine code for some platform. All of the
+previous chapters deal with rustc's frontend.</p>
+<br>
+<p>rustc's backend is <a class="notranslate" href="#2https://llvm.org">LLVM</a>, &quot;a collection of modular and
+reusable compiler and toolchain technologies&quot;. In particular, the LLVM project
+contains a pluggable compiler backend (also called &quot;LLVM&quot;), which is used by
+many compiler projects, including the <code>clang</code> C compiler and our beloved
+<code>rustc</code>.</p>
+<br>
+<p>LLVM's &quot;format <code>X</code>&quot; is called LLVM IR. It is basically assembly code with
+additional low-level types and annotations added. These annotations are helpful
+for doing optimizations on the LLVM IR and outputed machine code. The end
+result of all this is (at long last) something executable (e.g. an ELF object
+or wasm).</p>
+<br>
+<p>There are a few benefits to using LLVM:</p>
+<br>
+<div data-b="-">We don't have to write a whole compiler backend. This reduces implementation
+and maintainance burden.</div>
+<div data-b="-">We benefit from the large suite of advanced optimizations that the LLVM
+project has been collecting.</div>
+<div data-b="-">We automatically can compile Rust to any of the platforms for which LLVM has
+support. For example, as soon as LLVM added support for wasm, voila! rustc,
+clang, and a bunch of other languages were able to compile to wasm! (Well,
+there was some extra stuff to be done, but we were 90% there anyway).</div>
+<div data-b="-">We and other compiler projects benefit from each other. For example, when the
+<a href="#3spectre">Spectre and Meltdown security vulnerabilities</a> were discovered,
+only LLVM needed to be patched.</div>
+<br>
+<a class="notranslate" href="#1https://meltdownattack.com/">spectre</a>
+<br>
+<h2>Generating LLVM IR</h2>
+<br>
+<p>TODO</p>

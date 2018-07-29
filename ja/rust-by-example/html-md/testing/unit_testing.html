@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<h1>Unit testing</h1>
+<br>
+<p>Tests are Rust functions that verify that the non-test code is functioning in
+the expected manner. The bodies of test functions typically perform some setup,
+run the code we want to test, then assert whether the results are what we
+expect.</p>
+<br>
+<p>Most unit tests go into a <code>tests</code> <a class="notranslate" href="#3mod">mod</a> with the <code>#[cfg(test)]</code> <a class="notranslate" href="#3attribute">attribute</a>.
+Test functions are marked with the <code>#[test]</code> attribute.</p>
+<br>
+<p>Tests fail when something in the test function <a class="notranslate" href="#3panic">panics</a>. There are some
+helper <a class="notranslate" href="#3macros">macros</a>:</p>
+<br>
+<div data-b="*"><code>assert€(expression)</code> - panics if expression evaluates to <code>false</code>.</div>
+<div data-b="*"><code>assert_eq€(left, right)</code> and <code>assert_ne€(left, right)</code> - testing left and
+right expressions for equality and inequality respectively.</div>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn add(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    a + b"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// This is a really bad adding function, its purpose is to fail in this"></div><div data-l="#// example."></div><div data-l="// ">This is a really bad adding function, its purpose is to fail in this example.</div><div data-l="#[allow(dead_code)]"></div><div data-l="fn bad_add(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    a - b"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="#    // Note this useful idiom: importing names from outer (for mod tests) scope."></div><div data-l="    // ">Note this useful idiom: importing names from outer (for mod tests) scope.</div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn test_add() {"></div><div data-l="        assert_eq!(add(1, 2), 3);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn test_bad_add() {"></div><div data-l="#        // This assert would fire and test will fail."></div><div data-l="#        // Please note, that private functions can be tested too!"></div><div data-l="        // ">This assert would fire and test will fail. Please note, that private functions can be tested too!</div><div data-l="        assert_eq!(bad_add(1, 2), 3);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Tests can be run with <code>cargo test</code>.</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l=""></div><div data-l="running 2 tests"></div><div data-l="test tests::test_bad_add ... FAILED"></div><div data-l="test tests::test_add ... ok"></div><div data-l=""></div><div data-l="failures:"></div><div data-l=""></div><div data-l="---- tests::test_bad_add stdout ----"></div><div data-l="        thread 'tests::test_bad_add' panicked at 'assertion failed: `(left == right)`"></div><div data-l="  left: `-1`,"></div><div data-l=" right: `3`', src/lib.rs:21:8"></div><div data-l="note: Run with `RUST_BACKTRACE=1` for a backtrace."></div><div data-l=""></div><div data-l=""></div><div data-l="failures:"></div><div data-l="    tests::test_bad_add"></div><div data-l=""></div><div data-l="test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<h2>Testing panics</h2>
+<br>
+<p>To check functions that should panic under certain circumstances, use attribute
+<code>#[should_panic]</code>. This attribute accepts optional parameter <code>expected = </code> with
+the text of the panic message. If your function can panic in multiple ways, it helps
+make sure your test is testing the correct panic.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn divide_non_zero_result(a: u32, b: u32) -&gt; u32 {"></div><div data-l="    if b == 0 {"></div><div data-l="        panic!(&quot;Divide-by-zero error&quot;);"></div><div data-l="    } else if a &lt; b {"></div><div data-l="        panic!(&quot;Divide result is zero&quot;);"></div><div data-l="    }"></div><div data-l="    a / b"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn test_divide() {"></div><div data-l="        assert_eq!(divide_non_zero_result(10, 2), 5);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    #[should_panic]"></div><div data-l="    fn test_any_panic() {"></div><div data-l="        divide_non_zero_result(1, 0);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    #[should_panic(expected = &quot;Divide result is zero&quot;)]"></div><div data-l="    fn test_specific_panic() {"></div><div data-l="        divide_non_zero_result(1, 10);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Running these tests gives us:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l=""></div><div data-l="running 3 tests"></div><div data-l="test tests::test_any_panic ... ok"></div><div data-l="test tests::test_divide ... ok"></div><div data-l="test tests::test_specific_panic ... ok"></div><div data-l=""></div><div data-l="test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests tmp-test-should-panic"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<h2>Running specific tests</h2>
+<br>
+<p>To run specific tests one may specify the test name to <code>cargo test</code> command.</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test test_any_panic"></div><div data-l="running 1 test"></div><div data-l="test tests::test_any_panic ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests tmp-test-should-panic"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<p>To run multiple tests one may specify part of a test name that matches all the
+tests that should be run.</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test panic"></div><div data-l="running 2 tests"></div><div data-l="test tests::test_any_panic ... ok"></div><div data-l="test tests::test_specific_panic ... ok"></div><div data-l=""></div><div data-l="test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests tmp-test-should-panic"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<h2>Ignoring tests</h2>
+<br>
+<p>Tests can be marked with the<code>#[ignore]</code> attribute to exclude some tests. Or to run
+them with command <code>cargo test -- --ignored</code></p>
+<br>
+<div data-lang="rust"><div data-l="pub fn add(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    a + b"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn test_add() {"></div><div data-l="        assert_eq!(add(2, 2), 4);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn test_add_hundred() {"></div><div data-l="        assert_eq!(add(100, 2), 102);"></div><div data-l="        assert_eq!(add(2, 100), 102);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    #[ignore]"></div><div data-l="    fn ignored_test() {"></div><div data-l="        assert_eq!(add(0, 0), 0);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="running 1 test"></div><div data-l="test tests::ignored_test ... ignored"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests tmp-ignore"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="$ cargo test -- --ignored"></div><div data-l="running 1 test"></div><div data-l="test tests::ignored_test ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests tmp-ignore"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<a class="notranslate" href="#1attribute.html">attribute</a>
+<a class="notranslate" href="#1std/panic.html">panic</a>
+<a class="notranslate" href="#1macros.html">macros</a>
+<a class="notranslate" href="#1mod.html">mod</a>

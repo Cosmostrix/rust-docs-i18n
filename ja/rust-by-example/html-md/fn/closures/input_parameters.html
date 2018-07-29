@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h1>As input parameters</h1>
+<br>
+<p>While Rust chooses how to capture variables on the fly mostly without type 
+annotation, this ambiguity is not allowed when writing functions. When 
+taking a closure as an input parameter, the closure's complete type must be 
+annotated using one of a few <code>traits</code>. In order of decreasing restriction, 
+they are:</p>
+<br>
+<div data-b="*"><code>Fn</code>: the closure captures by reference (<code>&amp;T</code>)</div>
+<div data-b="*"><code>FnMut</code>: the closure captures by mutable reference (<code>&amp;mut T</code>)</div>
+<div data-b="*"><code>FnOnce</code>: the closure captures by value (<code>T</code>)</div>
+<br>
+<p>On a variable-by-variable basis, the compiler will capture variables in the 
+least restrictive manner possible. </p>
+<br>
+<p>For instance, consider a parameter annotated as <code>FnOnce</code>. This specifies 
+that the closure <i>may</i> capture by <code>&amp;T</code>, <code>&amp;mut T</code>, or <code>T</code>, but the compiler 
+will ultimately choose based on how the captured variables are used in the 
+closure.</p>
+<br>
+<p>This is because if a move is possible, then any type of borrow should also 
+be possible. Note that the reverse is not true. If the parameter is 
+annotated as <code>Fn</code>, then capturing variables by <code>&amp;mut T</code> or <code>T</code> are not 
+allowed.</p>
+<br>
+<p>In the following example, try swapping the usage of <code>Fn</code>, <code>FnMut</code>, and 
+<code>FnOnce</code> to see what happens:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// A function which takes a closure as an argument and calls it."></div><div data-l="// ">A function which takes a closure as an argument and calls it.</div><div data-l="fn apply&lt;F&gt;(f: F) where"></div><div data-l="#    // The closure takes no input and returns nothing."></div><div data-l="    // ">The closure takes no input and returns nothing.</div><div data-l="    F: FnOnce() {"></div><div data-l="#    // ^ TODO: Try changing this to `Fn` or `FnMut`."></div><div data-l="    // ">^ TODO: Try changing this to <code>Fn</code> or <code>FnMut</code>.</div><div data-l=""></div><div data-l="    f();"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// A function which takes a closure and returns an `i32`."></div><div data-l="// ">A function which takes a closure and returns an <code>i32</code>.</div><div data-l="fn apply_to_3&lt;F&gt;(f: F) -&gt; i32 where"></div><div data-l="#    // The closure takes an `i32` and returns an `i32`."></div><div data-l="    // ">The closure takes an <code>i32</code> and returns an <code>i32</code>.</div><div data-l="    F: Fn(i32) -&gt; i32 {"></div><div data-l=""></div><div data-l="    f(3)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    use std::mem;"></div><div data-l=""></div><div data-l="    let greeting = &quot;hello&quot;;"></div><div data-l="#    // A non-copy type."></div><div data-l="#    // `to_owned` creates owned data from borrowed one"></div><div data-l="    // ">A non-copy type. <code>to_owned</code> creates owned data from borrowed one</div><div data-l="    let mut farewell = &quot;goodbye&quot;.to_owned();"></div><div data-l=""></div><div data-l="#    // Capture 2 variables: `greeting` by reference and"></div><div data-l="#    // `farewell` by value."></div><div data-l="    // ">Capture 2 variables: <code>greeting</code> by reference and <code>farewell</code> by value.</div><div data-l="    let diary = || {"></div><div data-l="#        // `greeting` is by reference: requires `Fn`."></div><div data-l="        // "><code>greeting</code> is by reference: requires <code>Fn</code>.</div><div data-l="        println!(&quot;I said {}.&quot;, greeting);"></div><div data-l=""></div><div data-l="#        // Mutation forces `farewell` to be captured by"></div><div data-l="#        // mutable reference. Now requires `FnMut`."></div><div data-l="        // ">Mutation forces <code>farewell</code> to be captured by mutable reference. Now requires <code>FnMut</code>.</div><div data-l="        farewell.push_str(&quot;!!!&quot;);"></div><div data-l="        println!(&quot;Then I screamed {}.&quot;, farewell);"></div><div data-l="        println!(&quot;Now I can sleep. zzzzz&quot;);"></div><div data-l=""></div><div data-l="#        // Manually calling drop forces `farewell` to"></div><div data-l="#        // be captured by value. Now requires `FnOnce`."></div><div data-l="        // ">Manually calling drop forces <code>farewell</code> to be captured by value. Now requires <code>FnOnce</code>.</div><div data-l="        mem::drop(farewell);"></div><div data-l="    };"></div><div data-l=""></div><div data-l="#    // Call the function which applies the closure."></div><div data-l="    // ">Call the function which applies the closure.</div><div data-l="    apply(diary);"></div><div data-l=""></div><div data-l="#    // `double` satisfies `apply_to_3`'s trait bound"></div><div data-l="    // "><code>double</code> satisfies <code>apply_to_3</code>'s trait bound</div><div data-l="    let double = |x| 2 * x;"></div><div data-l=""></div><div data-l="    println!(&quot;3 doubled: {}&quot;, apply_to_3(double));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3drop"><code>std::mem::drop</code></a>, <a class="notranslate" href="#3fn"><code>Fn</code></a>, <a class="notranslate" href="#3fnmut"><code>FnMut</code></a>, and <a class="notranslate" href="#3fnonce"><code>FnOnce</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/mem/fn.drop.html">drop</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">fn</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnMut.html">fnmut</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnOnce.html">fnonce</a>

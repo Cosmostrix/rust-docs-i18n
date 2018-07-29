@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<h1>Drop</h1>
+<br>
+<p>Now that we’ve discussed traits, let’s talk about a particular trait provided
+by the Rust standard library, <a class="notranslate" href="#3drop"><code>Drop</code></a>. The <code>Drop</code> trait provides a way
+to run some code when a value goes out of scope. For example:</p>
+<br>
+<a class="notranslate" href="#1../../std/ops/trait.Drop.html">drop</a>
+<br>
+<div data-lang="rust"><div data-l="struct HasDrop;"></div><div data-l=""></div><div data-l="impl Drop for HasDrop {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Dropping!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = HasDrop;"></div><div data-l=""></div><div data-l="#    // Do stuff."></div><div data-l="    // ">Do stuff.</div><div data-l=""></div><div data-l="#//} // `x` goes out of scope here."></div><div data-l="} // "><code>x</code> goes out of scope here.</div></div>
+<br>
+<p>When <code>x</code> goes out of scope at the end of <code>main()</code>, the code for <code>Drop</code> will
+run. <code>Drop</code> has one method, which is also called <code>drop()</code>. It takes a mutable
+reference to <code>self</code>.</p>
+<br>
+<p>That’s it! The mechanics of <code>Drop</code> are very simple, but there are some
+subtleties. For example, values are dropped in the opposite order they are
+declared. Here’s another example:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Firework {"></div><div data-l="    strength: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Drop for Firework {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;BOOM times {}!!!&quot;, self.strength);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let firecracker = Firework { strength: 1 };"></div><div data-l="    let tnt = Firework { strength: 100 };"></div><div data-l="}"></div></div>
+<br>
+<p>This will output:</p>
+<br>
+<div data-lang="text"><div data-l="BOOM times 100!!!"></div><div data-l="BOOM times 1!!!"></div></div>
+<br>
+<p>The <code>tnt</code> goes off before the <code>firecracker</code> does, because it was declared
+afterwards. Last in, first out.</p>
+<br>
+<p>So what is <code>Drop</code> good for? Generally, <code>Drop</code> is used to clean up any resources
+associated with a <code>struct</code>. For example, the <a href="#3arc"><code>Arc&lt;T&gt;</code> type</a> is a
+reference-counted type. When <code>Drop</code> is called, it will decrement the reference
+count, and if the total number of references is zero, will clean up the
+underlying value.</p>
+<br>
+<a class="notranslate" href="#1../../std/sync/struct.Arc.html">arc</a>

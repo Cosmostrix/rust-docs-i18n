@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<h1>Working with Unsafe</h1>
+<br>
+<p>Rust generally only gives us the tools to talk about Unsafe Rust in a scoped and
+binary manner. Unfortunately, reality is significantly more complicated than
+that. For instance, consider the following toy function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn index(idx: usize, arr: &amp;[u8]) -&gt; Option&lt;u8&gt; {"></div><div data-l="    if idx &lt; arr.len() {"></div><div data-l="        unsafe {"></div><div data-l="            Some(*arr.get_unchecked(idx))"></div><div data-l="        }"></div><div data-l="    } else {"></div><div data-l="        None"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This function is safe and correct. We check that the index is in bounds, and if it
+is, index into the array in an unchecked manner. But even in such a trivial
+function, the scope of the unsafe block is questionable. Consider changing the
+<code>&lt;</code> to a <code>&lt;=</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn index(idx: usize, arr: &amp;[u8]) -&gt; Option&lt;u8&gt; {"></div><div data-l="    if idx &lt;= arr.len() {"></div><div data-l="        unsafe {"></div><div data-l="            Some(*arr.get_unchecked(idx))"></div><div data-l="        }"></div><div data-l="    } else {"></div><div data-l="        None"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This program is now unsound, and yet <i>we only modified safe code</i>. This is the
+fundamental problem of safety: it's non-local. The soundness of our unsafe
+operations necessarily depends on the state established by otherwise
+&quot;safe&quot; operations.</p>
+<br>
+<p>Safety is modular in the sense that opting into unsafety doesn't require you
+to consider arbitrary other kinds of badness. For instance, doing an unchecked
+index into a slice doesn't mean you suddenly need to worry about the slice being
+null or containing uninitialized memory. Nothing fundamentally changes. However
+safety <i>isn't</i> modular in the sense that programs are inherently stateful and
+your unsafe operations may depend on arbitrary other state.</p>
+<br>
+<p>This non-locality gets much worse when we incorporate actual persistent state.
+Consider a simple implementation of <code>Vec</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::ptr;"></div><div data-l=""></div><div data-l="#// Note: This definition is naive. See the chapter on implementing Vec."></div><div data-l="// ">Note: This definition is naive. See the chapter on implementing Vec.</div><div data-l="pub struct Vec&lt;T&gt; {"></div><div data-l="    ptr: *mut T,"></div><div data-l="    len: usize,"></div><div data-l="    cap: usize,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Note this implementation does not correctly handle zero-sized types."></div><div data-l="#// See the chapter on implementing Vec."></div><div data-l="// ">Note this implementation does not correctly handle zero-sized types. See the chapter on implementing Vec.</div><div data-l="impl&lt;T&gt; Vec&lt;T&gt; {"></div><div data-l="    pub fn push(&amp;mut self, elem: T) {"></div><div data-l="        if self.len == self.cap {"></div><div data-l="#            // not important for this example"></div><div data-l="            // ">not important for this example</div><div data-l="            self.reallocate();"></div><div data-l="        }"></div><div data-l="        unsafe {"></div><div data-l="            ptr::write(self.ptr.offset(self.len as isize), elem);"></div><div data-l="            self.len += 1;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    # fn reallocate(&amp;mut self) { }"></div><div data-l="}"></div><div data-l=""></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>This code is simple enough to reasonably audit and informally verify. Now consider
+adding the following method:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn make_room(&amp;mut self) {"></div><div data-l="#    // grow the capacity"></div><div data-l="    // ">grow the capacity</div><div data-l="    self.cap += 1;"></div><div data-l="}"></div></div>
+<br>
+<p>This code is 100% Safe Rust but it is also completely unsound. Changing the
+capacity violates the invariants of Vec (that <code>cap</code> reflects the allocated space
+in the Vec). This is not something the rest of Vec can guard against. It <i>has</i>
+to trust the capacity field because there's no way to verify it.</p>
+<br>
+<p>Because it relies on invariants of a struct field, this <code>unsafe</code> code
+does more than pollute a whole function: it pollutes a whole <i>module</i>.
+Generally, the only bullet-proof way to limit the scope of unsafe code is at the
+module boundary with privacy.</p>
+<br>
+<p>However this works <i>perfectly</i>. The existence of <code>make_room</code> is <i>not</i> a
+problem for the soundness of Vec because we didn't mark it as public. Only the
+module that defines this function can call it. Also, <code>make_room</code> directly
+accesses the private fields of Vec, so it can only be written in the same module
+as Vec.</p>
+<br>
+<p>It is therefore possible for us to write a completely safe abstraction that
+relies on complex invariants. This is <i>critical</i> to the relationship between
+Safe Rust and Unsafe Rust.</p>
+<br>
+<p>We have already seen that Unsafe code must trust <i>some</i> Safe code, but shouldn't
+trust <i>generic</i> Safe code. Privacy is important to unsafe code for similar reasons:
+it prevents us from having to trust all the safe code in the universe from messing
+with our trusted state.</p>
+<br>
+<p>Safety lives!</p>
+<br>

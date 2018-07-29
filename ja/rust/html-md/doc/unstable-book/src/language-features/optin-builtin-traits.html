@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1><code>optin_builtin_traits</code></h1>
+<br>
+<p>The tracking issue for this feature is <a class="notranslate" href="#4#13231">#13231</a> </p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/13231">#13231</a>
+<br>
+<p>----</p>
+<br>
+<p>The <code>optin_builtin_traits</code> feature gate allows you to define auto traits.</p>
+<br>
+<p>Auto traits, like <a class="notranslate" href="#4`Send`">`Send`</a> or <a class="notranslate" href="#4`Sync`">`Sync`</a> in the standard library, are marker traits
+that are automatically implemented for every type, unless the type, or a type it contains, 
+has explicitly opted out via a negative impl. </p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Send.html">`Send`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Sync.html">`Sync`</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl !Type for Trait"></div></div>
+<br>
+<p>Example:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(optin_builtin_traits)]"></div><div data-l=""></div><div data-l="auto trait Valid {}"></div><div data-l=""></div><div data-l="struct True;"></div><div data-l="struct False;"></div><div data-l=""></div><div data-l="impl !Valid for False {}"></div><div data-l=""></div><div data-l="struct MaybeValid&lt;T&gt;(T);"></div><div data-l=""></div><div data-l="fn must_be_valid&lt;T: Valid&gt;(_t: T) { }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // works"></div><div data-l="    // ">works</div><div data-l="    must_be_valid( MaybeValid(True) );"></div><div data-l="                "></div><div data-l="#    // compiler error - trait bound not satisfied"></div><div data-l="#    // must_be_valid( MaybeValid(False) );"></div><div data-l="    // ">compiler error - trait bound not satisfied must_be_valid( MaybeValid(False) );</div><div data-l="}"></div></div>

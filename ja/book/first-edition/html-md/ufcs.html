@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<h1>Universal Function Call Syntax</h1>
+<br>
+<p>Sometimes, functions can have the same names. Consider this code:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn f(&amp;self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait Bar {"></div><div data-l="    fn f(&amp;self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Baz;"></div><div data-l=""></div><div data-l="impl Foo for Baz {"></div><div data-l="    fn f(&amp;self) { println!(&quot;Baz’s impl of Foo&quot;); }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Bar for Baz {"></div><div data-l="    fn f(&amp;self) { println!(&quot;Baz’s impl of Bar&quot;); }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let b = Baz;"></div></div>
+<br>
+<p>If we were to try to call <code>b.f()</code>, we’d get an error:</p>
+<br>
+<div data-lang="text"><div data-l="error: multiple applicable methods in scope [E0034]"></div><div data-l="b.f();"></div><div data-l="  ^~~"></div><div data-l="note: candidate #1 is defined in an impl of the trait `main::Foo` for the type"></div><div data-l="`main::Baz`"></div><div data-l="    fn f(&amp;self) { println!(&quot;Baz’s impl of Foo&quot;); }"></div><div data-l="    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"></div><div data-l="note: candidate #2 is defined in an impl of the trait `main::Bar` for the type"></div><div data-l="`main::Baz`"></div><div data-l="    fn f(&amp;self) { println!(&quot;Baz’s impl of Bar&quot;); }"></div><div data-l="    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"></div><div data-l=""></div></div>
+<br>
+<p>We need a way to disambiguate which method we need. This feature is called
+‘universal function call syntax’, and it looks like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo {"></div><div data-l="#     fn f(&amp;self);"></div><div data-l="# }"></div><div data-l="# trait Bar {"></div><div data-l="#     fn f(&amp;self);"></div><div data-l="# }"></div><div data-l="# struct Baz;"></div><div data-l="# impl Foo for Baz {"></div><div data-l="#     fn f(&amp;self) { println!(&quot;Baz’s impl of Foo&quot;); }"></div><div data-l="# }"></div><div data-l="# impl Bar for Baz {"></div><div data-l="#     fn f(&amp;self) { println!(&quot;Baz’s impl of Bar&quot;); }"></div><div data-l="# }"></div><div data-l="# let b = Baz;"></div><div data-l="Foo::f(&amp;b);"></div><div data-l="Bar::f(&amp;b);"></div></div>
+<br>
+<p>Let’s break it down.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="Foo::"></div><div data-l="Bar::"></div></div>
+<br>
+<p>These halves of the invocation are the types of the two traits: <code>Foo</code> and
+<code>Bar</code>. This is what ends up actually doing the disambiguation between the two:
+Rust calls the one from the trait name you use.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="f(&amp;b)"></div></div>
+<br>
+<p>When we call a method like <code>b.f()</code> using <a href="#3methodsyntax">method syntax</a>, Rust
+will automatically borrow <code>b</code> if <code>f()</code> takes <code>&amp;self</code>. In this case, Rust will
+not, and so we need to pass an explicit <code>&amp;b</code>.</p>
+<br>
+<a class="notranslate" href="#1method-syntax.html">methodsyntax</a>
+<br>
+<h1>Angle-bracket Form</h1>
+<br>
+<p>The form of UFCS we just talked about:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="Trait::method(args);"></div></div>
+<br>
+<p>Is a short-hand. There’s an expanded form of this that’s needed in some
+situations:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="&lt;Type as Trait&gt;::method(args);"></div></div>
+<br>
+<p>The <code>&lt;&gt;::</code> syntax is a means of providing a type hint. The type goes inside
+the <code>&lt;&gt;</code>s. In this case, the type is <code>Type as Trait</code>, indicating that we want
+<code>Trait</code>’s version of <code>method</code> to be called here. The <code>as Trait</code> part is
+optional if it’s not ambiguous. Same with the angle brackets, hence the
+shorter form.</p>
+<br>
+<p>Here’s an example of using the longer form.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn foo() -&gt; i32;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Bar;"></div><div data-l=""></div><div data-l="impl Bar {"></div><div data-l="    fn foo() -&gt; i32 {"></div><div data-l="        20"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Foo for Bar {"></div><div data-l="    fn foo() -&gt; i32 {"></div><div data-l="        10"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(10, &lt;Bar as Foo&gt;::foo());"></div><div data-l="    assert_eq!(20, Bar::foo());"></div><div data-l="}"></div></div>
+<br>
+<p>Using the angle bracket syntax lets you call the trait method instead of the
+inherent one.</p>

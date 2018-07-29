@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Sign and verify a message with HMAC digest</h2>
+<br>
+<p><a href="#3ring">!<a class="notranslate" href="#4ring-badge">ring-badge</a></a> <a href="#3cat-cryptography">!<a class="notranslate" href="#4cat-cryptography-badge">cat-cryptography-badge</a></a></p>
+<br>
+<p>Uses <a class="notranslate" href="#4`ring::hmac`">`ring::hmac`</a> to creates a <a class="notranslate" href="#4`hmac::Signature`">`hmac::Signature`</a> of a string then verifies the signature is correct.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate ring;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Ring(ring::error::Unspecified);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="use ring::{digest, hmac, rand};"></div><div data-l="use ring::rand::SecureRandom;"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let mut key_value = [0u8; 48];"></div><div data-l="    let rng = rand::SystemRandom::new();"></div><div data-l="    rng.fill(&amp;mut key_value)?;"></div><div data-l="    let key = hmac::SigningKey::new(&amp;digest::SHA256, &amp;key_value);"></div><div data-l=""></div><div data-l="    let message = &quot;Legitimate and important message.&quot;;"></div><div data-l="    let signature = hmac::sign(&amp;key, message.as_bytes());"></div><div data-l="    hmac::verify_with_own_key(&amp;key, message.as_bytes(), signature.as_ref())?;"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://briansmith.org/rustdoc/ring/hmac/struct.Signature.html">`hmac::Signature`</a>
+<a class="notranslate" href="#1https://briansmith.org/rustdoc/ring/hmac/">`ring::hmac`</a>

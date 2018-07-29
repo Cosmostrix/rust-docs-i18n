@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<h1>Literals</h1>
+<br>
+<p>Numeric literals can be type annotated by adding the type as a suffix. As an example, 
+to specify that the literal <code>42</code> should have the type <code>i32</code>, write <code>42i32</code>.</p>
+<br>
+<p>The type of unsuffixed numeric literals will depend on how they are used. If no
+constraint exists, the compiler will use <code>i32</code> for integers, and <code>f64</code> for
+floating-point numbers.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // Suffixed literals, their types are known at initialization"></div><div data-l="    // ">Suffixed literals, their types are known at initialization</div><div data-l="    let x = 1u8;"></div><div data-l="    let y = 2u32;"></div><div data-l="    let z = 3f32;"></div><div data-l=""></div><div data-l="#    // Unsuffixed literal, their types depend on how they are used"></div><div data-l="    // ">Unsuffixed literal, their types depend on how they are used</div><div data-l="    let i = 1;"></div><div data-l="    let f = 1.0;"></div><div data-l=""></div><div data-l="#    // `size_of_val` returns the size of a variable in bytes"></div><div data-l="    // "><code>size_of_val</code> returns the size of a variable in bytes</div><div data-l="    println!(&quot;size of `x` in bytes: {}&quot;, std::mem::size_of_val(&amp;x));"></div><div data-l="    println!(&quot;size of `y` in bytes: {}&quot;, std::mem::size_of_val(&amp;y));"></div><div data-l="    println!(&quot;size of `z` in bytes: {}&quot;, std::mem::size_of_val(&amp;z));"></div><div data-l="    println!(&quot;size of `i` in bytes: {}&quot;, std::mem::size_of_val(&amp;i));"></div><div data-l="    println!(&quot;size of `f` in bytes: {}&quot;, std::mem::size_of_val(&amp;f));"></div><div data-l="}"></div></div>
+<br>
+<p>There are some concepts used in the previous code that haven't been explained
+yet, here's a brief explanation for the impatient readers:</p>
+<br>
+<div data-b="*"><code>fun(&amp;foo)</code> is used to pass an argument to a function <i>by reference</i>, rather
+than by value (<code>fun(foo)</code>). For more details see <a class="notranslate" href="#3borrow">borrowing</a>.</div>
+<div data-b="*"><code>std::mem::size_of_val</code> is a function, but called with its <i>full path</i>. Code
+can be split in logical units called <i>modules</i>. In this case, the
+<code>size_of_val</code> function is defined in the <code>mem</code> module, and the <code>mem</code> module
+is defined in the <code>std</code> <i>crate</i>. For more details, see
+<a class="notranslate" href="#3mod">modules</a> and <a class="notranslate" href="#3crate">crates</a>.</div>
+<br>
+<a class="notranslate" href="#1scope/borrow.html">borrow</a>
+<a class="notranslate" href="#1mod.html">mod</a>
+<a class="notranslate" href="#1crates.html">crate</a>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Maintain global mutable state</h2>
+<br>
+<p><a href="#3lazy_static">!<a class="notranslate" href="#4lazy_static-badge">lazy_static-badge</a></a> <a href="#3cat-rust-patterns">!<a class="notranslate" href="#4cat-rust-patterns-badge">cat-rust-patterns-badge</a></a></p>
+<br>
+<p>Declare global state using <a class="notranslate" href="#4lazy_static">lazy_static</a>. <a class="notranslate" href="#4lazy_static">lazy_static</a>
+creates a globally available <code>static ref</code> which requires a <a class="notranslate" href="#4`Mutex`">`Mutex`</a>
+to allow mutation (also see <a class="notranslate" href="#4`RwLock`">`RwLock`</a>). The <a class="notranslate" href="#4`Mutex`">`Mutex`</a> wrap ensures
+the state cannot be simultaneously accessed by multiple threads, preventing
+race conditions. A <a class="notranslate" href="#4`MutexGuard`">`MutexGuard`</a> must be acquired to read or mutate the
+value stored in a <a class="notranslate" href="#4`Mutex`">`Mutex`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate lazy_static;"></div><div data-l=""></div><div data-l="use std::sync::Mutex;"></div><div data-l="#"></div><div data-l="# error_chain!{ }"></div><div data-l=""></div><div data-l="lazy_static! {"></div><div data-l="    static ref FRUIT: Mutex&lt;Vec&lt;String&gt;&gt; = Mutex::new(Vec::new());"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn insert(fruit: &amp;str) -&gt; Result&lt;()&gt; {"></div><div data-l="    let mut db = FRUIT.lock().map_err(|_| &quot;Failed to acquire MutexGuard&quot;)?;"></div><div data-l="    db.push(fruit.to_string());"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    insert(&quot;apple&quot;)?;"></div><div data-l="    insert(&quot;orange&quot;)?;"></div><div data-l="    insert(&quot;peach&quot;)?;"></div><div data-l="    {"></div><div data-l="        let db = FRUIT.lock().map_err(|_| &quot;Failed to acquire MutexGuard&quot;)?;"></div><div data-l=""></div><div data-l="        db.iter().enumerate().for_each(|(i, item)| println!(&quot;{}: {}&quot;, i, item));"></div><div data-l="    }"></div><div data-l="    insert(&quot;grape&quot;)?;"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/sync/struct.Mutex.html">`Mutex`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/sync/struct.MutexGuard.html">`MutexGuard`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/sync/struct.RwLock.html">`RwLock`</a>

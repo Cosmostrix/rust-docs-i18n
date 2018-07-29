@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h1>tuples</h1>
+<br>
+<p>Tuples can be destructured in a <code>match</code> as follows:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let pair = (0, -2);"></div><div data-l="#    // TODO ^ Try different values for `pair`"></div><div data-l="    // ">TODO ^ Try different values for <code>pair</code></div><div data-l=""></div><div data-l="    println!(&quot;Tell me about {:?}&quot;, pair);"></div><div data-l="#    // Match can be used to destructure a tuple"></div><div data-l="    // ">Match can be used to destructure a tuple</div><div data-l="    match pair {"></div><div data-l="#        // Destructure the second"></div><div data-l="        // ">Destructure the second</div><div data-l="        (0, y) =&gt; println!(&quot;First is `0` and `y` is `{:?}`&quot;, y),"></div><div data-l="        (x, 0) =&gt; println!(&quot;`x` is `{:?}` and last is `0`&quot;, x),"></div><div data-l="        _      =&gt; println!(&quot;It doesn't matter what they are&quot;),"></div><div data-l="#        // `_` means don't bind the value to a variable"></div><div data-l="        // "><code>_</code> means don't bind the value to a variable</div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#2primitives/tuples.html">Tuples</a></p>

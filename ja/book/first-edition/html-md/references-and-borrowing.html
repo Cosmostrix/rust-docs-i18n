@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<h1>References and Borrowing</h1>
+<br>
+<p>This is the second of three sections presenting Rust’s ownership system. This is one of
+Rust’s most distinct and compelling features, with which Rust developers should
+become quite acquainted. Ownership is how Rust achieves its largest goal,
+memory safety. There are a few distinct concepts, each with its own
+chapter:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#3ownership">ownership</a>, the key concept</div>
+<div data-b="*">borrowing, which you’re reading now</div>
+<div data-b="*"><a class="notranslate" href="#3lifetimes">lifetimes</a>, an advanced concept of borrowing</div>
+<br>
+<p>These three chapters are related, and in order. You’ll need all three to fully
+understand the ownership system.</p>
+<br>
+<a class="notranslate" href="#1ownership.html">ownership</a>
+<a class="notranslate" href="#1lifetimes.html">lifetimes</a>
+<br>
+<h1>Meta</h1>
+<br>
+<p>Before we get to the details, two important notes about the ownership system.</p>
+<br>
+<p>Rust has a focus on safety and speed. It accomplishes these goals through many
+‘zero-cost abstractions’, which means that in Rust, abstractions cost as little
+as possible in order to make them work. The ownership system is a prime example
+of a zero-cost abstraction. All of the analysis we’ll talk about in this guide
+is <s>done at compile time</s>. You do not pay any run-time cost for any of these
+features.</p>
+<br>
+<p>However, this system does have a certain cost: learning curve. Many new users
+to Rust experience something we like to call ‘fighting with the borrow
+checker’, where the Rust compiler refuses to compile a program that the author
+thinks is valid. This often happens because the programmer’s mental model of
+how ownership should work doesn’t match the actual rules that Rust implements.
+You probably will experience similar things at first. There is good news,
+however: more experienced Rust developers report that once they work with the
+rules of the ownership system for a period of time, they fight the borrow
+checker less and less.</p>
+<br>
+<p>With that in mind, let’s learn about borrowing.</p>
+<br>
+<h1>Borrowing</h1>
+<br>
+<p>At the end of the <a class="notranslate" href="#3ownership">ownership</a> section, we had a nasty function that looked
+like this:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(v1: Vec&lt;i32&gt;, v2: Vec&lt;i32&gt;) -&gt; (Vec&lt;i32&gt;, Vec&lt;i32&gt;, i32) {"></div><div data-l="#    // Do stuff with `v1` and `v2`."></div><div data-l="    // ">Do stuff with <code>v1</code> and <code>v2</code>.</div><div data-l=""></div><div data-l="#    // Hand back ownership, and the result of our function."></div><div data-l="    // ">Hand back ownership, and the result of our function.</div><div data-l="    (v1, v2, 42)"></div><div data-l="}"></div><div data-l=""></div><div data-l="let v1 = vec![1, 2, 3];"></div><div data-l="let v2 = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let (v1, v2, answer) = foo(v1, v2);"></div></div>
+<br>
+<p>This is not idiomatic Rust, however, as it doesn’t take advantage of borrowing. Here’s
+the first step:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(v1: &amp;Vec&lt;i32&gt;, v2: &amp;Vec&lt;i32&gt;) -&gt; i32 {"></div><div data-l="#    // Do stuff with `v1` and `v2`."></div><div data-l="    // ">Do stuff with <code>v1</code> and <code>v2</code>.</div><div data-l=""></div><div data-l="#    // Return the answer."></div><div data-l="    // ">Return the answer.</div><div data-l="    42"></div><div data-l="}"></div><div data-l=""></div><div data-l="let v1 = vec![1, 2, 3];"></div><div data-l="let v2 = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let answer = foo(&amp;v1, &amp;v2);"></div><div data-l=""></div><div data-l="#// We can use `v1` and `v2` here!"></div><div data-l="// ">We can use <code>v1</code> and <code>v2</code> here!</div></div>
+<br>
+<p>A more concrete example:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="#    // Don't worry if you don't understand how `fold` works, the point here is that an immutable reference is borrowed."></div><div data-l="    // ">Don't worry if you don't understand how <code>fold</code> works, the point here is that an immutable reference is borrowed.</div><div data-l="    fn sum_vec(v: &amp;Vec&lt;i32&gt;) -&gt; i32 {"></div><div data-l="        v.iter().fold(0, |a, &amp;b| a + b)"></div><div data-l="    }"></div><div data-l="#    // Borrow two vectors and sum them."></div><div data-l="#    // This kind of borrowing does not allow mutation through the borrowed reference."></div><div data-l="    // ">Borrow two vectors and sum them. This kind of borrowing does not allow mutation through the borrowed reference.</div><div data-l="    fn foo(v1: &amp;Vec&lt;i32&gt;, v2: &amp;Vec&lt;i32&gt;) -&gt; i32 {"></div><div data-l="#        // Do stuff with `v1` and `v2`."></div><div data-l="        // ">Do stuff with <code>v1</code> and <code>v2</code>.</div><div data-l="        let s1 = sum_vec(v1);"></div><div data-l="        let s2 = sum_vec(v2);"></div><div data-l="#        // Return the answer."></div><div data-l="        // ">Return the answer.</div><div data-l="        s1 + s2"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let v1 = vec![1, 2, 3];"></div><div data-l="    let v2 = vec![4, 5, 6];"></div><div data-l=""></div><div data-l="    let answer = foo(&amp;v1, &amp;v2);"></div><div data-l="    println!(&quot;{}&quot;, answer);"></div><div data-l="}"></div></div>
+<br>
+<p>Instead of taking <code>Vec&lt;i32&gt;</code>s as our arguments, we take a reference:
+<code>&amp;Vec&lt;i32&gt;</code>. And instead of passing <code>v1</code> and <code>v2</code> directly, we pass <code>&amp;v1</code> and
+<code>&amp;v2</code>. We call the <code>&amp;T</code> type a ‘reference’, and rather than owning the resource,
+it borrows ownership. A binding that borrows something does not deallocate the
+resource when it goes out of scope. This means that after the call to <code>foo()</code>,
+we can use our original bindings again.</p>
+<br>
+<p>References are immutable, like bindings. This means that inside of <code>foo()</code>,
+the vectors can’t be changed at all:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo(v: &amp;Vec&lt;i32&gt;) {"></div><div data-l="     v.push(5);"></div><div data-l="}"></div><div data-l=""></div><div data-l="let v = vec![];"></div><div data-l=""></div><div data-l="foo(&amp;v);"></div></div>
+<br>
+<p>will give us this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: cannot borrow immutable borrowed content `*v` as mutable"></div><div data-l="v.push(5);"></div><div data-l="^"></div></div>
+<br>
+<p>Pushing a value mutates the vector, and so we aren’t allowed to do it.</p>
+<br>
+<h1>&amp;mut references</h1>
+<br>
+<p>There’s a second kind of reference: <code>&amp;mut T</code>. A ‘mutable reference’ allows you
+to mutate the resource you’re borrowing. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l="{"></div><div data-l="    let y = &amp;mut x;"></div><div data-l="    *y += 1;"></div><div data-l="}"></div><div data-l="println!(&quot;{}&quot;, x);"></div></div>
+<br>
+<p>This will print <code>6</code>. We make <code>y</code> a mutable reference to <code>x</code>, then add one to
+the thing <code>y</code> points at. You’ll notice that <code>x</code> had to be marked <code>mut</code> as well.
+If it wasn’t, we couldn’t take a mutable borrow to an immutable value.</p>
+<br>
+<p>You'll also notice we added an asterisk (<code>*</code>) in front of <code>y</code>, making it <code>*y</code>,
+this is because <code>y</code> is a <code>&amp;mut</code> reference. You'll need to use asterisks to
+access the contents of a reference as well.</p>
+<br>
+<p>Otherwise, <code>&amp;mut</code> references are like references. There <s>is</s> a large
+difference between the two, and how they interact, though. You can tell
+something is fishy in the above example, because we need that extra scope, with
+the <code>{</code> and <code>}</code>. If we remove them, we get an error:</p>
+<br>
+<div data-lang="text"><div data-l="error: cannot borrow `x` as immutable because it is also borrowed as mutable"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="                   ^"></div><div data-l="note: previous borrow of `x` occurs here; the mutable borrow prevents"></div><div data-l="subsequent moves, borrows, or modification of `x` until the borrow ends"></div><div data-l="        let y = &amp;mut x;"></div><div data-l="                     ^"></div><div data-l="note: previous borrow ends here"></div><div data-l="fn main() {"></div><div data-l=""></div><div data-l="}"></div><div data-l="^"></div></div>
+<br>
+<p>As it turns out, there are rules.</p>
+<br>
+<h1>The Rules</h1>
+<br>
+<p>Here are the rules for borrowing in Rust:</p>
+<br>
+<p>First, any borrow must last for a scope no greater than that of the owner.
+Second, you may have one or the other of these two kinds of borrows, but not
+both at the same time:</p>
+<br>
+<div data-b="*">one or more references (<code>&amp;T</code>) to a resource,</div>
+<div data-b="*">exactly one mutable reference (<code>&amp;mut T</code>).</div>
+<br>
+<br>
+<p>You may notice that this is very similar to, though not exactly the same as,
+the definition of a data race:</p>
+<br>
+<blockquote><p>There is a ‘data race’ when two or more pointers access the same memory
+location at the same time, where at least one of them is writing, and the
+operations are not synchronized.</p></blockquote>
+<br>
+<p>With references, you may have as many as you’d like, since none of them are
+writing. However, as we can only have one <code>&amp;mut</code> at a time, it is impossible to
+have a data race. This is how Rust prevents data races at compile time: we’ll
+get errors if we break the rules.</p>
+<br>
+<p>With this in mind, let’s consider our example again.</p>
+<br>
+<h2>Thinking in scopes</h2>
+<br>
+<p>Here’s the code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let mut x = 5;"></div><div data-l="    let y = &amp;mut x;"></div><div data-l=""></div><div data-l="    *y += 1;"></div><div data-l=""></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>This code gives us this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: cannot borrow `x` as immutable because it is also borrowed as mutable"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="                   ^"></div></div>
+<br>
+<p>This is because we’ve violated the rules: we have a <code>&amp;mut T</code> pointing to <code>x</code>,
+and so we aren’t allowed to create any <code>&amp;T</code>s. It's one or the other. The note
+hints at how to think about this problem:</p>
+<br>
+<div data-lang="text"><div data-l="note: previous borrow ends here"></div><div data-l="fn main() {"></div><div data-l=""></div><div data-l="}"></div><div data-l="^"></div></div>
+<br>
+<p>In other words, the mutable borrow is held through the rest of our example. What
+we want is for the mutable borrow by <code>y</code> to end so that the resource can be
+returned to the owner, <code>x</code>. <code>x</code> can then provide an immutable borrow to <code>println€</code>.
+In Rust, borrowing is tied to the scope that the borrow is valid for. And our
+scopes look like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let mut x = 5;"></div><div data-l=""></div><div data-l="#//    let y = &amp;mut x;    // -+ &amp;mut borrow of `x` starts here."></div><div data-l="#                       //  |"></div><div data-l="    let y = &amp;mut x;    // ">-+ &amp;mut borrow of <code>x</code> starts here.  |</div><div data-l="#//    *y += 1;           //  |"></div><div data-l="#                       //  |"></div><div data-l="    *y += 1;           // "> |  |</div><div data-l="#//    println!(&quot;{}&quot;, x); // -+ - Try to borrow `x` here."></div><div data-l="    println!(&quot;{}&quot;, x); // ">-+ - Try to borrow <code>x</code> here.</div><div data-l="#//}                      // -+ &amp;mut borrow of `x` ends here."></div><div data-l="}                      // ">-+ &amp;mut borrow of <code>x</code> ends here.</div><div data-l="                       "></div></div>
+<br>
+<p>The scopes conflict: we can’t make an <code>&amp;x</code> while <code>y</code> is in scope.</p>
+<br>
+<p>So when we add the curly braces:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l=""></div><div data-l="{"></div><div data-l="#//    let y = &amp;mut x; // -+ &amp;mut borrow starts here."></div><div data-l="    let y = &amp;mut x; // ">-+ &amp;mut borrow starts here.</div><div data-l="#//    *y += 1;        //  |"></div><div data-l="    *y += 1;        // "> |</div><div data-l="#//}                   // -+ ... and ends here."></div><div data-l="}                   // ">-+ ... and ends here.</div><div data-l=""></div><div data-l="#//println!(&quot;{}&quot;, x);  // &lt;- Try to borrow `x` here."></div><div data-l="println!(&quot;{}&quot;, x);  // ">&lt;- Try to borrow <code>x</code> here.</div></div>
+<br>
+<p>There’s no problem. Our mutable borrow goes out of scope before we create an
+immutable one. So scope is the key to seeing how long a borrow lasts for.</p>
+<br>
+<h2>Issues borrowing prevents</h2>
+<br>
+<p>Why have these restrictive rules? Well, as we noted, these rules prevent data
+races. What kinds of issues do data races cause? Here are a few.</p>
+<br>
+<h3>Iterator invalidation</h3>
+<br>
+<p>One example is ‘iterator invalidation’, which happens when you try to mutate a
+collection that you’re iterating over. Rust’s borrow checker prevents this from
+happening:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(&quot;{}&quot;, i);"></div><div data-l="}"></div></div>
+<br>
+<p>This prints out one through three. As we iterate through the vector, we’re
+only given references to the elements. And <code>v</code> is itself borrowed as immutable,
+which means we can’t change it while we’re iterating:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(&quot;{}&quot;, i);"></div><div data-l="    v.push(34);"></div><div data-l="}"></div></div>
+<br>
+<p>Here’s the error:</p>
+<br>
+<div data-lang="text"><div data-l="error: cannot borrow `v` as mutable because it is also borrowed as immutable"></div><div data-l="    v.push(34);"></div><div data-l="    ^"></div><div data-l="note: previous borrow of `v` occurs here; the immutable borrow prevents"></div><div data-l="subsequent moves or mutable borrows of `v` until the borrow ends"></div><div data-l="for i in &amp;v {"></div><div data-l="          ^"></div><div data-l="note: previous borrow ends here"></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(“{}”, i);"></div><div data-l="    v.push(34);"></div><div data-l="}"></div><div data-l="^"></div></div>
+<br>
+<p>We can’t modify <code>v</code> because it’s borrowed by the loop.</p>
+<br>
+<h3>Use after free</h3>
+<br>
+<p>References must not live longer than the resource they refer to. Rust will
+check the scopes of your references to ensure that this is true.</p>
+<br>
+<p>If Rust didn’t check this property, we could accidentally use a reference
+which was invalid. For example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let y: &amp;i32;"></div><div data-l="{"></div><div data-l="    let x = 5;"></div><div data-l="    y = &amp;x;"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;{}&quot;, y);"></div></div>
+<br>
+<p>We get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: `x` does not live long enough"></div><div data-l="    y = &amp;x;"></div><div data-l="         ^"></div><div data-l="note: reference must be valid for the block suffix following statement 0 at"></div><div data-l="2:16..."></div><div data-l="let y: &amp;i32;"></div><div data-l="{"></div><div data-l="    let x = 5;"></div><div data-l="    y = &amp;x;"></div><div data-l="}"></div><div data-l=""></div><div data-l="note: ...but borrowed value is only valid for the block suffix following"></div><div data-l="statement 0 at 4:18"></div><div data-l="    let x = 5;"></div><div data-l="    y = &amp;x;"></div><div data-l="}"></div></div>
+<br>
+<p>In other words, <code>y</code> is only valid for the scope where <code>x</code> exists. As soon as
+<code>x</code> goes away, it becomes invalid to refer to it. As such, the error says that
+the borrow ‘doesn’t live long enough’ because it’s not valid for the right
+amount of time.</p>
+<br>
+<p>The same problem occurs when the reference is declared <s>before</s> the variable it
+refers to. This is because resources within the same scope are freed in the
+opposite order they were declared:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let y: &amp;i32;"></div><div data-l="let x = 5;"></div><div data-l="y = &amp;x;"></div><div data-l=""></div><div data-l="println!(&quot;{}&quot;, y);"></div></div>
+<br>
+<p>We get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: `x` does not live long enough"></div><div data-l="y = &amp;x;"></div><div data-l="     ^"></div><div data-l="note: reference must be valid for the block suffix following statement 0 at"></div><div data-l="2:16..."></div><div data-l="    let y: &amp;i32;"></div><div data-l="    let x = 5;"></div><div data-l="    y = &amp;x;"></div><div data-l=""></div><div data-l="    println!(&quot;{}&quot;, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="note: ...but borrowed value is only valid for the block suffix following"></div><div data-l="statement 1 at 3:14"></div><div data-l="    let x = 5;"></div><div data-l="    y = &amp;x;"></div><div data-l=""></div><div data-l="    println!(&quot;{}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>In the above example, <code>y</code> is declared before <code>x</code>, meaning that <code>y</code> lives longer
+than <code>x</code>, which is not allowed.</p>

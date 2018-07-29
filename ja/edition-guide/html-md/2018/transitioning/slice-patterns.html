@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<h1>Basic slice patterns</h1>
+<br>
+<p>Have you ever tried to pattern match on the contents and structure of a slice?
+Rust 2018 will let you do just that.</p>
+<br>
+<p>For example, say we want to accept a list of names and respond to that with a
+greeting. With slice patterns, we can do that easy as pie with:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    greet(&amp;[]);"></div><div data-l="#    // output: Bummer, there's no one here :("></div><div data-l="    // ">output: Bummer, there's no one here :(</div><div data-l="    greet(&amp;[&quot;Alan&quot;]);"></div><div data-l="#    // output: Hey, there Alan! You seem to be alone."></div><div data-l="    // ">output: Hey, there Alan! You seem to be alone.</div><div data-l="    greet(&amp;[&quot;Joan&quot;, &quot;Hugh&quot;]);"></div><div data-l="#    // output: Hello, Joan and Hugh. Nice to see you are at least 2!"></div><div data-l="    // ">output: Hello, Joan and Hugh. Nice to see you are at least 2!</div><div data-l="    greet(&amp;[&quot;John&quot;, &quot;Peter&quot;, &quot;Stewart&quot;]);"></div><div data-l="#    // output: Hey everyone, we seem to be 3 here today."></div><div data-l="    // ">output: Hey everyone, we seem to be 3 here today.</div><div data-l="}"></div><div data-l=""></div><div data-l="fn greet(people: &amp;[&amp;str]) {"></div><div data-l="    match people {"></div><div data-l="        [] =&gt; println!(&quot;Bummer, there's no one here :(&quot;),"></div><div data-l="        [only_one] =&gt; println!(&quot;Hey, there {}! You seem to be alone.&quot;, only_one),"></div><div data-l="        [first, second] =&gt; println!("></div><div data-l="            &quot;Hello, {} and {}. Nice to see you are at least 2!&quot;,"></div><div data-l="            first, second"></div><div data-l="        ),"></div><div data-l="        _ =&gt; println!(&quot;Hey everyone, we seem to be {} here today.&quot;, people.len()),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Now, you don't have to check the length first.</p>
+<br>
+<p>We can also match on arrays like so:</p>
+<br>
+<div data-lang="rust"><div data-l="let arr = [1, 2, 3];"></div><div data-l=""></div><div data-l="assert_eq!(&quot;ends with 3&quot;, match arr {"></div><div data-l="    [_, _, 3] =&gt; &quot;ends with 3&quot;,"></div><div data-l="    [a, b, c] =&gt; &quot;ends with something else&quot;,"></div><div data-l="});"></div></div>
+<br>
+<h2>More details</h2>
+<br>
+<h3>Exhaustive patterns</h3>
+<br>
+<p>In the first example, note in particular the <code>_ =&gt; ...</code> pattern.
+Since we are matching on a slice, it could be of any length, so we need a
+<i>&quot;catch all pattern&quot;</i> to handle it. If we forgot the <code>_ =&gt; ...</code> or
+<code>identifier =&gt; ...</code> pattern, we would instead get an error saying:</p>
+<br>
+<div data-lang="ignore"><div data-l="error[E0004]: non-exhaustive patterns: `&amp;[_, _, _]` not covered"></div></div>
+<br>
+<p>If we added a case for a slice of size <code>3</code> we would instead get:</p>
+<br>
+<div data-lang="ignore"><div data-l="error[E0004]: non-exhaustive patterns: `&amp;[_, _, _, _]` not covered"></div></div>
+<br>
+<p>and so on...</p>
+<br>
+<h3>Arrays and exact lengths</h3>
+<br>
+<p>In the second example above, since arrays in Rust are of known lengths,
+we have to match on exactly three elements.
+If we try to match on 2 or 4 elements,we get the errors:</p>
+<br>
+<div data-lang="ignore"><div data-l="error[E0527]: pattern requires 2 elements but array has 3"></div></div>
+<br>
+<p>and</p>
+<br>
+<div data-lang="ignore"><div data-l="error[E0527]: pattern requires 4 elements but array has 3"></div></div>
+<br>
+<h3>In the pipeline</h3>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/23121">the tracking issue</a>
+<br>
+<p>When it comes to slice patterns, more advanced forms are planned but
+have not been stabilized yet. To learn more, follow <a class="notranslate" href="#4the tracking issue">the tracking issue</a>.</p>

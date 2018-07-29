@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<h1><code>compiletest</code></h1>
+<br>
+<h2>Introduction</h2>
+<br>
+<p><code>compiletest</code> is the main test harness of the Rust test suite.  It allows
+test authors to organize large numbers of tests (the Rust compiler has many
+thousands), efficient test execution (parallel execution is supported), and
+allows the test author to configure behavior and expected results of both
+individual and groups of tests.</p>
+<br>
+<p><code>compiletest</code> tests may check test code for success, for failure or in some
+cases, even failure to compile.  Tests are typically organized as a Rust source
+file with annotations in comments before and/or within the test code, which
+serve to direct <code>compiletest</code> on if or how to run the test, what behavior to
+expect, and more.  If you are unfamiliar with the compiler testing framework,
+see <a href="#2./tests/intro.html">this chapter</a> for additional background.</p>
+<br>
+<p>The tests themselves are typically (but not always) organized into
+&quot;suites&quot; – for example, <code>run-pass</code>, a folder representing tests that should
+succeed, <code>run-fail</code>, a folder holding tests that should compile successfully,
+but return a failure (non-zero status), <code>compile-fail</code>, a folder holding tests
+that should fail to compile, and many more.  The various suites are defined in
+<a class="notranslate" href="#3common">src/tools/compiletest/src/common.rs</a> in the <code>pub struct Config</code>
+declaration.  And a very good introduction to the different suites of compiler
+tests along with details about them can be found in <a href="#2./tests/adding.html">Adding new
+tests</a>.</p>
+<br>
+<h2>Adding a new test file</h2>
+<br>
+<p>Briefly, simply create your new test in the appropriate location under
+<a class="notranslate" href="#3test">src/test</a>. No registration of test files is necessary as <code>compiletest</code>
+will scan the <a class="notranslate" href="#3test">src/test</a> subfolder recursively, and will execute any Rust
+source files it finds as tests.  See <a href="#2./tests/adding.html"><code>Adding new tests</code></a>
+for a complete guide on how to adding new tests.</p>
+<br>
+<h2>Header Commands</h2>
+<br>
+<p>Source file annotations which appear in comments near the top of the source
+file <i>before</i> any test code are known as header commands.  These commands can
+instruct <code>compiletest</code> to ignore this test, set expectations on whether it is
+expected to succeed at compiling, or what the test's return code is expected to
+be.  Header commands (and their inline counterparts, Error Info commands) are
+described more fully
+<a class="notranslate" href="#2./tests/adding.html#header-commands-configuring-rustc">here</a>.</p>
+<br>
+<h3>Adding a new header command</h3>
+<br>
+<p>Header commands are defined in the <code>TestProps</code> struct in
+<a class="notranslate" href="#3header">src/tools/compiletest/src/header.rs</a>.  At a high level, there are
+dozens of test properties defined here, all set to default values in the
+<code>TestProp</code> struct's <code>impl</code> block. Any test can override this default value by
+specifying the property in question as header command as a comment (<code>//</code>) in
+the test source file, before any source code.</p>
+<br>
+<h4>Using a header command</h4>
+<br>
+<p>Here is an example, specifying the <code>must-compile-successfully</code> header command,
+which takes no arguments, followed by the <code>failure-status</code> header command,
+which takes a single argument (which, in this case is a value of 1).
+<code>failure-status</code> is instructing <code>compiletest</code> to expect a failure status of 1
+(rather than the current Rust default of 101 at the time of this writing).  The
+header command and the argument list (if present) are typically separated by a
+colon:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Copyright 2018 The Rust Project Developers. See the COPYRIGHT"></div><div data-l="#// file at the top-level directory of this distribution and at"></div><div data-l="#// http://rust-lang.org/COPYRIGHT."></div><div data-l="// ">Copyright 2018 The Rust Project Developers. See the COPYRIGHT file at the top-level directory of this distribution and at http://rust-lang.org/COPYRIGHT.</div><div data-l="//"></div><div data-l="#// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or"></div><div data-l="#// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license"></div><div data-l="#// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your"></div><div data-l="#// option. This file may not be copied, modified, or distributed"></div><div data-l="#// except according to those terms."></div><div data-l="// ">Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied, modified, or distributed except according to those terms.</div><div data-l=""></div><div data-l="#// must-compile-successfully"></div><div data-l="#// failure-status: 1"></div><div data-l="// ">must-compile-successfully failure-status: 1</div><div data-l=""></div><div data-l="#![feature(termination_trait)]"></div><div data-l=""></div><div data-l="use std::io::{Error, ErrorKind};"></div><div data-l=""></div><div data-l="fn main() -&gt; Result&lt;(), Box&lt;Error&gt;&gt; {"></div><div data-l="    Err(Box::new(Error::new(ErrorKind::Other, &quot;returned Box&lt;Error&gt; from main()&quot;)))"></div><div data-l="}"></div></div>
+<br>
+<h4>Adding a new header command property</h4>
+<br>
+<p>One would add a new header command if there is a need to define some test
+property or behavior on an individual, test-by-test basis.  A header command
+property serves as the header command's backing store (holds the command's
+current value) at runtime.</p>
+<br>
+<p>To add a new header command property:
+    1. Look for the <code>pub struct TestProps</code> declaration in
+       <a class="notranslate" href="#3header">src/tools/compiletest/src/header.rs</a> and add the new public
+       property to the end of the declaration.
+    2. Look for the <code>impl TestProps</code> implementation block immediately following
+       the struct declaration and initialize the new property to its default
+       value.</p>
+<br>
+<h4>Adding a new header command parser</h4>
+<br>
+<p>When <code>compiletest</code> encounters a test file, it parses the file a line at a time
+by calling every parser defined in the <code>Config</code> struct's implementation block,
+also in <a class="notranslate" href="#3header">src/tools/compiletest/src/header.rs</a> (note the <code>Config</code>
+struct's declaration block is found in
+<a class="notranslate" href="#3common">src/tools/compiletest/src/common.rs</a>.  <code>TestProps</code>'s <code>load_from()</code>
+method will try passing the current line of text to each parser, which, in turn
+typically checks to see if the line begins with a particular commented (<code>//</code>)
+header command such as <code>// must-compile-successfully</code> or <code>// failure-status</code>.
+Whitespace after the comment marker is optional.</p>
+<br>
+<p>Parsers will override a given header command property's default value merely by
+being specified in the test file as a header command or by having a parameter
+value specified in the test file, depending on the header command.</p>
+<br>
+<p>Parsers defined in <code>impl Config</code> are typically named <code>parse_&lt;header_command&gt;</code>
+(note kebab-case <code>&lt;header-command&gt;</code> transformed to snake-case
+<code>&lt;header_command&gt;</code>).  <code>impl Config</code> also defines several 'low-level' parsers
+which make it simple to parse common patterns like simple presence or not
+(<code>parse_name_directive()</code>), header-command:parameter(s)
+(<code>parse_name_value_directive()</code>), optional parsing only if a particular <code>cfg</code>
+attribute is defined (<code>has_cfg_prefix()</code>) and many more.  The low-level parsers
+are found near the end of the <code>impl Config</code> block; be sure to look through them
+and their associated parsers immediately above to see how they are used to
+avoid writing additional parsing code unneccessarily.</p>
+<br>
+<p>As a concrete example, here is the implementation for the
+<code>parse_failure_status()</code> parser, in
+<a class="notranslate" href="#3header">src/tools/compiletest/src/header.rs</a>:</p>
+<br>
+<div data-lang="diff"><div data-l="@@ -232,6 +232,7 @@ pub struct TestProps {"></div><div data-l="#     // customized normalization rules"></div><div data-l="     // ">customized normalization rules</div><div data-l="     pub normalize_stdout: Vec&lt;(String, String)&gt;,"></div><div data-l="     pub normalize_stderr: Vec&lt;(String, String)&gt;,"></div><div data-l="+    pub failure_status: i32,"></div><div data-l=" }"></div><div data-l=""></div><div data-l=" impl TestProps {"></div><div data-l="@@ -260,6 +261,7 @@ impl TestProps {"></div><div data-l="             run_pass: false,"></div><div data-l="             normalize_stdout: vec![],"></div><div data-l="             normalize_stderr: vec![],"></div><div data-l="+            failure_status: 101,"></div><div data-l="         }"></div><div data-l="     }"></div><div data-l=""></div><div data-l="@@ -383,6 +385,10 @@ impl TestProps {"></div><div data-l="             if let Some(rule) = config.parse_custom_normalization(ln, &quot;normalize-stderr&quot;) {"></div><div data-l="                 self.normalize_stderr.push(rule);"></div><div data-l="             }"></div><div data-l="+"></div><div data-l="+            if let Some(code) = config.parse_failure_status(ln) {"></div><div data-l="+                self.failure_status = code;"></div><div data-l="+            }"></div><div data-l="         });"></div><div data-l=""></div><div data-l="         for key in &amp;[&quot;RUST_TEST_NOCAPTURE&quot;, &quot;RUST_TEST_THREADS&quot;] {"></div><div data-l="@@ -488,6 +494,13 @@ impl Config {"></div><div data-l="         self.parse_name_directive(line, &quot;pretty-compare-only&quot;)"></div><div data-l="     }"></div><div data-l=""></div><div data-l="+    fn parse_failure_status(&amp;self, line: &amp;str) -&gt; Option&lt;i32&gt; {"></div><div data-l="+        match self.parse_name_value_directive(line, &quot;failure-status&quot;) {"></div><div data-l="+            Some(code) =&gt; code.trim().parse::&lt;i32&gt;().ok(),"></div><div data-l="+            _ =&gt; None,"></div><div data-l="+        }"></div><div data-l="+    }"></div></div>
+<br>
+<h2>Implementing the behavior change</h2>
+<br>
+<p>When a test invokes a particular header command, it is expected that some
+behavior will change as a result.  What behavior, obviously, will depend on the
+purpose of the header command.  In the case of <code>failure-status</code>, the behavior
+that changes is that <code>compiletest</code> expects the failure code defined by the
+header command invoked in the test, rather than the default value.</p>
+<br>
+<p>Although specific to <code>failure-status</code> (as every header command will have a
+different implementation in order to invoke behavior change) perhaps it is
+helpful to see the behavior change implementation of one case, simply as an
+example.  To implement <code>failure-status</code>, the <code>check_correct_failure_status()</code>
+function found in the <code>TestCx</code> implementation block, located in
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/tree/master/src/tools/compiletest/src/runtest.rs">src/tools/compiletest/src/runtest.rs</a>,
+was modified as per below:</p>
+<br>
+<div data-lang="diff"><div data-l="@@ -295,11 +295,14 @@ impl&lt;'test&gt; TestCx&lt;'test&gt; {"></div><div data-l="     }"></div><div data-l=""></div><div data-l="     fn check_correct_failure_status(&amp;self, proc_res: &amp;ProcRes) {"></div><div data-l="#//-        // The value the rust runtime returns on failure"></div><div data-l="-        // ">The value the rust runtime returns on failure</div><div data-l="-        const RUST_ERR: i32 = 101;"></div><div data-l="-        if proc_res.status.code() != Some(RUST_ERR) {"></div><div data-l="+        let expected_status = Some(self.props.failure_status);"></div><div data-l="+        let received_status = proc_res.status.code();"></div><div data-l="+"></div><div data-l="+        if expected_status != received_status {"></div><div data-l="             self.fatal_proc_rec("></div><div data-l="-                &amp;format!(&quot;failure produced the wrong error: {}&quot;, proc_res.status),"></div><div data-l="+                &amp;format!(&quot;Error: expected failure status ({:?}) but received status {:?}.&quot;,"></div><div data-l="+                         expected_status,"></div><div data-l="+                         received_status),"></div><div data-l="                 proc_res,"></div><div data-l="             );"></div><div data-l="         }"></div><div data-l="@@ -320,7 +323,6 @@ impl&lt;'test&gt; TestCx&lt;'test&gt; {"></div><div data-l="         );"></div><div data-l=""></div><div data-l="         let proc_res = self.exec_compiled_test();"></div><div data-l="-"></div><div data-l="         if !proc_res.status.success() {"></div><div data-l="             self.fatal_proc_rec(&quot;test run failed!&quot;, &amp;proc_res);"></div><div data-l="         }"></div><div data-l="@@ -499,7 +501,6 @@ impl&lt;'test&gt; TestCx&lt;'test&gt; {"></div><div data-l="                 expected,"></div><div data-l="                 actual"></div><div data-l="             );"></div><div data-l="-            panic!();"></div><div data-l="         }"></div><div data-l="     }"></div></div>
+<p>Note the use of <code>self.props.failure_status</code> to access the header command
+property.  In tests which do not specify the failure status header command,
+<code>self.props.failure_status</code> will evaluate to the default value of 101 at the
+time of this writing.  But for a test which specifies a header command of, for
+example, <code>// failure-status: 1</code>, <code>self.props.failure_status</code> will evaluate to
+1, as <code>parse_failure_status()</code> will have overridden the <code>TestProps</code> default
+value, for that test specifically.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test">test</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/compiletest/src/header.rs">header</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/compiletest/src/common.rs">common</a>

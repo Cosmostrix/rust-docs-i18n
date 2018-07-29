@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<h1>Equality and associated types</h1>
+<br>
+<p>This section covers how the trait system handles equality between
+associated types. The full system consists of several moving parts,
+which we will introduce one by one:</p>
+<br>
+<div data-b="-">Projection and the <code>Normalize</code> predicate</div>
+<div data-b="-">Skolemization</div>
+<div data-b="-">The <code>ProjectionEq</code> predicate</div>
+<div data-b="-">Integration with unification</div>
+<br>
+<h2>Associated type projection and normalization</h2>
+<br>
+<p>When a trait defines an associated type (e.g.,
+<a href="#3intoiter-item">the <code>Item</code> type in the <code>IntoIterator</code> trait</a>), that
+type can be referenced by the user using an <b>associated type
+projection</b> like <code>&lt;Option&lt;u32&gt; as IntoIterator&gt;::Item</code>. (Often,
+though, people will use the shorthand syntax <code>T::Item</code> – presently,
+that syntax is expanded during
+<a href="#2./type-checking.html">&quot;type collection&quot;</a> into the explicit form,
+though that is something we may want to change in the future.)</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#associatedtype.Item">intoiter-item</a>
+<br>
+<p><a name="normalize"></a></p>
+<br>
+<p>In some cases, associated type projections can be <b>normalized</b> –
+that is, simplified – based on the types given in an impl. So, to
+continue with our example, the impl of <code>IntoIterator</code> for <code>Option&lt;T&gt;</code>
+declares (among other things) that <code>Item = T</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; IntoIterator for Option&lt;T&gt; {"></div><div data-l="  type Item = T;"></div><div data-l="  ..."></div><div data-l="}"></div></div>
+<br>
+<p>This means we can normalize the projection <code>&lt;Option&lt;u32&gt; as
+IntoIterator&gt;::Item</code> to just <code>u32</code>.</p>
+<br>
+<p>In this case, the projection was a &quot;monomorphic&quot; one – that is, it
+did not have any type parameters.  Monomorphic projections are special
+because they can <b>always</b> be fully normalized – but often we can
+normalize other associated type projections as well. For example,
+<code>&lt;Option&lt;?T&gt; as IntoIterator&gt;::Item</code> (where <code>?T</code> is an inference
+variable) can be normalized to just <code>?T</code>.</p>
+<br>
+<p>In our logic, normalization is defined by a predicate
+<code>Normalize</code>. The <code>Normalize</code> clauses arise only from
+impls. For example, the <code>impl</code> of <code>IntoIterator</code> for <code>Option&lt;T&gt;</code> that
+we saw above would be lowered to a program clause like so:</p>
+<br>
+<div data-lang="text"><div data-l="forall&lt;T&gt; {"></div><div data-l="    Normalize(&lt;Option&lt;T&gt; as IntoIterator&gt;::Item -&gt; T) :-"></div><div data-l="        Implemented(Option&lt;T&gt;: IntoIterator)"></div><div data-l="}"></div></div>
+<br>
+<p>where in this case, the one <code>Implemented</code> condition is always true.</p>
+<br>
+<p>(An aside: since we do not permit quantification over traits, this is
+really more like a family of program clauses, one for each associated
+type.)</p>
+<br>
+<p>We could apply that rule to normalize either of the examples that
+we've seen so far.</p>
+<br>
+<h2>Skolemized associated types</h2>
+<br>
+<p>Sometimes however we want to work with associated types that cannot be
+normalized. For example, consider this function:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;T: IntoIterator&gt;(...) { ... }"></div></div>
+<br>
+<p>In this context, how would we normalize the type <code>T::Item</code>? Without
+knowing what <code>T</code> is, we can't really do so. To represent this case, we
+introduce a type called a <b>skolemized associated type
+projection</b>. This is written like so <code>(IntoIterator::Item)&lt;T&gt;</code>. You
+may note that it looks a lot like a regular type (e.g., <code>Option&lt;T&gt;</code>),
+except that the &quot;name&quot; of the type is <code>(IntoIterator::Item)</code>. This is
+not an accident: skolemized associated type projections work just like
+ordinary types like <code>Vec&lt;T&gt;</code> when it comes to unification. That is,
+they are only considered equal if (a) they are both references to the
+same associated type, like <code>IntoIterator::Item</code> and (b) their type
+arguments are equal.</p>
+<br>
+<p>Skolemized associated types are never written directly by the user.
+They are used internally by the trait system only, as we will see
+shortly.</p>
+<br>
+<h2>Projection equality</h2>
+<br>
+<p>So far we have seen two ways to answer the question of &quot;When can we
+consider an associated type projection equal to another type?&quot;:</p>
+<br>
+<div data-b="-">the <code>Normalize</code> predicate could be used to transform associated type
+projections when we knew which impl was applicable;</div>
+<div data-b="-"><b>skolemized</b> associated types can be used when we don't.</div>
+<br>
+<p>We now introduce the <code>ProjectionEq</code> predicate to bring those two cases
+together. The <code>ProjectionEq</code> predicate looks like so:</p>
+<br>
+<div data-lang="text"><div data-l="ProjectionEq(&lt;T as IntoIterator&gt;::Item = U)"></div></div>
+<br>
+<p>and we will see that it can be proven <i>either</i> via normalization or
+skolemization. As part of lowering an associated type declaration from
+some trait, we create two program clauses for <code>ProjectionEq</code>:</p>
+<br>
+<div data-lang="text"><div data-l="forall&lt;T, U&gt; {"></div><div data-l="    ProjectionEq(&lt;T as IntoIterator&gt;::Item = U) :-"></div><div data-l="        Normalize(&lt;T as IntoIterator&gt;::Item -&gt; U)"></div><div data-l="}"></div><div data-l=""></div><div data-l="forall&lt;T&gt; {"></div><div data-l="    ProjectionEq(&lt;T as IntoIterator&gt;::Item = (IntoIterator::Item)&lt;T&gt;)"></div><div data-l="}"></div></div>
+<br>
+<p>These are the only two <code>ProjectionEq</code> program clauses we ever make for
+any given associated item.</p>
+<br>
+<h2>Integration with unification</h2>
+<br>
+<p>Now we are ready to discuss how associated type equality integrates
+with unification. As described in the
+<a href="#2./type-inference.html">type inference</a> section, unification is
+basically a procedure with a signature like this:</p>
+<br>
+<div data-lang="text"><div data-l="Unify(A, B) = Result&lt;(Subgoals, RegionConstraints), NoSolution&gt;"></div></div>
+<br>
+<p>In other words, we try to unify two things A and B. That procedure
+might just fail, in which case we get back <code>Err(NoSolution)</code>. This
+would happen, for example, if we tried to unify <code>u32</code> and <code>i32</code>.</p>
+<br>
+<p>The key point is that, on success, unification can also give back to
+us a set of subgoals that still remain to be proven (it can also give
+back region constraints, but those are not relevant here).</p>
+<br>
+<p>Whenever unification encounters an (unskolemized!) associated type
+projection P being equated with some other type T, it always succeeds,
+but it produces a subgoal <code>ProjectionEq(P = T)</code> that is propagated
+back up. Thus it falls to the ordinary workings of the trait system
+to process that constraint.</p>
+<br>
+<p>(If we unify two projections P1 and P2, then unification produces a
+variable X and asks us to prove that <code>ProjectionEq(P1 = X)</code> and
+<code>ProjectionEq(P2 = X)</code>. That used to be needed in an older system to
+prevent cycles; I rather doubt it still is. -nmatsakis)</p>

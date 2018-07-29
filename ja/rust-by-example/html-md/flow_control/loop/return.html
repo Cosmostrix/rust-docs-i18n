@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h1>Returning from loops</h1>
+<br>
+<p>One of the uses of a <code>loop</code> is to retry an operation until it succeeds. If the
+operation returns a value though, you might need to pass it to the rest of the
+code: put it after the <code>break</code>, and it will be returned by the <code>loop</code>
+expression.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let mut counter = 0;"></div><div data-l=""></div><div data-l="    let result = loop {"></div><div data-l="        counter += 1;"></div><div data-l=""></div><div data-l="        if counter == 10 {"></div><div data-l="            break counter * 2;"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    assert_eq!(result, 20);"></div><div data-l="}"></div></div>

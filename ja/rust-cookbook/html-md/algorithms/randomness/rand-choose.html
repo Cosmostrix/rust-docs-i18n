@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h2>Create random passwords from a set of user-defined characters</h2>
+<br>
+<p><a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>Randomly generates a string of given length ASCII characters with custom user-defined bytestring, with <a class="notranslate" href="#4`choose`">`choose`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use rand::{thread_rng, Rng};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    const CHARSET: &amp;[u8] =  b&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ\"></div><div data-l="    abcdefghijklmnopqrstuvwxyz\"></div><div data-l="    0123456789)(*&amp;^%$#@!~&quot;;"></div><div data-l=""></div><div data-l="    let mut rng = thread_rng();"></div><div data-l="    let password: Option&lt;String&gt; = (0..30)"></div><div data-l="        .map(|_| Some(*rng.choose(CHARSET)? as char))"></div><div data-l="        .collect();"></div><div data-l=""></div><div data-l="    println!(&quot;{:?}&quot;, password);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/trait.Rng.html#method.choose">`choose`</a>

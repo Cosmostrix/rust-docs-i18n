@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<h1><code>used</code></h1>
+<br>
+<p>The tracking issue for this feature
+is: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/40289">40289</a>.</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>#[used]</code> attribute can be applied to <code>static</code> variables to prevent the Rust
+compiler from optimizing them away even if they appear to be unused by the crate
+(appear to be &quot;dead code&quot;).</p>
+<br>
+<div data-lang=" rust"><div data-l="#![feature(used)]"></div><div data-l=""></div><div data-l="#[used]"></div><div data-l="static FOO: i32 = 1;"></div><div data-l=""></div><div data-l="static BAR: i32 = 2;"></div><div data-l=""></div><div data-l="fn main() {}"></div></div>
+<br>
+<p>If you compile this program into an object file, you'll see that <code>FOO</code> makes it
+to the object file but <code>BAR</code> doesn't. Neither static variable is used by the
+program.</p>
+<br>
+<div data-lang=" text"><div data-l="$ rustc -C opt-level=3 --emit=obj used.rs"></div><div data-l=""></div><div data-l="$ nm -C used.o"></div><div data-l="0000000000000000 T main"></div><div data-l="                 U std::rt::lang_start"></div><div data-l="0000000000000000 r used::FOO"></div><div data-l="0000000000000000 t used::main"></div></div>
+<br>
+<p>Note that the <i>linker</i> knows nothing about the <code>#[used]</code> attribute and will
+remove <code>#[used]</code> symbols if they are not referenced by other parts of the
+program:</p>
+<br>
+<div data-lang=" text"><div data-l="$ rustc -C opt-level=3 used.rs"></div><div data-l=""></div><div data-l="$ nm -C used | grep FOO"></div></div>
+<br>
+<p>&quot;This doesn't sound too useful then!&quot; you may think but keep reading.</p>
+<br>
+<p>To preserve the symbols all the way to the final binary, you'll need the
+cooperation of the linker. Here's one example:</p>
+<br>
+<p>The ELF standard defines two special sections, <code>.init_array</code> and
+<code>.pre_init_array</code>, that may contain function pointers which will be executed
+<i>before</i> the <code>main</code> function is invoked. The linker will preserve symbols placed
+in these sections (at least when linking programs that target the <code>*-*-linux-*</code>
+targets).</p>
+<br>
+<div data-lang=" rust,ignore"><div data-l="#![feature(used)]"></div><div data-l=""></div><div data-l="extern &quot;C&quot; fn before_main() {"></div><div data-l="    println!(&quot;Hello, world!&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[link_section = &quot;.init_array&quot;]"></div><div data-l="#[used]"></div><div data-l="static INIT_ARRAY: [extern &quot;C&quot; fn(); 1] = [before_main];"></div><div data-l=""></div><div data-l="fn main() {}"></div></div>
+<br>
+<p>So, <code>#[used]</code> and <code>#[link_section]</code> can be combined to obtain &quot;life before
+main&quot;.</p>
+<br>
+<div data-lang=" text"><div data-l="$ rustc -C opt-level=3 before-main.rs"></div><div data-l=""></div><div data-l="$ ./before-main"></div><div data-l="Hello, world!"></div></div>
+<br>
+<p>Another example: ARM Cortex-M microcontrollers need their reset handler, a
+pointer to the function that will executed right after the microcontroller is
+turned on, to be placed near the start of their FLASH memory to boot properly.</p>
+<br>
+<p>This condition can be met using <code>#[used]</code> and <code>#[link_section]</code> plus a linker
+script.</p>
+<br>
+<div data-lang=" rust,ignore"><div data-l="#![feature(panic_implementation)]"></div><div data-l="#![feature(used)]"></div><div data-l="#![no_main]"></div><div data-l="#![no_std]"></div><div data-l=""></div><div data-l="use core::panic::PanicInfo;"></div><div data-l=""></div><div data-l="extern &quot;C&quot; fn reset_handler() -&gt; ! {"></div><div data-l="    loop {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[link_section = &quot;.reset_handler&quot;]"></div><div data-l="#[used]"></div><div data-l="static RESET_HANDLER: extern &quot;C&quot; fn() -&gt; ! = reset_handler;"></div><div data-l=""></div><div data-l="#[panic_implementation]"></div><div data-l="fn panic_impl(info: &amp;PanicInfo) -&gt; ! {"></div><div data-l="    loop {}"></div><div data-l="}"></div></div>
+<br>
+<div data-lang=" text"><div data-l="MEMORY"></div><div data-l="{"></div><div data-l="  FLASH : ORIGIN = 0x08000000, LENGTH = 128K"></div><div data-l="  RAM : ORIGIN = 0x20000000, LENGTH = 20K"></div><div data-l="}"></div><div data-l=""></div><div data-l="SECTIONS"></div><div data-l="{"></div><div data-l="  .text ORIGIN(FLASH) :"></div><div data-l="  {"></div><div data-l="    /* Vector table */"></div><div data-l="    LONG(ORIGIN(RAM) + LENGTH(RAM)); /* initial SP value */"></div><div data-l="    KEEP(*(.reset_handler));"></div><div data-l=""></div><div data-l="    /* Omitted: The rest of the vector table */"></div><div data-l=""></div><div data-l="    *(.text.*);"></div><div data-l="  } &gt; FLASH"></div><div data-l=""></div><div data-l="  /DISCARD/ :"></div><div data-l="  {"></div><div data-l="    /* Unused unwinding stuff */"></div><div data-l="    *(.ARM.exidx.*)"></div><div data-l="  }"></div><div data-l="}"></div></div>
+<br>
+<div data-lang=" text"><div data-l="$ xargo rustc --target thumbv7m-none-eabi --release -- \"></div><div data-l="    -C link-arg=-Tlink.x -C link-arg=-nostartfiles"></div><div data-l=""></div><div data-l="$ arm-none-eabi-objdump -Cd target/thumbv7m-none-eabi/release/app"></div><div data-l="./target/thumbv7m-none-eabi/release/app:     file format elf32-littlearm"></div><div data-l=""></div><div data-l=""></div><div data-l="Disassembly of section .text:"></div><div data-l=""></div><div data-l="08000000 &lt;app::RESET_HANDLER-0x4&gt;:"></div><div data-l=" 8000000:       20005000        .word   0x20005000"></div><div data-l=""></div><div data-l="08000004 &lt;app::RESET_HANDLER&gt;:"></div><div data-l=" 8000004:       08000009                                ...."></div><div data-l=""></div><div data-l="08000008 &lt;app::reset_handler&gt;:"></div><div data-l=" 8000008:       e7fe            b.n     8000008 &lt;app::reset_handler&gt;"></div></div>

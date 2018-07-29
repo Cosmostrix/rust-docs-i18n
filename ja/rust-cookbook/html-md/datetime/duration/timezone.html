@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Convert a local time to another timezone</h2>
+<br>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Gets the local time and displays it using <a class="notranslate" href="#4`offset::Local::now`">`offset::Local::now`</a> and then converts it to the UTC standard using the <a class="notranslate" href="#4`DateTime::from_utc`">`DateTime::from_utc`</a> struct method. A time is then converted using the <a class="notranslate" href="#4`offset::FixedOffset`">`offset::FixedOffset`</a> struct and the UTC time is then converted to UTC+8 and UTC-2.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l=""></div><div data-l="use chrono::{DateTime, FixedOffset, Local, Utc};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let local_time = Local::now();"></div><div data-l="    let utc_time = DateTime::&lt;Utc&gt;::from_utc(local_time.naive_utc(), Utc);"></div><div data-l="    let china_timezone = FixedOffset::east(8 * 3600);"></div><div data-l="    let rio_timezone = FixedOffset::west(2 * 3600);"></div><div data-l="    println!(&quot;Local time now is {}&quot;, local_time);"></div><div data-l="    println!(&quot;UTC time now is {}&quot;, utc_time);"></div><div data-l="    println!("></div><div data-l="        &quot;Time in Hong Kong now is {}&quot;,"></div><div data-l="        utc_time.with_timezone(&amp;china_timezone)"></div><div data-l="    );"></div><div data-l="    println!(&quot;Time in Rio de Janeiro now is {}&quot;, utc_time.with_timezone(&amp;rio_timezone));"></div><div data-l="}"></div></div>
+<br>
+<p><a class="notranslate" href="#4`DateTime::from_utc`">`DateTime::from_utc`</a>:https://docs.rs/chrono/<i>/chrono/struct.DateTime.html#method.from_utc
+[`offset::FixedOffset`]: https://docs.rs/chrono/</i>/chrono/offset/struct.FixedOffset.html
+<a class="notranslate" href="#4`offset::Local::now`">`offset::Local::now`</a>: https://docs.rs/chrono/*/chrono/offset/struct.Local.html#method.now</p>

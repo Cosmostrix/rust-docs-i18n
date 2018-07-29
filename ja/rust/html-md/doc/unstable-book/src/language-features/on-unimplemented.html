@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1><code>on_unimplemented</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29628">#29628</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29628">#29628</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>on_unimplemented</code> feature provides the <code>#[rustc_on_unimplemented]</code>
+attribute, which allows trait definitions to add specialized notes to error
+messages when an implementation was expected but not found.</p>
+<br>
+<p>For example:</p>
+<br>
+<div data-lang="rust,compile_fail"><div data-l="#![feature(on_unimplemented)]"></div><div data-l=""></div><div data-l="#[rustc_on_unimplemented=&quot;an iterator over elements of type `{A}` \"></div><div data-l="    cannot be built from a collection of type `{Self}`&quot;]"></div><div data-l="trait MyIterator&lt;A&gt; {"></div><div data-l="    fn next(&amp;mut self) -&gt; A;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn iterate_chars&lt;I: MyIterator&lt;char&gt;&gt;(i: I) {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    iterate_chars(&amp;[1, 2, 3][..]);"></div><div data-l="}"></div></div>
+<br>
+<p>When the user compiles this, they will see the following;</p>
+<br>
+<div data-lang="txt"><div data-l="error[E0277]: the trait bound `&amp;[{integer}]: MyIterator&lt;char&gt;` is not satisfied"></div><div data-l="  --&gt; &lt;anon&gt;:14:5"></div><div data-l="   |"></div><div data-l="14 |     iterate_chars(&amp;[1, 2, 3][..]);"></div><div data-l="   |     ^^^^^^^^^^^^^ an iterator over elements of type `char` cannot be built from a collection of type `&amp;[{integer}]`"></div><div data-l="   |"></div><div data-l="   = help: the trait `MyIterator&lt;char&gt;` is not implemented for `&amp;[{integer}]`"></div><div data-l="   = note: required by `iterate_chars`"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div></div>
+<br>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h2>Create and delete Gist with GitHub API</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3serde">!<a class="notranslate" href="#4serde-badge">serde-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>Creates a gist with POST request to GitHub <a href="#2https://developer.github.com/v3/gists/">gists API v3</a>
+using <a class="notranslate" href="#4`Client::post`">`Client::post`</a> and removes it with DELETE request using <a class="notranslate" href="#4`Client::delete`">`Client::delete`</a>.</p>
+<br>
+<p>The <a class="notranslate" href="#4`reqwest::Client`">`reqwest::Client`</a> is responsible for details of both requests including
+URL, body and authentication. The POST body from <a class="notranslate" href="#4`serde_json::json!`">`serde_json::json!`</a> macro
+provides arbitrary JSON body. Call to <a class="notranslate" href="#4`RequestBuilder::json`">`RequestBuilder::json`</a> sets the request
+body. <a class="notranslate" href="#4`RequestBuilder::basic_auth`">`RequestBuilder::basic_auth`</a> handles authentication. The call to
+<a class="notranslate" href="#4`RequestBuilder::send`">`RequestBuilder::send`</a> synchronously executes the requests.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde_derive;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde_json;"></div><div data-l=""></div><div data-l="use std::env;"></div><div data-l="use reqwest::Client;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         EnvVar(env::VarError);"></div><div data-l="#         HttpRequest(reqwest::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="#[derive(Deserialize, Debug)]"></div><div data-l="struct Gist {"></div><div data-l="    id: String,"></div><div data-l="    html_url: String,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let gh_user = env::var(&quot;GH_USER&quot;)?;"></div><div data-l="    let gh_pass = env::var(&quot;GH_PASS&quot;)?;"></div><div data-l=""></div><div data-l="    let gist_body = json!({"></div><div data-l="        &quot;description&quot;: &quot;the description for this gist&quot;,"></div><div data-l="        &quot;public&quot;: true,"></div><div data-l="        &quot;files&quot;: {"></div><div data-l="             &quot;main.rs&quot;: {"></div><div data-l="             &quot;content&quot;: r#&quot;fn main() { println!(&quot;hello world!&quot;);}&quot;#"></div><div data-l="            }"></div><div data-l="        }});"></div><div data-l=""></div><div data-l="    let request_url = &quot;https://api.github.com/gists&quot;;"></div><div data-l="    let mut response = Client::new()"></div><div data-l="        .post(request_url)"></div><div data-l="        .basic_auth(gh_user.clone(), Some(gh_pass.clone()))"></div><div data-l="        .json(&amp;gist_body)"></div><div data-l="        .send()?;"></div><div data-l=""></div><div data-l="    let gist: Gist = response.json()?;"></div><div data-l="    println!(&quot;Created {:?}&quot;, gist);"></div><div data-l=""></div><div data-l="    let request_url = format!(&quot;{}/{}&quot;,request_url, gist.id);"></div><div data-l="    let response = Client::new()"></div><div data-l="        .delete(&amp;request_url)"></div><div data-l="        .basic_auth(gh_user, Some(gh_pass))"></div><div data-l="        .send()?;"></div><div data-l=""></div><div data-l="    println!(&quot;Gist {} deleted! Status code: {}&quot;,gist.id, response.status());"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<p>The example uses <a class="notranslate" href="#4HTTP Basic Auth">HTTP Basic Auth</a> in order to authorize access to <a class="notranslate" href="#4GitHub API">GitHub API</a>.
+Typical use case would employ one of the much more complex <a class="notranslate" href="#4OAuth">OAuth</a> authorization
+flows.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html#method.delete">`Client::delete`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html#method.post">`Client::post`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.basic_auth">`RequestBuilder::basic_auth`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.json">`RequestBuilder::json`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.send">`RequestBuilder::send`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html">`reqwest::Client`</a>
+<a class="notranslate" href="#1https://docs.rs/serde_json/*/serde_json/macro.json.html">`serde_json::json!`</a>
+<br>
+<a class="notranslate" href="#1https://developer.github.com/v3/auth/">GitHub API</a>
+<a class="notranslate" href="#1https://tools.ietf.org/html/rfc2617">HTTP Basic Auth</a>
+<a class="notranslate" href="#1https://oauth.net/getting-started/">OAuth</a>

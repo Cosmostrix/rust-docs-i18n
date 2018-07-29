@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<h1>Crates and source files</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Crate</s> :\
+&amp;nbsp;&amp;nbsp; UTF8BOM<sup>?</sup>\
+&amp;nbsp;&amp;nbsp; SHEBANG<sup>?</sup>\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_InnerAttribute_">_InnerAttribute_</a><sup>\<i>&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; [_Item_]&lt;sup&gt;\</i></sup></p></blockquote>
+<br>
+<blockquote><p><b>&lt;sup&gt;Lexer&lt;/sup&gt;</b>\
+UTF8BOM : <code>\uFEFF</code>\
+SHEBANG : <code>#€</code> ~<a class="notranslate" href="#4`[` `\n`">`[` `\n`</a> ~<code>\n</code><sup>*</sup></p></blockquote>
+<br>
+<br>
+<blockquote><p>Note: Although Rust, like any other language, can be implemented by an
+interpreter as well as a compiler, the only existing implementation is a
+compiler,and the language has always been designed to be compiled. For these
+reasons, this section assumes a compiler.</p></blockquote>
+<br>
+<p>Rust's semantics obey a <i>phase distinction</i> between compile-time and
+run-time.<a class="notranslate" href="#4^phase-distinction">^phase-distinction</a> Semantic rules that have a <i>static
+interpretation</i> govern the success or failure of compilation, while
+semantic rules
+that have a <i>dynamic interpretation</i> govern the behavior of the program at
+run-time.</p>
+<br>
+<p>The compilation model centers on artifacts called <s>crates</s>. Each compilation
+processes a single crate in source form, and if successful, produces a single
+crate in binary form: either an executable or some sort of
+library.<a class="notranslate" href="#4^cratesourcefile">^cratesourcefile</a></p>
+<br>
+<p>A <s>crate</s> is a unit of compilation and linking, as well as versioning,
+distribution and runtime loading. A crate contains a <s>tree</s> of nested
+<a class="notranslate" href="#4module">module</a> scopes. The top level of this tree is a module that is
+anonymous (from the point of view of paths within the module) and any item
+within a crate has a canonical <a class="notranslate" href="#4module path">module path</a> denoting its location
+within the crate's module tree.</p>
+<br>
+<p>The Rust compiler is always invoked with a single source file as input, and
+always produces a single output crate. The processing of that source file may
+result in other source files being loaded as modules. Source files have the
+extension <code>.rs</code>.</p>
+<br>
+<p>A Rust source file describes a module, the name and location of which &amp;mdash;
+in the module tree of the current crate &amp;mdash; are defined from outside the
+source file: either by an explicit <code>mod_item</code> in a referencing source file, or
+by the name of the crate itself. Every source file is a module, but not every
+module needs its own source file: <a href="#3module">module definitions</a> can be nested
+within one file.</p>
+<br>
+<p>Each source file contains a sequence of zero or more <code>item</code> definitions, and
+may optionally begin with any number of <a class="notranslate" href="#4attributes">attributes</a>
+that apply to the containing module, most of which influence the behavior of
+the compiler. The anonymous crate module can have additional attributes that
+apply to the crate as a whole.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#// Specify the crate name."></div><div data-l="// ">Specify the crate name.</div><div data-l="#![crate_name = &quot;projx&quot;]"></div><div data-l=""></div><div data-l="#// Specify the type of output artifact."></div><div data-l="// ">Specify the type of output artifact.</div><div data-l="#![crate_type = &quot;lib&quot;]"></div><div data-l=""></div><div data-l="#// Turn on a warning."></div><div data-l="#// This can be done in any module, not just the anonymous crate module."></div><div data-l="// ">Turn on a warning. This can be done in any module, not just the anonymous crate module.</div><div data-l="#![warn(non_camel_case_types)]"></div></div>
+<br>
+<p>A crate that contains a <code>main</code> <a class="notranslate" href="#4function">function</a> can be compiled to an executable. If a
+<code>main</code> function is present, it must take no arguments, must not declare any
+<a class="notranslate" href="#4trait or lifetime bounds">trait or lifetime bounds</a>, must not have any <a class="notranslate" href="#4where clauses">where clauses</a>, and  its return
+type must  be one of the following:</p>
+<br>
+<div data-b="*"><code>()</code></div>
+<p><!-- * `!` -->
+* <code>Result&lt;T, E&gt; where T: on this list, E: Error</code></p>
+<br>
+<blockquote><p>Note: The implementation of which return types are allowed is determined by
+the unstable <a class="notranslate" href="#4`Termination`">`Termination`</a> trait.</p></blockquote>
+<br>
+<p>The optional <a class="notranslate" href="#4_UTF8 byte order mark_">_UTF8 byte order mark_</a> (UTF8BOM production) indicates that the
+file is encoded in UTF8. It can only occur at the beginning of the file and
+is ignored by the compiler.</p>
+<br>
+<p>A source file can have a <a class="notranslate" href="#4_shebang_">_shebang_</a> (SHEBANG production), which indicates
+to the operating system what program to use to execute this file. It serves
+essentially to treat the source file as an executable script. The shebang
+can only occur at the beginning of the file (but after the optional
+<s>UTF8BOM</s>). It is ignored by the compiler. For example:</p>
+<br>
+<div data-lang="text,ignore"><div data-l="#!/usr/bin/env rustx"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1This distinction would also exist in an interpreter.">^phase-distinction</a>
+<p>    Static checks like syntactic analysis, type checking, and lints should
+    happen before the program is executed regardless of when it is executed.</p>
+<br>
+<a class="notranslate" href="#1A crate is somewhat analogous to an *assembly* in the">^cratesourcefile</a>
+<p>    ECMA-335 CLI model, a <i>library</i> in the SML/NJ Compilation Manager, a <i>unit</i>
+    in the Owens and Flatt module system, or a <i>configuration</i> in Mesa.</p>
+<br>
+<a class="notranslate" href="#1items/modules.html">module</a>
+<a class="notranslate" href="#1paths.html">module path</a>
+<a class="notranslate" href="#1attributes.html">attributes</a>
+<a class="notranslate" href="#1types.html#tuple-types">unit</a>
+<a class="notranslate" href="#1attributes.html">_InnerAttribute_</a>
+<a class="notranslate" href="#1items.html">_Item_</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Shebang_(Unix)">_shebang_</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8">_utf8 byte order mark_</a>
+<a class="notranslate" href="#1items/functions.html">function</a>
+<a class="notranslate" href="#1../std/process/trait.Termination.html">`Termination`</a>
+<a class="notranslate" href="#1items/where-clauses.html">where clause</a>
+<a class="notranslate" href="#1trait-bounds.html">trait or lifetime bounds</a>

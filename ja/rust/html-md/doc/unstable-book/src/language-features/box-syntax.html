@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h1><code>box_syntax</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#49733">#49733</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/49733">#49733</a>
+<br>
+<p>See also <a class="notranslate" href="#2language-features/box-patterns.html"><code>box_patterns</code></a></p>
+<br>
+<p>------------------------</p>
+<br>
+<p>Currently the only stable way to create a <code>Box</code> is via the <code>Box::new</code> method.
+Also it is not possible in stable Rust to destructure a <code>Box</code> in a match
+pattern. The unstable <code>box</code> keyword can be used to create a <code>Box</code>. An example
+usage would be:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(box_syntax)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let b = box 5;"></div><div data-l="}"></div></div>

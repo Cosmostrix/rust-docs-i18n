@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<h1>Parameter Environment</h1>
+<br>
+<p>When working with associated and/or or generic items (types, constants,
+functions/methods) it is often relevant to have more information about the
+<code>Self</code> or generic parameters. Trait bounds and similar information is encoded in
+the <code>ParamEnv</code>. Often this is not enough information to obtain things like the
+type's <code>Layout</code>, but you can do all kinds of other checks on it (e.g. whether a
+type implements <code>Copy</code>) or you can evaluate an associated constant whose value
+does not depend on anything from the parameter environment.</p>
+<br>
+<p>For example if you have a function</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo&lt;T: Copy&gt;(t: T) {"></div><div data-l="}"></div></div>
+<br>
+<p>the parameter environment for that function is <code>[T: Copy]</code>. This means any
+evaluation within this function will, when accessing the type <code>T</code>, know about
+its <code>Copy</code> bound via the parameter environment.</p>
+<br>
+<p>Although you can obtain a valid <code>ParamEnv</code> for any item via
+<code>tcx.param_env(def_id)</code>, this <code>ParamEnv</code> can be too generic for your use case.
+Using the <code>ParamEnv</code> from the surrounding context can allow you to evaluate more
+things.</p>
+<br>
+<p>Another great thing about <code>ParamEnv</code> is that you can use it to bundle the thing
+depending on generic parameters (e.g. a <code>Ty</code>) by calling <code>param_env.and(ty)</code>.
+This will produce a <code>ParamEnvAnd&lt;Ty&gt;</code>, making clear that you should probably not
+be using the inner value without taking care to also use the <code>ParamEnv</code>.</p>

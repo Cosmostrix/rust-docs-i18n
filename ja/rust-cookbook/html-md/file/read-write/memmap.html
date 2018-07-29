@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Access a file randomly using a memory map</h2>
+<br>
+<p><a href="#3memmap">!<a class="notranslate" href="#4memmap-badge">memmap-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Creates a memory map of a file using <a class="notranslate" href="#4memmap">memmap</a> and simulates some non-sequential
+reads from the file. Using a memory map means you just index into a slice rather
+than dealing with <a class="notranslate" href="#4`seek`">`seek`</a> to navigate a File.</p>
+<br>
+<p>The <a class="notranslate" href="#4`Mmap::map`">`Mmap::map`</a> function assumes the file
+behind the memory map is not being modified at the same time by another process
+or else a <a class="notranslate" href="#4race condition">race condition</a> occurs.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate memmap;"></div><div data-l=""></div><div data-l="use memmap::Mmap;"></div><div data-l="# use std::fs::File;"></div><div data-l="# use std::io::Write;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="#     write!(File::create(&quot;content.txt&quot;)?, &quot;My hovercraft is full of eels!&quot;)?;"></div><div data-l="#"></div><div data-l="    let file = File::open(&quot;content.txt&quot;)?;"></div><div data-l="    let map = unsafe { Mmap::map(&amp;file)? };"></div><div data-l=""></div><div data-l="    let random_indexes = [0, 1, 2, 19, 22, 10, 11, 29];"></div><div data-l="    assert_eq!(&amp;map[3..13], b&quot;hovercraft&quot;);"></div><div data-l="    let random_bytes: Vec&lt;u8&gt; = random_indexes.iter()"></div><div data-l="        .map(|&amp;idx| map[idx])"></div><div data-l="        .collect();"></div><div data-l="    assert_eq!(&amp;random_bytes[..], b&quot;My loaf!&quot;);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/memmap/*/memmap/struct.Mmap.html#method.map">`Mmap::map`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html#method.seek">`seek`</a>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Race_condition#File_systems">race condition</a>

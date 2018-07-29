@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<h1>Lifetimes</h1>
+<br>
+<p>Rust enforces these rules through <i>lifetimes</i>. Lifetimes are effectively
+just names for scopes somewhere in the program. Each reference,
+and anything that contains a reference, is tagged with a lifetime specifying
+the scope it's valid for.</p>
+<br>
+<p>Within a function body, Rust generally doesn't let you explicitly name the
+lifetimes involved. This is because it's generally not really necessary
+to talk about lifetimes in a local context; Rust has all the information and
+can work out everything as optimally as possible. Many anonymous scopes and
+temporaries that you would otherwise have to write are often introduced to
+make your code Just Work.</p>
+<br>
+<p>However once you cross the function boundary, you need to start talking about
+lifetimes. Lifetimes are denoted with an apostrophe: <code>'a</code>, <code>'static</code>. To dip
+our toes with lifetimes, we're going to pretend that we're actually allowed
+to label scopes with lifetimes, and desugar the examples from the start of
+this chapter.</p>
+<br>
+<p>Originally, our examples made use of <i>aggressive</i> sugar -- high fructose corn
+syrup even -- around scopes and lifetimes, because writing everything out
+explicitly is <i>extremely noisy</i>. All Rust code relies on aggressive inference
+and elision of &quot;obvious&quot; things.</p>
+<br>
+<p>One particularly interesting piece of sugar is that each <code>let</code> statement implicitly
+introduces a scope. For the most part, this doesn't really matter. However it
+does matter for variables that refer to each other. As a simple example, let's
+completely desugar this simple piece of Rust code:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 0;"></div><div data-l="let y = &amp;x;"></div><div data-l="let z = &amp;y;"></div></div>
+<br>
+<p>The borrow checker always tries to minimize the extent of a lifetime, so it will
+likely desugar to the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// NOTE: `'a: {` and `&amp;'b x` is not valid syntax!"></div><div data-l="// ">NOTE: <code>'a: {</code> and <code>&amp;'b x</code> is not valid syntax!</div><div data-l="'a: {"></div><div data-l="    let x: i32 = 0;"></div><div data-l="    'b: {"></div><div data-l="#        // lifetime used is 'b because that's good enough."></div><div data-l="        // ">lifetime used is 'b because that's good enough.</div><div data-l="        let y: &amp;'b i32 = &amp;'b x;"></div><div data-l="        'c: {"></div><div data-l="#            // ditto on 'c"></div><div data-l="            // ">ditto on 'c</div><div data-l="            let z: &amp;'c &amp;'b i32 = &amp;'c y;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Wow. That's... awful. Let's all take a moment to thank Rust for making this easier.</p>
+<br>
+<p>Actually passing references to outer scopes will cause Rust to infer
+a larger lifetime:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 0;"></div><div data-l="let z;"></div><div data-l="let y = &amp;x;"></div><div data-l="z = y;"></div></div>
+<br>
+<div data-lang="rust,ignore"><div data-l="'a: {"></div><div data-l="    let x: i32 = 0;"></div><div data-l="    'b: {"></div><div data-l="        let z: &amp;'b i32;"></div><div data-l="        'c: {"></div><div data-l="#            // Must use 'b here because this reference is"></div><div data-l="#            // being passed to that scope."></div><div data-l="            // ">Must use 'b here because this reference is being passed to that scope.</div><div data-l="            let y: &amp;'b i32 = &amp;'b x;"></div><div data-l="            z = y;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<br>
+<br>
+<h1>Example: references that outlive referents</h1>
+<br>
+<p>Alright, let's look at some of those examples from before:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn as_str(data: &amp;u32) -&gt; &amp;str {"></div><div data-l="    let s = format!(&quot;{}&quot;, data);"></div><div data-l="    &amp;s"></div><div data-l="}"></div></div>
+<br>
+<p>desugars to:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn as_str&lt;'a&gt;(data: &amp;'a u32) -&gt; &amp;'a str {"></div><div data-l="    'b: {"></div><div data-l="        let s = format!(&quot;{}&quot;, data);"></div><div data-l="        return &amp;'a s;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This signature of <code>as_str</code> takes a reference to a u32 with <i>some</i> lifetime, and
+promises that it can produce a reference to a str that can live <i>just as long</i>.
+Already we can see why this signature might be trouble. That basically implies
+that we're going to find a str somewhere in the scope the reference
+to the u32 originated in, or somewhere <i>even earlier</i>. That's a bit of a tall
+order.</p>
+<br>
+<p>We then proceed to compute the string <code>s</code>, and return a reference to it. Since
+the contract of our function says the reference must outlive <code>'a</code>, that's the
+lifetime we infer for the reference. Unfortunately, <code>s</code> was defined in the
+scope <code>'b</code>, so the only way this is sound is if <code>'b</code> contains <code>'a</code> -- which is
+clearly false since <code>'a</code> must contain the function call itself. We have therefore
+created a reference whose lifetime outlives its referent, which is <i>literally</i>
+the first thing we said that references can't do. The compiler rightfully blows
+up in our face.</p>
+<br>
+<p>To make this more clear, we can expand the example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn as_str&lt;'a&gt;(data: &amp;'a u32) -&gt; &amp;'a str {"></div><div data-l="    'b: {"></div><div data-l="        let s = format!(&quot;{}&quot;, data);"></div><div data-l="        return &amp;'a s"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    'c: {"></div><div data-l="        let x: u32 = 0;"></div><div data-l="        'd: {"></div><div data-l="#            // An anonymous scope is introduced because the borrow does not"></div><div data-l="#            // need to last for the whole scope x is valid for. The return"></div><div data-l="#            // of as_str must find a str somewhere before this function"></div><div data-l="#            // call. Obviously not happening."></div><div data-l="            // ">An anonymous scope is introduced because the borrow does not need to last for the whole scope x is valid for. The return of as_str must find a str somewhere before this function call. Obviously not happening.</div><div data-l="            println!(&quot;{}&quot;, as_str::&lt;'d&gt;(&amp;'d x));"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Shoot!</p>
+<br>
+<p>Of course, the right way to write this function is as follows:</p>
+<br>
+<div data-lang="rust"><div data-l="fn to_string(data: &amp;u32) -&gt; String {"></div><div data-l="    format!(&quot;{}&quot;, data)"></div><div data-l="}"></div></div>
+<br>
+<p>We must produce an owned value inside the function to return it! The only way
+we could have returned an <code>&amp;'a str</code> would have been if it was in a field of the
+<code>&amp;'a u32</code>, which is obviously not the case.</p>
+<br>
+<p>(Actually we could have also just returned a string literal, which as a global
+can be considered to reside at the bottom of the stack; though this limits
+our implementation <i>just a bit</i>.)</p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h1>Example: aliasing a mutable reference</h1>
+<br>
+<p>How about the other example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut data = vec![1, 2, 3];"></div><div data-l="let x = &amp;data[0];"></div><div data-l="data.push(4);"></div><div data-l="println!(&quot;{}&quot;, x);"></div></div>
+<br>
+<div data-lang="rust,ignore"><div data-l="'a: {"></div><div data-l="    let mut data: Vec&lt;i32&gt; = vec![1, 2, 3];"></div><div data-l="    'b: {"></div><div data-l="#        // 'b is as big as we need this borrow to be"></div><div data-l="#        // (just need to get to `println!`)"></div><div data-l="        // ">'b is as big as we need this borrow to be (just need to get to <code>println€</code>)</div><div data-l="        let x: &amp;'b i32 = Index::index::&lt;'b&gt;(&amp;'b data, 0);"></div><div data-l="        'c: {"></div><div data-l="#            // Temporary scope because we don't need the"></div><div data-l="#            // &amp;mut to last any longer."></div><div data-l="            // ">Temporary scope because we don't need the &amp;mut to last any longer.</div><div data-l="            Vec::push(&amp;'c mut data, 4);"></div><div data-l="        }"></div><div data-l="        println!(&quot;{}&quot;, x);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The problem here is a bit more subtle and interesting. We want Rust to
+reject this program for the following reason: We have a live shared reference <code>x</code>
+to a descendant of <code>data</code> when we try to take a mutable reference to <code>data</code>
+to <code>push</code>. This would create an aliased mutable reference, which would
+violate the <i>second</i> rule of references.</p>
+<br>
+<p>However this is <i>not at all</i> how Rust reasons that this program is bad. Rust
+doesn't understand that <code>x</code> is a reference to a subpath of <code>data</code>. It doesn't
+understand Vec at all. What it <i>does</i> see is that <code>x</code> has to live for <code>'b</code> to
+be printed. The signature of <code>Index::index</code> subsequently demands that the
+reference we take to <code>data</code> has to survive for <code>'b</code>. When we try to call <code>push</code>,
+it then sees us try to make an <code>&amp;'c mut data</code>. Rust knows that <code>'c</code> is contained
+within <code>'b</code>, and rejects our program because the <code>&amp;'b data</code> must still be live!</p>
+<br>
+<p>Here we see that the lifetime system is much more coarse than the reference
+semantics we're actually interested in preserving. For the most part, <i>that's
+totally ok</i>, because it keeps us from spending all day explaining our program
+to the compiler. However it does mean that several programs that are totally
+correct with respect to Rust's <i>true</i> semantics are rejected because lifetimes
+are too dumb.</p>

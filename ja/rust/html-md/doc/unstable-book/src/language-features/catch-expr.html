@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h1><code>catch_expr</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#31436">#31436</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/31436">#31436</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>catch_expr</code> feature adds support for a <code>catch</code> expression. The <code>catch</code>
+expression creates a new scope one can use the <code>?</code> operator in.</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(catch_expr)]"></div><div data-l=""></div><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="let result: Result&lt;i32, ParseIntError&gt; = do catch {"></div><div data-l="    &quot;1&quot;.parse::&lt;i32&gt;()?"></div><div data-l="        + &quot;2&quot;.parse::&lt;i32&gt;()?"></div><div data-l="        + &quot;3&quot;.parse::&lt;i32&gt;()?"></div><div data-l="};"></div><div data-l="assert_eq!(result, Ok(6));"></div><div data-l=""></div><div data-l="let result: Result&lt;i32, ParseIntError&gt; = do catch {"></div><div data-l="    &quot;1&quot;.parse::&lt;i32&gt;()?"></div><div data-l="        + &quot;foo&quot;.parse::&lt;i32&gt;()?"></div><div data-l="        + &quot;3&quot;.parse::&lt;i32&gt;()?"></div><div data-l="};"></div><div data-l="assert!(result.is_err());"></div></div>

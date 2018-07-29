@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h1>Unsafe Operations</h1>
+<br>
+<p>As an introduction to this section, to borrow from <a href="#3unsafe">the official docs</a>,
+&quot;one should try to minimize the amount of unsafe code in a code base.&quot; With that
+in mind, let's get started! Unsafe blocks in Rust are used to bypass protections
+put in place by the compiler; specifically, there are four primary things that
+unsafe blocks are used for:</p>
+<br>
+<div data-b="*">dereferencing raw pointers</div>
+<div data-b="*">calling a function over FFI (but this is covered in <a href="#2std_misc/ffi.html">a previous
+  chapter</a> of the book)</div>
+<div data-b="*">calling functions which are <code>unsafe</code></div>
+<div data-b="*">inline assembly</div>
+<br>
+<h3>Raw Pointers</h3>
+<p>Raw pointers <code>*</code> and references <code>&amp;T</code> function similarly, but references are
+always safe because they are guaranteed to point to valid data due to the
+borrow checker. Dereferencing a raw pointer can only be done through an unsafe
+block.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let raw_p: *const u32 = &amp;10;"></div><div data-l=""></div><div data-l="    unsafe {"></div><div data-l="        assert!(*raw_p == 10);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>Calling Unsafe Functions</h3>
+<p>Some functions can be declared as <code>unsafe</code>, meaning it is the programmer's
+responsibility to ensure correctness instead of the compiler's. One example
+of this is <a class="notranslate" href="#4`std::slice::from_raw_parts`">`std::slice::from_raw_parts`</a> which will create a slice given a
+pointer to the first element and a length.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::slice;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let some_vector = vec![1, 2, 3, 4];"></div><div data-l=""></div><div data-l="    let pointer = some_vector.as_ptr();"></div><div data-l="    let length = some_vector.len();"></div><div data-l=""></div><div data-l="    unsafe {"></div><div data-l="        let my_slice: &amp;[u32] = slice::from_raw_parts(pointer, length);"></div><div data-l="        "></div><div data-l="        assert_eq!(some_vector.as_slice(), my_slice);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>For <code>slice::from_raw_parts</code>, one of the assumptions which <i>must</i> be upheld is 
+that the pointer passed in points to valid memory and that the memory pointed to
+is of the correct type. If these invariants aren't upheld then the program's 
+behaviour is undefined and there is no knowing what will happen.</p>
+<br>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/second-edition/ch19-01-unsafe-rust.html">unsafe</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/slice/fn.from_raw_parts.html">`std::slice::from_raw_parts`</a>

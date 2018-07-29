@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<h2>Building a Single-Threaded Web Server</h2>
+<br>
+<p>We’ll start by getting a single-threaded web server working. Before we begin,
+let’s look at a quick overview of the protocols involved in building web
+servers. The details of these protocols are beyond the scope of this book, but
+a brief overview will give you the information you need.</p>
+<br>
+<p>The two main protocols involved in web servers are the <i>Hypertext Transfer
+Protocol</i> <i>(HTTP)</i> and the <i>Transmission Control Protocol</i> <i>(TCP)</i>. Both
+protocols are <i>request-response</i> protocols, meaning a <i>client</i> initiates
+requests and a <i>server</i> listens to the requests and provides a response to the
+client. The contents of those requests and responses are defined by the
+protocols.</p>
+<br>
+<p>TCP is the lower-level protocol that describes the details of how information
+gets from one server to another but doesn’t specify what that information is.
+HTTP builds on top of TCP by defining the contents of the requests and
+responses. It’s technically possible to use HTTP with other protocols, but in
+the vast majority of cases, HTTP sends its data over TCP. We’ll work with the
+raw bytes of TCP and HTTP requests and responses.</p>
+<br>
+<h3>Listening to the TCP Connection</h3>
+<br>
+<p>Our web server needs to listen to a TCP connection, so that’s the first part
+we’ll work on. The standard library offers a <code>std::net</code> module that lets us do
+this. Let’s make a new project in the usual fashion:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo new hello"></div><div data-l="     Created binary (application) `hello` project"></div><div data-l="$ cd hello"></div></div>
+<br>
+<p>Now enter the code in Listing 20-1 in <i>src/main.rs</i> to start. This code will
+listen at the address <code>127.0.0.1:7878</code> for incoming TCP streams. When it gets
+an incoming stream, it will print <code>Connection established€</code>.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::net::TcpListener;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l=""></div><div data-l="    for stream in listener.incoming() {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        println!(&quot;Connection established!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-1: Listening for incoming streams and printing
+a message when we receive a stream</span></p>
+<br>
+<p>Using <code>TcpListener</code>, we can listen for TCP connections at the address
+<code>127.0.0.1:7878</code>. In the address, the section before the colon is an IP address
+representing your computer (this is the same on every computer and doesn’t
+represent the authors’ computer specifically), and <code>7878</code> is the port. We’ve
+chosen this port for two reasons: HTTP is normally accepted on this port, and
+7878 is <i>rust</i> typed on a telephone.</p>
+<br>
+<p>The <code>bind</code> function in this scenario works like the <code>new</code> function in that it
+will return a new <code>TcpListener</code> instance. The reason the function is called
+<code>bind</code> is that in networking, connecting to a port to listen to is known as
+“binding to a port.”</p>
+<br>
+<p>The <code>bind</code> function returns a <code>Result&lt;T, E&gt;</code>, which indicates that binding
+might fail. For example, connecting to port 80 requires administrator
+privileges (nonadministrators can listen only on ports higher than 1024), so if
+we tried to connect to port 80 without being an administrator, binding wouldn’t
+work. As another example, binding wouldn’t work if we ran two instances of our
+program and so had two programs listening to the same port. Because we’re
+writing a basic server just for learning purposes, we won’t worry about
+handling these kinds of errors; instead, we use <code>unwrap</code> to stop the program if
+errors happen.</p>
+<br>
+<p>The <code>incoming</code> method on <code>TcpListener</code> returns an iterator that gives us a
+sequence of streams (more specifically, streams of type <code>TcpStream</code>). A single
+<i>stream</i> represents an open connection between the client and the server. A
+<i>connection</i> is the name for the full request and response process in which a
+client connects to the server, the server generates a response, and the server
+closes the connection. As such, <code>TcpStream</code> will read from itself to see what
+the client sent and then allow us to write our response to the stream. Overall,
+this <code>for</code> loop will process each connection in turn and produce a series of
+streams for us to handle.</p>
+<br>
+<p>For now, our handling of the stream consists of calling <code>unwrap</code> to terminate
+our program if the stream has any errors; if there aren’t any errors, the
+program prints a message. We’ll add more functionality for the success case in
+the next listing. The reason we might receive errors from the <code>incoming</code> method
+when a client connects to the server is that we’re not actually iterating over
+connections. Instead, we’re iterating over <i>connection attempts</i>. The
+connection might not be successful for a number of reasons, many of them
+operating system specific. For example, many operating systems have a limit to
+the number of simultaneous open connections they can support; new connection
+attempts beyond that number will produce an error until some of the open
+connections are closed.</p>
+<br>
+<p>Let’s try running this code! Invoke <code>cargo run</code> in the terminal and then load
+<i>127.0.0.1:7878</i> in a web browser. The browser should show an error message
+like “Connection reset,” because the server isn’t currently sending back any
+data. But when you look at your terminal, you should see several messages that
+were printed when the browser connected to the server!</p>
+<br>
+<div data-lang="text"><div data-l="     Running `target/debug/hello`"></div><div data-l="Connection established!"></div><div data-l="Connection established!"></div><div data-l="Connection established!"></div></div>
+<br>
+<p>Sometimes, you’ll see multiple messages printed for one browser request; the
+reason might be that the browser is making a request for the page as well as a
+request for other resources, like the <i>favicon.ico</i> icon that appears in the
+browser tab.</p>
+<br>
+<p>It could also be that the browser is trying to connect to the server multiple
+times because the server isn’t responding with any data. When <code>stream</code> goes out
+of scope and is dropped at the end of the loop, the connection is closed as
+part of the <code>drop</code> implementation. Browsers sometimes deal with closed
+connections by retrying, because the problem might be temporary. The important
+factor is that we’ve successfully gotten a handle to a TCP connection!</p>
+<br>
+<p>Remember to stop the program by pressing <span class="keystroke">ctrl-c</span>
+when you’re done running a particular version of the code. Then restart <code>cargo
+run</code> after you’ve made each set of code changes to make sure you’re running the
+newest code.</p>
+<br>
+<h3>Reading the Request</h3>
+<br>
+<p>Let’s implement the functionality to read the request from the browser! To
+separate the concerns of first getting a connection and then taking some action
+with the connection, we’ll start a new function for processing connections. In
+this new <code>handle_connection</code> function, we’ll read data from the TCP stream and
+print it so we can see the data being sent from the browser. Change the code to
+look like Listing 20-2.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::io::prelude::*;"></div><div data-l="use std::net::TcpStream;"></div><div data-l="use std::net::TcpListener;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l=""></div><div data-l="    for stream in listener.incoming() {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        handle_connection(stream);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="    let mut buffer = [0; 512];"></div><div data-l=""></div><div data-l="    stream.read(&amp;mut buffer).unwrap();"></div><div data-l=""></div><div data-l="    println!(&quot;Request: {}&quot;, String::from_utf8_lossy(&amp;buffer[..]));"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-2: Reading from the <code>TcpStream</code> and printing
+the data</span></p>
+<br>
+<p>We bring <code>std::io::prelude</code> into scope to get access to certain traits that let
+us read from and write to the stream. In the <code>for</code> loop in the <code>main</code> function,
+instead of printing a message that says we made a connection, we now call the
+new <code>handle_connection</code> function and pass the <code>stream</code> to it.</p>
+<br>
+<p>In the <code>handle_connection</code> function, we’ve made the <code>stream</code> parameter mutable.
+The reason is that the <code>TcpStream</code> instance keeps track of what data it returns
+to us internally. It might read more data than we asked for and save that data
+for the next time we ask for data. It therefore needs to be <code>mut</code> because its
+internal state might change; usually, we think of “reading” as not needing
+mutation, but in this case we need the <code>mut</code> keyword.</p>
+<br>
+<p>Next, we need to actually read from the stream. We do this in two steps: first,
+we declare a <code>buffer</code> on the stack to hold the data that is read in. We’ve made
+the buffer 512 bytes in size, which is big enough to hold the data of a basic
+request and sufficient for our purposes in this chapter. If we wanted to handle
+requests of an arbitrary size, buffer management would need to be more
+complicated; we’ll keep it simple for now. We pass the buffer to <code>stream.read</code>,
+which will read bytes from the <code>TcpStream</code> and put them in the buffer.</p>
+<br>
+<p>Second, we convert the bytes in the buffer to a string and print that string.
+The <code>String::from_utf8_lossy</code> function takes a <code>&amp;[u8]</code> and produces a <code>String</code>
+from it. The “lossy” part of the name indicates the behavior of this function
+when it sees an invalid UTF-8 sequence: it will replace the invalid sequence
+with <code>�</code>, the <code>U+FFFD REPLACEMENT CHARACTER</code>. You might see replacement
+characters for characters in the buffer that aren’t filled by request data.</p>
+<br>
+<p>Let’s try this code! Start the program and make a request in a web browser
+again. Note that we’ll still get an error page in the browser, but our
+program’s output in the terminal will now look similar to this:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.42 secs"></div><div data-l="     Running `target/debug/hello`"></div><div data-l="Request: GET / HTTP/1.1"></div><div data-l="Host: 127.0.0.1:7878"></div><div data-l="User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101"></div><div data-l="Firefox/52.0"></div><div data-l="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"></div><div data-l="Accept-Language: en-US,en;q=0.5"></div><div data-l="Accept-Encoding: gzip, deflate"></div><div data-l="Connection: keep-alive"></div><div data-l="Upgrade-Insecure-Requests: 1"></div><div data-l="������������������������������������"></div></div>
+<br>
+<p>Depending on your browser, you might get slightly different output. Now that
+we’re printing the request data, we can see why we get multiple connections
+from one browser request by looking at the path after <code>Request: GET</code>. If the
+repeated connections are all requesting <i>/</i>, we know the browser is trying to
+fetch <i>/</i> repeatedly because it’s not getting a response from our program.</p>
+<br>
+<p>Let’s break down this request data to understand what the browser is asking of
+our program.</p>
+<br>
+<h3>A Closer Look at an HTTP Request</h3>
+<br>
+<p>HTTP is a text-based protocol, and a request takes this format:</p>
+<br>
+<div data-lang="text"><div data-l="Method Request-URI HTTP-Version CRLF"></div><div data-l="headers CRLF"></div><div data-l="message-body"></div></div>
+<br>
+<p>The first line is the <i>request line</i> that holds information about what the
+client is requesting. The first part of the request line indicates the <i>method</i>
+being used, such as <code>GET</code> or <code>POST</code>, which describes how the client is making
+this request. Our client used a <code>GET</code> request.</p>
+<br>
+<p>The next part of the request line is <i>/</i>, which indicates the <i>Uniform Resource
+Identifier</i> <i>(URI)</i> the client is requesting: a URI is almost, but not quite,
+the same as a <i>Uniform Resource Locator</i> <i>(URL)</i>. The difference between URIs
+and URLs isn’t important for our purposes in this chapter, but the HTTP spec
+uses the term URI, so we can just mentally substitute URL for URI here.</p>
+<br>
+<p>The last part is the HTTP version the client uses, and then the request line
+ends in a <i>CRLF sequence</i>. (CRLF stands for <i>carriage return</i> and <i>line feed</i>,
+which are terms from the typewriter days!) The CRLF sequence can also be
+written as <code>\r\n</code>, where <code>\r</code> is a carriage return and <code>\n</code> is a line feed. The
+CRLF sequence separates the request line from the rest of the request data.
+Note that when the CRLF is printed, we see a new line start rather than <code>\r\n</code>.</p>
+<br>
+<p>Looking at the request line data we received from running our program so far,
+we see that <code>GET</code> is the method, <i>/</i> is the request URI, and <code>HTTP/1.1</code> is the
+version.</p>
+<br>
+<p>After the request line, the remaining lines starting from <code>Host:</code> onward are
+headers. <code>GET</code> requests have no body.</p>
+<br>
+<p>Try making a request from a different browser or asking for a different
+address, such as <i>127.0.0.1:7878/test</i>, to see how the request data changes.</p>
+<br>
+<p>Now that we know what the browser is asking for, let’s send back some data!</p>
+<br>
+<h3>Writing a Response</h3>
+<br>
+<p>Now we’ll implement sending data in response to a client request. Responses
+have the following format:</p>
+<br>
+<div data-lang="text"><div data-l="HTTP-Version Status-Code Reason-Phrase CRLF"></div><div data-l="headers CRLF"></div><div data-l="message-body"></div></div>
+<br>
+<p>The first line is a <i>status line</i> that contains the HTTP version used in the
+response, a numeric status code that summarizes the result of the request, and
+a reason phrase that provides a text description of the status code. After the
+CRLF sequence are any headers, another CRLF sequence, and the body of the
+response.</p>
+<br>
+<p>Here is an example response that uses HTTP version 1.1, has a status code of
+200, an OK reason phrase, no headers, and no body:</p>
+<br>
+<div data-lang="text"><div data-l="HTTP/1.1 200 OK\r\n\r\n"></div></div>
+<br>
+<p>The status code 200 is the standard success response. The text is a tiny
+successful HTTP response. Let’s write this to the stream as our response to a
+successful request! From the <code>handle_connection</code> function, remove the
+<code>println€</code> that was printing the request data and replace it with the code in
+Listing 20-3.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="    let mut buffer = [0; 512];"></div><div data-l=""></div><div data-l="    stream.read(&amp;mut buffer).unwrap();"></div><div data-l=""></div><div data-l="    let response = &quot;HTTP/1.1 200 OK\r\n\r\n&quot;;"></div><div data-l=""></div><div data-l="    stream.write(response.as_bytes()).unwrap();"></div><div data-l="    stream.flush().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-3: Writing a tiny successful HTTP response to
+the stream</span></p>
+<br>
+<p>The first new line defines the <code>response</code> variable that holds the success
+message’s data. Then we call <code>as_bytes</code> on our <code>response</code> to convert the string
+data to bytes. The <code>write</code> method on <code>stream</code> takes a <code>&amp;[u8]</code> and sends those
+bytes directly down the connection.</p>
+<br>
+<p>Because the <code>write</code> operation could fail, we use <code>unwrap</code> on any error result
+as before. Again, in a real application you would add error handling here.
+Finally, <code>flush</code> will wait and prevent the program from continuing until all
+the bytes are written to the connection; <code>TcpStream</code> contains an internal
+buffer to minimize calls to the underlying operating system.</p>
+<br>
+<p>With these changes, let’s run our code and make a request. We’re no longer
+printing any data to the terminal, so we won’t see any output other than the
+output from Cargo. When you load <i>127.0.0.1:7878</i> in a web browser, you should
+get a blank page instead of an error. You’ve just hand-coded an HTTP request
+and response!</p>
+<br>
+<h3>Returning Real HTML</h3>
+<br>
+<p>Let’s implement the functionality for returning more than a blank page. Create
+a new file, <i>hello.html</i>, in the root of your project directory, not in the
+<i>src</i> directory. You can input any HTML you want; Listing 20-4 shows one
+possibility.</p>
+<br>
+<p><span class="filename">Filename: hello.html</span></p>
+<br>
+<div data-lang="html"><div data-l="&lt;!DOCTYPE html&gt;"></div><div data-l="&lt;html lang=&quot;en&quot;&gt;"></div><div data-l="  &lt;head&gt;"></div><div data-l="    &lt;meta charset=&quot;utf-8&quot;&gt;"></div><div data-l="    &lt;title&gt;Hello!&lt;/title&gt;"></div><div data-l="  &lt;/head&gt;"></div><div data-l="  &lt;body&gt;"></div><div data-l="    &lt;h1&gt;Hello!&lt;/h1&gt;"></div><div data-l="    &lt;p&gt;Hi from Rust&lt;/p&gt;"></div><div data-l="  &lt;/body&gt;"></div><div data-l="&lt;/html&gt;"></div></div>
+<br>
+<p><span class="caption">Listing 20-4: A sample HTML file to return in a
+response</span></p>
+<br>
+<p>This is a minimal HTML5 document with a heading and some text. To return this
+from the server when a request is received, we’ll modify <code>handle_connection</code> as
+shown in Listing 20-5 to read the HTML file, add it to the response as a body,
+and send it.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="use std::fs;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="    let mut buffer = [0; 512];"></div><div data-l="    stream.read(&amp;mut buffer).unwrap();"></div><div data-l=""></div><div data-l="    let contents = fs::read_to_string(&quot;hello.html&quot;).unwrap();"></div><div data-l=""></div><div data-l="    let response = format!(&quot;HTTP/1.1 200 OK\r\n\r\n{}&quot;, contents);"></div><div data-l=""></div><div data-l="    stream.write(response.as_bytes()).unwrap();"></div><div data-l="    stream.flush().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-5: Sending the contents of <i>hello.html</i> as the
+body of the response</span></p>
+<br>
+<p>We’ve added a line at the top to bring the standard library’s <code>File</code> into
+scope. The code for opening a file and reading the contents should look
+familiar; we used it in Chapter 12 when we read the contents of a file for our
+I/O project in Listing 12-4.</p>
+<br>
+<p>Next, we use <code>format€</code> to add the file’s contents as the body of the success
+response.</p>
+<br>
+<p>Run this code with <code>cargo run</code> and load <i>127.0.0.1:7878</i> in your browser; you
+should see your HTML rendered!</p>
+<br>
+<p>Currently, we’re ignoring the request data in <code>buffer</code> and just sending back
+the contents of the HTML file unconditionally. That means if you try requesting
+<i>127.0.0.1:7878/something-else</i> in your browser, you’ll still get back this
+same HTML response. Our server is very limited and is not what most web servers
+do. We want to customize our responses depending on the request and only send
+back the HTML file for a well-formed request to <i>/</i>.</p>
+<br>
+<h3>Validating the Request and Selectively Responding</h3>
+<br>
+<p>Right now, our web server will return the HTML in the file no matter what the
+client requested. Let’s add functionality to check that the browser is
+requesting <i>/</i> before returning the HTML file and return an error if the
+browser requests anything else. For this we need to modify <code>handle_connection</code>,
+as shown in Listing 20-6. This new code checks the content of the request
+received against what we know a request for <i>/</i> looks like and adds <code>if</code> and
+<code>else</code> blocks to treat requests differently.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="# use std::fs;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="    let mut buffer = [0; 512];"></div><div data-l="    stream.read(&amp;mut buffer).unwrap();"></div><div data-l=""></div><div data-l="    let get = b&quot;GET / HTTP/1.1\r\n&quot;;"></div><div data-l=""></div><div data-l="    if buffer.starts_with(get) {"></div><div data-l="        let contents = fs::read_to_string(&quot;hello.html&quot;).unwrap();"></div><div data-l=""></div><div data-l="        let response = format!(&quot;HTTP/1.1 200 OK\r\n\r\n{}&quot;, contents);"></div><div data-l=""></div><div data-l="        stream.write(response.as_bytes()).unwrap();"></div><div data-l="        stream.flush().unwrap();"></div><div data-l="    } else {"></div><div data-l="#        // some other request"></div><div data-l="        // ">some other request</div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-6: Matching the request and handling requests
+to <i>/</i> differently than other requests</span></p>
+<br>
+<p>First, we hardcode the data corresponding to the <i>/</i> request into the <code>get</code>
+variable. Because we’re reading raw bytes into the buffer, we transform <code>get</code>
+into a byte string by adding the <code>b&quot;&quot;</code> byte string syntax at the start of the
+content data. Then we check whether <code>buffer</code> starts with the bytes in <code>get</code>. If
+it does, it means we’ve received a well-formed request to <i>/</i>, which is the
+success case we’ll handle in the <code>if</code> block that returns the contents of our
+HTML file.</p>
+<br>
+<p>If <code>buffer</code> does <i>not</i> start with the bytes in <code>get</code>, it means we’ve received
+some other request. We’ll add code to the <code>else</code> block in a moment to respond
+to all other requests.</p>
+<br>
+<p>Run this code now and request <i>127.0.0.1:7878</i>; you should get the HTML in
+<i>hello.html</i>. If you make any other request, such as
+<i>127.0.0.1:7878/something-else</i>, you’ll get a connection error like those you
+saw when running the code in Listing 20-1 and Listing 20-2.</p>
+<br>
+<p>Now let’s add the code in Listing 20-7 to the <code>else</code> block to return a response
+with the status code 404, which signals that the content for the request was
+not found. We’ll also return some HTML for a page to render in the browser
+indicating the response to the end user.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="# use std::fs;"></div><div data-l="# fn handle_connection(mut stream: TcpStream) {"></div><div data-l="# if true {"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="} else {"></div><div data-l="    let status_line = &quot;HTTP/1.1 404 NOT FOUND\r\n\r\n&quot;;"></div><div data-l="    let contents = fs::read_to_string(&quot;404.html&quot;).unwrap();"></div><div data-l=""></div><div data-l="    let response = format!(&quot;{}{}&quot;, status_line, contents);"></div><div data-l=""></div><div data-l="    stream.write(response.as_bytes()).unwrap();"></div><div data-l="    stream.flush().unwrap();"></div><div data-l="}"></div><div data-l="# }"></div></div>
+<br>
+<p><span class="caption">Listing 20-7: Responding with status code 404 and an
+error page if anything other than <i>/</i> was requested</span></p>
+<br>
+<p>Here, our response has a status line with status code 404 and the reason
+phrase <code>NOT FOUND</code>. We’re still not returning headers, and the body of the
+response will be the HTML in the file <i>404.html</i>. You’ll need to create a
+<i>404.html</i> file next to <i>hello.html</i> for the error page; again feel free to use
+any HTML you want or use the example HTML in Listing 20-8.</p>
+<br>
+<p><span class="filename">Filename: 404.html</span></p>
+<br>
+<div data-lang="html"><div data-l="&lt;!DOCTYPE html&gt;"></div><div data-l="&lt;html lang=&quot;en&quot;&gt;"></div><div data-l="  &lt;head&gt;"></div><div data-l="    &lt;meta charset=&quot;utf-8&quot;&gt;"></div><div data-l="    &lt;title&gt;Hello!&lt;/title&gt;"></div><div data-l="  &lt;/head&gt;"></div><div data-l="  &lt;body&gt;"></div><div data-l="    &lt;h1&gt;Oops!&lt;/h1&gt;"></div><div data-l="    &lt;p&gt;Sorry, I don't know what you're asking for.&lt;/p&gt;"></div><div data-l="  &lt;/body&gt;"></div><div data-l="&lt;/html&gt;"></div></div>
+<br>
+<p><span class="caption">Listing 20-8: Sample content for the page to send back
+with any 404 response</span></p>
+<br>
+<p>With these changes, run your server again. Requesting <i>127.0.0.1:7878</i>
+should return the contents of <i>hello.html</i>, and any other request, like
+<i>127.0.0.1:7878/foo</i>, should return the error HTML from <i>404.html</i>.</p>
+<br>
+<h3>A Touch of Refactoring</h3>
+<br>
+<p>At the moment the <code>if</code> and <code>else</code> blocks have a lot of repetition: they’re both
+reading files and writing the contents of the files to the stream. The only
+differences are the status line and the filename. Let’s make the code more
+concise by pulling out those differences into separate <code>if</code> and <code>else</code> lines
+that will assign the values of the status line and the filename to variables;
+we can then use those variables unconditionally in the code to read the file
+and write the response. Listing 20-9 shows the resulting code after replacing
+the large <code>if</code> and <code>else</code> blocks.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="# use std::fs;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="#     let mut buffer = [0; 512];"></div><div data-l="#     stream.read(&amp;mut buffer).unwrap();"></div><div data-l="#"></div><div data-l="#     let get = b&quot;GET / HTTP/1.1\r\n&quot;;"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l=""></div><div data-l="    let (status_line, filename) = if buffer.starts_with(get) {"></div><div data-l="        (&quot;HTTP/1.1 200 OK\r\n\r\n&quot;, &quot;hello.html&quot;)"></div><div data-l="    } else {"></div><div data-l="        (&quot;HTTP/1.1 404 NOT FOUND\r\n\r\n&quot;, &quot;404.html&quot;)"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let contents = fs::read_to_string(filename).unwrap();"></div><div data-l=""></div><div data-l="    let response = format!(&quot;{}{}&quot;, status_line, contents);"></div><div data-l=""></div><div data-l="    stream.write(response.as_bytes()).unwrap();"></div><div data-l="    stream.flush().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-9: Refactoring the <code>if</code> and <code>else</code> blocks to
+contain only the code that differs between the two cases</span></p>
+<br>
+<p>Now the <code>if</code> and <code>else</code> blocks only return the appropriate values for the
+status line and filename in a tuple; we then use destructuring to assign these
+two values to <code>status_line</code> and <code>filename</code> using a pattern in the <code>let</code>
+statement, as discussed in Chapter 18.</p>
+<br>
+<p>The previously duplicated code is now outside the <code>if</code> and <code>else</code> blocks and
+uses the <code>status_line</code> and <code>filename</code> variables. This makes it easier to see
+the difference between the two cases, and it means we have only one place to
+update the code if we want to change how the file reading and response writing
+work. The behavior of the code in Listing 20-9 will be the same as that in
+Listing 20-8.</p>
+<br>
+<p>Awesome! We now have a simple web server in approximately 40 lines of Rust code
+that responds to one request with a page of content and responds to all other
+requests with a 404 response.</p>
+<br>
+<p>Currently, our server runs in a single thread, meaning it can only serve one
+request at a time. Let’s examine how that can be a problem by simulating some
+slow requests. Then we’ll fix it so our server can handle multiple requests at
+once.</p>

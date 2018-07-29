@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<h1>Path</h1>
+<br>
+<p>The <code>Path</code> struct represents file paths in the underlying filesystem. There are
+two flavors of <code>Path</code>: <code>posix::Path</code>, for UNIX-like systems, and
+<code>windows::Path</code>, for Windows. The prelude exports the appropriate
+platform-specific <code>Path</code> variant.</p>
+<br>
+<p>A <code>Path</code> can be created from an <code>OsStr</code>, and provides several methods to get
+information from the file/directory the path points to.</p>
+<br>
+<p>Note that a <code>Path</code> is <i>not</i> internally represented as an UTF-8 string, but
+instead is stored as a vector of bytes (<code>Vec&lt;u8&gt;</code>). Therefore, converting a
+<code>Path</code> to a <code>&amp;str</code> is <i>not</i> free and may fail (an <code>Option</code> is returned).</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Create a `Path` from an `&amp;'static str`"></div><div data-l="    // ">Create a <code>Path</code> from an <code>&amp;'static str</code></div><div data-l="    let path = Path::new(&quot;.&quot;);"></div><div data-l=""></div><div data-l="#    // The `display` method returns a `Show`able structure"></div><div data-l="    // ">The <code>display</code> method returns a <code>Show</code>able structure</div><div data-l="    let _display = path.display();"></div><div data-l=""></div><div data-l="#    // `join` merges a path with a byte container using the OS specific"></div><div data-l="#    // separator, and returns the new path"></div><div data-l="    // "><code>join</code> merges a path with a byte container using the OS specific separator, and returns the new path</div><div data-l="    let new_path = path.join(&quot;a&quot;).join(&quot;b&quot;);"></div><div data-l=""></div><div data-l="#    // Convert the path into a string slice"></div><div data-l="    // ">Convert the path into a string slice</div><div data-l="    match new_path.to_str() {"></div><div data-l="        None =&gt; panic!(&quot;new path is not a valid UTF-8 sequence&quot;),"></div><div data-l="        Some(s) =&gt; println!(&quot;new path is {}&quot;, s),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div></div>
+<br>
+<p>Be sure to check at other <code>Path</code> methods (<code>posix::Path</code> or <code>windows::Path</code>) and
+the <code>Metadata</code> struct.</p>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#31">OsStr</a> and <a class="notranslate" href="#32">Metadata</a>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ffi/struct.OsStr.html">1</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.Metadata.html">2</a>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<h1>Passes</h1>
+<br>
+<p>Rustdoc has a concept called &quot;passes&quot;. These are transformations that
+<code>rustdoc</code> runs on your documentation before producing its final output.</p>
+<br>
+<p>In addition to the passes below, check out the docs for these flags:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#2command-line-arguments.html#a--passes-add-more-rustdoc-passes"><code>--passes</code></a></div>
+<div data-b="*"><a class="notranslate" href="#2command-line-arguments.html#a--no-defaults-dont-run-default-passes"><code>--no-defaults</code></a></div>
+<br>
+<h2>Default passes</h2>
+<br>
+<p>By default, rustdoc will run some passes, namely:</p>
+<br>
+<div data-b="*"><code>strip-hidden</code></div>
+<div data-b="*"><code>strip-private</code></div>
+<div data-b="*"><code>collapse-docs</code></div>
+<div data-b="*"><code>unindent-comments</code></div>
+<br>
+<p>However, <code>strip-private</code> implies <code>strip-private-imports</code>, and so effectively,
+all passes are run by default.</p>
+<br>
+<h2><code>strip-hidden</code></h2>
+<br>
+<p>This pass implements the <code>#[doc(hidden)]</code> attribute. When this pass runs, it
+checks each item, and if it is annotated with this attribute, it removes it
+from <code>rustdoc</code>'s output.</p>
+<br>
+<p>Without this pass, these items will remain in the output.</p>
+<br>
+<h2><code>unindent-comments</code></h2>
+<br>
+<p>When you write a doc comment like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// This is a documentation comment."></div><div data-l="/// ">This is a documentation comment.</div></div>
+<br>
+<p>There's a space between the <code>///</code> and that <code>T</code>. That spacing isn't intended
+to be a part of the output; it's there for humans, to help separate the doc
+comment syntax from the text of the comment. This pass is what removes that
+space.</p>
+<br>
+<p>The exact rules are left under-specified so that we can fix issues that we find.</p>
+<br>
+<p>Without this pass, the exact number of spaces is preserved.</p>
+<br>
+<h2><code>collapse-docs</code></h2>
+<br>
+<p>With this pass, multiple <code>#[doc]</code> attributes are converted into one single
+documentation string.</p>
+<br>
+<p>For example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[doc = &quot;This is the first line.&quot;]"></div><div data-l="#[doc = &quot;This is the second line.&quot;]"></div></div>
+<br>
+<p>Gets collapsed into a single doc string of</p>
+<br>
+<div data-lang="text"><div data-l="This is the first line."></div><div data-l="This is the second line."></div></div>
+<br>
+<h2><code>strip-private</code></h2>
+<br>
+<p>This removes documentation for any non-public items, so for example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// These are private docs."></div><div data-l="/// ">These are private docs.</div><div data-l="struct Private;"></div><div data-l=""></div><div data-l="#///// These are public docs."></div><div data-l="/// ">These are public docs.</div><div data-l="pub struct Public;"></div></div>
+<br>
+<p>This pass removes the docs for <code>Private</code>, since they're not public.</p>
+<br>
+<p>This pass implies <code>strip-priv-imports</code>.</p>
+<br>
+<h2><code>strip-priv-imports</code></h2>
+<br>
+<p>This is the same as <code>strip-private</code>, but for <code>extern crate</code> and <code>use</code>
+statements instead of items.</p>

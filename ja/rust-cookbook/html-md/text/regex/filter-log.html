@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Filter a log file by matching multiple regular expressions</h2>
+<br>
+<p><a href="#3regex">!<a class="notranslate" href="#4regex-badge">regex-badge</a></a> <a href="#3cat-text-processing">!<a class="notranslate" href="#4cat-text-processing-badge">cat-text-processing-badge</a></a></p>
+<br>
+<p>Reads a file named <code>application.log</code> and only outputs the lines
+containing “version X.X.X”, some IP address followed by port 443
+(e.g. “192.168.0.1:443”), or a specific warning.</p>
+<br>
+<p>A <a class="notranslate" href="#4`regex::RegexSetBuilder`">`regex::RegexSetBuilder`</a> composes a <a class="notranslate" href="#4`regex::RegexSet`">`regex::RegexSet`</a>.
+Since backslashes are very common in regular expressions, using
+<a class="notranslate" href="#4raw string literals">raw string literals</a> makes them more readable.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate regex;"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::{BufReader, BufRead};"></div><div data-l="use regex::RegexSetBuilder;"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         Regex(regex::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let log_path = &quot;application.log&quot;;"></div><div data-l="    let buffered = BufReader::new(File::open(log_path)?);"></div><div data-l=""></div><div data-l="    let set = RegexSetBuilder::new(&amp;["></div><div data-l="        r#&quot;version &quot;\d\.\d\.\d&quot;&quot;#,"></div><div data-l="        r#&quot;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:443&quot;#,"></div><div data-l="        r#&quot;warning.*timeout expired&quot;#,"></div><div data-l="    ]).case_insensitive(true)"></div><div data-l="        .build()?;"></div><div data-l=""></div><div data-l="    buffered"></div><div data-l="        .lines()"></div><div data-l="        .filter_map(|line| line.ok())"></div><div data-l="        .filter(|line| set.is_match(line.as_str()))"></div><div data-l="        .for_each(|x| println!(&quot;{}&quot;, x));"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/regex/*/regex/struct.RegexSet.html">`regex::RegexSet`</a>
+<a class="notranslate" href="#1https://docs.rs/regex/*/regex/struct.RegexSetBuilder.html">`regex::RegexSetBuilder`</a>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/tokens.html#raw-string-literals">raw string literals</a>

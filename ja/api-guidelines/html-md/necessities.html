@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h1>Necessities</h1>
+<br>
+<br>
+<p><a id="c-stable"></a>
+## Public dependencies of a stable crate are stable (C-STABLE)</p>
+<br>
+<p>A crate cannot be stable (&gt;=1.0.0) without all of its public dependencies being
+stable.</p>
+<br>
+<p>Public dependencies are crates from which types are used in the public API of
+the current crate.</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn do_my_thing(arg: other_crate::TheirThing) { /* ... */ }"></div></div>
+<br>
+<p>A crate containing this function cannot be stable unless <code>other_crate</code> is also
+stable.</p>
+<br>
+<p>Be careful because public dependencies can sneak in at unexpected places.</p>
+<br>
+<div data-lang="rust"><div data-l="pub struct Error {"></div><div data-l="    private: ErrorImpl,"></div><div data-l="}"></div><div data-l=""></div><div data-l="enum ErrorImpl {"></div><div data-l="    Io(io::Error),"></div><div data-l="#    // Should be okay even if other_crate isn't"></div><div data-l="#    // stable, because ErrorImpl is private."></div><div data-l="    // ">Should be okay even if other_crate isn't stable, because ErrorImpl is private.</div><div data-l="    Dep(other_crate::Error),"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Oh no! This puts other_crate into the public API"></div><div data-l="#// of the current crate."></div><div data-l="// ">Oh no! This puts other_crate into the public API of the current crate.</div><div data-l="impl From&lt;other_crate::Error&gt; for Error {"></div><div data-l="    fn from(err: other_crate::Error) -&gt; Self {"></div><div data-l="        Error { private: ErrorImpl::Dep(err) }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-permissive"></a>
+## Crate and its dependencies have a permissive license (C-PERMISSIVE)</p>
+<br>
+<p>The software produced by the Rust project is dual-licensed, under either the
+<a class="notranslate" href="#4MIT">MIT</a> or <a class="notranslate" href="#4Apache 2.0">Apache 2.0</a> licenses. Crates that simply need the maximum
+compatibility with the Rust ecosystem are recommended to do the same, in the
+manner described herein. Other options are described below.</p>
+<br>
+<p>These API guidelines do not provide a detailed explanation of Rust's license,
+but there is a small amount said in the <a class="notranslate" href="#4Rust FAQ">Rust FAQ</a>. These guidelines are
+concerned with matters of interoperability with Rust, and are not comprehensive
+over licensing options.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/LICENSE-MIT">MIT</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/LICENSE-APACHE">Apache 2.0</a>
+<a class="notranslate" href="#1https://www.rust-lang.org/en-US/faq.html#why-a-dual-mit-asl2-license">Rust FAQ</a>
+<br>
+<p>To apply the Rust license to your project, define the <code>license</code> field in your
+<code>Cargo.toml</code> as:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;...&quot;"></div><div data-l="version = &quot;...&quot;"></div><div data-l="authors = [&quot;...&quot;]"></div><div data-l="license = &quot;MIT OR Apache-2.0&quot;"></div></div>
+<br>
+<p>And toward the end of your README.md:</p>
+<br>
+<div data-lang=""><div data-l="## License"></div><div data-l=""></div><div data-l="Licensed under either of"></div><div data-l=""></div><div data-l=" * Apache License, Version 2.0"></div><div data-l="   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)"></div><div data-l=" * MIT license"></div><div data-l="   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)"></div><div data-l=""></div><div data-l="at your option."></div><div data-l=""></div><div data-l="## Contribution"></div><div data-l=""></div><div data-l="Unless you explicitly state otherwise, any contribution intentionally submitted"></div><div data-l="for inclusion in the work by you, as defined in the Apache-2.0 license, shall be"></div><div data-l="dual licensed as above, without any additional terms or conditions."></div></div>
+<br>
+<p>Besides the dual MIT/Apache-2.0 license, another common licensing approach used
+by Rust crate authors is to apply a single permissive license such as MIT or
+BSD. This license scheme is also entirely compatible with Rust's, because it
+imposes the minimal restrictions of Rust's MIT license.</p>
+<br>
+<p>Crates that desire perfect license compatibility with Rust are not recommended
+to choose only the Apache license. The Apache license, though it is a permissive
+license, imposes restrictions beyond the MIT and BSD licenses that can
+discourage or prevent their use in some scenarios, so Apache-only software
+cannot be used in some situations where most of the Rust runtime stack can.</p>
+<br>
+<p>The license of a crate's dependencies can affect the restrictions on
+distribution of the crate itself, so a permissively-licensed crate should
+generally only depend on permissively-licensed crates.</p>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h1>Higher Order Functions</h1>
+<br>
+<p>Rust provides Higher Order Functions (HOF). These are functions that
+take one or more functions and/or produce a more useful function. HOFs
+and lazy iterators give Rust its functional flavor.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn is_odd(n: u32) -&gt; bool {"></div><div data-l="    n % 2 == 1"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Find the sum of all the squared odd numbers under 1000&quot;);"></div><div data-l="    let upper = 1000;"></div><div data-l=""></div><div data-l="#    // Imperative approach"></div><div data-l="#    // Declare accumulator variable"></div><div data-l="    // ">Imperative approach Declare accumulator variable</div><div data-l="    let mut acc = 0;"></div><div data-l="#    // Iterate: 0, 1, 2, ... to infinity"></div><div data-l="    // ">Iterate: 0, 1, 2, ... to infinity</div><div data-l="    for n in 0.. {"></div><div data-l="#        // Square the number"></div><div data-l="        // ">Square the number</div><div data-l="        let n_squared = n * n;"></div><div data-l=""></div><div data-l="        if n_squared &gt;= upper {"></div><div data-l="#            // Break loop if exceeded the upper limit"></div><div data-l="            // ">Break loop if exceeded the upper limit</div><div data-l="            break;"></div><div data-l="        } else if is_odd(n_squared) {"></div><div data-l="#            // Accumulate value, if it's odd"></div><div data-l="            // ">Accumulate value, if it's odd</div><div data-l="            acc += n_squared;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    println!(&quot;imperative style: {}&quot;, acc);"></div><div data-l=""></div><div data-l="#    // Functional approach"></div><div data-l="    // ">Functional approach</div><div data-l="    let sum_of_squared_odd_numbers: u32 ="></div><div data-l="#//        (0..).map(|n| n * n)                             // All natural numbers squared"></div><div data-l="        (0..).map(|n| n * n)                             // ">All natural numbers squared</div><div data-l="#//             .take_while(|&amp;n_squared| n_squared &lt; upper) // Below upper limit"></div><div data-l="             .take_while(|&amp;n_squared| n_squared &lt; upper) // ">Below upper limit</div><div data-l="#//             .filter(|&amp;n_squared| is_odd(n_squared))     // That are odd"></div><div data-l="             .filter(|&amp;n_squared| is_odd(n_squared))     // ">That are odd</div><div data-l="#//             .fold(0, |acc, n_squared| acc + n_squared); // Sum them"></div><div data-l="             .fold(0, |acc, n_squared| acc + n_squared); // ">Sum them</div><div data-l="    println!(&quot;functional style: {}&quot;, sum_of_squared_odd_numbers);"></div><div data-l="}"></div></div>
+<br>
+<p><a class="notranslate" href="#3option">Option</a>
+and
+<a class="notranslate" href="#3iter">Iterator</a>
+implement their fair share of HOFs.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/option/enum.Option.html">option</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/iter/trait.Iterator.html">iter</a>

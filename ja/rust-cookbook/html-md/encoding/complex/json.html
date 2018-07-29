@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Serialize and deserialize unstructured JSON</h2>
+<br>
+<p><a href="#3serde-json">!<a class="notranslate" href="#4serde-json-badge">serde-json-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>The <a class="notranslate" href="#4`serde_json`">`serde_json`</a> crate provides a <a class="notranslate" href="#4`from_str`">`from_str`</a> function to parse a <code>&amp;str</code> of
+JSON.</p>
+<br>
+<p>Unstructured JSON can be parsed into a universal <a class="notranslate" href="#4`serde_json::Value`">`serde_json::Value`</a> type that
+is able to represent any valid JSON data.</p>
+<br>
+<p>The example below shows a <code>&amp;str</code> of JSON being parsed.  The expected value is declared using the <a class="notranslate" href="#4`json!`">`json!`</a> macro.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde_json;"></div><div data-l=""></div><div data-l="use serde_json::Value;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Json(serde_json::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let j = r#&quot;{"></div><div data-l="                 &quot;userid&quot;: 103609,"></div><div data-l="                 &quot;verified&quot;: true,"></div><div data-l="                 &quot;access_privileges&quot;: ["></div><div data-l="                   &quot;user&quot;,"></div><div data-l="                   &quot;admin&quot;"></div><div data-l="                 ]"></div><div data-l="               }&quot;#;"></div><div data-l=""></div><div data-l="    let parsed: Value = serde_json::from_str(j)?;"></div><div data-l=""></div><div data-l="    let expected = json!({"></div><div data-l="        &quot;userid&quot;: 103609,"></div><div data-l="        &quot;verified&quot;: true,"></div><div data-l="        &quot;access_privileges&quot;: ["></div><div data-l="            &quot;user&quot;,"></div><div data-l="            &quot;admin&quot;"></div><div data-l="        ]"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    assert_eq!(parsed, expected);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/fn.from_str.html">`from_str`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/macro.json.html">`json!`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/">`serde_json`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/enum.Value.html">`serde_json::Value`</a>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<h1>Type inference</h1>
+<br>
+<p>Type inference is the process of automatic detection of the type of an
+expression.</p>
+<br>
+<p>It is what allows Rust to work with fewer or no type annotations,
+making things easier for users:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let mut things = vec![];"></div><div data-l="    things.push(&quot;thing&quot;)"></div><div data-l="}"></div></div>
+<br>
+<p>Here, the type of <code>things</code> is <i>inferenced</i> to be <code>&amp;str</code> because that's the value
+we push into <code>things</code>.</p>
+<br>
+<p>The type inference is based on the standard Hindley-Milner (HM) type inference
+algorithm, but extended in various way to accommodate subtyping, region
+inference, and higher-ranked types.</p>
+<br>
+<h2>A note on terminology</h2>
+<br>
+<p>We use the notation <code>?T</code> to refer to inference variables, also called
+existential variables.</p>
+<br>
+<p>We use the terms &quot;region&quot; and &quot;lifetime&quot; interchangeably. Both refer to
+the <code>'a</code> in <code>&amp;'a T</code>.</p>
+<br>
+<p>The term &quot;bound region&quot; refers to a region that is bound in a function
+signature, such as the <code>'a</code> in <code>for&lt;'a&gt; fn(&amp;'a u32)</code>. A region is
+&quot;free&quot; if it is not bound.</p>
+<br>
+<h2>Creating an inference context</h2>
+<br>
+<p>You create and &quot;enter&quot; an inference context by doing something like
+the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="tcx.infer_ctxt().enter(|infcx| {"></div><div data-l="#    // Use the inference context `infcx` here."></div><div data-l="    // ">Use the inference context <code>infcx</code> here.</div><div data-l="})"></div></div>
+<br>
+<p>Each inference context creates a short-lived type arena to store the
+fresh types and things that it will create, as described in the
+<a href="#3ty-ch">chapter on the <code>ty</code> module</a>. This arena is created by the <code>enter</code>
+function and disposed of after it returns.</p>
+<br>
+<a class="notranslate" href="#1ty.html">ty-ch</a>
+<br>
+<p>Within the closure, <code>infcx</code> has the type <code>InferCtxt&lt;'cx, 'gcx, 'tcx&gt;</code>
+for some fresh <code>'cx</code> and <code>'tcx</code> – the latter corresponds to the lifetime of
+this temporary arena, and the <code>'cx</code> is the lifetime of the <code>InferCtxt</code> itself.
+(Again, see the <a href="#3ty-ch"><code>ty</code> chapter</a> for more details on this setup.)</p>
+<br>
+<p>The <code>tcx.infer_ctxt</code> method actually returns a builder, which means
+there are some kinds of configuration you can do before the <code>infcx</code> is
+created. See <code>InferCtxtBuilder</code> for more information.</p>
+<br>
+<p><a name="vars"></a></p>
+<br>
+<h2>Inference variables</h2>
+<br>
+<p>The main purpose of the inference context is to house a bunch of
+<b>inference variables</b> – these represent types or regions whose precise
+value is not yet known, but will be uncovered as we perform type-checking.</p>
+<br>
+<p>If you're familiar with the basic ideas of unification from H-M type
+systems, or logic languages like Prolog, this is the same concept. If
+you're not, you might want to read a tutorial on how H-M type
+inference works, or perhaps this blog post on
+<a class="notranslate" href="#4unification in the Chalk project">unification in the Chalk project</a>.</p>
+<br>
+<a class="notranslate" href="#1http://smallcultfollowing.com/babysteps/blog/2017/03/25/unification-in-chalk-part-1/">Unification in the Chalk project</a>
+<br>
+<p>All told, the inference context stores four kinds of inference variables as of
+this writing:</p>
+<br>
+<div data-b="-">Type variables, which come in three varieties:</div>
+<div data-b="  -">General type variables (the most common). These can be unified with any
+type.</div>
+<div data-b="  -">Integral type variables, which can only be unified with an integral type,
+and arise from an integer literal expression like <code>22</code>.</div>
+<div data-b="  -">Float type variables, which can only be unified with a float type, and
+arise from a float literal expression like <code>22.0</code>.</div>
+<div data-b="-">Region variables, which represent lifetimes, and arise all over the place.</div>
+<br>
+<p>All the type variables work in much the same way: you can create a new
+type variable, and what you get is <code>Ty&lt;'tcx&gt;</code> representing an
+unresolved type <code>?T</code>. Then later you can apply the various operations
+that the inferencer supports, such as equality or subtyping, and it
+will possibly <b>instantiate</b> (or <b>bind</b>) that <code>?T</code> to a specific
+value as a result.</p>
+<br>
+<p>The region variables work somewhat differently, and are described
+below in a separate section.</p>
+<br>
+<h2>Enforcing equality / subtyping</h2>
+<br>
+<p>The most basic operations you can perform in the type inferencer is
+<b>equality</b>, which forces two types <code>T</code> and <code>U</code> to be the same. The
+recommended way to add an equality constraint is to use the <code>at</code>
+method, roughly like so:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="infcx.at(...).eq(t, u);"></div></div>
+<br>
+<p>The first <code>at()</code> call provides a bit of context, i.e. why you are
+doing this unification, and in what environment, and the <code>eq</code> method
+performs the actual equality constraint.</p>
+<br>
+<p>When you equate things, you force them to be precisely equal. Equating
+returns an <code>InferResult</code> – if it returns <code>Err(err)</code>, then equating
+failed, and the enclosing <code>TypeError</code> will tell you what went wrong.</p>
+<br>
+<p>The success case is perhaps more interesting. The &quot;primary&quot; return
+type of <code>eq</code> is <code>()</code> – that is, when it succeeds, it doesn't return a
+value of any particular interest. Rather, it is executed for its
+side-effects of constraining type variables and so forth. However, the
+actual return type is not <code>()</code>, but rather <code>InferOk&lt;()&gt;</code>. The
+<code>InferOk</code> type is used to carry extra trait obligations – your job is
+to ensure that these are fulfilled (typically by enrolling them in a
+fulfillment context). See the <a class="notranslate" href="#4trait chapter">trait chapter</a> for more background on that.</p>
+<br>
+<a class="notranslate" href="#1traits/resolution.html">trait chapter</a>
+<br>
+<p>You can similarly enforce subtyping through <code>infcx.at(..).sub(..)</code>. The same
+basic concepts as above apply.</p>
+<br>
+<h2>&quot;Trying&quot; equality</h2>
+<br>
+<p>Sometimes you would like to know if it is <i>possible</i> to equate two
+types without error.  You can test that with <code>infcx.can_eq</code> (or
+<code>infcx.can_sub</code> for subtyping). If this returns <code>Ok</code>, then equality
+is possible – but in all cases, any side-effects are reversed.</p>
+<br>
+<p>Be aware, though, that the success or failure of these methods is always
+<b>modulo regions</b>. That is, two types <code>&amp;'a u32</code> and <code>&amp;'b u32</code> will
+return <code>Ok</code> for <code>can_eq</code>, even if <code>'a €= 'b</code>.  This falls out from the
+&quot;two-phase&quot; nature of how we solve region constraints.</p>
+<br>
+<h2>Snapshots</h2>
+<br>
+<p>As described in the previous section on <code>can_eq</code>, often it is useful
+to be able to do a series of operations and then roll back their
+side-effects. This is done for various reasons: one of them is to be
+able to backtrack, trying out multiple possibilities before settling
+on which path to take. Another is in order to ensure that a series of
+smaller changes take place atomically or not at all.</p>
+<br>
+<p>To allow for this, the inference context supports a <code>snapshot</code> method.
+When you call it, it will start recording changes that occur from the
+operations you perform. When you are done, you can either invoke
+<code>rollback_to</code>, which will undo those changes, or else <code>confirm</code>, which
+will make the permanent. Snapshots can be nested as long as you follow
+a stack-like discipline.</p>
+<br>
+<p>Rather than use snapshots directly, it is often helpful to use the
+methods like <code>commit_if_ok</code> or <code>probe</code> that encapsulate higher-level
+patterns.</p>
+<br>
+<h2>Subtyping obligations</h2>
+<br>
+<p>One thing worth discussing is subtyping obligations. When you force
+two types to be a subtype, like <code>?T &lt;: i32</code>, we can often convert those
+into equality constraints. This follows from Rust's rather limited notion
+of subtyping: so, in the above case, <code>?T &lt;: i32</code> is equivalent to <code>?T = i32</code>.</p>
+<br>
+<p>However, in some cases we have to be more careful. For example, when
+regions are involved. So if you have <code>?T &lt;: &amp;'a i32</code>, what we would do
+is to first &quot;generalize&quot; <code>&amp;'a i32</code> into a type with a region variable:
+<code>&amp;'?b i32</code>, and then unify <code>?T</code> with that (<code>?T = &amp;'?b i32</code>). We then
+relate this new variable with the original bound:</p>
+<br>
+<div data-lang="text"><div data-l="&amp;'?b i32 &lt;: &amp;'a i32"></div></div>
+<br>
+<p>This will result in a region constraint (see below) of <code>'?b: 'a</code>.</p>
+<br>
+<p>One final interesting case is relating two unbound type variables,
+like <code>?T &lt;: ?U</code>.  In that case, we can't make progress, so we enqueue
+an obligation <code>Subtype(?T, ?U)</code> and return it via the <code>InferOk</code>
+mechanism. You'll have to try again when more details about <code>?T</code> or
+<code>?U</code> are known.</p>
+<br>
+<h2>Region constraints</h2>
+<br>
+<p>Regions are inferenced somewhat differently from types. Rather than
+eagerly unifying things, we simply collect constraints as we go, but
+make (almost) no attempt to solve regions. These constraints have the
+form of an &quot;outlives&quot; constraint:</p>
+<br>
+<div data-lang="text"><div data-l="'a: 'b"></div></div>
+<br>
+<p>Actually the code tends to view them as a subregion relation, but it's the same
+idea:</p>
+<br>
+<div data-lang="text"><div data-l="'b &lt;= 'a"></div></div>
+<br>
+<p>(There are various other kinds of constraints, such as &quot;verifys&quot;; see
+the <code>region_constraints</code> module for details.)</p>
+<br>
+<p>There is one case where we do some amount of eager unification. If you have an
+equality constraint between two regions</p>
+<br>
+<div data-lang="text"><div data-l="'a = 'b"></div></div>
+<br>
+<p>we will record that fact in a unification table. You can then use
+<code>opportunistic_resolve_var</code> to convert <code>'b</code> to <code>'a</code> (or vice
+versa). This is sometimes needed to ensure termination of fixed-point
+algorithms.</p>
+<br>
+<h2>Extracting region constraints</h2>
+<br>
+<p>Ultimately, region constraints are only solved at the very end of
+type-checking, once all other constraints are known. There are two
+ways to solve region constraints right now: lexical and
+non-lexical. Eventually there will only be one.</p>
+<br>
+<p>To solve <b>lexical</b> region constraints, you invoke
+<code>resolve_regions_and_report_errors</code>.  This &quot;closes&quot; the region
+constraint process and invoke the <code>lexical_region_resolve</code> code. Once
+this is done, any further attempt to equate or create a subtyping
+relationship will yield an ICE.</p>
+<br>
+<p>Non-lexical region constraints are not handled within the inference
+context. Instead, the NLL solver (actually, the MIR type-checker)
+invokes <code>take_and_reset_region_constraints</code> periodically. This
+extracts all of the outlives constraints from the region solver, but
+leaves the set of variables intact. This is used to get <i>just</i> the
+region constraints that resulted from some particular point in the
+program, since the NLL solver needs to know not just <i>what</i> regions
+were subregions but <i>where</i>. Finally, the NLL solver invokes
+<code>take_region_var_origins</code>, which &quot;closes&quot; the region constraint
+process in the same way as normal solving.</p>
+<br>
+<h2>Lexical region resolution</h2>
+<br>
+<p>Lexical region resolution is done by initially assigning each region
+variable to an empty value. We then process each outlives constraint
+repeatedly, growing region variables until a fixed-point is reached.
+Region variables can be grown using a least-upper-bound relation on
+the region lattice in a fairly straightforward fashion.</p>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h1><code>attr_literals</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#34981">#34981</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/34981">#34981</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>At present, literals are only accepted as the value of a key-value pair in
+attributes. What's more, only <s>string</s> literals are accepted. This means that
+literals can only appear in forms of <code>#[attr(name = &quot;value&quot;)]</code> or
+<code>#[attr = &quot;value&quot;]</code>.</p>
+<br>
+<p>The <code>attr_literals</code> unstable feature allows other types of literals to be used
+in attributes. Here are some examples of attributes that can now be used with
+this feature enabled:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[attr]"></div><div data-l="#[attr(true)]"></div><div data-l="#[attr(ident)]"></div><div data-l="#[attr(ident, 100, true, &quot;true&quot;, ident = 100, ident = &quot;hello&quot;, ident(100))]"></div><div data-l="#[attr(100)]"></div><div data-l="#[attr(enabled = true)]"></div><div data-l="#[enabled(true)]"></div><div data-l="#[attr(&quot;hello&quot;)]"></div><div data-l="#[repr(C, align = 4)]"></div><div data-l="#[repr(C, align(4))]"></div></div>
+<br>

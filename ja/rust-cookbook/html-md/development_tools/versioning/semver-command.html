@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Check external command version for compatibility</h2>
+<br>
+<p><a href="#3semver">!<a class="notranslate" href="#4semver-badge">semver-badge</a></a> <a href="#3cat-text-processing">!<a class="notranslate" href="#4cat-text-processing-badge">cat-text-processing-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>Runs <code>git --version</code> using <a class="notranslate" href="#4`Command`">`Command`</a>, then parses the version number into a
+<a class="notranslate" href="#4`semver::Version`">`semver::Version`</a> using <a class="notranslate" href="#4`Version::parse`">`Version::parse`</a>. <a class="notranslate" href="#4`VersionReq::matches`">`VersionReq::matches`</a> compares
+<a class="notranslate" href="#4`semver::VersionReq`">`semver::VersionReq`</a> to the parsed version.  The command output resembles
+&quot;git version x.y.z&quot;.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate semver;"></div><div data-l=""></div><div data-l="use std::process::Command;"></div><div data-l="use semver::{Version, VersionReq};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         Utf8(std::string::FromUtf8Error);"></div><div data-l="#         SemVer(semver::SemVerError);"></div><div data-l="#         SemVerReq(semver::ReqParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let version_constraint = &quot;&gt; 1.12.0&quot;;"></div><div data-l="    let version_test = VersionReq::parse(version_constraint)?;"></div><div data-l="    let output = Command::new(&quot;git&quot;).arg(&quot;--version&quot;).output()?;"></div><div data-l=""></div><div data-l="    if !output.status.success() {"></div><div data-l="        bail!(&quot;Command executed with failing error code&quot;);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let stdout = String::from_utf8(output.stdout)?;"></div><div data-l="    let version = stdout.split(&quot; &quot;).last().ok_or_else(|| {"></div><div data-l="        &quot;Invalid command output&quot;"></div><div data-l="    })?;"></div><div data-l="    let parsed_version = Version::parse(version)?;"></div><div data-l=""></div><div data-l="    if !version_test.matches(&amp;parsed_version) {"></div><div data-l="        bail!(&quot;Command version lower than minimum supported version (found {}, need {})&quot;,"></div><div data-l="            parsed_version, version_constraint);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Command.html">`Command`</a>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.Version.html">`semver::Version`</a>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.VersionReq.html">`semver::VersionReq`</a>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.Version.html#method.parse">`Version::parse`</a>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.VersionReq.html#method.matches">`VersionReq::matches`</a>

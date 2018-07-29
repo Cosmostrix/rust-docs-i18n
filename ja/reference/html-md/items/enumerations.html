@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<h1>Enumerations</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Enumeration</s> :\
+&amp;nbsp;&amp;nbsp; <code>enum</code>
+   <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;
+   <a class="notranslate" href="#4_Generics_">_Generics_</a><sup>?</sup>
+   <a class="notranslate" href="#4_WhereClause_">_WhereClause_</a><sup>?</sup>
+   <code>{</code> <s>EnumItems</s><sup>?</sup> <code>}</code></p>
+<br>
+<p><s>EnumItems</s> :\
+&amp;nbsp;&amp;nbsp; <s>EnumItem</s> ( <code>,</code> <s>EnumItem</s> )<sup>\<i>&lt;/sup&gt; `,`&lt;sup&gt;?&lt;/sup&gt;
+
+_EnumItem_ :\
+&amp;nbsp;&amp;nbsp; _OuterAttribute_&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;( <s>EnumItemTuple</s> | <s>EnumItemStruct</s>
+                               | <s>EnumItemDiscriminant</s> )<sup>?</sup></p>
+<br>
+<p><s>EnumItemTuple</s> :\
+&amp;nbsp;&amp;nbsp; <code>(</code> <a class="notranslate" href="#4_TupleFields_">_TupleFields_</a><sup>?</sup> <code>)</code></p>
+<br>
+<p><s>EnumItemStruct</s> :\
+&amp;nbsp;&amp;nbsp; <code>{</code> <a class="notranslate" href="#4_StructFields_">_StructFields_</a><sup>?</sup> <code>}</code></p>
+<br>
+<p><s>EnumItemDiscriminant</s> :\
+&amp;nbsp;&amp;nbsp; <code>=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p></blockquote>
+<br>
+<p>An <i>enumeration</i>, also referred to as <i>enum</i> is a simultaneous definition of a
+nominal <a class="notranslate" href="#4enumerated type">enumerated type</a> as well as a set of <i>constructors</i>, that can be used
+to create or pattern-match values of the corresponding enumerated type.</p>
+<br>
+<p>Enumerations are declared with the keyword <code>enum</code>.</p>
+<br>
+<p>An example of an <code>enum</code> item and its use:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Animal {"></div><div data-l="    Dog,"></div><div data-l="    Cat,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut a: Animal = Animal::Dog;"></div><div data-l="a = Animal::Cat;"></div></div>
+<br>
+<p>Enum constructors can have either named or unnamed fields:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Animal {"></div><div data-l="    Dog(String, f64),"></div><div data-l="    Cat { name: String, weight: f64 },"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut a: Animal = Animal::Dog(&quot;Cocoa&quot;.to_string(), 37.2);"></div><div data-l="a = Animal::Cat { name: &quot;Spotty&quot;.to_string(), weight: 2.7 };"></div></div>
+<br>
+<p>In this example, <code>Cat</code> is a <s>struct-like enum variant</s>, whereas <code>Dog</code> is simply
+called an enum variant. Each enum instance has a <s>discriminant</s> which is an
+integer associated to it that is used to determine which variant it holds. An
+opaque reference to this discriminant can be obtained with the
+<a class="notranslate" href="#4`mem::discriminant`">`mem::discriminant`</a> function.</p>
+<br>
+<h2>Custom Discriminant Values for Field-Less Enumerations</h2>
+<br>
+<p>If there is no data attached to <i>any</i> of the variants of an enumeration,
+then the discriminant can be directly chosen and accessed.</p>
+<br>
+<p>These enumerations can be cast to integer types with the <code>as</code> operator by a
+<a class="notranslate" href="#4numeric cast">numeric cast</a>. The enumeration can optionally specify which integer each
+discriminant gets by following the variant name with <code>=</code> and then an integer
+literal. If the first variant in the declaration is unspecified, then it is set
+to zero. For every unspecified discriminant, it is set to one higher than the
+previous variant in the declaration.</p>
+<br>
+<div data-lang="rust"><div data-l="enum Foo {"></div><div data-l="#//    Bar,            // 0"></div><div data-l="    Bar,            // ">0</div><div data-l="#//    Baz = 123,      // 123"></div><div data-l="    Baz = 123,      // ">123</div><div data-l="#//    Quux,           // 124"></div><div data-l="    Quux,           // ">124</div><div data-l="}"></div><div data-l=""></div><div data-l="let baz_discriminant = Foo::Baz as u32;"></div><div data-l="assert_eq!(baz_discriminant, 123);"></div></div>
+<br>
+<p>Under the <a class="notranslate" href="#4default representation">default representation</a>, the specified discriminant is interpreted as
+an <code>isize</code> value although the compiler is allowed to use a smaller type in the
+actual memory layout. The size and thus acceptable values can be changed by
+using a <a class="notranslate" href="#4primitive representation">primitive representation</a> or the <a class="notranslate" href="#4`C` representation">`C` representation</a>.</p>
+<br>
+<p>It is an error when two variants share the same discriminant.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="enum SharedDiscriminantError {"></div><div data-l="    SharedA = 1,"></div><div data-l="    SharedB = 1"></div><div data-l="}"></div><div data-l=""></div><div data-l="enum SharedDiscriminantError2 {"></div><div data-l="#//    Zero,       // 0"></div><div data-l="    Zero,       // ">0</div><div data-l="#//    One,        // 1"></div><div data-l="    One,        // ">1</div><div data-l="#//    OneToo = 1  // 1 (collision with previous!)"></div><div data-l="    OneToo = 1  // ">1 (collision with previous!)</div><div data-l="}"></div></div>
+<br>
+<p>It is also an error to have an unspecified discriminant where the previous
+discriminant is the maximum value for the size of the discriminant.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[repr(u8)]"></div><div data-l="enum OverflowingDiscriminantError {"></div><div data-l="    Max = 255,"></div><div data-l="#//    MaxPlusOne // Would be 256, but that overflows the enum."></div><div data-l="    MaxPlusOne // ">Would be 256, but that overflows the enum.</div><div data-l="}"></div><div data-l=""></div><div data-l="#[repr(u8)]"></div><div data-l="enum OverflowingDiscriminantError2 {"></div><div data-l="#//    MaxMinusOne = 254, // 254"></div><div data-l="    MaxMinusOne = 254, // ">254</div><div data-l="#//    Max,               // 255"></div><div data-l="    Max,               // ">255</div><div data-l="#//    MaxPlusOne         // Would be 256, but that overflows the enum."></div><div data-l="    MaxPlusOne         // ">Would be 256, but that overflows the enum.</div><div data-l="}"></div></div>
+<br>
+<h2>Zero-variant Enums</h2>
+<br>
+<p>Enums with zero variants are known as <i>zero-variant enums</i>. As they have
+no valid values, they cannot be instantiated.</p>
+<br>
+<div data-lang="rust"><div data-l="enum ZeroVariants {}"></div></div>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1items/generics.html">_Generics_</a>
+<a class="notranslate" href="#1items/generics.html#where-clauses">_WhereClause_</a>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1items/structs.html">_TupleFields_</a>
+<a class="notranslate" href="#1items/structs.html">_StructFields_</a>
+<a class="notranslate" href="#1types.html#enumerated-types">enumerated type</a>
+<a class="notranslate" href="#1../std/mem/fn.discriminant.html">`mem::discriminant`</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#semantics">numeric cast</a>
+<a class="notranslate" href="#1attributes.html#ffi-attributes">`repr` attribute</a>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h1>Items</h1>
+<br>
+<p>An <s>item</s> is a component of a crate. Items are organized within a crate by a
+nested set of <a class="notranslate" href="#4modules">modules</a>. Every crate has a single &quot;outermost&quot; anonymous module;
+all further items within the crate have <a class="notranslate" href="#4paths">paths</a> within the module tree of the
+crate.</p>
+<br>
+<a class="notranslate" href="#1items/modules.html">modules</a>
+<a class="notranslate" href="#1paths.html">paths</a>
+<br>
+<p>Items are entirely determined at compile-time, generally remain fixed during
+execution, and may reside in read-only memory.</p>
+<br>
+<p>There are several kinds of items:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#2items/modules.html">modules</a></div>
+<div data-b="*"><a href="#2items/extern-crates.html"><code>extern crate</code> declarations</a></div>
+<div data-b="*"><a href="#2items/use-declarations.html"><code>use</code> declarations</a></div>
+<div data-b="*"><a href="#2items/functions.html">function definitions</a></div>
+<div data-b="*"><a href="#2items/type-aliases.html">type definitions</a></div>
+<div data-b="*"><a href="#2items/structs.html">struct definitions</a></div>
+<div data-b="*"><a href="#2items/enumerations.html">enumeration definitions</a></div>
+<div data-b="*"><a href="#2items/unions.html">union definitions</a></div>
+<div data-b="*"><a href="#2items/constant-items.html">constant items</a></div>
+<div data-b="*"><a href="#2items/static-items.html">static items</a></div>
+<div data-b="*"><a href="#2items/traits.html">trait definitions</a></div>
+<div data-b="*"><a class="notranslate" href="#2items/implementations.html">implementations</a></div>
+<div data-b="*"><a href="#2items/external-blocks.html"><code>extern</code> blocks</a></div>
+<br>
+<p>Some items form an implicit scope for the declaration of sub-items. In other
+words, within a function or module, declarations of items can (in many cases)
+be mixed with the statements, control blocks, and similar artifacts that
+otherwise compose the item body. The meaning of these scoped items is the same
+as if the item was declared outside the scope &amp;mdash; it is still a static item
+&amp;mdash; except that the item's <i>path name</i> within the module namespace is
+qualified by the name of the enclosing item, or is private to the enclosing
+item (in the case of functions). The grammar specifies the exact locations in
+which sub-item declarations may appear.</p>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<h1>Higher-Rank Trait Bounds (HRTBs)</h1>
+<br>
+<p>Rust's <code>Fn</code> traits are a little bit magic. For instance, we can write the
+following code:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Closure&lt;F&gt; {"></div><div data-l="    data: (u8, u16),"></div><div data-l="    func: F,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;F&gt; Closure&lt;F&gt;"></div><div data-l="    where F: Fn(&amp;(u8, u16)) -&gt; &amp;u8,"></div><div data-l="{"></div><div data-l="    fn call(&amp;self) -&gt; &amp;u8 {"></div><div data-l="        (self.func)(&amp;self.data)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn do_it(data: &amp;(u8, u16)) -&gt; &amp;u8 { &amp;data.0 }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let clo = Closure { data: (0, 1), func: do_it };"></div><div data-l="    println!(&quot;{}&quot;, clo.call());"></div><div data-l="}"></div></div>
+<br>
+<p>If we try to naively desugar this code in the same way that we did in the
+lifetimes section, we run into some trouble:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Closure&lt;F&gt; {"></div><div data-l="    data: (u8, u16),"></div><div data-l="    func: F,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;F&gt; Closure&lt;F&gt;"></div><div data-l="#    // where F: Fn(&amp;'??? (u8, u16)) -&gt; &amp;'??? u8,"></div><div data-l="    // ">where F: Fn(&amp;'??? (u8, u16)) -&gt; &amp;'??? u8,</div><div data-l="{"></div><div data-l="    fn call&lt;'a&gt;(&amp;'a self) -&gt; &amp;'a u8 {"></div><div data-l="        (self.func)(&amp;self.data)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn do_it&lt;'b&gt;(data: &amp;'b (u8, u16)) -&gt; &amp;'b u8 { &amp;'b data.0 }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    'x: {"></div><div data-l="        let clo = Closure { data: (0, 1), func: do_it };"></div><div data-l="        println!(&quot;{}&quot;, clo.call());"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>How on earth are we supposed to express the lifetimes on <code>F</code>'s trait bound? We
+need to provide some lifetime there, but the lifetime we care about can't be
+named until we enter the body of <code>call</code>! Also, that isn't some fixed lifetime;
+<code>call</code> works with <i>any</i> lifetime <code>&amp;self</code> happens to have at that point.</p>
+<br>
+<p>This job requires The Magic of Higher-Rank Trait Bounds (HRTBs). The way we
+desugar this is as follows:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="where for&lt;'a&gt; F: Fn(&amp;'a (u8, u16)) -&gt; &amp;'a u8,"></div></div>
+<br>
+<p>(Where <code>Fn(a, b, c) -&gt; d</code> is itself just sugar for the unstable <i>real</i> <code>Fn</code>
+trait)</p>
+<br>
+<p><code>for&lt;'a&gt;</code> can be read as &quot;for all choices of <code>'a</code>&quot;, and basically produces an
+<i>infinite list</i> of trait bounds that F must satisfy. Intense. There aren't many
+places outside of the <code>Fn</code> traits where we encounter HRTBs, and even for
+those we have a nice magic sugar for the common cases.</p>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<h1>Allowed-by-default lints</h1>
+<br>
+<p>These lints are all set to the 'allow' level by default. As such, they won't show up
+unless you set them to a higher lint level with a flag or attribute.</p>
+<br>
+<h2>anonymous-parameters</h2>
+<br>
+<p>This lint detects anonymous parameters. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn foo(usize);"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: use of deprecated anonymous parameter"></div><div data-l=" --&gt; src/lib.rs:5:11"></div><div data-l="  |"></div><div data-l="5 |     fn foo(usize);"></div><div data-l="  |           ^"></div><div data-l="  |"></div><div data-l="  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!"></div><div data-l="  = note: for more information, see issue #41686 &lt;https://github.com/rust-lang/rust/issues/41686&gt;"></div></div>
+<br>
+<p>This syntax is mostly a historical accident, and can be worked around quite
+easily:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn foo(_: usize);"></div><div data-l="}"></div></div>
+<br>
+<h2>bare-trait-object</h2>
+<br>
+<p>This lint suggests using <code>dyn Trait</code> for trait objects. Some example code
+that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(dyn_trait)]"></div><div data-l=""></div><div data-l="trait Trait { }"></div><div data-l=""></div><div data-l="fn takes_trait_object(_: Box&lt;Trait&gt;) {"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: trait objects without an explicit `dyn` are deprecated"></div><div data-l=" --&gt; src/lib.rs:7:30"></div><div data-l="  |"></div><div data-l="7 | fn takes_trait_object(_: Box&lt;Trait&gt;) {"></div><div data-l="  |                              ^^^^^ help: use `dyn`: `dyn Trait`"></div><div data-l="  |"></div></div>
+<br>
+<p>To fix it, do as the help message suggests:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(dyn_trait)]"></div><div data-l="#![deny(bare_trait_objects)]"></div><div data-l=""></div><div data-l="trait Trait { }"></div><div data-l=""></div><div data-l="fn takes_trait_object(_: Box&lt;dyn Trait&gt;) {"></div><div data-l="}"></div></div>
+<br>
+<h2>box-pointers</h2>
+<br>
+<p>This lints use of the Box type. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Foo {"></div><div data-l="    x: Box&lt;isize&gt;,"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: type uses owned (Box type) pointers: std::boxed::Box&lt;isize&gt;"></div><div data-l=" --&gt; src/lib.rs:6:5"></div><div data-l="  |"></div><div data-l="6 |     x: Box&lt;isize&gt; //~ ERROR type uses owned"></div><div data-l="  |     ^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<p>This lint is mostly historical, and not particularly useful. <code>Box&lt;T&gt;</code> used to
+be built into the language, and the only way to do heap allocation. Today's
+Rust can call into other allocators, etc.</p>
+<br>
+<h2>elided-lifetime-in-path</h2>
+<br>
+<p>This lint detects the use of hidden lifetime parameters. Some example code
+that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Foo&lt;'a&gt; {"></div><div data-l="    x: &amp;'a u32"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn foo(x: &amp;Foo) {"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: hidden lifetime parameters are deprecated, try `Foo&lt;'_&gt;`"></div><div data-l=" --&gt; src/lib.rs:5:12"></div><div data-l="  |"></div><div data-l="5 | fn foo(x: &amp;Foo) {"></div><div data-l="  |            ^^^"></div><div data-l="  |"></div></div>
+<br>
+<p>Lifetime elision elides this lifetime, but that is being deprecated.</p>
+<br>
+<h2>missing-copy-implementations</h2>
+<br>
+<p>This lint detects potentially-forgotten implementations of <code>Copy</code>. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="pub struct Foo {"></div><div data-l="    pub field: i32"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: type could implement `Copy`; consider adding `impl Copy`"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | / pub struct Foo { //~ ERROR type could implement `Copy`; consider adding `impl Copy`"></div><div data-l="4 | |     pub field: i32"></div><div data-l="5 | | }"></div><div data-l="  | |_^"></div><div data-l="  |"></div></div>
+<br>
+<p>You can fix the lint by deriving <code>Copy</code>.</p>
+<br>
+<p>This lint is set to 'allow' because this code isn't bad; it's common to write
+newtypes like this specifically so that a <code>Copy</code> type is no longer <code>Copy</code>.</p>
+<br>
+<h2>missing-debug-implementations</h2>
+<br>
+<p>This lint detects missing implementations of <code>fmt::Debug</code>. Some example code
+that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="pub struct Foo;"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: type does not implement `fmt::Debug`; consider adding #[derive(Debug)] or a manual implementation"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | pub struct Foo;"></div><div data-l="  | ^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<p>You can fix the lint by deriving <code>Debug</code>.</p>
+<br>
+<h2>missing-docs</h2>
+<br>
+<p>This lint detects missing documentation for public items. Some example code
+that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn foo() {}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: missing documentation for crate"></div><div data-l=" --&gt; src/main.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | / #![deny(missing_docs)]"></div><div data-l="2 | |"></div><div data-l="3 | | pub fn foo() {}"></div><div data-l="4 | |"></div><div data-l="5 | | fn main() {}"></div><div data-l="  | |____________^"></div><div data-l="  |"></div><div data-l=""></div><div data-l="error: missing documentation for a function"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div><div data-l=""></div></div>
+<br>
+<p>To fix the lint, add documentation to all items.</p>
+<br>
+<h2>single-use-lifetime</h2>
+<br>
+<p>This lint detects lifetimes that are only used once. Some example code that
+triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Foo&lt;'x&gt; {"></div><div data-l="    x: &amp;'x u32"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: lifetime name `'x` only used once"></div><div data-l=" --&gt; src/main.rs:3:12"></div><div data-l="  |"></div><div data-l="3 | struct Foo&lt;'x&gt; {"></div><div data-l="  |            ^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>trivial-casts</h2>
+<br>
+<p>This lint detects trivial casts which could be removed. Some example code
+that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="let x: &amp;u32 = &amp;42;"></div><div data-l="let _ = x as *const u32;"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: trivial cast: `&amp;u32` as `*const u32`. Cast can be replaced by coercion, this might require type ascription or a temporary variable"></div><div data-l=" --&gt; src/main.rs:5:13"></div><div data-l="  |"></div><div data-l="5 |     let _ = x as *const u32;"></div><div data-l="  |             ^^^^^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="note: lint level defined here"></div><div data-l=" --&gt; src/main.rs:1:9"></div><div data-l="  |"></div><div data-l="1 | #![deny(trivial_casts)]"></div><div data-l="  |         ^^^^^^^^^^^^^"></div></div>
+<br>
+<h2>trivial-numeric-casts</h2>
+<br>
+<p>This lint detects trivial casts of numeric types which could be removed. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 42i32 as i32;"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: trivial numeric cast: `i32` as `i32`. Cast can be replaced by coercion, this might require type ascription or a temporary variable"></div><div data-l=" --&gt; src/main.rs:4:13"></div><div data-l="  |"></div><div data-l="4 |     let x = 42i32 as i32;"></div><div data-l="  |             ^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>unreachable-pub</h2>
+<br>
+<p>This lint triggers for <code>pub</code> items not reachable from the crate root. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="mod foo {"></div><div data-l="    pub mod bar {"></div><div data-l="        "></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: unreachable `pub` item"></div><div data-l=" --&gt; src/main.rs:4:5"></div><div data-l="  |"></div><div data-l="4 |     pub mod bar {"></div><div data-l="  |     ---^^^^^^^^"></div><div data-l="  |     |"></div><div data-l="  |     help: consider restricting its visibility: `pub(crate)`"></div><div data-l="  |"></div></div>
+<br>
+<h2>unsafe-code</h2>
+<br>
+<p>This lint catches usage of <code>unsafe</code> code. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    unsafe {"></div><div data-l=""></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: usage of an `unsafe` block"></div><div data-l=" --&gt; src/main.rs:4:5"></div><div data-l="  |"></div><div data-l="4 | /     unsafe {"></div><div data-l="5 | |         "></div><div data-l="6 | |     }"></div><div data-l="  | |_____^"></div><div data-l="  |"></div></div>
+<br>
+<h2>unstable-features</h2>
+<br>
+<p>This lint is deprecated and no longer used.</p>
+<br>
+<h2>unused-extern-crates</h2>
+<br>
+<p>This lint guards against <code>extern crate</code> items that are never used. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate semver;"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: unused extern crate"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | extern crate semver;"></div><div data-l="  | ^^^^^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>unused-import-braces</h2>
+<br>
+<p>This lint catches unnecessary braces around an imported item. Some example
+code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="use test::{A};"></div><div data-l=""></div><div data-l="pub mod test {"></div><div data-l="    pub struct A;"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: braces around A is unnecessary"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | use test::{A};"></div><div data-l="  | ^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<p>To fix it, <code>use test::A;</code></p>
+<br>
+<h2>unused-qualifications</h2>
+<br>
+<p>This lint detects unnecessarily qualified names. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="mod foo {"></div><div data-l="    pub fn bar() {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    use foo::bar;"></div><div data-l="    foo::bar();"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: unnecessary qualification"></div><div data-l=" --&gt; src/main.rs:9:5"></div><div data-l="  |"></div><div data-l="9 |     foo::bar();"></div><div data-l="  |     ^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<p>You can call <code>bar()</code> directly, without the <code>foo::</code>.</p>
+<br>
+<h2>unused-results</h2>
+<br>
+<p>This lint checks for the unused result of an expression in a statement. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="fn foo&lt;T&gt;() -&gt; T { panic!() }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo::&lt;usize&gt;();"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: unused result"></div><div data-l=" --&gt; src/main.rs:6:5"></div><div data-l="  |"></div><div data-l="6 |     foo::&lt;usize&gt;();"></div><div data-l="  |     ^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>variant-size-differences</h2>
+<br>
+<p>This lint detects enums with widely varying variant sizes. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust"><div data-l="enum En {"></div><div data-l="    V0(u8),"></div><div data-l="    VBig([u8; 1024]),"></div><div data-l="}"></div></div>
+<br>
+<p>When set to 'deny', this will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: enum variant is more than three times larger (1024 bytes) than the next largest"></div><div data-l=" --&gt; src/main.rs:5:5"></div><div data-l="  |"></div><div data-l="5 |     VBig([u8; 1024]),   //~ ERROR variant is more than three times larger"></div><div data-l="  |     ^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h1>Bounds</h1>
+<br>
+<p>When working with generics, the type parameters often must use traits as <i>bounds</i> to
+stipulate what functionality a type implements. For example, the following
+example uses the trait <code>Display</code> to print and so it requires <code>T</code> to be bound
+by <code>Display</code>; that is, <code>T</code> <i>must</i> implement <code>Display</code>.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Define a function `printer` that takes a generic type `T` which"></div><div data-l="#// must implement trait `Display`."></div><div data-l="// ">Define a function <code>printer</code> that takes a generic type <code>T</code> which must implement trait <code>Display</code>.</div><div data-l="fn printer&lt;T: Display&gt;(t: T) {"></div><div data-l="    println!(&quot;{}&quot;, t);"></div><div data-l="}"></div></div>
+<br>
+<p>Bounding restricts the generic to types that conform to the bounds. That is:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct S&lt;T: Display&gt;(T);"></div><div data-l=""></div><div data-l="#// Error! `Vec&lt;T&gt;` does not implement `Display`. This"></div><div data-l="#// specialization will fail."></div><div data-l="// ">Error! <code>Vec&lt;T&gt;</code> does not implement <code>Display</code>. This specialization will fail.</div><div data-l="let s = S(vec![1]);"></div></div>
+<br>
+<p>Another effect of bounding is that generic instances are allowed to access the 
+<a class="notranslate" href="#4methods">methods</a> of traits specified in the bounds. For example:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// A trait which implements the print marker: `{:?}`."></div><div data-l="// ">A trait which implements the print marker: <code>{:?}</code>.</div><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="trait HasArea {"></div><div data-l="    fn area(&amp;self) -&gt; f64;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl HasArea for Rectangle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 { self.length * self.height }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Rectangle { length: f64, height: f64 }"></div><div data-l="#[allow(dead_code)]"></div><div data-l="struct Triangle  { length: f64, height: f64 }"></div><div data-l=""></div><div data-l="#// The generic `T` must implement `Debug`. Regardless"></div><div data-l="#// of the type, this will work properly."></div><div data-l="// ">The generic <code>T</code> must implement <code>Debug</code>. Regardless of the type, this will work properly.</div><div data-l="fn print_debug&lt;T: Debug&gt;(t: &amp;T) {"></div><div data-l="    println!(&quot;{:?}&quot;, t);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// `T` must implement `HasArea`. Any function which meets"></div><div data-l="#// the bound can access `HasArea`'s function `area`."></div><div data-l="// "><code>T</code> must implement <code>HasArea</code>. Any function which meets the bound can access <code>HasArea</code>'s function <code>area</code>.</div><div data-l="fn area&lt;T: HasArea&gt;(t: &amp;T) -&gt; f64 { t.area() }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let rectangle = Rectangle { length: 3.0, height: 4.0 };"></div><div data-l="    let _triangle = Triangle  { length: 3.0, height: 4.0 };"></div><div data-l=""></div><div data-l="    print_debug(&amp;rectangle);"></div><div data-l="    println!(&quot;Area: {}&quot;, area(&amp;rectangle));"></div><div data-l=""></div><div data-l="    //print_debug(&amp;_triangle);"></div><div data-l="    //println!(&quot;Area: {}&quot;, area(&amp;_triangle));"></div><div data-l="#    // ^ TODO: Try uncommenting these."></div><div data-l="#    // | Error: Does not implement either `Debug` or `HasArea`. "></div><div data-l="    // ">^ TODO: Try uncommenting these. | Error: Does not implement either <code>Debug</code> or <code>HasArea</code>. </div><div data-l="}"></div></div>
+<br>
+<p>As an additional note, <a class="notranslate" href="#3where"><code>where</code></a> clauses can also be used to apply bounds in
+some cases to be more expressive.</p>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3fmt"><code>std::fmt</code></a>, <a class="notranslate" href="#3structs"><code>struct</code>s</a>, and <a class="notranslate" href="#3traits"><code>trait</code>s</a></p>
+<br>
+<a class="notranslate" href="#1hello/print.html">fmt</a>
+<a class="notranslate" href="#1fn/methods.html">methods</a>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1trait.html">traits</a>
+<a class="notranslate" href="#1generics/where.html">where</a>

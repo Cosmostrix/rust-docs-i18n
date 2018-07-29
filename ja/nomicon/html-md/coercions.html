@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<h1>Coercions</h1>
+<br>
+<p>Types can implicitly be coerced to change in certain contexts. These changes are
+generally just <i>weakening</i> of types, largely focused around pointers and
+lifetimes. They mostly exist to make Rust &quot;just work&quot; in more cases, and are
+largely harmless.</p>
+<br>
+<p>Here's all the kinds of coercion:</p>
+<br>
+<p>Coercion is allowed between the following types:</p>
+<br>
+<div data-b="*">Transitivity: <code>T_1</code> to <code>T_3</code> where <code>T_1</code> coerces to <code>T_2</code> and <code>T_2</code> coerces to
+<code>T_3</code></div>
+<div data-b="*">Pointer Weakening:</div>
+<div data-b="    *"><code>&amp;mut T</code> to <code>&amp;T</code></div>
+<div data-b="    *"><code>*mut T</code> to <code>*const T</code></div>
+<div data-b="    *"><code>&amp;T</code> to <code>*const T</code></div>
+<div data-b="    *"><code>&amp;mut T</code> to <code>*mut T</code></div>
+<div data-b="*">Unsizing: <code>T</code> to <code>U</code> if <code>T</code> implements <code>CoerceUnsized&lt;U&gt;</code></div>
+<div data-b="*">Deref coercion: Expression <code>&amp;x</code> of type <code>&amp;T</code> to <code>&amp;*x</code> of type <code>&amp;U</code> if <code>T</code> derefs to <code>U</code> (i.e. <code>T: Deref&lt;Target=U&gt;</code>)</div>
+<br>
+<p><code>CoerceUnsized&lt;Pointer&lt;U&gt;&gt; for Pointer&lt;T&gt; where T: Unsize&lt;U&gt;</code> is implemented
+for all pointer types (including smart pointers like Box and Rc). Unsize is
+only implemented automatically, and enables the following transformations:</p>
+<br>
+<div data-b="*"><code>[T; n]</code> =&gt; <code>[T]</code></div>
+<div data-b="*"><code>T</code> =&gt; <code>Trait</code> where <code>T: Trait</code></div>
+<div data-b="*"><code>Foo&lt;..., T, ...&gt;</code> =&gt; <code>Foo&lt;..., U, ...&gt;</code> where:</div>
+<div data-b="    *"><code>T: Unsize&lt;U&gt;</code></div>
+<div data-b="    *"><code>Foo</code> is a struct</div>
+<div data-b="    *">Only the last field of <code>Foo</code> has type involving <code>T</code></div>
+<div data-b="    *"><code>T</code> is not part of the type of any other fields</div>
+<div data-b="    *"><code>Bar&lt;T&gt;: Unsize&lt;Bar&lt;U&gt;&gt;</code>, if the last field of <code>Foo</code> has type <code>Bar&lt;T&gt;</code></div>
+<br>
+<p>Coercions occur at a <i>coercion site</i>. Any location that is explicitly typed
+will cause a coercion to its type. If inference is necessary, the coercion will
+not be performed. Exhaustively, the coercion sites for an expression <code>e</code> to
+type <code>U</code> are:</p>
+<br>
+<div data-b="*">let statements, statics, and consts: <code>let x: U = e</code></div>
+<div data-b="*">Arguments to functions: <code>takes_a_U(e)</code></div>
+<div data-b="*">Any expression that will be returned: <code>fn foo() -&gt; U { e }</code></div>
+<div data-b="*">Struct literals: <code>Foo { some_u: e }</code></div>
+<div data-b="*">Array literals: <code>let x: [U; 10] = [e, ..]</code></div>
+<div data-b="*">Tuple literals: <code>let x: (U, ..) = (e, ..)</code></div>
+<div data-b="*">The last expression in a block: <code>let x: U = { ..; e }</code></div>
+<br>
+<p>Note that we do not perform coercions when matching traits (except for
+receivers, see below). If there is an impl for some type <code>U</code> and <code>T</code> coerces to
+<code>U</code>, that does not constitute an implementation for <code>T</code>. For example, the
+following will not type check, even though it is OK to coerce <code>t</code> to <code>&amp;T</code> and
+there is an impl for <code>&amp;T</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait Trait {}"></div><div data-l=""></div><div data-l="fn foo&lt;X: Trait&gt;(t: X) {}"></div><div data-l=""></div><div data-l="impl&lt;'a&gt; Trait for &amp;'a i32 {}"></div><div data-l=""></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let t: &amp;mut i32 = &amp;mut 0;"></div><div data-l="    foo(t);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="&lt;anon&gt;:10:5: 10:8 error: the trait bound `&amp;mut i32 : Trait` is not satisfied [E0277]"></div><div data-l="&lt;anon&gt;:10     foo(t);"></div><div data-l="              ^~~"></div></div>

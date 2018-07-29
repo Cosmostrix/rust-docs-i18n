@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<h1>Lowering rules</h1>
+<br>
+<p>This section gives the complete lowering rules for Rust traits into
+<a href="#3pc">program clauses</a>. It is a kind of reference. These rules
+reference the <a href="#3dg">domain goals</a> defined in an earlier section.</p>
+<br>
+<a class="notranslate" href="#1./traits/goals-and-clauses.html">pc</a>
+<a class="notranslate" href="#1./traits/goals-and-clauses.html#domain-goals">dg</a>
+<br>
+<h2>Notation</h2>
+<br>
+<p>The nonterminal <code>Pi</code> is used to mean some generic <i>parameter</i>, either a
+named lifetime like <code>'a</code> or a type paramter like <code>A</code>.</p>
+<br>
+<p>The nonterminal <code>Ai</code> is used to mean some generic <i>argument</i>, which
+might be a lifetime like <code>'a</code> or a type like <code>Vec&lt;A&gt;</code>.</p>
+<br>
+<p>When defining the lowering rules, we will give goals and clauses in
+the <a href="#2./traits/goals-and-clauses.html">notation given in this section</a>.
+We sometimes insert &quot;macros&quot; like <code>LowerWhereClause€</code> into these
+definitions; these macros reference other sections within this chapter.</p>
+<br>
+<h2>Rule names and cross-references</h2>
+<br>
+<p>Each of these lowering rules is given a name, documented with a
+comment like so:</p>
+<br>
+<p>    // Rule Foo-Bar-Baz</p>
+<br>
+<p>you can also search through the <code>librustc_traits</code> crate in rustc
+to find the corresponding rules from the implementation.</p>
+<br>
+<h2>Lowering where clauses</h2>
+<br>
+<p>When used in a goal position, where clauses can be mapped directly to
+<a href="#3dg">domain goals</a>, as follows:</p>
+<br>
+<div data-b="-"><code>A0: Foo&lt;A1..An&gt;</code> maps to <code>Implemented(A0: Foo&lt;A1..An&gt;)</code>.</div>
+<div data-b="-"><code>A0: Foo&lt;A1..An, Item = T&gt;</code> maps to
+<code>ProjectionEq(&lt;A0 as Foo&lt;A1..An&gt;&gt;::Item = T)</code></div>
+<div data-b="-"><code>T: 'r</code> maps to <code>Outlives(T, 'r)</code></div>
+<div data-b="-"><code>'a: 'b</code> maps to <code>Outlives('a, 'b)</code></div>
+<br>
+<p>In the rules below, we will use <code>WC</code> to indicate where clauses that
+appear in Rust syntax; we will then use the same <code>WC</code> to indicate
+where those where clauses appear as goals in the program clauses that
+we are producing. In that case, the mapping above is used to convert
+from the Rust syntax into goals.</p>
+<br>
+<h3>Transforming the lowered where clauses</h3>
+<br>
+<p>In addition, in the rules below, we sometimes do some transformations
+on the lowered where clauses, as defined here:</p>
+<br>
+<div data-b="-"><code>FromEnv(WC)</code> – this indicates that:</div>
+<div data-b="  -"><code>Implemented(TraitRef)</code> becomes <code>FromEnv(TraitRef)</code></div>
+<div data-b="  -"><code>ProjectionEq(Projection = Ty)</code> becomes <code>FromEnv(Projection = Ty)</code></div>
+<div data-b="  -">other where-clauses are left intact</div>
+<div data-b="-"><code>WellFormed(WC)</code> – this indicates that:</div>
+<div data-b="  -"><code>Implemented(TraitRef)</code> becomes <code>WellFormed(TraitRef)</code></div>
+<div data-b="  -"><code>ProjectionEq(Projection = Ty)</code> becomes <code>WellFormed(Projection = Ty)</code></div>
+<br>
+<p><i>TODO</i>: I suspect that we want to alter the outlives relations too,
+but Chalk isn't modeling those right now.</p>
+<br>
+<h2>Lowering traits</h2>
+<br>
+<p>Given a trait definition</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//trait Trait&lt;P1..Pn&gt; // P0 == Self"></div><div data-l="trait Trait&lt;P1..Pn&gt; // ">P0 == Self</div><div data-l="where WC"></div><div data-l="{"></div><div data-l="#    // trait items"></div><div data-l="    // ">trait items</div><div data-l="}"></div></div>
+<br>
+<p>we will produce a number of declarations. This section is focused on
+the program clauses for the trait header (i.e., the stuff outside the
+<code>{}</code>); the <a href="#2#trait-items">section on trait items</a> covers the stuff
+inside the <code>{}</code>.</p>
+<br>
+<h3>Trait header</h3>
+<br>
+<p>From the trait itself we mostly make &quot;meta&quot; rules that setup the
+relationships between different kinds of domain goals.  The first such
+rule from the trait header creates the mapping between the <code>FromEnv</code>
+and <code>Implemented</code> predicates:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implemented-From-Env"></div><div data-l="// ">Rule Implemented-From-Env</div><div data-l="forall&lt;Self, P1..Pn&gt; {"></div><div data-l="  Implemented(Self: Trait&lt;P1..Pn&gt;) :- FromEnv(Self: Trait&lt;P1..Pn&gt;)"></div><div data-l="}"></div></div>
+<br>
+<p><a name="implied-bounds"></a></p>
+<br>
+<h4>Implied bounds</h4>
+<br>
+<p>The next few clauses have to do with implied bounds (see also
+<a class="notranslate" href="#4RFC 2089">RFC 2089</a>). For each trait, we produce two clauses:</p>
+<br>
+<a class="notranslate" href="#1https://rust-lang.github.io/rfcs/2089-implied-bounds.html">RFC 2089</a>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implied-Bound-From-Trait"></div><div data-l="// ">Rule Implied-Bound-From-Trait</div><div data-l="//"></div><div data-l="#// For each where clause WC:"></div><div data-l="// ">For each where clause WC:</div><div data-l="forall&lt;Self, P1..Pn&gt; {"></div><div data-l="  FromEnv(WC) :- FromEnv(Self: Trait&lt;P1..Pn)"></div><div data-l="}"></div></div>
+<br>
+<p>This clause says that if we are assuming that the trait holds, then we can also
+assume that its where-clauses hold. It's perhaps useful to see an example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait Eq: PartialEq { ... }"></div></div>
+<br>
+<p>In this case, the <code>PartialEq</code> supertrait is equivalent to a <code>where
+Self: PartialEq</code> where clause, in our simplified model. The program
+clause above therefore states that if we can prove <code>FromEnv(T: Eq)</code> –
+e.g., if we are in some function with <code>T: Eq</code> in its where clauses –
+then we also know that <code>FromEnv(T: PartialEq)</code>. Thus the set of things
+that follow from the environment are not only the <b>direct where
+clauses</b> but also things that follow from them.</p>
+<br>
+<p>The next rule is related; it defines what it means for a trait reference
+to be <b>well-formed</b>:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule WellFormed-TraitRef"></div><div data-l="// ">Rule WellFormed-TraitRef</div><div data-l="forall&lt;Self, P1..Pn&gt; {"></div><div data-l="  WellFormed(Self: Trait&lt;P1..Pn&gt;) :- Implemented(Self: Trait&lt;P1..Pn&gt;) &amp;&amp; WellFormed(WC)"></div><div data-l="}"></div></div>
+<br>
+<p>This <code>WellFormed</code> rule states that <code>T: Trait</code> is well-formed if (a)
+<code>T: Trait</code> is implemented and (b) all the where-clauses declared on
+<code>Trait</code> are well-formed (and hence they are implemented). Remember
+that the <code>WellFormed</code> predicate is
+<a class="notranslate" href="#2./traits/goals-and-clauses.html#coinductive">coinductive</a>; in this
+case, it is serving as a kind of &quot;carrier&quot; that allows us to enumerate
+all the where clauses that are transitively implied by <code>T: Trait</code>.</p>
+<br>
+<p>An example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait Foo: A + Bar { }"></div><div data-l="trait Bar: B + Foo { }"></div><div data-l="trait A { }"></div><div data-l="trait B { }"></div></div>
+<br>
+<p>Here, the transitive set of implications for <code>T: Foo</code> are <code>T: A</code>, <code>T: Bar</code>, and
+<code>T: B</code>.  And indeed if we were to try to prove <code>WellFormed(T: Foo)</code>, we would
+have to prove each one of those:</p>
+<br>
+<div data-b="-"><code>WellFormed(T: Foo)</code></div>
+<div data-b="  -"><code>Implemented(T: Foo)</code></div>
+<div data-b="  -"><code>WellFormed(T: A)</code></div>
+<div data-b="    -"><code>Implemented(T: A)</code></div>
+<div data-b="  -"><code>WellFormed(T: Bar)</code></div>
+<div data-b="    -"><code>Implemented(T: Bar)</code></div>
+<div data-b="    -"><code>WellFormed(T: B)</code></div>
+<div data-b="      -"><code>Implemented(T: Bar)</code></div>
+<div data-b="    -"><code>WellFormed(T: Foo)</code> -- cycle, true coinductively</div>
+<br>
+<p>This <code>WellFormed</code> predicate is only used when proving that impls are
+well-formed – basically, for each impl of some trait ref <code>TraitRef</code>,
+we must show that <code>WellFormed(TraitRef)</code>. This in turn justifies the
+implied bounds rules that allow us to extend the set of <code>FromEnv</code>
+items.</p>
+<br>
+<h2>Lowering type definitions</h2>
+<br>
+<p>We also want to have some rules which define when a type is well-formed.
+For example, given this type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Set&lt;K&gt; where K: Hash { ... }"></div></div>
+<br>
+<p>then <code>Set&lt;i32&gt;</code> is well-formed because <code>i32</code> implements <code>Hash</code>, but
+<code>Set&lt;NotHash&gt;</code> would not be well-formed. Basically, a type is well-formed
+if its parameters verify the where clauses written on the type definition.</p>
+<br>
+<p>Hence, for every type definition:</p>
+<br>
+<div data-lang="rust, ignore"><div data-l="struct Type&lt;P1..Pn&gt; where WC { ... }"></div></div>
+<br>
+<p>we produce the following rule:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule WellFormed-Type"></div><div data-l="// ">Rule WellFormed-Type</div><div data-l="forall&lt;P1..Pn&gt; {"></div><div data-l="  WellFormed(Type&lt;P1..Pn&gt;) :- WC"></div><div data-l="}"></div></div>
+<br>
+<p>Note that we use <code>struct</code> for defining a type, but this should be understood
+as a general type definition (it could be e.g. a generic <code>enum</code>).</p>
+<br>
+<p>Conversely, we define rules which say that if we assume that a type is
+well-formed, we can also assume that its where clauses hold. That is,
+we produce the following family of rules:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule FromEnv-Type"></div><div data-l="// ">Rule FromEnv-Type</div><div data-l="//"></div><div data-l="#// For each where clause `WC`"></div><div data-l="// ">For each where clause <code>WC</code></div><div data-l="forall&lt;P1..Pn&gt; {"></div><div data-l="  FromEnv(WC) :- FromEnv(Type&lt;P1..Pn&gt;)"></div><div data-l="}"></div></div>
+<br>
+<p>As for the implied bounds RFC, functions will <i>assume</i> that their arguments
+are well-formed. For example, suppose we have the following bit of code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait Hash: Eq { }"></div><div data-l="struct Set&lt;K: Hash&gt; { ... }"></div><div data-l=""></div><div data-l="fn foo&lt;K&gt;(collection: Set&lt;K&gt;, x: K, y: K) {"></div><div data-l="#    // `x` and `y` can be equalized even if we did not explicitly write"></div><div data-l="#    // `where K: Eq`"></div><div data-l="    // "><code>x</code> and <code>y</code> can be equalized even if we did not explicitly write <code>where K: Eq</code></div><div data-l="    if x == y {"></div><div data-l="        ..."></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In the <code>foo</code> function, we assume that <code>Set&lt;K&gt;</code> is well-formed, i.e. we have
+<code>FromEnv(Set&lt;K&gt;)</code> in our environment. Because of the previous rule, we get
+ <code>FromEnv(K: Hash)</code> without needing an explicit where clause. And because
+of the <code>Hash</code> trait definition, there also exists a rule which says:</p>
+<br>
+<div data-lang="text"><div data-l="forall&lt;K&gt; {"></div><div data-l="  FromEnv(K: Eq) :- FromEnv(K: Hash)"></div><div data-l="}"></div></div>
+<br>
+<p>which means that we finally get <code>FromEnv(K: Eq)</code> and then can compare <code>x</code>
+and <code>y</code> without needing an explicit where clause.</p>
+<br>
+<p><a name="trait-items"></a></p>
+<br>
+<h2>Lowering trait items</h2>
+<br>
+<h3>Associated type declarations</h3>
+<br>
+<p>Given a trait that declares a (possibly generic) associated type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//trait Trait&lt;P1..Pn&gt; // P0 == Self"></div><div data-l="trait Trait&lt;P1..Pn&gt; // ">P0 == Self</div><div data-l="where WC"></div><div data-l="{"></div><div data-l="    type AssocType&lt;Pn+1..Pm&gt;: Bounds where WC1;"></div><div data-l="}"></div></div>
+<br>
+<p>We will produce a number of program clauses. The first two define
+the rules by which <code>ProjectionEq</code> can succeed; these two clauses are discussed
+in detail in the <a href="#2./traits/associated-types.html">section on associated types</a>,
+but reproduced here for reference:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule ProjectionEq-Normalize"></div><div data-l="// ">Rule ProjectionEq-Normalize</div><div data-l="//"></div><div data-l="#// ProjectionEq can succeed by normalizing:"></div><div data-l="// ">ProjectionEq can succeed by normalizing:</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm, U&gt; {"></div><div data-l="  ProjectionEq(&lt;Self as Trait&lt;P1..Pn&gt;&gt;::AssocType&lt;Pn+1..Pm&gt; = U) :-"></div><div data-l="      Normalize(&lt;Self as Trait&lt;P1..Pn&gt;&gt;::AssocType&lt;Pn+1..Pm&gt; -&gt; U)"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="#// Rule ProjectionEq-Skolemize"></div><div data-l="// ">Rule ProjectionEq-Skolemize</div><div data-l="//"></div><div data-l="#// ProjectionEq can succeed by skolemizing, see &quot;associated type&quot;"></div><div data-l="#// chapter for more:"></div><div data-l="// ">ProjectionEq can succeed by skolemizing, see &quot;associated type&quot; chapter for more:</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm&gt; {"></div><div data-l="  ProjectionEq("></div><div data-l="    &lt;Self as Trait&lt;P1..Pn&gt;&gt;::AssocType&lt;Pn+1..Pm&gt; ="></div><div data-l="    (Trait::AssocType)&lt;Self, P1..Pn, Pn+1..Pm&gt;"></div><div data-l="  )"></div><div data-l="}"></div></div>
+<br>
+<p>The next rule covers implied bounds for the projection. In particular,
+the <code>Bounds</code> declared on the associated type must have been proven to hold
+to show that the impl is well-formed, and hence we can rely on them
+elsewhere.</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implied-Bound-From-AssocTy"></div><div data-l="// ">Rule Implied-Bound-From-AssocTy</div><div data-l="//"></div><div data-l="#// For each `Bound` in `Bounds`:"></div><div data-l="// ">For each <code>Bound</code> in <code>Bounds</code>:</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm&gt; {"></div><div data-l="    FromEnv(&lt;Self as Trait&lt;P1..Pn&gt;&gt;::AssocType&lt;Pn+1..Pm&gt;&gt;: Bound) :-"></div><div data-l="      FromEnv(Self: Trait&lt;P1..Pn&gt;)"></div><div data-l="}"></div></div>
+<br>
+<p>Next, we define the requirements for an instantiation of our associated
+type to be well-formed...</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule WellFormed-AssocTy"></div><div data-l="// ">Rule WellFormed-AssocTy</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm&gt; {"></div><div data-l="    WellFormed((Trait::AssocType)&lt;Self, P1..Pn, Pn+1..Pm&gt;) :-"></div><div data-l="      WC1, Implemented(Self: Trait&lt;P1..Pn&gt;)"></div><div data-l="}"></div></div>
+<br>
+<p>...along with the reverse implications, when we can assume that it is
+well-formed.</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implied-WC-From-AssocTy"></div><div data-l="// ">Rule Implied-WC-From-AssocTy</div><div data-l="//"></div><div data-l="#// For each where clause WC1:"></div><div data-l="// ">For each where clause WC1:</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm&gt; {"></div><div data-l="    FromEnv(WC1) :- FromEnv((Trait::AssocType)&lt;Self, P1..Pn, Pn+1..Pm&gt;)"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implied-Trait-From-AssocTy"></div><div data-l="// ">Rule Implied-Trait-From-AssocTy</div><div data-l="forall&lt;Self, P1..Pn, Pn+1..Pm&gt; {"></div><div data-l="    FromEnv(Self: Trait&lt;P1..Pn&gt;) :-"></div><div data-l="      FromEnv((Trait::AssocType)&lt;Self, P1..Pn, Pn+1..Pm&gt;)"></div><div data-l="}"></div></div>
+<br>
+<h3>Lowering function and constant declarations</h3>
+<br>
+<p>Chalk didn't model functions and constants, but I would eventually like to
+treat them exactly like normalization. See <a href="#2#constant-vals">the section on function/constant
+values below</a> for more details.</p>
+<br>
+<h2>Lowering impls</h2>
+<br>
+<p>Given an impl of a trait:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;P0..Pn&gt; Trait&lt;A1..An&gt; for A0"></div><div data-l="where WC"></div><div data-l="{"></div><div data-l="#    // zero or more impl items"></div><div data-l="    // ">zero or more impl items</div><div data-l="}"></div></div>
+<br>
+<p>Let <code>TraitRef</code> be the trait reference <code>A0: Trait&lt;A1..An&gt;</code>. Then we
+will create the following rules:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule Implemented-From-Impl"></div><div data-l="// ">Rule Implemented-From-Impl</div><div data-l="forall&lt;P0..Pn&gt; {"></div><div data-l="  Implemented(TraitRef) :- WC"></div><div data-l="}"></div></div>
+<br>
+<p>In addition, we will lower all of the <i>impl items</i>.</p>
+<br>
+<h2>Lowering impl items</h2>
+<br>
+<h3>Associated type values</h3>
+<br>
+<p>Given an impl that contains:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;P0..Pn&gt; Trait&lt;P1..Pn&gt; for P0"></div><div data-l="where WC_impl"></div><div data-l="{"></div><div data-l="    type AssocType&lt;Pn+1..Pm&gt; = T;"></div><div data-l="}"></div></div>
+<br>
+<p>and our where clause <code>WC1</code> on the trait associated type from above, we
+produce the following rule:</p>
+<br>
+<div data-lang="text"><div data-l="#// Rule Normalize-From-Impl"></div><div data-l="// ">Rule Normalize-From-Impl</div><div data-l="forall&lt;P0..Pm&gt; {"></div><div data-l="  forall&lt;Pn+1..Pm&gt; {"></div><div data-l="    Normalize(&lt;P0 as Trait&lt;P1..Pn&gt;&gt;::AssocType&lt;Pn+1..Pm&gt; -&gt; T) :-"></div><div data-l="      Implemented(P0 as Trait) &amp;&amp; WC1"></div><div data-l="  }"></div><div data-l="}"></div></div>
+<br>
+<p>Note that <code>WC_impl</code> and <code>WC1</code> both encode where-clauses that the impl can
+rely on. (<code>WC_impl</code> is not used here, because it is implied by
+<code>Implemented(P0 as Trait)</code>.)</p>
+<br>
+<p><a name="constant-vals"></a></p>
+<br>
+<h3>Function and constant values</h3>
+<br>
+<p>Chalk didn't model functions and constants, but I would eventually
+like to treat them exactly like normalization. This presumably
+involves adding a new kind of parameter (constant), and then having a
+<code>NormalizeValue</code> domain goal. This is <i>to be written</i> because the
+details are a bit up in the air.</p>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>create</code></h1>
+<br>
+<p>The <code>create</code> static method opens a file in write-only mode. If the file
+already existed, the old content is destroyed. Otherwise, a new file is
+created.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="static LOREM_IPSUM: &amp;'static str ="></div><div data-l="&quot;Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod"></div><div data-l="tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"></div><div data-l="quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo"></div><div data-l="consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse"></div><div data-l="cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non"></div><div data-l="proident, sunt in culpa qui officia deserunt mollit anim id est laborum."></div><div data-l="&quot;;"></div><div data-l=""></div><div data-l="use std::error::Error;"></div><div data-l="use std::io::prelude::*;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let path = Path::new(&quot;out/lorem_ipsum.txt&quot;);"></div><div data-l="    let display = path.display();"></div><div data-l=""></div><div data-l="#    // Open a file in write-only mode, returns `io::Result&lt;File&gt;`"></div><div data-l="    // ">Open a file in write-only mode, returns <code>io::Result&lt;File&gt;</code></div><div data-l="    let mut file = match File::create(&amp;path) {"></div><div data-l="        Err(why) =&gt; panic!(&quot;couldn't create {}: {}&quot;,"></div><div data-l="                           display,"></div><div data-l="                           why.description()),"></div><div data-l="        Ok(file) =&gt; file,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="#    // Write the `LOREM_IPSUM` string to `file`, returns `io::Result&lt;()&gt;`"></div><div data-l="    // ">Write the <code>LOREM_IPSUM</code> string to <code>file</code>, returns <code>io::Result&lt;()&gt;</code></div><div data-l="    match file.write_all(LOREM_IPSUM.as_bytes()) {"></div><div data-l="        Err(why) =&gt; {"></div><div data-l="            panic!(&quot;couldn't write to {}: {}&quot;, display,"></div><div data-l="                                               why.description())"></div><div data-l="        },"></div><div data-l="        Ok(_) =&gt; println!(&quot;successfully wrote to {}&quot;, display),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Here's the expected successful output:</p>
+<br>
+<div data-lang="bash"><div data-l="$ mkdir out"></div><div data-l="$ rustc create.rs &amp;&amp; ./create"></div><div data-l="successfully wrote to out/lorem_ipsum.txt"></div><div data-l="$ cat out/lorem_ipsum.txt"></div><div data-l="Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod"></div><div data-l="tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"></div><div data-l="quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo"></div><div data-l="consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse"></div><div data-l="cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non"></div><div data-l="proident, sunt in culpa qui officia deserunt mollit anim id est laborum."></div></div>
+<br>
+<p>(As in the previous example, you are encouraged to test this example under
+failure conditions.)</p>
+<br>
+<p>There is also a more generic <code>open_mode</code> method that can open files in other
+modes like: read+write, append, etc.</p>

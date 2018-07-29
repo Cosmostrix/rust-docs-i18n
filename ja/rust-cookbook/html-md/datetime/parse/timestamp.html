@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Convert date to UNIX timestamp and vice versa</h2>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Converts a date given by <a class="notranslate" href="#4`NaiveDate::from_ymd`">`NaiveDate::from_ymd`</a> and <a class="notranslate" href="#4`NaiveTime::from_hms`">`NaiveTime::from_hms`</a>
+to <a class="notranslate" href="#4UNIX timestamp">UNIX timestamp</a> using <a class="notranslate" href="#4`NaiveDateTime::timestamp`">`NaiveDateTime::timestamp`</a>.
+Then it calculates what was the date after one billion seconds
+since January 1, 1970 0:00:00 UTC, using <a class="notranslate" href="#4`NaiveDateTime::from_timestamp`">`NaiveDateTime::from_timestamp`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l=""></div><div data-l="use chrono::{NaiveDate, NaiveDateTime};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let date_time: NaiveDateTime = NaiveDate::from_ymd(2017, 11, 12).and_hms(17, 33, 44);"></div><div data-l="    println!("></div><div data-l="        &quot;Number of seconds between 1970-01-01 00:00:00 and {} is {}.&quot;,"></div><div data-l="        date_time, date_time.timestamp());"></div><div data-l=""></div><div data-l="    let date_time_after_a_billion_seconds = NaiveDateTime::from_timestamp(1_000_000_000, 0);"></div><div data-l="    println!("></div><div data-l="        &quot;Date after a billion seconds since 1970-01-01 00:00:00 was {}.&quot;,"></div><div data-l="        date_time_after_a_billion_seconds);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveDate.html#method.from_ymd">`NaiveDate::from_ymd`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveDateTime.html#method.from_timestamp">`NaiveDateTime::from_timestamp`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveDateTime.html#method.timestamp">`NaiveDateTime::timestamp`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveTime.html#method.from_hms">`NaiveTime::from_hms`</a>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Unix_time">UNIX timestamp</a>

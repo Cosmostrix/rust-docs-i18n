@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<h1>Adding new tests</h1>
+<br>
+<p><b>In general, we expect every PR that fixes a bug in rustc to come
+accompanied by a regression test of some kind.</b> This test should fail
+in master but pass after the PR. These tests are really useful for
+preventing us from repeating the mistakes of the past.</p>
+<br>
+<p>To add a new test, the first thing you generally do is to create a
+file, typically a Rust source file. Test files have a particular
+structure:</p>
+<br>
+<div data-b="-">They always begin with the <a href="#2./conventions.html#copyright">copyright notice</a>;</div>
+<div data-b="-">then they should have some kind of
+<a href="#2#explanatory_comment">comment explaining what the test is about</a>;</div>
+<div data-b="-">next, they can have one or more <a href="#2#header_commands">header commands</a>, which
+are special comments that the test interpreter knows how to interpret.</div>
+<div data-b="-">finally, they have the Rust source. This may have various <a href="#2#error_annotations">error
+  annotations</a> which indicate expected compilation errors or
+warnings.</div>
+<br>
+<p>Depending on the test suite, there may be some other details to be aware of:
+  - For <a href="#2#ui">the <code>ui</code> test suite</a>, you need to generate reference output files.</p>
+<br>
+<h2>What kind of test should I add?</h2>
+<br>
+<p>It can be difficult to know what kind of test to use. Here are some
+rough heuristics:</p>
+<br>
+<div data-b="-">Some tests have specialized needs:</div>
+<div data-b="  -">need to run gdb or lldb? use the <code>debuginfo</code> test suite</div>
+<div data-b="  -">need to inspect LLVM IR or MIR IR? use the <code>codegen</code> or <code>mir-opt</code> test
+suites</div>
+<div data-b="  -">need to run rustdoc? Prefer a <code>rustdoc</code> test</div>
+<div data-b="  -">need to inspect the resulting binary in some way? Then use <code>run-make</code></div>
+<div data-b="-">For most other things, <a href="#2#ui">a <code>ui</code> (or <code>ui-fulldeps</code>) test</a> is to be
+preferred:</div>
+<div data-b="  -"><code>ui</code> tests subsume both run-pass, compile-fail, and parse-fail tests</div>
+<div data-b="  -">in the case of warnings or errors, <code>ui</code> tests capture the full output,
+which makes it easier to review but also helps prevent &quot;hidden&quot; regressions
+in the output</div>
+<br>
+<h2>Naming your test</h2>
+<br>
+<p>We have not traditionally had a lot of structure in the names of
+tests.  Moreover, for a long time, the rustc test runner did not
+support subdirectories (it now does), so test suites like
+<a class="notranslate" href="#4`src/test/run-pass`">`src/test/run-pass`</a> have a huge mess of files in them. This is not
+considered an ideal setup.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test/run-pass/">`src/test/run-pass`</a>
+<br>
+<p>For regression tests – basically, some random snippet of code that
+came in from the internet – we often just name the test after the
+issue. For example, <code>src/test/run-pass/issue-12345.rs</code>. If possible,
+though, it is better if you can put the test into a directory that
+helps identify what piece of code is being tested here (e.g.,
+<code>borrowck/issue-12345.rs</code> is much better), or perhaps give it a more
+meaningful name. Still, <b>do include the issue number somewhere</b>.</p>
+<br>
+<p>When writing a new feature, <b>create a subdirectory to store your
+tests</b>. For example, if you are implementing RFC 1234 (&quot;Widgets&quot;),
+then it might make sense to put the tests in directories like:</p>
+<br>
+<div data-b="-"><code>src/test/ui/rfc1234-widgets/</code></div>
+<div data-b="-"><code>src/test/run-pass/rfc1234-widgets/</code></div>
+<div data-b="-">etc</div>
+<br>
+<p>In other cases, there may already be a suitable directory. (The proper
+directory structure to use is actually an area of active debate.)</p>
+<br>
+<p><a name="explanatory_comment"></a></p>
+<br>
+<h2>Comment explaining what the test is about</h2>
+<br>
+<p>When you create a test file, <b>include a comment summarizing the point
+of the test immediately after the copyright notice</b>. This should
+highlight which parts of the test are more important, and what the bug
+was that the test is fixing.  Citing an issue number is often very
+helpful.</p>
+<br>
+<p>This comment doesn't have to be super extensive. Just something like
+&quot;Regression test for #18060: match arms were matching in the wrong
+order.&quot;  might already be enough.</p>
+<br>
+<p>These comments are very useful to others later on when your test
+breaks, since they often can highlight what the problem is. They are
+also useful if for some reason the tests need to be refactored, since
+they let others know which parts of the test were important (often a
+test must be rewritten because it no longer tests what is was meant to
+test, and then it's useful to know what it <i>was</i> meant to test
+exactly).</p>
+<br>
+<p><a name="header_commands"></a></p>
+<br>
+<h2>Header commands: configuring rustc</h2>
+<br>
+<p>Header commands are special comments that the test runner knows how to
+interpret.  They must appear before the Rust source in the test. They
+are normally put after the short comment that explains the point of
+this test. For example, this test uses the <code>// compile-flags</code> command
+to specify a custom flag to give to rustc when the test is compiled:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Copyright 2017 The Rust Project Developers. blah blah blah."></div><div data-l="#// ..."></div><div data-l="#// except according to those terms."></div><div data-l="// ">Copyright 2017 The Rust Project Developers. blah blah blah. ... except according to those terms.</div><div data-l=""></div><div data-l="#// Test the behavior of `0 - 1` when overflow checks are disabled."></div><div data-l="// ">Test the behavior of <code>0 - 1</code> when overflow checks are disabled.</div><div data-l=""></div><div data-l="#// compile-flags: -Coverflow-checks=off"></div><div data-l="// ">compile-flags: -Coverflow-checks=off</div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 0 - 1;"></div><div data-l="    ..."></div><div data-l="}"></div></div>
+<br>
+<h3>Ignoring tests</h3>
+<br>
+<p>These are used to ignore the test in some situations, which means the test won't
+be compiled or run.</p>
+<br>
+<div data-b="*"><code>ignore-X</code> where <code>X</code> is a target detail or stage will ignore the
+test accordingly (see below)</div>
+<div data-b="*"><code>only-X</code> is like <code>ignore-X</code>, but will <i>only</i> run the test on that
+target or stage</div>
+<div data-b="*"><code>ignore-pretty</code> will not compile the pretty-printed test (this is
+done to test the pretty-printer, but might not always work)</div>
+<div data-b="*"><code>ignore-test</code> always ignores the test</div>
+<div data-b="*"><code>ignore-lldb</code> and <code>ignore-gdb</code> will skip a debuginfo test on that
+debugger.</div>
+<br>
+<p>Some examples of <code>X</code> in <code>ignore-X</code>:</p>
+<br>
+<div data-b="*">Architecture: <code>aarch64</code>, <code>arm</code>, <code>asmjs</code>, <code>mips</code>, <code>wasm32</code>, <code>x86_64</code>,
+<code>x86</code>, ...</div>
+<div data-b="*">OS: <code>android</code>, <code>emscripten</code>, <code>freebsd</code>, <code>ios</code>, <code>linux</code>, <code>macos</code>,
+<code>windows</code>, ...</div>
+<div data-b="*">Environment (fourth word of the target triple): <code>gnu</code>, <code>msvc</code>,
+<code>musl</code>.</div>
+<div data-b="*">Pointer width: <code>32bit</code>, <code>64bit</code>.</div>
+<div data-b="*">Stage: <code>stage0</code>, <code>stage1</code>, <code>stage2</code>.</div>
+<br>
+<h3>Other Header Commands</h3>
+<br>
+<p>Here is a list of other header commands. This list is not
+exhaustive. Header commands can generally be found by browsing the
+<code>TestProps</code> structure found in <a class="notranslate" href="#4`header.rs`">`header.rs`</a> from the compiletest
+source.</p>
+<br>
+<div data-b="*"><code>run-rustfix</code> for UI tests, indicates that the test produces
+structured suggestions. The test writer should create a <code>.fixed</code>
+file, which contains the source with the suggestions applied.
+When the test is run, compiletest first checks that the correct
+lint/warning is generated. Then, it applies the suggestion and
+compares against <code>.fixed</code> (they must match). Finally, the fixed
+source is compiled, and this compilation is required to succeed.
+The <code>.fixed</code> file can also be generated automatically with the
+<code>--bless</code> option, discussed <a class="notranslate" href="#2#bless">below</a>.</div>
+<div data-b="*"><code>min-{gdb,lldb}-version</code></div>
+<div data-b="*"><code>min-llvm-version</code></div>
+<div data-b="*"><code>compile-pass</code> for UI tests, indicates that the test is
+supposed to compile, as opposed to the default where the test is
+supposed to error out.</div>
+<div data-b="*"><code>compile-flags</code> passes extra command-line args to the compiler,
+e.g. <code>compile-flags -g</code> which forces debuginfo to be enabled.</div>
+<div data-b="*"><code>should-fail</code> indicates that the test should fail; used for &quot;meta
+testing&quot;, where we test the compiletest program itself to check that
+it will generate errors in appropriate scenarios. This header is
+ignored for pretty-printer tests.</div>
+<div data-b="*"><code>gate-test-X</code> where <code>X</code> is a feature marks the test as &quot;gate test&quot;
+for feature X.  Such tests are supposed to ensure that the compiler
+errors when usage of a gated feature is attempted without the proper
+<code>#€[feature(X)]</code> tag.  Each unstable lang feature is required to
+have a gate test.</div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/compiletest/src/header.rs">`header.rs`</a>
+<br>
+<p><a name="error_annotations"></a></p>
+<br>
+<h2>Error annotations</h2>
+<br>
+<p>Error annotations specify the errors that the compiler is expected to
+emit. They are &quot;attached&quot; to the line in source where the error is
+located.</p>
+<br>
+<div data-b="*"><code>~</code>: Associates the following error level and message with the
+current line</div>
+<div data-b="*"><code>~|</code>: Associates the following error level and message with the same
+line as the previous comment</div>
+<div data-b="*"><code>~^</code>: Associates the following error level and message with the
+previous line. Each caret (<code>^</code>) that you add adds a line to this, so
+<code>~^^^^^^^</code> is seven lines up.</div>
+<br>
+<p>The error levels that you can have are:</p>
+<br>
+<div data-b="1."><code>ERROR</code></div>
+<div data-b="2."><code>WARNING</code></div>
+<div data-b="3."><code>NOTE</code></div>
+<div data-b="4."><code>HELP</code> and <code>SUGGESTION</code><i>
+
+\</i> <b>Note</b>: <code>SUGGESTION</code> must follow immediately after <code>HELP</code>.</div>
+<br>
+<h2>Revisions</h2>
+<br>
+<p>Certain classes of tests support &quot;revisions&quot; (as of the time of this
+writing, this includes run-pass, compile-fail, run-fail, and
+incremental, though incremental tests are somewhat
+different). Revisions allow a single test file to be used for multiple
+tests. This is done by adding a special header at the top of the file:</p>
+<br>
+<div data-lang="rust"><div data-l="#// revisions: foo bar baz"></div><div data-l="// ">revisions: foo bar baz</div></div>
+<br>
+<p>This will result in the test being compiled (and tested) three times,
+once with <code>--cfg foo</code>, once with <code>--cfg bar</code>, and once with <code>--cfg
+baz</code>. You can therefore use <code>#[cfg(foo)]</code> etc within the test to tweak
+each of these results.</p>
+<br>
+<p>You can also customize headers and expected error messages to a particular
+revision. To do this, add <code>[foo]</code> (or <code>bar</code>, <code>baz</code>, etc) after the <code>//</code>
+comment, like so:</p>
+<br>
+<div data-lang="rust"><div data-l="#// A flag to pass in only for cfg `foo`:"></div><div data-l="// ">A flag to pass in only for cfg <code>foo</code>:</div><div data-l="//[foo]compile-flags: -Z verbose"></div><div data-l=""></div><div data-l="#[cfg(foo)]"></div><div data-l="fn test_foo() {"></div><div data-l="    let x: usize = 32_u32; //[foo]~ ERROR mismatched types"></div><div data-l="}"></div></div>
+<br>
+<p>Note that not all headers have meaning when customized to a revision.
+For example, the <code>ignore-test</code> header (and all &quot;ignore&quot; headers)
+currently only apply to the test as a whole, not to particular
+revisions. The only headers that are intended to really work when
+customized to a revision are error patterns and compiler flags.</p>
+<br>
+<p><a name="ui"></a></p>
+<br>
+<h2>Guide to the UI tests</h2>
+<br>
+<p>The UI tests are intended to capture the compiler's complete output,
+so that we can test all aspects of the presentation. They work by
+compiling a file (e.g., <a class="notranslate" href="#3hw-main"><code>ui/hello_world/main.rs</code></a>),
+capturing the output, and then applying some normalization (see
+below). This normalized result is then compared against reference
+files named <code>ui/hello_world/main.stderr</code> and
+<code>ui/hello_world/main.stdout</code>. If either of those files doesn't exist,
+the output must be empty (that is actually the case for
+<a href="#3hw">this particular test</a>). If the test run fails, we will print out
+the current output, but it is also saved in
+<code>build/&lt;target-triple&gt;/test/ui/hello_world/main.stdout</code> (this path is
+printed as part of the test failure message), so you can run <code>diff</code>
+and so forth.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/test/ui/hello_world/main.rs">hw-main</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/test/ui/hello_world/">hw</a>
+<br>
+<h3>Tests that do not result in compile errors</h3>
+<br>
+<p>By default, a UI test is expected <b>not to compile</b> (in which case,
+it should contain at least one <code>//~ ERROR</code> annotation). However, you
+can also make UI tests where compilation is expected to succeed, and
+you can even run the resulting program. Just add one of the following
+<a href="#2#header_commands">header commands</a>:</p>
+<br>
+<div data-b="-"><code>// compile-pass</code> – compilation should succeed but do
+not run the resulting binary</div>
+<div data-b="-"><code>// run-pass</code> – compilation should succeed and we should run the
+resulting binary</div>
+<br>
+<p><a name="bless"></a></p>
+<br>
+<h3>Editing and updating the reference files</h3>
+<br>
+<p>If you have changed the compiler's output intentionally, or you are
+making a new test, you can pass <code>--bless</code> to the test subcommand. E.g.
+if some tests in <code>src/test/ui</code> are failing, you can run</p>
+<br>
+<div data-lang="text"><div data-l="./x.py test --stage 1 src/test/ui --bless"></div></div>
+<br>
+<p>to automatically adjust the <code>.stderr</code>, <code>.stdout</code> or <code>.fixed</code> files of
+all tests. Of course you can also target just specific tests with the
+<code>--test-args your_test_name</code> flag, just like when running the tests.</p>
+<br>
+<h3>Normalization</h3>
+<br>
+<p>The normalization applied is aimed at eliminating output difference
+between platforms, mainly about filenames:</p>
+<br>
+<div data-b="-">the test directory is replaced with <code>$DIR</code></div>
+<div data-b="-">all backslashes (<code>\</code>) are converted to forward slashes (<code>/</code>) (for Windows)</div>
+<div data-b="-">all CR LF newlines are converted to LF</div>
+<br>
+<p>Sometimes these built-in normalizations are not enough. In such cases, you
+may provide custom normalization rules using the header commands, e.g.</p>
+<br>
+<div data-lang="rust"><div data-l="#// normalize-stdout-test: &quot;foo&quot; -&gt; &quot;bar&quot;"></div><div data-l="#// normalize-stderr-32bit: &quot;fn\(\) \(32 bits\)&quot; -&gt; &quot;fn\(\) \($$PTR bits\)&quot;"></div><div data-l="#// normalize-stderr-64bit: &quot;fn\(\) \(64 bits\)&quot; -&gt; &quot;fn\(\) \($$PTR bits\)&quot;"></div><div data-l="// ">normalize-stdout-test: &quot;foo&quot; -&gt; &quot;bar&quot; normalize-stderr-32bit: &quot;fn\(\) \(32 bits\)&quot; -&gt; &quot;fn\(\) \($$PTR bits\)&quot; normalize-stderr-64bit: &quot;fn\(\) \(64 bits\)&quot; -&gt; &quot;fn\(\) \($$PTR bits\)&quot;</div></div>
+<br>
+<p>This tells the test, on 32-bit platforms, whenever the compiler writes
+<code>fn() (32 bits)</code> to stderr, it should be normalized to read <code>fn() ($PTR bits)</code>
+instead. Similar for 64-bit. The replacement is performed by regexes using
+default regex flavor provided by <code>regex</code> crate.</p>
+<br>
+<p>The corresponding reference file will use the normalized output to test both
+32-bit and 64-bit platforms:</p>
+<br>
+<div data-lang="text"><div data-l="..."></div><div data-l="   |"></div><div data-l="   = note: source type: fn() ($PTR bits)"></div><div data-l="   = note: target type: u16 (16 bits)"></div><div data-l="..."></div></div>
+<br>
+<p>Please see <a class="notranslate" href="#3mrs"><code>ui/transmute/main.rs</code></a> and <a class="notranslate" href="#3"><code>main.stderr</code></a> for a
+concrete usage example.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/test/ui/transmute/main.rs">mrs</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/test/ui/transmute/main.stderr">`main.stderr`</a>
+<br>
+<p>Besides <code>normalize-stderr-32bit</code> and <code>-64bit</code>, one may use any target
+information or stage supported by <code>ignore-X</code> here as well (e.g.
+<code>normalize-stderr-windows</code> or simply <code>normalize-stderr-test</code> for unconditional
+replacement).</p>

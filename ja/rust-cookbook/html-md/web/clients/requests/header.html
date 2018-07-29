@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h2>Set custom headers and URL parameters for a REST request</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3hyper">!<a class="notranslate" href="#4hyper-badge">hyper-badge</a></a> <a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>Sets both standard and custom HTTP headers as well as URL parameters
+for a HTTP GET request. Creates a custom header of type <code>XPoweredBy</code>
+with <a class="notranslate" href="#4`hyper::header!`">`hyper::header!`</a> macro.</p>
+<br>
+<p>Builds complex URL with <a class="notranslate" href="#4`Url::parse_with_params`">`Url::parse_with_params`</a>.  Sets standard headers
+<a class="notranslate" href="#4`header::UserAgent`">`header::UserAgent`</a>, <a class="notranslate" href="#4`header::Authorization`">`header::Authorization`</a>, and custom <code>XPoweredBy</code>
+with <a class="notranslate" href="#4`RequestBuilder::header`">`RequestBuilder::header`</a> then makes the request with
+<a class="notranslate" href="#4`RequestBuilder::send`">`RequestBuilder::send`</a>.</p>
+<br>
+<p>The request targets <http://httpbin.org/headers> service which responds with
+a JSON dict containing all request headers for easy verification.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l="extern crate reqwest;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate hyper;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde_derive;"></div><div data-l=""></div><div data-l="use std::collections::HashMap;"></div><div data-l="use url::Url;"></div><div data-l="use reqwest::Client;"></div><div data-l="use reqwest::header::{UserAgent, Authorization, Bearer};"></div><div data-l=""></div><div data-l="header! { (XPoweredBy, &quot;X-Powered-By&quot;) =&gt; [String] }"></div><div data-l=""></div><div data-l="#[derive(Deserialize, Debug)]"></div><div data-l="pub struct HeadersEcho {"></div><div data-l="    pub headers: HashMap&lt;String, String&gt;,"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Reqwest(reqwest::Error);"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let url = Url::parse_with_params(&quot;http://httpbin.org/headers&quot;,"></div><div data-l="                                     &amp;[(&quot;lang&quot;, &quot;rust&quot;), (&quot;browser&quot;, &quot;servo&quot;)])?;"></div><div data-l=""></div><div data-l="    let mut response = Client::new()"></div><div data-l="        .get(url)"></div><div data-l="        .header(UserAgent::new(&quot;Rust-test&quot;))"></div><div data-l="        .header(Authorization(Bearer { token: &quot;DEadBEEfc001cAFeEDEcafBAd&quot;.to_owned() }))"></div><div data-l="        .header(XPoweredBy(&quot;Guybrush Threepwood&quot;.to_owned()))"></div><div data-l="        .send()?;"></div><div data-l=""></div><div data-l="    let out: HeadersEcho = response.json()?;"></div><div data-l="    assert_eq!(out.headers[&quot;Authorization&quot;],"></div><div data-l="               &quot;Bearer DEadBEEfc001cAFeEDEcafBAd&quot;);"></div><div data-l="    assert_eq!(out.headers[&quot;User-Agent&quot;], &quot;Rust-test&quot;);"></div><div data-l="    assert_eq!(out.headers[&quot;X-Powered-By&quot;], &quot;Guybrush Threepwood&quot;);"></div><div data-l="    assert_eq!(response.url().as_str(),"></div><div data-l="               &quot;http://httpbin.org/headers?lang=rust&amp;browser=servo&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;{:?}&quot;, out);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.servo.org/hyper/header/struct.Authorization.html">`header::Authorization`</a>
+<a class="notranslate" href="#1https://doc.servo.org/hyper/header/struct.UserAgent.html">`header::UserAgent`</a>
+<a class="notranslate" href="#1https://doc.servo.org/hyper/macro.header.html">`hyper::header!`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.header">`RequestBuilder::header`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.send">`RequestBuilder::send`</a>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html#method.parse_with_params">`Url::parse_with_params`</a>

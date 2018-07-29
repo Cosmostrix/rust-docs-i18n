@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Log to stdout instead of stderr</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Creates a custom logger configuration using the <a class="notranslate" href="#4`Builder::target`">`Builder::target`</a> to set the target of the log output to <a class="notranslate" href="#4`Target::Stdout`">`Target::Stdout`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="use env_logger::{Builder, Target};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    Builder::new()"></div><div data-l="        .target(Target::Stdout)"></div><div data-l="        .init();"></div><div data-l=""></div><div data-l="    error!(&quot;This error has been printed to Stdout&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html#method.target">`Builder::target`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/fmt/enum.Target.html">`Target::Stdout`</a>

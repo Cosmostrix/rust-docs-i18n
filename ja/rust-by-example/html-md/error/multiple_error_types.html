@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1>Multiple error types</h1>
+<br>
+<p>The previous examples have always been very convenient; <code>Result</code>s interact
+with other <code>Result</code>s and <code>Option</code>s interact with other <code>Option</code>s.</p>
+<br>
+<p>Sometimes an <code>Option</code> needs to interact with a <code>Result</code>, or a
+<code>Result&lt;T, Error1&gt;</code> needs to interact with a <code>Result&lt;T, Error2&gt;</code>. In those
+cases, we want to manage our different error types in a way that makes them
+composable and easy to interact with.</p>
+<br>
+<p>In the following code, two instances of <code>unwrap</code> generate different error
+types. <code>Vec::first</code> returns an <code>Option</code>, while <code>parse::&lt;i32&gt;</code> returns a
+<code>Result&lt;i32, ParseIntError&gt;</code>:</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn double_first(vec: Vec&lt;&amp;str&gt;) -&gt; i32 {"></div><div data-l="#//    let first = vec.first().unwrap(); // Generate error 1"></div><div data-l="    let first = vec.first().unwrap(); // ">Generate error 1</div><div data-l="#//    2 * first.parse::&lt;i32&gt;().unwrap() // Generate error 2"></div><div data-l="    2 * first.parse::&lt;i32&gt;().unwrap() // ">Generate error 2</div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let numbers = vec![&quot;42&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let empty = vec![];"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {}&quot;, double_first(numbers));"></div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {}&quot;, double_first(empty));"></div><div data-l="#    // Error 1: the input vector is empty"></div><div data-l="    // ">Error 1: the input vector is empty</div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {}&quot;, double_first(strings));"></div><div data-l="#    // Error 2: the element doesn't parse to a number"></div><div data-l="    // ">Error 2: the element doesn't parse to a number</div><div data-l="}"></div></div>
+<br>
+<p>Over the next sections, we'll see several strategies for handling these kind of problems.</p>

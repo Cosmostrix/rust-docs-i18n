@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h2>Project Layout</h2>
+<br>
+<p>Cargo uses conventions for file placement to make it easy to dive into a new
+Cargo project:</p>
+<br>
+<div data-lang=""><div data-l="."></div><div data-l="├── Cargo.lock"></div><div data-l="├── Cargo.toml"></div><div data-l="├── benches"></div><div data-l="│   └── large-input.rs"></div><div data-l="├── examples"></div><div data-l="│   └── simple.rs"></div><div data-l="├── src"></div><div data-l="│   ├── bin"></div><div data-l="│   │   └── another_executable.rs"></div><div data-l="│   ├── lib.rs"></div><div data-l="│   └── main.rs"></div><div data-l="└── tests"></div><div data-l="    └── some-integration-tests.rs"></div></div>
+<br>
+<div data-b="*"><code>Cargo.toml</code> and <code>Cargo.lock</code> are stored in the root of your project (<i>package
+  root</i>).</div>
+<div data-b="*">Source code goes in the <code>src</code> directory.</div>
+<div data-b="*">The default library file is <code>src/lib.rs</code>.</div>
+<div data-b="*">The default executable file is <code>src/main.rs</code>.</div>
+<div data-b="*">Other executables can be placed in <code>src/bin/*.rs</code>.</div>
+<div data-b="*">Integration tests go in the <code>tests</code> directory (unit tests go in each file
+they're testing).</div>
+<div data-b="*">Examples go in the <code>examples</code> directory.</div>
+<div data-b="*">Benchmarks go in the <code>benches</code> directory.</div>
+<br>
+<p>These are explained in more detail in the <a class="notranslate" href="#2reference/manifest.html#the-project-layout">manifest
+description</a>.</p>

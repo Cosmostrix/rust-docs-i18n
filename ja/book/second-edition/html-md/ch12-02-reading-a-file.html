@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<h2>Reading a File</h2>
+<br>
+<p>Now we’ll add functionality to read the file that is specified in the
+<code>filename</code> command line argument. First, we need a sample file to test it with:
+the best kind of file to use to make sure <code>minigrep</code> is working is one with a
+small amount of text over multiple lines with some repeated words. Listing 12-3
+has an Emily Dickinson poem that will work well! Create a file called
+<i>poem.txt</i> at the root level of your project, and enter the poem “I’m Nobody!
+Who are you?”</p>
+<br>
+<p><span class="filename">Filename: poem.txt</span></p>
+<br>
+<div data-lang="text"><div data-l="I'm nobody! Who are you?"></div><div data-l="Are you nobody, too?"></div><div data-l="Then there's a pair of us - don't tell!"></div><div data-l="They'd banish us, you know."></div><div data-l=""></div><div data-l="How dreary to be somebody!"></div><div data-l="How public, like a frog"></div><div data-l="To tell your name the livelong day"></div><div data-l="To an admiring bog!"></div></div>
+<br>
+<p><span class="caption">Listing 12-3: A poem by Emily Dickinson makes a good test
+case</span></p>
+<br>
+<p>With the text in place, edit <i>src/main.rs</i> and add code to open the file, as
+shown in Listing 12-4.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="use std::env;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::prelude::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#     let args: Vec&lt;String&gt; = env::args().collect();"></div><div data-l="#"></div><div data-l="#     let query = &amp;args[1];"></div><div data-l="#     let filename = &amp;args[2];"></div><div data-l="#"></div><div data-l="#     println!(&quot;Searching for {}&quot;, query);"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    println!(&quot;In file {}&quot;, filename);"></div><div data-l=""></div><div data-l="    let mut f = File::open(filename).expect(&quot;file not found&quot;);"></div><div data-l=""></div><div data-l="    let mut contents = String::new();"></div><div data-l="    f.read_to_string(&amp;mut contents)"></div><div data-l="        .expect(&quot;something went wrong reading the file&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;With text:\n{}&quot;, contents);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 12-4: Reading the contents of the file specified
+by the second argument</span></p>
+<br>
+<p>First, we add some more <code>use</code> statements to bring in relevant parts of the
+standard library: we need <code>std::fs::File</code> to handle files, and
+<code>std::io::prelude::*</code> contains various useful traits for doing I/O, including
+file I/O. In the same way that Rust has a general prelude that brings certain
+types and functions into scope automatically, the <code>std::io</code> module has its own
+prelude of common types and functions you’ll need when working with I/O. Unlike
+with the default prelude, we must explicitly add a <code>use</code> statement for the
+prelude from <code>std::io</code>.</p>
+<br>
+<p>In <code>main</code>, we’ve added three statements: first, we get a mutable handle to the
+file by calling the <code>File::open</code> function and passing it the value of the
+<code>filename</code> variable. Second, we create a variable called <code>contents</code> and set it
+to a mutable, empty <code>String</code>. This will hold the content of the file after we
+read it in. Third, we call <code>read_to_string</code> on our file handle and pass a
+mutable reference to <code>contents</code> as an argument.</p>
+<br>
+<p>After those lines, we’ve again added a temporary <code>println€</code> statement that
+prints the value of <code>contents</code> after the file is read, so we can check that the
+program is working so far.</p>
+<br>
+<p>Let’s run this code with any string as the first command line argument (because
+we haven’t implemented the searching part yet) and the <i>poem.txt</i> file as the
+second argument:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run the poem.txt"></div><div data-l="   Compiling minigrep v0.1.0 (file:///projects/minigrep)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running `target/debug/minigrep the poem.txt`"></div><div data-l="Searching for the"></div><div data-l="In file poem.txt"></div><div data-l="With text:"></div><div data-l="I'm nobody! Who are you?"></div><div data-l="Are you nobody, too?"></div><div data-l="Then there's a pair of us - don't tell!"></div><div data-l="They'd banish us, you know."></div><div data-l=""></div><div data-l="How dreary to be somebody!"></div><div data-l="How public, like a frog"></div><div data-l="To tell your name the livelong day"></div><div data-l="To an admiring bog!"></div></div>
+<br>
+<p>Great! The code read and then printed the contents of the file. But the code
+has a few flaws. The <code>main</code> function has multiple responsibilities: generally,
+functions are clearer and easier to maintain if each function is responsible
+for only one idea. The other problem is that we’re not handling errors as well
+as we could. The program is still small, so these flaws aren’t a big problem,
+but as the program grows, it will be harder to fix them cleanly. It’s good
+practice to begin refactoring early on when developing a program, because it’s
+much easier to refactor smaller amounts of code. We’ll do that next.</p>

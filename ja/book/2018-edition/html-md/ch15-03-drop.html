@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<h2>Running Code on Cleanup with the <code>Drop</code> Trait</h2>
+<br>
+<p>The second trait important to the smart pointer pattern is <code>Drop</code>, which lets
+you customize what happens when a value is about to go out of scope. You can
+provide an implementation for the <code>Drop</code> trait on any type, and the code you
+specify can be used to release resources like files or network connections.
+We’re introducing <code>Drop</code> in the context of smart pointers because the
+functionality of the <code>Drop</code> trait is almost always used when implementing a
+smart pointer. For example, <code>Box&lt;T&gt;</code> customizes <code>Drop</code> to deallocate the space
+on the heap that the box points to.</p>
+<br>
+<p>In some languages, the programmer must call code to free memory or resources
+every time they finish using an instance of a smart pointer. If they forget,
+the system might become overloaded and crash. In Rust, you can specify that a
+particular bit of code be run whenever a value goes out of scope, and the
+compiler will insert this code automatically. As a result, you don’t need to be
+careful about placing cleanup code everywhere in a program that an instance of
+a particular type is finished with—you still won’t leak resources!</p>
+<br>
+<p>Specify the code to run when a value goes out of scope by implementing the
+<code>Drop</code> trait. The <code>Drop</code> trait requires you to implement one method named
+<code>drop</code> that takes a mutable reference to <code>self</code>. To see when Rust calls <code>drop</code>,
+let’s implement <code>drop</code> with <code>println€</code> statements for now.</p>
+<br>
+<p>Listing 15-14 shows a <code>CustomSmartPointer</code> struct whose only custom
+functionality is that it will print <code>Dropping CustomSmartPointer€</code> when the
+instance goes out of scope. This example demonstrates when Rust runs the <code>drop</code>
+function.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="struct CustomSmartPointer {"></div><div data-l="    data: String,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Drop for CustomSmartPointer {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Dropping CustomSmartPointer with data `{}`!&quot;, self.data);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = CustomSmartPointer { data: String::from(&quot;my stuff&quot;) };"></div><div data-l="    let d = CustomSmartPointer { data: String::from(&quot;other stuff&quot;) };"></div><div data-l="    println!(&quot;CustomSmartPointers created.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 15-14: A <code>CustomSmartPointer</code> struct that
+implements the <code>Drop</code> trait where we would put our cleanup code</span></p>
+<br>
+<p>The <code>Drop</code> trait is included in the prelude, so we don’t need to import it. We
+implement the <code>Drop</code> trait on <code>CustomSmartPointer</code> and provide an
+implementation for the <code>drop</code> method that calls <code>println€</code>. The body of the
+<code>drop</code> function is where you would place any logic that you wanted to run when
+an instance of your type goes out of scope. We’re printing some text here to
+demonstrate when Rust will call <code>drop</code>.</p>
+<br>
+<p>In <code>main</code>, we create two instances of <code>CustomSmartPointer</code> and then print
+<code>CustomSmartPointers created.</code>. At the end of <code>main</code>, our instances of
+<code>CustomSmartPointer</code> will go out of scope, and Rust will call the code we put
+in the <code>drop</code> method, printing our final message. Note that we didn’t need to
+call the <code>drop</code> method explicitly.</p>
+<br>
+<p>When we run this program, we’ll see the following output:</p>
+<br>
+<div data-lang="text"><div data-l="CustomSmartPointers created."></div><div data-l="Dropping CustomSmartPointer with data `other stuff`!"></div><div data-l="Dropping CustomSmartPointer with data `my stuff`!"></div></div>
+<br>
+<p>Rust automatically called <code>drop</code> for us when our instances went out of scope,
+calling the code we specified. Variables are dropped in the reverse order of
+their creation, so <code>d</code> was dropped before <code>c</code>. This example gives you a visual
+guide to how the <code>drop</code> method works; usually you would specify the cleanup
+code that your type needs to run rather than a print message.</p>
+<br>
+<h3>Dropping a Value Early with <code>std::mem::drop</code></h3>
+<br>
+<p>Unfortunately, it’s not straightforward to disable the automatic <code>drop</code>
+functionality. Disabling <code>drop</code> isn’t usually necessary; the whole point of the
+<code>Drop</code> trait is that it’s taken care of automatically. Occasionally, however,
+you might want to clean up a value early. One example is when using smart
+pointers that manage locks: you might want to force the <code>drop</code> method that
+releases the lock to run so other code in the same scope can acquire the lock.
+Rust doesn’t let you call the <code>Drop</code> trait’s <code>drop</code> method manually; instead
+you have to call the <code>std::mem::drop</code> function provided by the standard library
+if you want to force a value to be dropped before the end of its scope.</p>
+<br>
+<p>If we try to call the <code>Drop</code> trait’s <code>drop</code> method manually by modifying the
+<code>main</code> function from Listing 15-14, as shown in Listing 15-15, we’ll get a
+compiler error:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let c = CustomSmartPointer { data: String::from(&quot;some data&quot;) };"></div><div data-l="    println!(&quot;CustomSmartPointer created.&quot;);"></div><div data-l="    c.drop();"></div><div data-l="    println!(&quot;CustomSmartPointer dropped before the end of main.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 15-15: Attempting to call the <code>drop</code> method from
+the <code>Drop</code> trait manually to clean up early</span></p>
+<br>
+<p>When we try to compile this code, we’ll get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0040]: explicit use of destructor method"></div><div data-l="  --&gt; src/main.rs:14:7"></div><div data-l="   |"></div><div data-l="14 |     c.drop();"></div><div data-l="   |       ^^^^ explicit destructor calls not allowed"></div></div>
+<br>
+<p>This error message states that we’re not allowed to explicitly call <code>drop</code>. The
+error message uses the term <i>destructor</i>, which is the general programming term
+for a function that cleans up an instance. A <i>destructor</i> is analogous to a
+<i>constructor</i>, which creates an instance. The <code>drop</code> function in Rust is one
+particular destructor.</p>
+<br>
+<p>Rust doesn’t let us call <code>drop</code> explicitly because Rust would still
+automatically call <code>drop</code> on the value at the end of <code>main</code>. This would be a
+<i>double free</i> error because Rust would be trying to clean up the same value
+twice.</p>
+<br>
+<p>We can’t disable the automatic insertion of <code>drop</code> when a value goes out of
+scope, and we can’t call the <code>drop</code> method explicitly. So, if we need to force
+a value to be cleaned up early, we can use the <code>std::mem::drop</code> function.</p>
+<br>
+<p>The <code>std::mem::drop</code> function is different than the <code>drop</code> method in the <code>Drop</code>
+trait. We call it by passing the value we want to force to be dropped early as
+an argument. The function is in the prelude, so we can modify <code>main</code> in Listing
+15-15 to call the <code>drop</code> function, as shown in Listing 15-16:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# struct CustomSmartPointer {"></div><div data-l="#     data: String,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# impl Drop for CustomSmartPointer {"></div><div data-l="#     fn drop(&amp;mut self) {"></div><div data-l="#         println!(&quot;Dropping CustomSmartPointer!&quot;);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="    let c = CustomSmartPointer { data: String::from(&quot;some data&quot;) };"></div><div data-l="    println!(&quot;CustomSmartPointer created.&quot;);"></div><div data-l="    drop(c);"></div><div data-l="    println!(&quot;CustomSmartPointer dropped before the end of main.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 15-16: Calling <code>std::mem::drop</code> to explicitly
+drop a value before it goes out of scope</span></p>
+<br>
+<p>Running this code will print the following:</p>
+<br>
+<div data-lang="text"><div data-l="CustomSmartPointer created."></div><div data-l="Dropping CustomSmartPointer with data `some data`!"></div><div data-l="CustomSmartPointer dropped before the end of main."></div></div>
+<br>
+<p>The text `<code class=2>Dropping CustomSmartPointer with data `some data`!</code><code> is printed
+between the </code>CustomSmartPointer created.<code> and </code>CustomSmartPointer dropped
+before the end of main.<code> text, showing that the </code>drop<code> method code is called to
+drop </code>c` at that point.</p>
+<br>
+<p>You can use code specified in a <code>Drop</code> trait implementation in many ways to
+make cleanup convenient and safe: for instance, you could use it to create your
+own memory allocator! With the <code>Drop</code> trait and Rust’s ownership system, you
+don’t have to remember to clean up because Rust does it automatically.</p>
+<br>
+<p>You also don’t have to worry about problems resulting from accidentally
+cleaning up values still in use: the ownership system that makes sure
+references are always valid also ensures that <code>drop</code> gets called only once when
+the value is no longer being used.</p>
+<br>
+<p>Now that we’ve examined <code>Box&lt;T&gt;</code> and some of the characteristics of smart
+pointers, let’s look at a few other smart pointers defined in the standard
+library.</p>

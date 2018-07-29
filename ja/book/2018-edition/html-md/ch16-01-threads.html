@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<h2>Using Threads to Run Code Simultaneously</h2>
+<br>
+<p>In most current operating systems, an executed program’s code is run in a
+<i>process</i>, and the operating system manages multiple processes at once. Within
+your program, you can also have independent parts that run simultaneously. The
+features that run these independent parts are called <i>threads</i>.</p>
+<br>
+<p>Splitting the computation in your program into multiple threads can improve
+performance because the program does multiple tasks at the same time, but it
+also adds complexity. Because threads can run simultaneously, there’s no
+inherent guarantee about the order in which parts of your code on different
+threads will run. This can lead to problems, such as:</p>
+<br>
+<div data-b="*">Race conditions, where threads are accessing data or resources in an
+inconsistent order</div>
+<div data-b="*">Deadlocks, where two threads are waiting for each other to finish using a
+resource the other thread has, preventing both threads from continuing</div>
+<div data-b="*">Bugs that happen only in certain situations and are hard to reproduce and fix
+reliably</div>
+<br>
+<p>Rust attempts to mitigate the negative effects of using threads, but
+programming in a multithreaded context still takes careful thought and requires
+a code structure that is different from that in programs running in a single
+thread.</p>
+<br>
+<p>Programming languages implement threads in a few different ways. Many operating
+systems provide an API for creating new threads. This model where a language
+calls the operating system APIs to create threads is sometimes called <i>1:1</i>,
+meaning one operating system thread per one language thread.</p>
+<br>
+<p>Many programming languages provide their own special implementation of threads.
+Programming language-provided threads are known as <i>green</i> threads, and
+languages that use these green threads will execute them in the context of a
+different number of operating system threads. For this reason, the
+green-threaded model is called the <i>M:N</i> model: there are <code>M</code> green threads per
+<code>N</code> operating system threads, where <code>M</code> and <code>N</code> are not necessarily the same
+number.</p>
+<br>
+<p>Each model has its own advantages and trade-offs, and the trade-off most
+important to Rust is runtime support. <i>Runtime</i> is a confusing term and can
+have different meanings in different contexts.</p>
+<br>
+<p>In this context, by <i>runtime</i> we mean code that is included by the language in
+every binary. This code can be large or small depending on the language, but
+every non-assembly language will have some amount of runtime code. For that
+reason, colloquially when people say a language has “no runtime,” they often
+mean “small runtime.” Smaller runtimes have fewer features but have the
+advantage of resulting in smaller binaries, which make it easier to combine the
+language with other languages in more contexts. Although many languages are
+okay with increasing the runtime size in exchange for more features, Rust needs
+to have nearly no runtime and cannot compromise on being able to call into C to
+maintain performance.</p>
+<br>
+<p>The green-threading M:N model requires a larger language runtime to manage
+threads. As such, the Rust standard library only provides an implementation of
+1:1 threading. Because Rust is such a low-level language, there are crates that
+implement M:N threading if you would rather trade overhead for aspects such as
+more control over which threads run when and lower costs of context switching,
+for example.</p>
+<br>
+<p>Now that we’ve defined threads in Rust, let’s explore how to use the
+thread-related API provided by the standard library.</p>
+<br>
+<h3>Creating a New Thread with <code>spawn</code></h3>
+<br>
+<p>To create a new thread, we call the <code>thread::spawn</code> function and pass it a
+closure (we talked about closures in Chapter 13) containing the code we want to
+run in the new thread. The example in Listing 16-1 prints some text from a main
+thread and other text from a new thread:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l="use std::time::Duration;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    thread::spawn(|| {"></div><div data-l="        for i in 1..10 {"></div><div data-l="            println!(&quot;hi number {} from the spawned thread!&quot;, i);"></div><div data-l="            thread::sleep(Duration::from_millis(1));"></div><div data-l="        }"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    for i in 1..5 {"></div><div data-l="        println!(&quot;hi number {} from the main thread!&quot;, i);"></div><div data-l="        thread::sleep(Duration::from_millis(1));"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 16-1: Creating a new thread to print one thing
+while the main thread prints something else</span></p>
+<br>
+<p>Note that with this function, the new thread will be stopped when the main
+thread ends, whether or not it has finished running. The output from this
+program might be a little different every time, but it will look similar to the
+following:</p>
+<br>
+<div data-lang="text"><div data-l="hi number 1 from the main thread!"></div><div data-l="hi number 1 from the spawned thread!"></div><div data-l="hi number 2 from the main thread!"></div><div data-l="hi number 2 from the spawned thread!"></div><div data-l="hi number 3 from the main thread!"></div><div data-l="hi number 3 from the spawned thread!"></div><div data-l="hi number 4 from the main thread!"></div><div data-l="hi number 4 from the spawned thread!"></div><div data-l="hi number 5 from the spawned thread!"></div></div>
+<br>
+<p>The calls to <code>thread::sleep</code> force a thread to stop its execution for a short
+duration, allowing a different thread to run. The threads will probably take
+turns, but that isn’t guaranteed: it depends on how your operating system
+schedules the threads. In this run, the main thread printed first, even though
+the print statement from the spawned thread appears first in the code. And even
+though we told the spawned thread to print until <code>i</code> is 9, it only got to 5
+before the main thread shut down.</p>
+<br>
+<p>If you run this code and only see output from the main thread, or don’t see any
+overlap, try increasing the numbers in the ranges to create more opportunities
+for the operating system to switch between the threads.</p>
+<br>
+<h3>Waiting for All Threads to Finish Using <code>join</code> Handles</h3>
+<br>
+<p>The code in Listing 16-1 not only stops the spawned thread prematurely most of
+the time due to the main thread ending, but also can't guarantee that the
+spawned thread will get to run at all. The reason is that there is no guarantee
+on the order in which threads run!</p>
+<br>
+<p>We can fix the problem of the spawned thread not getting to run, or not getting
+to run completely, by saving the return value of <code>thread::spawn</code> in a variable.
+The return type of <code>thread::spawn</code> is <code>JoinHandle</code>. A <code>JoinHandle</code> is an owned
+value that, when we call the <code>join</code> method on it, will wait for its thread to
+finish. Listing 16-2 shows how to use the <code>JoinHandle</code> of the thread we created
+in Listing 16-1 and call <code>join</code> to make sure the spawned thread finishes before
+<code>main</code> exits:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l="use std::time::Duration;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let handle = thread::spawn(|| {"></div><div data-l="        for i in 1..10 {"></div><div data-l="            println!(&quot;hi number {} from the spawned thread!&quot;, i);"></div><div data-l="            thread::sleep(Duration::from_millis(1));"></div><div data-l="        }"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    for i in 1..5 {"></div><div data-l="        println!(&quot;hi number {} from the main thread!&quot;, i);"></div><div data-l="        thread::sleep(Duration::from_millis(1));"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    handle.join().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 16-2: Saving a <code>JoinHandle</code> from <code>thread::spawn</code>
+to guarantee the thread is run to completion</span></p>
+<br>
+<p>Calling <code>join</code> on the handle blocks the thread currently running until the
+thread represented by the handle terminates. <i>Blocking</i> a thread means that
+thread is prevented from performing work or exiting. Because we’ve put the call
+to <code>join</code> after the main thread’s <code>for</code> loop, running Listing 16-2 should
+produce output similar to this:</p>
+<br>
+<div data-lang="text"><div data-l="hi number 1 from the main thread!"></div><div data-l="hi number 2 from the main thread!"></div><div data-l="hi number 1 from the spawned thread!"></div><div data-l="hi number 3 from the main thread!"></div><div data-l="hi number 2 from the spawned thread!"></div><div data-l="hi number 4 from the main thread!"></div><div data-l="hi number 3 from the spawned thread!"></div><div data-l="hi number 4 from the spawned thread!"></div><div data-l="hi number 5 from the spawned thread!"></div><div data-l="hi number 6 from the spawned thread!"></div><div data-l="hi number 7 from the spawned thread!"></div><div data-l="hi number 8 from the spawned thread!"></div><div data-l="hi number 9 from the spawned thread!"></div></div>
+<br>
+<p>The two threads continue alternating, but the main thread waits because of the
+call to <code>handle.join()</code> and does not end until the spawned thread is finished.</p>
+<br>
+<p>But let’s see what happens when we instead move <code>handle.join()</code> before the
+<code>for</code> loop in <code>main</code>, like this:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l="use std::time::Duration;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let handle = thread::spawn(|| {"></div><div data-l="        for i in 1..10 {"></div><div data-l="            println!(&quot;hi number {} from the spawned thread!&quot;, i);"></div><div data-l="            thread::sleep(Duration::from_millis(1));"></div><div data-l="        }"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    handle.join().unwrap();"></div><div data-l=""></div><div data-l="    for i in 1..5 {"></div><div data-l="        println!(&quot;hi number {} from the main thread!&quot;, i);"></div><div data-l="        thread::sleep(Duration::from_millis(1));"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The main thread will wait for the spawned thread to finish and then run its
+<code>for</code> loop, so the output won’t be interleaved anymore, as shown here:</p>
+<br>
+<div data-lang="text"><div data-l="hi number 1 from the spawned thread!"></div><div data-l="hi number 2 from the spawned thread!"></div><div data-l="hi number 3 from the spawned thread!"></div><div data-l="hi number 4 from the spawned thread!"></div><div data-l="hi number 5 from the spawned thread!"></div><div data-l="hi number 6 from the spawned thread!"></div><div data-l="hi number 7 from the spawned thread!"></div><div data-l="hi number 8 from the spawned thread!"></div><div data-l="hi number 9 from the spawned thread!"></div><div data-l="hi number 1 from the main thread!"></div><div data-l="hi number 2 from the main thread!"></div><div data-l="hi number 3 from the main thread!"></div><div data-l="hi number 4 from the main thread!"></div></div>
+<br>
+<p>Small details, such as where <code>join</code> is called, can affect whether or not your
+threads run at the same time.</p>
+<br>
+<h3>Using <code>move</code> Closures with Threads</h3>
+<br>
+<p>The <code>move</code> closure is often used alongside <code>thread::spawn</code> because it allows
+you to use data from one thread in another thread.</p>
+<br>
+<p>In Chapter 13, we mentioned we can use the <code>move</code> keyword before the parameter
+list of a closure to force the closure to take ownership of the values it uses
+in the environment. This technique is especially useful when creating new
+threads in order to transfer ownership of values from one thread to another.</p>
+<br>
+<p>Notice in Listing 16-1 that the closure we pass to <code>thread::spawn</code> takes no
+arguments: we’re not using any data from the main thread in the spawned
+thread’s code. To use data from the main thread in the spawned thread, the
+spawned thread’s closure must capture the values it needs. Listing 16-3 shows
+an attempt to create a vector in the main thread and use it in the spawned
+thread. However, this won’t yet work, as you’ll see in a moment.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="    let handle = thread::spawn(|| {"></div><div data-l="        println!(&quot;Here's a vector: {:?}&quot;, v);"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    handle.join().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 16-3: Attempting to use a vector created by the
+main thread in another thread</span></p>
+<br>
+<p>The closure uses <code>v</code>, so it will capture <code>v</code> and make it part of the closure’s
+environment. Because <code>thread::spawn</code> runs this closure in a new thread, we
+should be able to access <code>v</code> inside that new thread. But when we compile this
+example, we get the following error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0373]: closure may outlive the current function, but it borrows `v`,"></div><div data-l="which is owned by the current function"></div><div data-l=" --&gt; src/main.rs:6:32"></div><div data-l="  |"></div><div data-l="6 |     let handle = thread::spawn(|| {"></div><div data-l="  |                                ^^ may outlive borrowed value `v`"></div><div data-l="7 |         println!(&quot;Here's a vector: {:?}&quot;, v);"></div><div data-l="  |                                           - `v` is borrowed here"></div><div data-l="  |"></div><div data-l="help: to force the closure to take ownership of `v` (and any other referenced"></div><div data-l="variables), use the `move` keyword"></div><div data-l="  |"></div><div data-l="6 |     let handle = thread::spawn(move || {"></div><div data-l="  |                                ^^^^^^^"></div></div>
+<br>
+<p>Rust <i>infers</i> how to capture <code>v</code>, and because <code>println€</code> only needs a reference
+to <code>v</code>, the closure tries to borrow <code>v</code>. However, there’s a problem: Rust can’t
+tell how long the spawned thread will run, so it doesn’t know if the reference
+to <code>v</code> will always be valid.</p>
+<br>
+<p>Listing 16-4 provides a scenario that’s more likely to have a reference to <code>v</code>
+that won’t be valid:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="    let handle = thread::spawn(|| {"></div><div data-l="        println!(&quot;Here's a vector: {:?}&quot;, v);"></div><div data-l="    });"></div><div data-l=""></div><div data-l="#//    drop(v); // oh no!"></div><div data-l="    drop(v); // ">oh no!</div><div data-l=""></div><div data-l="    handle.join().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 16-4: A thread with a closure that attempts to
+capture a reference to <code>v</code> from a main thread that drops <code>v</code></span></p>
+<br>
+<p>If we were allowed to run this code, there’s a possibility the spawned thread
+would be immediately put in the background without running at all. The spawned
+thread has a reference to <code>v</code> inside, but the main thread immediately drops
+<code>v</code>, using the <code>drop</code> function we discussed in Chapter 15. Then, when the
+spawned thread starts to execute, <code>v</code> is no longer valid, so a reference to it
+is also invalid. Oh no!</p>
+<br>
+<p>To fix the compiler error in Listing 16-3, we can use the error message’s
+advice:</p>
+<br>
+<div data-lang="text"><div data-l="help: to force the closure to take ownership of `v` (and any other referenced"></div><div data-l="variables), use the `move` keyword"></div><div data-l="  |"></div><div data-l="6 |     let handle = thread::spawn(move || {"></div><div data-l="  |                                ^^^^^^^"></div></div>
+<br>
+<p>By adding the <code>move</code> keyword before the closure, we force the closure to take
+ownership of the values it’s using rather than allowing Rust to infer that it
+should borrow the values. The modification to Listing 16-3 shown in Listing
+16-5 will compile and run as we intend:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="    let handle = thread::spawn(move || {"></div><div data-l="        println!(&quot;Here's a vector: {:?}&quot;, v);"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    handle.join().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 16-5: Using the <code>move</code> keyword to force a closure
+to take ownership of the values it uses</span></p>
+<br>
+<p>What would happen to the code in Listing 16-4 where the main thread called
+<code>drop</code> if we use a <code>move</code> closure? Would <code>move</code> fix that case? Unfortunately,
+no; we would get a different error because what Listing 16-4 is trying to do
+isn’t allowed for a different reason. If we added <code>move</code> to the closure, we
+would move <code>v</code> into the closure’s environment, and we could no longer call
+<code>drop</code> on it in the main thread. We would get this compiler error instead:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0382]: use of moved value: `v`"></div><div data-l="  --&gt; src/main.rs:10:10"></div><div data-l="   |"></div><div data-l="6  |     let handle = thread::spawn(move || {"></div><div data-l="   |                                ------- value moved (into closure) here"></div><div data-l="..."></div><div data-l="#//10 |     drop(v); // oh no!"></div><div data-l="10 |     drop(v); // ">oh no!</div><div data-l="   |          ^ value used here after move"></div><div data-l="   |"></div><div data-l="   = note: move occurs because `v` has type `std::vec::Vec&lt;i32&gt;`, which does"></div><div data-l="   not implement the `Copy` trait"></div></div>
+<br>
+<p>Rust’s ownership rules have saved us again! We got an error from the code in
+Listing 16-3 because Rust was being conservative and only borrowing <code>v</code> for the
+thread, which meant the main thread could theoretically invalidate the spawned
+thread’s reference. By telling Rust to move ownership of <code>v</code> to the spawned
+thread, we’re guaranteeing Rust that the main thread won’t use <code>v</code> anymore. If
+we change Listing 16-4 in the same way, we’re then violating the ownership
+rules when we try to use <code>v</code> in the main thread. The <code>move</code> keyword overrides
+Rust’s conservative default of borrowing; it doesn’t let us violate the
+ownership rules.</p>
+<br>
+<p>With a basic understanding of threads and the thread API, let’s look at what we
+can <i>do</i> with threads.</p>

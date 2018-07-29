@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h1>Custom</h1>
+<br>
+<p>Some conditionals like <code>target_os</code> are implicitly provided by <code>rustc</code>, but
+custom conditionals must be passed to <code>rustc</code> using the <code>--cfg</code> flag.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#[cfg(some_condition)]"></div><div data-l="fn conditional_function() {"></div><div data-l="    println!(&quot;condition met!&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    conditional_function();"></div><div data-l="}"></div></div>
+<br>
+<p>Try to run this to see what happens without the custom <code>cfg</code> flag.</p>
+<br>
+<p>With the custom <code>cfg</code> flag:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc --cfg some_condition custom.rs &amp;&amp; ./custom"></div><div data-l="condition met!"></div></div>

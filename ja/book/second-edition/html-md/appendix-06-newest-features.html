@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h1>Appendix F - Newest Features</h1>
+<br>
+<p>This appendix documents features that have been added to stable Rust since the
+main part of the book was completed.</p>
+<br>
+<br>
+<h2>Field init shorthand</h2>
+<br>
+<p>We can initialize a data structure (struct, enum, union) with named
+fields, by writing <code>fieldname</code> as a shorthand for <code>fieldname: fieldname</code>.
+This allows a compact syntax for initialization, with less duplication:</p>
+<br>
+<div data-lang="rust"><div data-l="#[derive(Debug)]"></div><div data-l="struct Person {"></div><div data-l="    name: String,"></div><div data-l="    age: u8,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let name = String::from(&quot;Peter&quot;);"></div><div data-l="    let age = 27;"></div><div data-l=""></div><div data-l="#    // Using full syntax:"></div><div data-l="    // ">Using full syntax:</div><div data-l="    let peter = Person { name: name, age: age };"></div><div data-l=""></div><div data-l="    let name = String::from(&quot;Portia&quot;);"></div><div data-l="    let age = 27;"></div><div data-l=""></div><div data-l="#    // Using field init shorthand:"></div><div data-l="    // ">Using field init shorthand:</div><div data-l="    let portia = Person { name, age };"></div><div data-l=""></div><div data-l="    println!(&quot;{:?}&quot;, portia);"></div><div data-l="}"></div></div>
+<br>
+<br>
+<h2>Returning from loops</h2>
+<br>
+<p>One of the uses of a <code>loop</code> is to retry an operation you know can fail, such as
+checking if a thread completed its job. However, you might need to pass the
+result of that operation to the rest of your code. If you add it to the <code>break</code>
+expression you use to stop the loop, it will be returned by the broken loop:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut counter = 0;"></div><div data-l=""></div><div data-l="    let result = loop {"></div><div data-l="        counter += 1;"></div><div data-l=""></div><div data-l="        if counter == 10 {"></div><div data-l="            break counter * 2;"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    assert_eq!(result, 20);"></div><div data-l="}"></div></div>
+<br>
+<h2>Nested groups in <code>use</code> declarations</h2>
+<br>
+<p>If you have a complex module tree with many different submodules and you need
+to import a few items from each one, it might be useful to group all the
+imports in the same declaration to keep your code clean and avoid repeating the
+base modules’ name.</p>
+<br>
+<p>The <code>use</code> declaration supports nesting to help you in those cases, both with
+simple imports and glob ones. For example this snippets imports <code>bar</code>, <code>Foo</code>,
+all the items in <code>baz</code> and <code>Bar</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![allow(unused_imports, dead_code)]"></div><div data-l="#"></div><div data-l="# mod foo {"></div><div data-l="#     pub mod bar {"></div><div data-l="#         pub type Foo = ();"></div><div data-l="#     }"></div><div data-l="#     pub mod baz {"></div><div data-l="#         pub mod quux {"></div><div data-l="#             pub type Bar = ();"></div><div data-l="#         }"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="use foo::{"></div><div data-l="    bar::{self, Foo},"></div><div data-l="    baz::{*, quux::Bar},"></div><div data-l="};"></div><div data-l="#"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<h2>Inclusive ranges</h2>
+<br>
+<p>Previously, when a range (<code>..</code> or <code>...</code>) was used as an expression, it had to be
+<code>..</code>, which is exclusive of the upper bound, while patterns had to use <code>...</code>,
+which is inclusive of the upper bound. Now, <code>..=</code> is accepted as syntax for
+inclusive ranges in both expression and range context:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    for i in 0 ..= 10 {"></div><div data-l="        match i {"></div><div data-l="            0 ..= 5 =&gt; println!(&quot;{}: low&quot;, i),"></div><div data-l="            6 ..= 10 =&gt; println!(&quot;{}: high&quot;, i),"></div><div data-l="            _ =&gt; println!(&quot;{}: out of range&quot;, i),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>...</code> syntax is still accepted in matches, but it is not accepted in
+expressions. <code>..=</code> should be preferred.</p>
+<br>
+<h2>128-bit integers</h2>
+<br>
+<p>Rust 1.26.0 added 128-bit integer primitives:</p>
+<br>
+<div data-b="-"><code>u128</code>: A 128-bit unsigned integer with range <a class="notranslate" href="#40, 2^128 - 1">0, 2^128 - 1</a></div>
+<div data-b="-"><code>i128</code>: A 128-bit signed integer with range <a class="notranslate" href="#4-(2^127), 2^127 - 1">-(2^127), 2^127 - 1</a></div>
+<br>
+<p>These primitives are implemented efficiently via LLVM support. They are
+available even on platforms that don’t natively support 128-bit integers and
+can be used like the other integer types.</p>
+<br>
+<p>These primitives can be very useful for algorithms that need to use very large
+integers efficiently, such as certain cryptographic algorithms.</p>

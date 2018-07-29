@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1>Documentation</h1>
+<br>
+<p>Doc comments are very useful for big projects that require documentation. When
+running <a class="notranslate" href="#31">Rustdoc</a>, these are the comments that get compiled into
+documentation. They are denoted by a <code>///</code>, and support <a class="notranslate" href="#32">Markdown</a>.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#![crate_name = &quot;doc&quot;]"></div><div data-l=""></div><div data-l="#///// A human being is represented here"></div><div data-l="/// ">A human being is represented here</div><div data-l="pub struct Person {"></div><div data-l="#//    /// A person must have a name, no matter how much Juliet may hate it"></div><div data-l="    /// ">A person must have a name, no matter how much Juliet may hate it</div><div data-l="    name: String,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Person {"></div><div data-l="#//    /// Returns a person with the name given them"></div><div data-l="    /// ">Returns a person with the name given them</div><div data-l="    ///"></div><div data-l="#//    /// # Arguments"></div><div data-l="    /// "># Arguments</div><div data-l="    ///"></div><div data-l="#//    /// * `name` - A string slice that holds the name of the person"></div><div data-l="    /// ">* <code>name</code> - A string slice that holds the name of the person</div><div data-l="    ///"></div><div data-l="#//    /// # Example"></div><div data-l="    /// "># Example</div><div data-l="    ///"></div><div data-l="#//    /// ```"></div><div data-l="    /// ">```</div><div data-l="#//    /// // You can have rust code between fences inside the comments"></div><div data-l="    /// ">// You can have rust code between fences inside the comments</div><div data-l="#//    /// // If you pass --test to Rustdoc, it will even test it for you!"></div><div data-l="    /// ">// If you pass --test to Rustdoc, it will even test it for you!</div><div data-l="#//    /// use doc::Person;"></div><div data-l="    /// ">use doc::Person;</div><div data-l="#//    /// let person = Person::new(&quot;name&quot;);"></div><div data-l="    /// ">let person = Person::new(&quot;name&quot;);</div><div data-l="#//    /// ```"></div><div data-l="    /// ">```</div><div data-l="    pub fn new(name: &amp;str) -&gt; Person {"></div><div data-l="        Person {"></div><div data-l="            name: name.to_string(),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#//    /// Gives a friendly hello!"></div><div data-l="    /// ">Gives a friendly hello!</div><div data-l="    ///"></div><div data-l="#//    /// Says &quot;Hello, [name]&quot; to the `Person` it is called on."></div><div data-l="    /// ">Says &quot;Hello, <a class="notranslate" href="#4name">name</a>&quot; to the <code>Person</code> it is called on.</div><div data-l="    pub fn hello(&amp; self) {"></div><div data-l="        println!(&quot;Hello, {}!&quot;, self.name);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let john = Person::new(&quot;John&quot;);"></div><div data-l=""></div><div data-l="    john.hello();"></div><div data-l="}"></div></div>
+<br>
+<p>To run the tests, first build the code as a library, then tell rustdoc where
+to find the library so it can link it into each doctest program:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc doc.rs --crate-type lib"></div><div data-l="$ rustdoc --test --extern doc=&quot;libdoc.rlib&quot; doc.rs"></div></div>
+<br>
+<p>(When you run <code>cargo test</code> on a library crate, Cargo will automatically
+generate and run the correct rustc and rustdoc commands.)</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/documentation.html">1</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Markdown">2</a>

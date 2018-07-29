@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h1>Declare first</h1>
+<br>
+<p>It's possible to declare variable bindings first, and initialize them later.
+However, this form is seldom used, as it may lead to the use of uninitialized
+variables.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn main() {"></div><div data-l="#    // Declare a variable binding"></div><div data-l="    // ">Declare a variable binding</div><div data-l="    let a_binding;"></div><div data-l=""></div><div data-l="    {"></div><div data-l="        let x = 2;"></div><div data-l=""></div><div data-l="#        // Initialize the binding"></div><div data-l="        // ">Initialize the binding</div><div data-l="        a_binding = x * x;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;a binding: {}&quot;, a_binding);"></div><div data-l=""></div><div data-l="    let another_binding;"></div><div data-l=""></div><div data-l="#    // Error! Use of uninitialized binding"></div><div data-l="    // ">Error! Use of uninitialized binding</div><div data-l="    println!(&quot;another binding: {}&quot;, another_binding);"></div><div data-l="#    // FIXME ^ Comment out this line"></div><div data-l="    // ">FIXME ^ Comment out this line</div><div data-l=""></div><div data-l="    another_binding = 1;"></div><div data-l=""></div><div data-l="    println!(&quot;another binding: {}&quot;, another_binding);"></div><div data-l="}"></div></div>
+<br>
+<p>The compiler forbids use of uninitialized variables, as this would lead to
+undefined behavior.</p>

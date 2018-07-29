@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1>Trait solving (new-style)</h1>
+<br>
+<p>🚧 This chapter describes &quot;new-style&quot; trait solving. This is still in the
+<a href="#3wg">process of being implemented</a>; this chapter serves as a kind of
+in-progress design document. If you would prefer to read about how the
+current trait solver works, check out
+<a href="#2./traits/resolution.html">this other chapter</a>. (By the way, if you
+would like to help in hacking on the new solver, you will find
+instructions for getting involved in the
+<a href="#3wg">Traits Working Group tracking issue</a>.) 🚧</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/48416">wg</a>
+<br>
+<p>Trait solving is based around a few key ideas:</p>
+<br>
+<div data-b="-"><a href="#2./traits/lowering-to-logic.html">Lowering to logic</a>, which expresses
+Rust traits in terms of standard logical terms.</div>
+<div data-b="  -">The <a href="#2./traits/goals-and-clauses.html">goals and clauses</a> chapter
+describes the precise form of rules we use, and
+<a href="#2./traits/lowering-rules.html">lowering rules</a> gives the complete set of
+lowering rules in a more reference-like form.</div>
+<div data-b="-"><a href="#2./traits/canonical-queries.html">Canonical queries</a>, which allow us
+to solve trait problems (like &quot;is <code>Foo</code> implemented for the type
+<code>Bar</code>?&quot;) once, and then apply that same result independently in many
+different inference contexts.</div>
+<div data-b="-"><a href="#2./traits/associated-types.html">Lazy normalization</a>, which is the
+technique we use to accommodate associated types when figuring out
+whether types are equal.</div>
+<p>- <a href="#2./traits/regions.html">Region constraints</a>, which are accumulated
+  during trait solving but mostly ignored. This means that trait
+  solving effectively ignores the precise regions involved, always –
+  but we still remember the constraints on them so that those
+  constraints can be checked by thet type checker.
+  
+Note: this is not a complete list of topics. See the sidebar for more.</p>

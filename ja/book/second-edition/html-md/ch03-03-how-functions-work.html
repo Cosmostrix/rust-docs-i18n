@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<h2>Functions</h2>
+<br>
+<p>Functions are pervasive in Rust code. You’ve already seen one of the most
+important functions in the language: the <code>main</code> function, which is the entry
+point of many programs. You’ve also seen the <code>fn</code> keyword, which allows you to
+declare new functions.</p>
+<br>
+<p>Rust code uses <i>snake case</i> as the conventional style for function and variable
+names. In snake case, all letters are lowercase and underscores separate words.
+Here’s a program that contains an example function definition:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello, world!&quot;);"></div><div data-l=""></div><div data-l="    another_function();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn another_function() {"></div><div data-l="    println!(&quot;Another function.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Function definitions in Rust start with <code>fn</code> and have a set of parentheses
+after the function name. The curly brackets tell the compiler where the
+function body begins and ends.</p>
+<br>
+<p>We can call any function we’ve defined by entering its name followed by a set
+of parentheses. Because <code>another_function</code> is defined in the program, it can be
+called from inside the <code>main</code> function. Note that we defined <code>another_function</code>
+<i>after</i> the <code>main</code> function in the source code; we could have defined it before
+as well. Rust doesn’t care where you define your functions, only that they’re
+defined somewhere.</p>
+<br>
+<p>Let’s start a new binary project named <i>functions</i> to explore functions
+further. Place the <code>another_function</code> example in <i>src/main.rs</i> and run it. You
+should see the following output:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling functions v0.1.0 (file:///projects/functions)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.28 secs"></div><div data-l="     Running `target/debug/functions`"></div><div data-l="Hello, world!"></div><div data-l="Another function."></div></div>
+<br>
+<p>The lines execute in the order in which they appear in the <code>main</code> function.
+First, the “Hello, world!” message prints, and then <code>another_function</code> is
+called and its message is printed.</p>
+<br>
+<h3>Function Parameters</h3>
+<br>
+<p>Functions can also be defined to have <i>parameters</i>, which are special variables
+that are part of a function’s signature. When a function has parameters, you
+can provide it with concrete values for those parameters. Technically, the
+concrete values are called <i>arguments</i>, but in casual conversation, people tend
+to use the words <i>parameter</i> and <i>argument</i> interchangeably for either the
+variables in a function’s definition or the concrete values passed in when you
+call a function.</p>
+<br>
+<p>The following rewritten version of <code>another_function</code> shows what parameters
+look like in Rust:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    another_function(5);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn another_function(x: i32) {"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>Try running this program; you should get the following output:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling functions v0.1.0 (file:///projects/functions)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 1.21 secs"></div><div data-l="     Running `target/debug/functions`"></div><div data-l="The value of x is: 5"></div></div>
+<br>
+<p>The declaration of <code>another_function</code> has one parameter named <code>x</code>. The type of
+<code>x</code> is specified as <code>i32</code>. When <code>5</code> is passed to <code>another_function</code>, the
+<code>println€</code> macro puts <code>5</code> where the pair of curly brackets were in the format
+string.</p>
+<br>
+<p>In function signatures, you <i>must</i> declare the type of each parameter. This is
+a deliberate decision in Rust’s design: requiring type annotations in function
+definitions means the compiler almost never needs you to use them elsewhere in
+the code to figure out what you mean.</p>
+<br>
+<p>When you want a function to have multiple parameters, separate the parameter
+declarations with commas, like this:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    another_function(5, 6);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn another_function(x: i32, y: i32) {"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="    println!(&quot;The value of y is: {}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>This example creates a function with two parameters, both of which are <code>i32</code>
+types. The function then prints the values in both of its parameters. Note that
+function parameters don’t all need to be the same type, they just happen to be
+in this example.</p>
+<br>
+<p>Let’s try running this code. Replace the program currently in your <i>functions</i>
+project’s <i>src/main.rs</i> file with the preceding example and run it using <code>cargo
+run</code>:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling functions v0.1.0 (file:///projects/functions)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/functions`"></div><div data-l="The value of x is: 5"></div><div data-l="The value of y is: 6"></div></div>
+<br>
+<p>Because we called the function with <code>5</code> as the value for  <code>x</code> and <code>6</code> is passed
+as the value for <code>y</code>, the two strings are printed with these values.</p>
+<br>
+<h3>Function Bodies Contain Statements and Expressions</h3>
+<br>
+<p>Function bodies are made up of a series of statements optionally ending in an
+expression. So far, we’ve only covered functions without an ending expression,
+but you have seen an expression as part of a statement. Because Rust is an
+expression-based language, this is an important distinction to understand.
+Other languages don’t have the same distinctions, so let’s look at what
+statements and expressions are and how their differences affect the bodies of
+functions.</p>
+<br>
+<p>We’ve actually already used statements and expressions. <i>Statements</i> are
+instructions that perform some action and do not return a value. <i>Expressions</i>
+evaluate to a resulting value. Let’s look at some examples.</p>
+<br>
+<p>Creating a variable and assigning a value to it with the <code>let</code> keyword is a
+statement. In Listing 3-1, <code>let y = 6;</code> is a statement.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let y = 6;"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 3-1: A <code>main</code> function declaration containing one statement</span></p>
+<br>
+<p>Function definitions are also statements; the entire preceding example is a
+statement in itself.</p>
+<br>
+<p>Statements do not return values. Therefore, you can’t assign a <code>let</code> statement
+to another variable, as the following code tries to do; you’ll get an error:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let x = (let y = 6);"></div><div data-l="}"></div></div>
+<br>
+<p>When you run this program, the error you’ll get looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling functions v0.1.0 (file:///projects/functions)"></div><div data-l="error: expected expression, found statement (`let`)"></div><div data-l=" --&gt; src/main.rs:2:14"></div><div data-l="  |"></div><div data-l="2 |     let x = (let y = 6);"></div><div data-l="  |              ^^^"></div><div data-l="  |"></div><div data-l="  = note: variable declaration using `let` is a statement"></div></div>
+<br>
+<p>The <code>let y = 6</code> statement does not return a value, so there isn’t anything for
+<code>x</code> to bind to. This is different from what happens in other languages, such as
+C and Ruby, where the assignment returns the value of the assignment. In those
+languages, you can write <code>x = y = 6</code> and have both <code>x</code> and <code>y</code> have the value
+<code>6</code>; that is not the case in Rust.</p>
+<br>
+<p>Expressions evaluate to something and make up most of the rest of the code that
+you’ll write in Rust. Consider a simple math operation, such as <code>5 + 6</code>, which
+is an expression that evaluates to the value <code>11</code>. Expressions can be part of
+statements: in Listing 3-1, the <code>6</code> in the statement <code>let y = 6;</code> is an
+expression that evaluates to the value <code>6</code>. Calling a function is an
+expression. Calling a macro is an expression. The block that we use to create
+new scopes, <code>{}</code>, is an expression, for example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = 5;"></div><div data-l=""></div><div data-l="    let y = {"></div><div data-l="        let x = 3;"></div><div data-l="        x + 1"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;The value of y is: {}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>This expression:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="{"></div><div data-l="    let x = 3;"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>is a block that, in this case, evaluates to <code>4</code>. That value gets bound to <code>y</code>
+as part of the <code>let</code> statement. Note the <code>x + 1</code> line without a semicolon at
+the end, which is unlike most of the lines you’ve seen so far. Expressions do
+not include ending semicolons. If you add a semicolon to the end of an
+expression, you turn it into a statement, which will then not return a value.
+Keep this in mind as you explore function return values and expressions next.</p>
+<br>
+<h3>Functions with Return Values</h3>
+<br>
+<p>Functions can return values to the code that calls them. We don’t name return
+values, but we do declare their type after an arrow (<code>-&gt;</code>). In Rust, the return
+value of the function is synonymous with the value of the final expression in
+the block of the body of a function. You can return early from a function by
+using the <code>return</code> keyword and specifying a value, but most functions return
+the last expression implicitly. Here’s an example of a function that returns a
+value:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn five() -&gt; i32 {"></div><div data-l="    5"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = five();"></div><div data-l=""></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>There are no function calls, macros, or even <code>let</code> statements in the <code>five</code>
+function—just the number <code>5</code> by itself. That’s a perfectly valid function in
+Rust. Note that the function’s return type is specified, too, as <code>-&gt; i32</code>. Try
+running this code; the output should look like this:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling functions v0.1.0 (file:///projects/functions)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.30 secs"></div><div data-l="     Running `target/debug/functions`"></div><div data-l="The value of x is: 5"></div></div>
+<br>
+<p>The <code>5</code> in <code>five</code> is the function’s return value, which is why the return type
+is <code>i32</code>. Let’s examine this in more detail. There are two important bits:
+first, the line <code>let x = five();</code> shows that we’re using the return value of a
+function to initialize a variable. Because the function <code>five</code> returns a <code>5</code>,
+that line is the same as the following:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div></div>
+<br>
+<p>Second, the <code>five</code> function has no parameters and defines the type of the
+return value, but the body of the function is a lonely <code>5</code> with no semicolon
+because it’s an expression whose value we want to return.</p>
+<br>
+<p>Let’s look at another example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = plus_one(5);"></div><div data-l=""></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn plus_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>Running this code will print <code>The value of x is: 6</code>. But if we place a
+semicolon at the end of the line containing <code>x + 1</code>, changing it from an
+expression to a statement, we’ll get an error.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let x = plus_one(5);"></div><div data-l=""></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn plus_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1;"></div><div data-l="}"></div></div>
+<br>
+<p>Running this code produces an error, as follows:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0308]: mismatched types"></div><div data-l=" --&gt; src/main.rs:7:28"></div><div data-l="  |"></div><div data-l="7 |   fn plus_one(x: i32) -&gt; i32 {"></div><div data-l="  |  ____________________________^"></div><div data-l="8 | |     x + 1;"></div><div data-l="  | |          - help: consider removing this semicolon"></div><div data-l="9 | | }"></div><div data-l="  | |_^ expected i32, found ()"></div><div data-l="  |"></div><div data-l="  = note: expected type `i32`"></div><div data-l="             found type `()`"></div></div>
+<br>
+<p>The main error message, “mismatched types,” reveals the core issue with this
+code. The definition of the function <code>plus_one</code> says that it will return an
+<code>i32</code>, but statements don’t evaluate to a value, which is expressed by <code>()</code>,
+the empty tuple. Therefore, nothing is returned, which contradicts the function
+definition and results in an error. In this output, Rust provides a message to
+possibly help rectify this issue: it suggests removing the semicolon, which
+would fix the error.</p>

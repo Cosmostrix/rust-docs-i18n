@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1><code>From</code> and <code>Into</code></h1>
+<br>
+<p>The <a class="notranslate" href="#4`From`">`From`</a> and <a class="notranslate" href="#4`Into`">`Into`</a> traits are inherently linked, and this is actually part of
+its implementation. If you are able to convert type A from type B, then it
+should be easy to believe that we should be able to convert type B to type A.</p>
+<br>
+<h2><code>From</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`From`">`From`</a> trait allows for a type to define how to create itself from another
+type, hence providing a very simple mechanism for converting between several
+types. There are numerous implementations of this trait within the standard
+library for conversion of primitive and common types.</p>
+<br>
+<p>For example we can easily convert a <code>str</code> into a <code>String</code></p>
+<br>
+<div data-lang="rust"><div data-l="let my_str = &quot;hello&quot;;"></div><div data-l="let my_string = String::from(my_str);"></div></div>
+<br>
+<p>We can do similar for defining a conversion for our own type.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::convert::From;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Number {"></div><div data-l="    value: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl From&lt;i32&gt; for Number {"></div><div data-l="    fn from(item: i32) -&gt; Self {"></div><div data-l="        Number { value: item }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let num = Number::from(30);"></div><div data-l="    println!(&quot;My number is {:?}&quot;, num);"></div><div data-l="}"></div></div>
+<br>
+<h2><code>Into</code></h2>
+<br>
+<p>The <a class="notranslate" href="#4`Into`">`Into`</a> trait is simply the reciprocal of the <code>From</code> trait. That is, if you
+have implemented the <code>From</code> trait for your type you get the <code>Into</code>
+implementation for free.</p>
+<br>
+<p>Using the <code>Into</code> trait will typically require specification of the type to
+convert into as the compiler is unable to determine this most of the time.
+However this is a small trade-off considering we get the functionality for free.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::convert::From;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Number {"></div><div data-l="    value: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl From&lt;i32&gt; for Number {"></div><div data-l="    fn from(item: i32) -&gt; Self {"></div><div data-l="        Number { value: item }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let int = 5;"></div><div data-l="#    // Try removing the type declaration"></div><div data-l="    // ">Try removing the type declaration</div><div data-l="    let num: Number = int.into();"></div><div data-l="    println!(&quot;My number is {:?}&quot;, num);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/convert/trait.From.html">`From`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/convert/trait.Into.html">`Into`</a>

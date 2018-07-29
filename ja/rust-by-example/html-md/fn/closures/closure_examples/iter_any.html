@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h1>Iterator::any</h1>
+<br>
+<p><code>Iterator::any</code> is a function which when passed an iterator, will return
+<code>true</code> if any element satisfies the predicate. Otherwise <code>false</code>. Its
+signature:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub trait Iterator {"></div><div data-l="#    // The type being iterated over."></div><div data-l="    // ">The type being iterated over.</div><div data-l="    type Item;"></div><div data-l=""></div><div data-l="#    // `any` takes `&amp;mut self` meaning the caller may be borrowed"></div><div data-l="#    // and modified, but not consumed."></div><div data-l="    // "><code>any</code> takes <code>&amp;mut self</code> meaning the caller may be borrowed and modified, but not consumed.</div><div data-l="    fn any&lt;F&gt;(&amp;mut self, f: F) -&gt; bool where"></div><div data-l="#        // `FnMut` meaning any captured variable may at most be"></div><div data-l="#        // modified, not consumed. `Self::Item` states it takes"></div><div data-l="#        // arguments to the closure by value."></div><div data-l="        // "><code>FnMut</code> meaning any captured variable may at most be modified, not consumed. <code>Self::Item</code> states it takes arguments to the closure by value.</div><div data-l="        F: FnMut(Self::Item) -&gt; bool {}"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let vec1 = vec![1, 2, 3];"></div><div data-l="    let vec2 = vec![4, 5, 6];"></div><div data-l=""></div><div data-l="#    // `iter()` for vecs yields `&amp;i32`. Destructure to `i32`."></div><div data-l="    // "><code>iter()</code> for vecs yields <code>&amp;i32</code>. Destructure to <code>i32</code>.</div><div data-l="    println!(&quot;2 in vec1: {}&quot;, vec1.iter()     .any(|&amp;x| x == 2));"></div><div data-l="#    // `into_iter()` for vecs yields `i32`. No destructuring required."></div><div data-l="    // "><code>into_iter()</code> for vecs yields <code>i32</code>. No destructuring required.</div><div data-l="    println!(&quot;2 in vec2: {}&quot;, vec2.into_iter().any(| x| x == 2));"></div><div data-l=""></div><div data-l="    let array1 = [1, 2, 3];"></div><div data-l="    let array2 = [4, 5, 6];"></div><div data-l=""></div><div data-l="#    // `iter()` for arrays yields `&amp;i32`."></div><div data-l="    // "><code>iter()</code> for arrays yields <code>&amp;i32</code>.</div><div data-l="    println!(&quot;2 in array1: {}&quot;, array1.iter()     .any(|&amp;x| x == 2));"></div><div data-l="#    // `into_iter()` for arrays unusually yields `&amp;i32`."></div><div data-l="    // "><code>into_iter()</code> for arrays unusually yields <code>&amp;i32</code>.</div><div data-l="    println!(&quot;2 in array2: {}&quot;, array2.into_iter().any(|&amp;x| x == 2));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3any"><code>std::iter::Iterator::any</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.any">any</a>

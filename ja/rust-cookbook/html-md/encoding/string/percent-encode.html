@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h2>Percent-encode a string</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>Encode an input string with <a class="notranslate" href="#4percent-encoding">percent-encoding</a> using the <a class="notranslate" href="#4`utf8_percent_encode`">`utf8_percent_encode`</a>
+function from the <code>percent-encoding</code> crate. Then decode using the <a class="notranslate" href="#4`percent_decode`">`percent_decode`</a>
+function.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::percent_encoding::{utf8_percent_encode, percent_decode, DEFAULT_ENCODE_SET};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Utf8(std::str::Utf8Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let input = &quot;confident, productive systems programming&quot;;"></div><div data-l=""></div><div data-l="    let iter = utf8_percent_encode(input, DEFAULT_ENCODE_SET);"></div><div data-l="    let encoded: String = iter.collect();"></div><div data-l="    assert_eq!(encoded, &quot;confident,%20productive%20systems%20programming&quot;);"></div><div data-l=""></div><div data-l="    let iter = percent_decode(encoded.as_bytes());"></div><div data-l="    let decoded = iter.decode_utf8()?;"></div><div data-l="    assert_eq!(decoded, &quot;confident, productive systems programming&quot;);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<p>The encode set defines which bytes (in addition to non-ASCII and controls) need
+to be percent-encoded. The choice of this set depends on context. For example,
+<code>url</code> encodes <code>?</code> in a URL path but not in a query string.</p>
+<br>
+<p>The return value of encoding is an iterator of <code>&amp;str</code> slices which collect into
+a <code>String</code>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/percent-encoding/*/percent_encoding/fn.percent_decode.html">`percent_decode`</a>
+<a class="notranslate" href="#1https://docs.rs/percent-encoding/*/percent_encoding/fn.utf8_percent_encode.html">`utf8_percent_encode`</a>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Percent-encoding">percent-encoding</a>

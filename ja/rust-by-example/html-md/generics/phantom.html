@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<h1>Phantom type parameters</h1>
+<br>
+<p>A phantom type parameter is one that doesn't show up at runtime,
+but is checked statically (and only) at compile time.</p>
+<br>
+<p>Data types can use extra generic type parameters to act as markers
+or to perform type checking at compile time. These extra parameters 
+hold no storage values, and have no runtime behavior.</p>
+<br>
+<p>In the following example, we combine <a class="notranslate" href="#4std::marker::PhantomData">std::marker::PhantomData</a>
+with the phantom type parameter concept to create tuples containing
+different data types.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::marker::PhantomData;"></div><div data-l=""></div><div data-l="#// A phantom tuple struct which is generic over `A` with hidden parameter `B`."></div><div data-l="// ">A phantom tuple struct which is generic over <code>A</code> with hidden parameter <code>B</code>.</div><div data-l="#//#[derive(PartialEq)] // Allow equality test for this type."></div><div data-l="#[derive(PartialEq)] // ">Allow equality test for this type.</div><div data-l="struct PhantomTuple&lt;A, B&gt;(A,PhantomData&lt;B&gt;);"></div><div data-l=""></div><div data-l="#// A phantom type struct which is generic over `A` with hidden parameter `B`."></div><div data-l="// ">A phantom type struct which is generic over <code>A</code> with hidden parameter <code>B</code>.</div><div data-l="#//#[derive(PartialEq)] // Allow equality test for this type."></div><div data-l="#[derive(PartialEq)] // ">Allow equality test for this type.</div><div data-l="struct PhantomStruct&lt;A, B&gt; { first: A, phantom: PhantomData&lt;B&gt; }"></div><div data-l=""></div><div data-l="#// Note: Storage is allocated for generic type `A`, but not for `B`."></div><div data-l="#//       Therefore, `B` cannot be used in computations."></div><div data-l="// ">Note: Storage is allocated for generic type <code>A</code>, but not for <code>B</code>.       Therefore, <code>B</code> cannot be used in computations.</div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Here, `f32` and `f64` are the hidden parameters."></div><div data-l="#    // PhantomTuple type specified as `&lt;char, f32&gt;`."></div><div data-l="    // ">Here, <code>f32</code> and <code>f64</code> are the hidden parameters. PhantomTuple type specified as <code>&lt;char, f32&gt;</code>.</div><div data-l="    let _tuple1: PhantomTuple&lt;char, f32&gt; = PhantomTuple('Q', PhantomData);"></div><div data-l="#    // PhantomTuple type specified as `&lt;char, f64&gt;`."></div><div data-l="    // ">PhantomTuple type specified as <code>&lt;char, f64&gt;</code>.</div><div data-l="    let _tuple2: PhantomTuple&lt;char, f64&gt; = PhantomTuple('Q', PhantomData);"></div><div data-l=""></div><div data-l="#    // Type specified as `&lt;char, f32&gt;`."></div><div data-l="    // ">Type specified as <code>&lt;char, f32&gt;</code>.</div><div data-l="    let _struct1: PhantomStruct&lt;char, f32&gt; = PhantomStruct {"></div><div data-l="        first: 'Q',"></div><div data-l="        phantom: PhantomData,"></div><div data-l="    };"></div><div data-l="#    // Type specified as `&lt;char, f64&gt;`."></div><div data-l="    // ">Type specified as <code>&lt;char, f64&gt;</code>.</div><div data-l="    let _struct2: PhantomStruct&lt;char, f64&gt; = PhantomStruct {"></div><div data-l="        first: 'Q',"></div><div data-l="        phantom: PhantomData,"></div><div data-l="    };"></div><div data-l="    "></div><div data-l="#    // Compile-time Error! Type mismatch so these cannot be compared:"></div><div data-l="    // ">Compile-time Error! Type mismatch so these cannot be compared:</div><div data-l="    //println!(&quot;_tuple1 == _tuple2 yields: {}&quot;,"></div><div data-l="#    //          _tuple1 == _tuple2);"></div><div data-l="    // ">         <s>tuple1 == </s>tuple2);</div><div data-l="    "></div><div data-l="#    // Compile-time Error! Type mismatch so these cannot be compared:"></div><div data-l="    // ">Compile-time Error! Type mismatch so these cannot be compared:</div><div data-l="    //println!(&quot;_struct1 == _struct2 yields: {}&quot;,"></div><div data-l="#    //          _struct1 == _struct2);"></div><div data-l="    // ">         <s>struct1 == </s>struct2);</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#4Derive">Derive</a>, <a class="notranslate" href="#4struct">struct</a>, and <a class="notranslate" href="#4TupleStructs">TupleStructs</a></p>
+<br>
+<a class="notranslate" href="#1trait/derive.html">Derive</a>
+<a class="notranslate" href="#1custom_types/structs.html">struct</a>
+<a class="notranslate" href="#1custom_types/structs.html">TupleStructs</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/struct.PhantomData.html">std::marker::PhantomData</a>

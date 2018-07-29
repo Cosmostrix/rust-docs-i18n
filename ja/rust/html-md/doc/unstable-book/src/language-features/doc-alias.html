@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>doc_alias</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#50146">#50146</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/50146">#50146</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>You can add alias(es) to an item when using the <code>rustdoc</code> search through the
+<code>doc(alias)</code> attribute. Example:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#![feature(doc_alias)]"></div><div data-l=""></div><div data-l="#[doc(alias = &quot;x&quot;)]"></div><div data-l="#[doc(alias = &quot;big&quot;)]"></div><div data-l="pub struct BigX;"></div></div>
+<br>
+<p>Then, when looking for it through the <code>rustdoc</code> search, if you enter &quot;x&quot; or
+&quot;big&quot;, search will show the <code>BigX</code> struct first.</p>
+<br>
+<p>Note that this feature is currently hidden behind the <code>feature(doc_alias)</code> gate.</p>

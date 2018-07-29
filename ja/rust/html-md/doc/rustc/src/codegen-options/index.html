@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<h1>Codegen options</h1>
+<br>
+<p>All of these options are passed to <code>rustc</code> via the <code>-C</code> flag, short for &quot;codegen.&quot; You can see
+a version of this list for your exact compiler by running <code>rustc -C help</code>.</p>
+<br>
+<h2>ar</h2>
+<br>
+<p>This option is deprecated and does nothing.</p>
+<br>
+<h2>linker</h2>
+<br>
+<p>This flag lets you control which linker <code>rustc</code> invokes to link your code.</p>
+<br>
+<h2>link-arg=val</h2>
+<br>
+<p>This flag lets you append a single extra argument to the linker invocation.</p>
+<br>
+<p>&quot;Append&quot; is significant; you can pass this flag multiple times to add multiple arguments.</p>
+<br>
+<h2>link-args</h2>
+<br>
+<p>This flag lets you append multiple extra arguments to the linker invocation. The
+options should be separated by spaces.</p>
+<br>
+<h2>link-dead-code</h2>
+<br>
+<p>Normally, the linker will remove dead code. This flag disables this behavior.</p>
+<br>
+<p>An example of when this flag might be useful is when trying to construct code coverage
+metrics.</p>
+<br>
+<h2>lto</h2>
+<br>
+<p>This flag instructs LLVM to use <a href="#2https://llvm.org/docs/LinkTimeOptimization.html">link time
+optimizations</a>.</p>
+<br>
+<p>It takes one of two values, <code>thin</code> and <code>fat</code>. 'thin' LTO <a href="#2http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html">is a new feature of
+LLVM</a>,
+'fat' referring to the classic version of LTO.</p>
+<br>
+<h2>target-cpu</h2>
+<br>
+<p>This instructs <code>rustc</code> to generate code specifically for a particular processor.</p>
+<br>
+<p>You can run <code>rustc --print target-cpus</code> to see the valid options to pass
+here. Additionally, <code>native</code> can be passed to use the processor of the host
+machine.</p>
+<br>
+<h2>target-feature</h2>
+<br>
+<p>Individual targets will support different features; this flag lets you control
+enabling or disabling a feature.</p>
+<br>
+<p>To see the valid options and an example of use, run <code>rustc --print
+target-features</code>.</p>
+<br>
+<h2>passes</h2>
+<br>
+<p>This flag can be used to add extra LLVM passes to the compilation.</p>
+<br>
+<p>The list must be separated by spaces.</p>
+<br>
+<h2>llvm-args</h2>
+<br>
+<p>This flag can be used to pass a list of arguments directly to LLVM.</p>
+<br>
+<p>The list must be separated by spaces.</p>
+<br>
+<h2>save-temps</h2>
+<br>
+<p><code>rustc</code> will generate temporary files during compilation; normally it will
+delete them after it's done with its work. This option will cause them to be
+preserved instead of removed.</p>
+<br>
+<h2>rpath</h2>
+<br>
+<p>This option allows you to set the value of
+<a class="notranslate" href="#2https://en.wikipedia.org/wiki/Rpath"><code>rpath</code></a>.</p>
+<br>
+<h2>overflow-checks</h2>
+<br>
+<p>This flag allows you to control the behavior of integer overflow. This flag
+can be passed many options:</p>
+<br>
+<div data-b="*">To turn overflow checks on: <code>y</code>, <code>yes</code>, or <code>on</code>.</div>
+<div data-b="*">To turn overflow checks off: <code>n</code>, <code>no</code>, or <code>off</code>.</div>
+<br>
+<h2>no-prepopulate-passes</h2>
+<br>
+<p>The pass manager comes pre-populated with a list of passes; this flag
+ensures that list is empty.</p>
+<br>
+<h2>no-vectorize-loops</h2>
+<br>
+<p>By default, <code>rustc</code> will attempt to <a class="notranslate" href="#2https://llvm.org/docs/Vectorizers.html#the-loop-vectorizer">vectorize
+loops</a>. This
+flag will turn that behavior off.</p>
+<br>
+<h2>no-vectorize-slp</h2>
+<br>
+<p>By default, <code>rustc</code> will attempt to vectorize loops using <a class="notranslate" href="#2https://llvm.org/docs/Vectorizers.html#the-slp-vectorizer">superword-level
+parallelism</a>. This
+flag will turn that behavior off.</p>
+<br>
+<h2>soft-float</h2>
+<br>
+<p>This option will make <code>rustc</code> generate code using &quot;soft floats.&quot; By default,
+a lot of hardware supports floating point instructions, and so the code generated
+will take advantage of this. &quot;soft floats&quot; emulate floating point instructions
+in software.</p>
+<br>
+<h2>prefer-dynamic</h2>
+<br>
+<p>By default, <code>rustc</code> prefers to statically link dependencies. This option will
+make it use dynamic linking instead.</p>
+<br>
+<h2>no-integrated-as</h2>
+<br>
+<p>LLVM comes with an internal assembler; this option will let you use an
+external assembler instead.</p>
+<br>
+<h2>no-redzone</h2>
+<br>
+<p>This flag allows you to disable <a href="#2https://en.wikipedia.org/wiki/Red_zone_\(computing\">the
+red zone</a>). This flag can
+be passed many options:</p>
+<br>
+<div data-b="*">To enable the red zone: <code>y</code>, <code>yes</code>, or <code>on</code>.</div>
+<div data-b="*">To disable it: <code>n</code>, <code>no</code>, or <code>off</code>.</div>
+<br>
+<h2>relocation-model</h2>
+<br>
+<p>This option lets you choose which relocation model to use.</p>
+<br>
+<p>To find the valid options for this flag, run <code>rustc --print relocation-models</code>.</p>
+<br>
+<h2>code-model=val</h2>
+<br>
+<p>This option lets you choose which code model to use.</p>
+<br>
+<p>To find the valid options for this flag, run <code>rustc --print code-models</code>.</p>
+<br>
+<h2>metadata</h2>
+<br>
+<p>This option allows you to control the metadata used for symbol mangling.</p>
+<br>
+<h2>extra-filename</h2>
+<br>
+<p>This option allows you to put extra data in each output filename.</p>
+<br>
+<h2>codegen-units</h2>
+<br>
+<p>This flag lets you control how many threads are used when doing
+code generation.</p>
+<br>
+<p>Increasing paralellism may speed up compile times, but may also
+produce slower code.</p>
+<br>
+<h2>remark</h2>
+<br>
+<p>This flag lets you print remarks for these optimization passes.</p>
+<br>
+<p>The list of passes should be separated by spaces.</p>
+<br>
+<p><code>all</code> will remark on every pass.</p>
+<br>
+<h2>no-stack-check</h2>
+<br>
+<p>This option is deprecated and does nothing.</p>
+<br>
+<h2>debuginfo</h2>
+<br>
+<p>This flag lets you control debug information:</p>
+<br>
+<div data-b="*"><code>0</code>: no debug info at all</div>
+<div data-b="*"><code>1</code>: line tables only</div>
+<div data-b="*"><code>2</code>: full debug info</div>
+<br>
+<h2>opt-level</h2>
+<br>
+<p>This flag lets you control the optimization level.</p>
+<br>
+<div data-b="*"><code>0</code>: no optimizations</div>
+<div data-b="*"><code>1</code>: basic optimizations</div>
+<div data-b="*"><code>2</code>: some optimizations</div>
+<div data-b="*"><code>3</code>: all optimizations</div>
+<div data-b="*"><code>s</code>: optimize for binary size</div>
+<div data-b="*"><code>z</code>: optimize for binary size, but also turn off loop vectorization.</div>
+<br>
+<h2>debug-assertions</h2>
+<br>
+<p>This flag lets you turn <code>cfg(debug_assertions)</code> on or off.</p>
+<br>
+<h2>inline-threshold</h2>
+<br>
+<p>This option lets you set the threshold for inlining a function.</p>
+<br>
+<p>The default is 225.</p>
+<br>
+<h2>panic</h2>
+<br>
+<p>This option lets you control what happens when the code panics.</p>
+<br>
+<div data-b="*"><code>abort</code>: terminate the process upon panic</div>
+<div data-b="*"><code>unwind</code>: unwind the stack upon panic</div>
+<br>
+<h2>incremental</h2>
+<br>
+<p>This flag allows you to enable incremental compilation.</p>

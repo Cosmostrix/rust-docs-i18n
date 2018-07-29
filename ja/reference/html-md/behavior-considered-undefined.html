@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h2>Behavior considered undefined</h2>
+<br>
+<p>Rust code, including within <code>unsafe</code> blocks and <code>unsafe</code> functions is incorrect
+if it exhibits any of the behaviors in the following list. It is the
+programmer's responsibility when writing <code>unsafe</code> code that it is not possible
+to let <code>safe</code> code exhibit these behaviors.</p>
+<br>
+<div data-b="*">Data races.</div>
+<div data-b="*">Dereferencing a null or dangling raw pointer.</div>
+<div data-b="*">Unaligned pointer reading and writing outside of <a class="notranslate" href="#4`read_unaligned`">`read_unaligned`</a>
+and <a class="notranslate" href="#4`write_unaligned`">`write_unaligned`</a>.</div>
+<div data-b="*">Reads of <a class="notranslate" href="#4undef">undef</a> \(uninitialized) memory.</div>
+<div data-b="*">Breaking the <a class="notranslate" href="#4pointer aliasing rules">pointer aliasing rules</a> on accesses through raw pointers;
+a subset of the rules used by C.</div>
+<div data-b="*"><code>&amp;mut T</code> and <code>&amp;T</code> follow LLVM’s scoped <a class="notranslate" href="#4noalias">noalias</a> model, except if the <code>&amp;T</code>
+contains an <a class="notranslate" href="#4`UnsafeCell<U>`">`UnsafeCell<U>`</a>.</div>
+<div data-b="*">Mutating non-mutable data &amp;mdash; that is, data reached through a shared
+reference or data owned by a <code>let</code> binding), unless that data is contained
+within an <a class="notranslate" href="#4`UnsafeCell<U>`">`UnsafeCell<U>`</a>.</div>
+<div data-b="*">Invoking undefined behavior via compiler intrinsics:</div>
+<div data-b="  *">Indexing outside of the bounds of an object with <a class="notranslate" href="#4`offset`">`offset`</a> with
+the exception of one byte past the end of the object.</div>
+<div data-b="  *">Using <a class="notranslate" href="#4`std::ptr::copy_nonoverlapping_memory`">`std::ptr::copy_nonoverlapping_memory`</a>, a.k.a. the <code>memcpy32</code>and
+<code>memcpy64</code> intrinsics, on overlapping buffers.</div>
+<div data-b="*">Invalid values in primitive types, even in private fields and locals:</div>
+<div data-b="  *">Dangling or null references and boxes.</div>
+<div data-b="  *">A value other than <code>false</code> (<code>0</code>) or <code>true</code> (<code>1</code>) in a <code>bool</code>.</div>
+<div data-b="  *">A discriminant in an <code>enum</code> not included in the type definition.</div>
+<div data-b="  *">A value in a <code>char</code> which is a surrogate or above <code>char::MAX</code>.</div>
+<div data-b="  *">Non-UTF-8 byte sequences in a <code>str</code>.</div>
+<br>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#noalias">noalias</a>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#pointer-aliasing-rules">pointer aliasing rules</a>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#undefined-values">undef</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.pointer.html#method.offset">`offset`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ptr/fn.copy_nonoverlapping.html">`std::ptr::copy_nonoverlapping_memory`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html">`UnsafeCell&lt;U&gt;`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ptr/fn.read_unaligned.html">`read_unaligned`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ptr/fn.write_unaligned.html">`write_unaligned`</a>

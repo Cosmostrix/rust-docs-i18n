@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1>Whitespace</h1>
+<br>
+<p>Whitespace is any non-empty string containing only characters that have the
+<code>Pattern_White_Space</code> Unicode property, namely:</p>
+<br>
+<div data-b="-"><code>U+0009</code> (horizontal tab, <code>'\t'</code>)</div>
+<div data-b="-"><code>U+000A</code> (line feed, <code>'\n'</code>)</div>
+<div data-b="-"><code>U+000B</code> (vertical tab)</div>
+<div data-b="-"><code>U+000C</code> (form feed)</div>
+<div data-b="-"><code>U+000D</code> (carriage return, <code>'\r'</code>)</div>
+<div data-b="-"><code>U+0020</code> (space, <code>' '</code>)</div>
+<div data-b="-"><code>U+0085</code> (next line)</div>
+<div data-b="-"><code>U+200E</code> (left-to-right mark)</div>
+<div data-b="-"><code>U+200F</code> (right-to-left mark)</div>
+<div data-b="-"><code>U+2028</code> (line separator)</div>
+<div data-b="-"><code>U+2029</code> (paragraph separator)</div>
+<br>
+<p>Rust is a &quot;free-form&quot; language, meaning that all forms of whitespace serve only
+to separate <s>tokens</s> in the grammar, and have no semantic significance.</p>
+<br>
+<p>A Rust program has identical meaning if each whitespace element is replaced
+with any other legal whitespace element, such as a single space character.</p>

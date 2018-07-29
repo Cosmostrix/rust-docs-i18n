@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<h1>Type checking</h1>
+<br>
+<p>The <a class="notranslate" href="#3typeck"><code>rustc_typeck</code></a> crate contains the source for &quot;type collection&quot;
+and &quot;type checking&quot;, as well as a few other bits of related functionality. (It
+draws heavily on the <a class="notranslate" href="#4type inference">type inference</a> and <a class="notranslate" href="#4trait solving">trait solving</a>.)</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc_typeck">typeck</a>
+<a class="notranslate" href="#1type-inference.html">type inference</a>
+<a class="notranslate" href="#1traits/resolution.html">trait solving</a>
+<br>
+<h2>Type collection</h2>
+<br>
+<p>Type &quot;collection&quot; is the process of converting the types found in the HIR
+(<code>hir::Ty</code>), which represent the syntactic things that the user wrote, into the
+<b>internal representation</b> used by the compiler (<code>Ty&lt;'tcx&gt;</code>) – we also do
+similar conversions for where-clauses and other bits of the function signature.</p>
+<br>
+<p>To try and get a sense for the difference, consider this function:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Foo { }"></div><div data-l="fn foo(x: Foo, y: self::Foo) { ... }"></div><div data-l="#//        ^^^     ^^^^^^^^^"></div><div data-l="// ">       ^^^     ^^^^^^^^^</div></div>
+<br>
+<p>Those two parameters <code>x</code> and <code>y</code> each have the same type: but they will have
+distinct <code>hir::Ty</code> nodes. Those nodes will have different spans, and of course
+they encode the path somewhat differently. But once they are &quot;collected&quot; into
+<code>Ty&lt;'tcx&gt;</code> nodes, they will be represented by the exact same internal type.</p>
+<br>
+<p>Collection is defined as a bundle of <a class="notranslate" href="#4queries">queries</a> for computing information about
+the various functions, traits, and other items in the crate being compiled.
+Note that each of these queries is concerned with <i>interprocedural</i> things –
+for example, for a function definition, collection will figure out the type and
+signature of the function, but it will not visit the <i>body</i> of the function in
+any way, nor examine type annotations on local variables (that's the job of
+type <i>checking</i>).</p>
+<br>
+<p>For more details, see the <a class="notranslate" href="#3collect"><code>collect</code></a> module.</p>
+<br>
+<a class="notranslate" href="#1query.html">queries</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc_typeck/collect/">collect</a>
+<br>
+<p><b>TODO</b>: actually talk about type checking...</p>

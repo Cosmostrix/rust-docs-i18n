@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<h1><code>generators</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#43122">#43122</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/43122">#43122</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>generators</code> feature gate in Rust allows you to define generator or
+coroutine literals. A generator is a &quot;resumable function&quot; that syntactically
+resembles a closure but compiles to much different semantics in the compiler
+itself. The primary feature of a generator is that it can be suspended during
+execution to be resumed at a later date. Generators use the <code>yield</code> keyword to
+&quot;return&quot;, and then the caller can <code>resume</code> a generator to resume execution just
+after the <code>yield</code> keyword.</p>
+<br>
+<p>Generators are an extra-unstable feature in the compiler right now. Added in
+<a class="notranslate" href="#4RFC 2033">RFC 2033</a> they're mostly intended right now as a information/constraint
+gathering phase. The intent is that experimentation can happen on the nightly
+compiler before actual stabilization. A further RFC will be required to
+stabilize generators/coroutines and will likely contain at least a few small
+tweaks to the overall design.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/2033">RFC 2033</a>
+<br>
+<p>A syntactical example of a generator is:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(generators, generator_trait)]"></div><div data-l=""></div><div data-l="use std::ops::{Generator, GeneratorState};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut generator = || {"></div><div data-l="        yield 1;"></div><div data-l="        return &quot;foo&quot;"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    match unsafe { generator.resume() } {"></div><div data-l="        GeneratorState::Yielded(1) =&gt; {}"></div><div data-l="        _ =&gt; panic!(&quot;unexpected value from resume&quot;),"></div><div data-l="    }"></div><div data-l="    match unsafe { generator.resume() } {"></div><div data-l="        GeneratorState::Complete(&quot;foo&quot;) =&gt; {}"></div><div data-l="        _ =&gt; panic!(&quot;unexpected value from resume&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Generators are closure-like literals which can contain a <code>yield</code> statement. The
+<code>yield</code> statement takes an optional expression of a value to yield out of the
+generator. All generator literals implement the <code>Generator</code> trait in the
+<code>std::ops</code> module. The <code>Generator</code> trait has one main method, <code>resume</code>, which
+resumes execution of the generator at the previous suspension point.</p>
+<br>
+<p>An example of the control flow of generators is that the following example
+prints all numbers in order:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(generators, generator_trait)]"></div><div data-l=""></div><div data-l="use std::ops::Generator;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut generator = || {"></div><div data-l="        println!(&quot;2&quot;);"></div><div data-l="        yield;"></div><div data-l="        println!(&quot;4&quot;);"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;1&quot;);"></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="    println!(&quot;3&quot;);"></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="    println!(&quot;5&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>At this time the main intended use case of generators is an implementation
+primitive for async/await syntax, but generators will likely be extended to
+ergonomic implementations of iterators and other primitives in the future.
+Feedback on the design and usage is always appreciated!</p>
+<br>
+<h3>The <code>Generator</code> trait</h3>
+<br>
+<p>The <code>Generator</code> trait in <code>std::ops</code> currently looks like:</p>
+<br>
+<div data-lang=""><div data-l="# #![feature(generator_trait)]"></div><div data-l="# use std::ops::GeneratorState;"></div><div data-l=""></div><div data-l="pub trait Generator {"></div><div data-l="    type Yield;"></div><div data-l="    type Return;"></div><div data-l="    unsafe fn resume(&amp;mut self) -&gt; GeneratorState&lt;Self::Yield, Self::Return&gt;;"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>Generator::Yield</code> type is the type of values that can be yielded with the
+<code>yield</code> statement. The <code>Generator::Return</code> type is the returned type of the
+generator. This is typically the last expression in a generator's definition or
+any value passed to <code>return</code> in a generator. The <code>resume</code> function is the entry
+point for executing the <code>Generator</code> itself.</p>
+<br>
+<p>The return value of <code>resume</code>, <code>GeneratorState</code>, looks like:</p>
+<br>
+<div data-lang=""><div data-l="pub enum GeneratorState&lt;Y, R&gt; {"></div><div data-l="    Yielded(Y),"></div><div data-l="    Complete(R),"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>Yielded</code> variant indicates that the generator can later be resumed. This
+corresponds to a <code>yield</code> point in a generator. The <code>Complete</code> variant indicates
+that the generator is complete and cannot be resumed again. Calling <code>resume</code>
+after a generator has returned <code>Complete</code> will likely result in a panic of the
+program.</p>
+<br>
+<h3>Closure-like semantics</h3>
+<br>
+<p>The closure-like syntax for generators alludes to the fact that they also have
+closure-like semantics. Namely:</p>
+<br>
+<div data-b="*">When created, a generator executes no code. A closure literal does not
+actually execute any of the closure's code on construction, and similarly a
+generator literal does not execute any code inside the generator when
+constructed.</div>
+<br>
+<div data-b="*">Generators can capture outer variables by reference or by move, and this can
+be tweaked with the <code>move</code> keyword at the beginning of the closure. Like
+closures all generators will have an implicit environment which is inferred by
+the compiler. Outer variables can be moved into a generator for use as the
+generator progresses.</div>
+<br>
+<div data-b="*">Generator literals produce a value with a unique type which implements the
+<code>std::ops::Generator</code> trait. This allows actual execution of the generator
+through the <code>Generator::resume</code> method as well as also naming it in return
+types and such.</div>
+<br>
+<div data-b="*">Traits like <code>Send</code> and <code>Sync</code> are automatically implemented for a <code>Generator</code>
+depending on the captured variables of the environment. Unlike closures,
+generators also depend on variables live across suspension points. This means
+that although the ambient environment may be <code>Send</code> or <code>Sync</code>, the generator
+itself may not be due to internal variables live across <code>yield</code> points being
+not-<code>Send</code> or not-<code>Sync</code>. Note that generators, like closures, do
+not implement traits like <code>Copy</code> or <code>Clone</code> automatically.</div>
+<br>
+<div data-b="*">Whenever a generator is dropped it will drop all captured environment
+variables.</div>
+<br>
+<p>Note that unlike closures generators at this time cannot take any arguments.
+That is, generators must always look like <code>|| { ... }</code>. This restriction may be
+lifted at a future date, the design is ongoing!</p>
+<br>
+<h3>Generators as state machines</h3>
+<br>
+<p>In the compiler, generators are currently compiled as state machines. Each
+<code>yield</code> expression will correspond to a different state that stores all live
+variables over that suspension point. Resumption of a generator will dispatch on
+the current state and then execute internally until a <code>yield</code> is reached, at
+which point all state is saved off in the generator and a value is returned.</p>
+<br>
+<p>Let's take a look at an example to see what's going on here:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(generators, generator_trait)]"></div><div data-l=""></div><div data-l="use std::ops::Generator;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let ret = &quot;foo&quot;;"></div><div data-l="    let mut generator = move || {"></div><div data-l="        yield 1;"></div><div data-l="        return ret"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="}"></div></div>
+<br>
+<p>This generator literal will compile down to something similar to:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(generators, generator_trait)]"></div><div data-l=""></div><div data-l="use std::ops::{Generator, GeneratorState};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let ret = &quot;foo&quot;;"></div><div data-l="    let mut generator = {"></div><div data-l="        enum __Generator {"></div><div data-l="            Start(&amp;'static str),"></div><div data-l="            Yield1(&amp;'static str),"></div><div data-l="            Done,"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        impl Generator for __Generator {"></div><div data-l="            type Yield = i32;"></div><div data-l="            type Return = &amp;'static str;"></div><div data-l=""></div><div data-l="            unsafe fn resume(&amp;mut self) -&gt; GeneratorState&lt;i32, &amp;'static str&gt; {"></div><div data-l="                use std::mem;"></div><div data-l="                match mem::replace(self, __Generator::Done) {"></div><div data-l="                    __Generator::Start(s) =&gt; {"></div><div data-l="                        *self = __Generator::Yield1(s);"></div><div data-l="                        GeneratorState::Yielded(1)"></div><div data-l="                    }"></div><div data-l=""></div><div data-l="                    __Generator::Yield1(s) =&gt; {"></div><div data-l="                        *self = __Generator::Done;"></div><div data-l="                        GeneratorState::Complete(s)"></div><div data-l="                    }"></div><div data-l=""></div><div data-l="                    __Generator::Done =&gt; {"></div><div data-l="                        panic!(&quot;generator resumed after completion&quot;)"></div><div data-l="                    }"></div><div data-l="                }"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        __Generator::Start(ret)"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="    unsafe { generator.resume() };"></div><div data-l="}"></div></div>
+<br>
+<p>Notably here we can see that the compiler is generating a fresh type,
+<code>__Generator</code> in this case. This type has a number of states (represented here
+as an <code>enum</code>) corresponding to each of the conceptual states of the generator.
+At the beginning we're closing over our outer variable <code>foo</code> and then that
+variable is also live over the <code>yield</code> point, so it's stored in both states.</p>
+<br>
+<p>When the generator starts it'll immediately yield 1, but it saves off its state
+just before it does so indicating that it has reached the yield point. Upon
+resuming again we'll execute the <code>return ret</code> which returns the <code>Complete</code>
+state.</p>
+<br>
+<p>Here we can also note that the <code>Done</code> state, if resumed, panics immediately as
+it's invalid to resume a completed generator. It's also worth noting that this
+is just a rough desugaring, not a normative specification for what the compiler
+does.</p>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Testing</h1>
+<br>
+<p>As we know testing is integral to any piece of software! Rust has first-class
+support for unit and integration testing (<a href="#2https://doc.rust-lang.org/book/second-edition/ch11-00-testing.html">see this
+chapter</a> in
+TRPL).</p>
+<br>
+<p>From the testing chapters linked above, we see how to write unit tests and
+integration tests. Organizationally, we can place unit tests in the modules they
+test and integration tests in their own <code>tests/</code> directory:</p>
+<br>
+<div data-lang="txt"><div data-l="foo"></div><div data-l="├── Cargo.toml"></div><div data-l="├── src"></div><div data-l="│   └── main.rs"></div><div data-l="└── tests"></div><div data-l="    ├── my_test.rs"></div><div data-l="    └── my_other_test.rs"></div></div>
+<br>
+<p>Each file in <code>tests</code> is a separate integration test.</p>
+<br>
+<p><code>cargo</code> naturally provides an easy way to run all of your tests!</p>
+<br>
+<div data-lang="sh"><div data-l="cargo test"></div></div>
+<br>
+<p>You should see output like this:</p>
+<br>
+<div data-lang="txt"><div data-l="$ cargo test"></div><div data-l="   Compiling blah v0.1.0 (file:///nobackup/blah)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.89 secs"></div><div data-l="     Running target/debug/deps/blah-d3b32b97275ec472"></div><div data-l=""></div><div data-l="running 3 tests"></div><div data-l="test test_bar ... ok"></div><div data-l="test test_baz ... ok"></div><div data-l="test test_foo_bar ... ok"></div><div data-l="test test_foo ... ok"></div><div data-l=""></div><div data-l="test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<p>You can also run tests whose name matches a pattern:</p>
+<br>
+<div data-lang="sh"><div data-l="cargo test test_foo"></div></div>
+<br>
+<div data-lang="txt"><div data-l="$ cargo test test_foo"></div><div data-l="   Compiling blah v0.1.0 (file:///nobackup/blah)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.35 secs"></div><div data-l="     Running target/debug/deps/blah-d3b32b97275ec472"></div><div data-l=""></div><div data-l="running 2 tests"></div><div data-l="test test_foo ... ok"></div><div data-l="test test_foo_bar ... ok"></div><div data-l=""></div><div data-l="test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out"></div></div>
+<br>
+<p>One word of caution: Cargo may run multiple tests concurrently, so make sure
+that they don't race with each other. For example, if they all output to a
+file, you should make them write to different files.</p>

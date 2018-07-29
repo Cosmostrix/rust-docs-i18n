@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1>Explicit annotation</h1>
+<br>
+<p>The borrow checker uses explicit lifetime annotations to determine
+how long references should be valid. In cases where lifetimes are not
+elided<a class="notranslate" href="#4^1">^1</a>, Rust requires explicit annotations to determine what the 
+lifetime of a reference should be. The syntax for explicitly annotating 
+a lifetime uses an apostrophe character as follows: </p>
+<br>
+<div data-lang="rust,ignore"><div data-l="foo&lt;'a&gt;"></div><div data-l="#// `foo` has a lifetime parameter `'a`"></div><div data-l="// "><code>foo</code> has a lifetime parameter <code>'a</code></div></div>
+<br>
+<p>Similar to <a class="notranslate" href="#3anonymity">closures</a>, using lifetimes requires generics. 
+Additionally, this lifetime syntax indicates that the lifetime of <code>foo</code> 
+may not exceed that of <code>'a</code>. Explicit annotation of a type has the form 
+<code>&amp;'a T</code> where <code>'a</code> has already been introduced.</p>
+<br>
+<p>In cases with multiple lifetimes, the syntax is similar:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="foo&lt;'a, 'b&gt;"></div><div data-l="#// `foo` has lifetime parameters `'a` and `'b`"></div><div data-l="// "><code>foo</code> has lifetime parameters <code>'a</code> and <code>'b</code></div></div>
+<br>
+<p>In this case, the lifetime of <code>foo</code> cannot exceed that of either <code>'a</code> <i>or</i> <code>'b</code>.</p>
+<br>
+<p>See the following example for explicit lifetime annotation in use:</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#// `print_refs` takes two references to `i32` which have different"></div><div data-l="#// lifetimes `'a` and `'b`. These two lifetimes must both be at"></div><div data-l="#// least as long as the function `print_refs`."></div><div data-l="// "><code>print_refs</code> takes two references to <code>i32</code> which have different lifetimes <code>'a</code> and <code>'b</code>. These two lifetimes must both be at least as long as the function <code>print_refs</code>.</div><div data-l="fn print_refs&lt;'a, 'b&gt;(x: &amp;'a i32, y: &amp;'b i32) {"></div><div data-l="    println!(&quot;x is {} and y is {}&quot;, x, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// A function which takes no arguments, but has a lifetime parameter `'a`."></div><div data-l="// ">A function which takes no arguments, but has a lifetime parameter <code>'a</code>.</div><div data-l="fn failed_borrow&lt;'a&gt;() {"></div><div data-l="    let _x = 12;"></div><div data-l=""></div><div data-l="#    // ERROR: `_x` does not live long enough"></div><div data-l="    // ">ERROR: <code>_x</code> does not live long enough</div><div data-l="    //let y: &amp;'a i32 = &amp;_x;"></div><div data-l="#    // Attempting to use the lifetime `'a` as an explicit type annotation "></div><div data-l="#    // inside the function will fail because the lifetime of `&amp;_x` is shorter"></div><div data-l="#    // than that of `y`. A short lifetime cannot be coerced into a longer one."></div><div data-l="    // ">Attempting to use the lifetime <code>'a</code> as an explicit type annotation  inside the function will fail because the lifetime of <code>&amp;_x</code> is shorter than that of <code>y</code>. A short lifetime cannot be coerced into a longer one.</div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Create variables to be borrowed below."></div><div data-l="    // ">Create variables to be borrowed below.</div><div data-l="    let (four, nine) = (4, 9);"></div><div data-l="    "></div><div data-l="#    // Borrows (`&amp;`) of both variables are passed into the function."></div><div data-l="    // ">Borrows (<code>&amp;</code>) of both variables are passed into the function.</div><div data-l="    print_refs(&amp;four, &amp;nine);"></div><div data-l="#    // Any input which is borrowed must outlive the borrower. "></div><div data-l="#    // In other words, the lifetime of `four` and `nine` must "></div><div data-l="#    // be longer than that of `print_refs`."></div><div data-l="    // ">Any input which is borrowed must outlive the borrower.  In other words, the lifetime of <code>four</code> and <code>nine</code> must  be longer than that of <code>print_refs</code>.</div><div data-l="    "></div><div data-l="    failed_borrow();"></div><div data-l="#    // `failed_borrow` contains no references to force `'a` to be "></div><div data-l="#    // longer than the lifetime of the function, but `'a` is longer."></div><div data-l="#    // Because the lifetime is never constrained, it defaults to `'static`."></div><div data-l="    // "><code>failed_borrow</code> contains no references to force <code>'a</code> to be  longer than the lifetime of the function, but <code>'a</code> is longer. Because the lifetime is never constrained, it defaults to <code>'static</code>.</div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1[elision] implicitly annotates lifetimes and so is different.">^1</a>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3generics">generics</a> and <a class="notranslate" href="#3closures">closures</a></p>
+<br>
+<a class="notranslate" href="#1fn/closures/anonymity.html">anonymity</a>
+<a class="notranslate" href="#1fn/closures.html">closures</a>
+<a class="notranslate" href="#1scope/lifetime/elision.html">elision</a>
+<a class="notranslate" href="#1generics.html">generics</a>

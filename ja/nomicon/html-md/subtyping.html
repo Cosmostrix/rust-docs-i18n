@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<h1>Subtyping and Variance</h1>
+<br>
+<p>Subtyping is a relationship between types that allows statically typed
+languages to be a bit more flexible and permissive.</p>
+<br>
+<p>The most common and easy to understand example of this can be found in
+languages with inheritance. Consider an Animal type which has an <code>eat()</code>
+method, and a Cat type which extends Animal, adding a <code>meow()</code> method.
+Without subtyping, if someone were to write a <code>feed(Animal)</code> function, they
+wouldn't be able to pass a Cat to this function, because a Cat isn't <i>exactly</i>
+an Animal. But being able to pass a Cat where an Animal is expected seems
+fairly reasonable. After all, a Cat is just an Animal <i>and more</i>. Something
+having extra features that can be ignored shouldn't be any impediment to
+using it!</p>
+<br>
+<p>This is exactly what subtyping lets us do. Because a Cat is an Animal <i>and more</i>
+we say that Cat is a <i>subtype</i> of Animal. We then say that anywhere a value of
+a certain type is expected, a value with a subtype can also be supplied. Ok
+actually it's a lot more complicated and subtle than that, but that's the
+basic intuition that gets you by in 99% of the cases. We'll cover why it's
+<i>only</i> 99% later in this section.</p>
+<br>
+<p>Although Rust doesn't have any notion of structural inheritance, it <i>does</i>
+include subtyping. In Rust, subtyping derives entirely from lifetimes. Since
+lifetimes are regions of code, we can partially order them based on the
+<i>contains</i> (outlives) relationship.</p>
+<br>
+<p>Subtyping on lifetimes is in terms of that relationship: if <code>'big: 'small</code>
+(&quot;big contains small&quot; or &quot;big outlives small&quot;), then <code>'big</code> is a subtype
+of <code>'small</code>. This is a large source of confusion, because it seems backwards
+to many: the bigger region is a <i>subtype</i> of the smaller region. But it makes
+sense if you consider our Animal example: <i>Cat</i> is an Animal <i>and more</i>,
+just as <code>'big</code> is <code>'small</code> <i>and more</i>.</p>
+<br>
+<p>Put another way, if someone wants a reference that lives for <code>'small</code>,
+usually what they actually mean is that they want a reference that lives
+for <i>at least</i> <code>'small</code>. They don't actually care if the lifetimes match
+exactly. For this reason <code>'static</code>, the forever lifetime, is a subtype
+of every lifetime.</p>
+<br>
+<p>Higher-ranked lifetimes are also subtypes of every concrete lifetime. This is
+because taking an arbitrary lifetime is strictly more general than taking a
+specific one.</p>
+<br>
+<p>(The typed-ness of lifetimes is a fairly arbitrary construct that some
+disagree with. However it simplifies our analysis to treat lifetimes
+and types uniformly.)</p>
+<br>
+<p>However you can't write a function that takes a value of type <code>'a</code>! Lifetimes
+are always just part of another type, so we need a way of handling that.
+To handle it, we need to talk about <i>variance</i>.</p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<h1>Variance</h1>
+<br>
+<p>Variance is where things get a bit complicated.</p>
+<br>
+<p>Variance is a property that <i>type constructors</i> have with respect to their
+arguments. A type constructor in Rust is a generic type with unbound arguments.
+For instance <code>Vec</code> is a type constructor that takes a <code>T</code> and returns a
+<code>Vec&lt;T&gt;</code>. <code>&amp;</code> and <code>&amp;mut</code> are type constructors that take two inputs: a
+lifetime, and a type to point to.</p>
+<br>
+<p>A type constructor F's <i>variance</i> is how the subtyping of its inputs affects the
+subtyping of its outputs. There are three kinds of variance in Rust:</p>
+<br>
+<div data-b="*">F is <i>covariant</i> over <code>T</code> if <code>T</code> being a subtype of <code>U</code> implies
+<code>F&lt;T&gt;</code> is a subtype of <code>F&lt;U&gt;</code> (subtyping &quot;passes through&quot;)</div>
+<div data-b="*">F is <i>contravariant</i> over <code>T</code> if <code>T</code> being a subtype of <code>U</code> implies
+<code>F&lt;U&gt;</code> is a subtype of <code>F&lt;T&gt;</code> (subtyping is &quot;inverted&quot;)</div>
+<div data-b="*">F is <i>invariant</i> over <code>T</code> otherwise (no subtyping relation can be derived)</div>
+<br>
+<p>It should be noted that covariance is <i>far</i> more common and important than
+contravariance in Rust. The existence of contravariance in Rust can mostly
+be ignored.</p>
+<br>
+<p>Some important variances (which we will explain in detail below):</p>
+<br>
+<div data-b="*"><code>&amp;'a T</code> is covariant over <code>'a</code> and <code>T</code> (as is <code>*const T</code> by metaphor)</div>
+<div data-b="*"><code>&amp;'a mut T</code> is covariant over <code>'a</code> but invariant over <code>T</code></div>
+<div data-b="*"><code>fn(T) -&gt; U</code> is <b>contra</b>variant over <code>T</code>, but covariant over <code>U</code></div>
+<div data-b="*"><code>Box</code>, <code>Vec</code>, and all other collections are covariant over the types of
+their contents</div>
+<div data-b="*"><code>UnsafeCell&lt;T&gt;</code>, <code>Cell&lt;T&gt;</code>, <code>RefCell&lt;T&gt;</code>, <code>Mutex&lt;T&gt;</code> and all other
+interior mutability types are invariant over T (as is <code>*mut T</code> by metaphor)</div>
+<br>
+<p>To understand why these variances are correct and desirable, we will consider
+several examples.</p>
+<br>
+<p>We have already covered why <code>&amp;'a T</code> should be covariant over <code>'a</code> when
+introducing subtyping: it's desirable to be able to pass longer-lived things
+where shorter-lived things are needed.</p>
+<br>
+<p>Similar reasoning applies to why it should be covariant over T: it's reasonable
+to be able to pass <code>&amp;&amp;'static str</code> where an <code>&amp;&amp;'a str</code> is expected. The
+additional level of indirection doesn't change the desire to be able to pass
+longer lived things where shorter lived things are expected.</p>
+<br>
+<p>However this logic doesn't apply to <code>&amp;mut</code>. To see why <code>&amp;mut</code> should
+be invariant over T, consider the following code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn overwrite&lt;T: Copy&gt;(input: &amp;mut T, new: &amp;mut T) {"></div><div data-l="    *input = *new;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut forever_str: &amp;'static str = &quot;hello&quot;;"></div><div data-l="    {"></div><div data-l="        let string = String::from(&quot;world&quot;);"></div><div data-l="        overwrite(&amp;mut forever_str, &amp;mut &amp;*string);"></div><div data-l="    }"></div><div data-l="#    // Oops, printing free'd memory"></div><div data-l="    // ">Oops, printing free'd memory</div><div data-l="    println!(&quot;{}&quot;, forever_str);"></div><div data-l="}"></div></div>
+<br>
+<p>The signature of <code>overwrite</code> is clearly valid: it takes mutable references to
+two values of the same type, and overwrites one with the other.</p>
+<br>
+<p>But, if <code>&amp;mut T</code> was covariant over T, then <code>&amp;mut &amp;'static str</code> would be a
+subtype of <code>&amp;mut &amp;'a str</code>, since <code>&amp;'static str</code> is a subtype of <code>&amp;'a str</code>.
+Therefore the lifetime of <code>forever_str</code> would successfully be &quot;shrunk&quot; down
+to the shorter lifetime of <code>string</code>, and <code>overwrite</code> would be called successfully.
+<code>string</code> would subsequently be dropped, and <code>forever_str</code> would point to
+freed memory when we print it! Therefore <code>&amp;mut</code> should be invariant.</p>
+<br>
+<p>This is the general theme of variance vs invariance: if variance would allow you
+to store a short-lived value in a longer-lived slot, then invariance must be used.</p>
+<br>
+<p>More generally, the soundness of subtyping and variance is based on the idea that its ok to
+forget details, but with mutable references there's always someone (the original
+value being referenced) that remembers the forgotten details and will assume
+that those details haven't changed. If we do something to invalidate those details,
+the original location can behave unsoundly.</p>
+<br>
+<p>However it <i>is</i> sound for <code>&amp;'a mut T</code> to be covariant over <code>'a</code>. The key difference
+between <code>'a</code> and T is that <code>'a</code> is a property of the reference itself,
+while T is something the reference is borrowing. If you change T's type, then
+the source still remembers the original type. However if you change the
+lifetime's type, no one but the reference knows this information, so it's fine.
+Put another way: <code>&amp;'a mut T</code> owns <code>'a</code>, but only <i>borrows</i> T.</p>
+<br>
+<p><code>Box</code> and <code>Vec</code> are interesting cases because they're covariant, but you can
+definitely store values in them! This is where Rust's typesystem allows it to
+be a bit more clever than others. To understand why it's sound for owning
+containers to be covariant over their contents, we must consider
+the two ways in which a mutation may occur: by-value or by-reference.</p>
+<br>
+<p>If mutation is by-value, then the old location that remembers extra details is
+moved out of, meaning it can't use the value anymore. So we simply don't need to
+worry about anyone remembering dangerous details. Put another way, applying
+subtyping when passing by-value <i>destroys details forever</i>. For example, this
+compiles and is fine:</p>
+<br>
+<div data-lang="rust"><div data-l="fn get_box&lt;'a&gt;(str: &amp;'a str) -&gt; Box&lt;&amp;'a str&gt; {"></div><div data-l="#    // String literals are `&amp;'static str`s, but it's fine for us to"></div><div data-l="#    // &quot;forget&quot; this and let the caller think the string won't live that long."></div><div data-l="    // ">String literals are <code>&amp;'static str</code>s, but it's fine for us to &quot;forget&quot; this and let the caller think the string won't live that long.</div><div data-l="    Box::new(&quot;hello&quot;)"></div><div data-l="}"></div></div>
+<br>
+<p>If mutation is by-reference, then our container is passed as <code>&amp;mut Vec&lt;T&gt;</code>. But
+<code>&amp;mut</code> is invariant over its value, so <code>&amp;mut Vec&lt;T&gt;</code> is actually invariant over <code>T</code>.
+So the fact that <code>Vec&lt;T&gt;</code> is covariant over <code>T</code> doesn't matter at all when
+mutating by-reference.</p>
+<br>
+<p>But being covariant still allows <code>Box</code> and <code>Vec</code> to be weakened when shared
+immutably. So you can pass a <code>&amp;Vec&lt;&amp;'static str&gt;</code> where a <code>&amp;Vec&lt;&amp;'a str&gt;</code> is
+expected.</p>
+<br>
+<p>The invariance of the cell types can be seen as follows: <code>&amp;</code> is like an <code>&amp;mut</code>
+for a cell, because you can still store values in them through an <code>&amp;</code>. Therefore
+cells must be invariant to avoid lifetime smuggling.</p>
+<br>
+<p><code>fn</code> is the most subtle case because they have mixed variance, and in fact are
+the only source of <b>contra</b>variance. To see why <code>fn(T) -&gt; U</code> should be contravariant
+over T, consider the following function signature:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// 'a is derived from some parent scope"></div><div data-l="// ">'a is derived from some parent scope</div><div data-l="fn foo(&amp;'a str) -&gt; usize;"></div></div>
+<br>
+<p>This signature claims that it can handle any <code>&amp;str</code> that lives at least as
+long as <code>'a</code>. Now if this signature was <b>co</b>variant over <code>&amp;'a str</code>, that
+would mean</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo(&amp;'static str) -&gt; usize;"></div></div>
+<br>
+<p>could be provided in its place, as it would be a subtype. However this function
+has a stronger requirement: it says that it can only handle <code>&amp;'static str</code>s,
+and nothing else. Giving <code>&amp;'a str</code>s to it would be unsound, as it's free to
+assume that what it's given lives forever. Therefore functions definitely shouldn't
+be <b>co</b>variant over their arguments.</p>
+<br>
+<p>However if we flip it around and use <b>contra</b>variance, it <i>does</i> work! If
+something expects a function which can handle strings that live forever,
+it makes perfect sense to instead provide a function that can handle
+strings that live for <i>less</i> than forever. So</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo(&amp;'a str) -&gt; usize;"></div></div>
+<br>
+<p>can be passed where</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo(&amp;'static str) -&gt; usize;"></div></div>
+<br>
+<p>is expected.</p>
+<br>
+<p>To see why <code>fn(T) -&gt; U</code> should be <b>co</b>variant over U, consider the following
+function signature:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// 'a is derived from some parent scope"></div><div data-l="// ">'a is derived from some parent scope</div><div data-l="fn foo(usize) -&gt; &amp;'a str;"></div></div>
+<br>
+<p>This signature claims that it will return something that outlives <code>'a</code>. It is
+therefore completely reasonable to provide</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo(usize) -&gt; &amp;'static str;"></div></div>
+<br>
+<p>in its place, as it does indeed return things that outlive <code>'a</code>. Therefore
+functions are covariant over their return type.</p>
+<br>
+<p><code>*const</code> has the exact same semantics as <code>&amp;</code>, so variance follows. <code>*mut</code> on the
+other hand can dereference to an <code>&amp;mut</code> whether shared or not, so it is marked
+as invariant just like cells.</p>
+<br>
+<p>This is all well and good for the types the standard library provides, but
+how is variance determined for type that <i>you</i> define? A struct, informally
+speaking, inherits the variance of its fields. If a struct <code>Foo</code>
+has a generic argument <code>A</code> that is used in a field <code>a</code>, then Foo's variance
+over <code>A</code> is exactly <code>a</code>'s variance. However if <code>A</code> is used in multiple fields:</p>
+<br>
+<div data-b="*">If all uses of A are covariant, then Foo is covariant over A</div>
+<div data-b="*">If all uses of A are contravariant, then Foo is contravariant over A</div>
+<div data-b="*">Otherwise, Foo is invariant over A</div>
+<br>
+<div data-lang="rust"><div data-l="use std::cell::Cell;"></div><div data-l=""></div><div data-l="struct Foo&lt;'a, 'b, A: 'a, B: 'b, C, D, E, F, G, H, In, Out, Mixed&gt; {"></div><div data-l="#//    a: &amp;'a A,     // covariant over 'a and A"></div><div data-l="    a: &amp;'a A,     // ">covariant over 'a and A</div><div data-l="#//    b: &amp;'b mut B, // covariant over 'b and invariant over B"></div><div data-l="    b: &amp;'b mut B, // ">covariant over 'b and invariant over B</div><div data-l=""></div><div data-l="#//    c: *const C,  // covariant over C"></div><div data-l="    c: *const C,  // ">covariant over C</div><div data-l="#//    d: *mut D,    // invariant over D"></div><div data-l="    d: *mut D,    // ">invariant over D</div><div data-l=""></div><div data-l="#//    e: E,         // covariant over E"></div><div data-l="    e: E,         // ">covariant over E</div><div data-l="#//    f: Vec&lt;F&gt;,    // covariant over F"></div><div data-l="    f: Vec&lt;F&gt;,    // ">covariant over F</div><div data-l="#//    g: Cell&lt;G&gt;,   // invariant over G"></div><div data-l="    g: Cell&lt;G&gt;,   // ">invariant over G</div><div data-l=""></div><div data-l="#//    h1: H,        // would also be variant over H except..."></div><div data-l="    h1: H,        // ">would also be variant over H except...</div><div data-l="#//    h2: Cell&lt;H&gt;,  // invariant over H, because invariance wins all conflicts"></div><div data-l="    h2: Cell&lt;H&gt;,  // ">invariant over H, because invariance wins all conflicts</div><div data-l=""></div><div data-l="#//    i: fn(In) -&gt; Out,       // contravariant over In, covariant over Out"></div><div data-l="    i: fn(In) -&gt; Out,       // ">contravariant over In, covariant over Out</div><div data-l=""></div><div data-l="#//    k1: fn(Mixed) -&gt; usize, // would be contravariant over Mixed except.."></div><div data-l="    k1: fn(Mixed) -&gt; usize, // ">would be contravariant over Mixed except..</div><div data-l="#//    k2: Mixed,              // invariant over Mixed, because invariance wins all conflicts"></div><div data-l="    k2: Mixed,              // ">invariant over Mixed, because invariance wins all conflicts</div><div data-l="}"></div></div>

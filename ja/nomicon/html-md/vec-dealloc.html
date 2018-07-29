@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Deallocating</h1>
+<br>
+<p>Next we should implement Drop so that we don't massively leak tons of resources.
+The easiest way is to just call <code>pop</code> until it yields None, and then deallocate
+our buffer. Note that calling <code>pop</code> is unneeded if <code>T: €Drop</code>. In theory we can
+ask Rust if <code>T</code> <code>needs_drop</code> and omit the calls to <code>pop</code>. However in practice
+LLVM is <i>really</i> good at removing simple side-effect free code like this, so I
+wouldn't bother unless you notice it's not being stripped (in this case it is).</p>
+<br>
+<p>We must not call <code>heap::deallocate</code> when <code>self.cap == 0</code>, as in this case we
+haven't actually allocated any memory.</p>
+<br>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Drop for Vec&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        if self.cap != 0 {"></div><div data-l="            while let Some(_) = self.pop() { }"></div><div data-l=""></div><div data-l="            let align = mem::align_of::&lt;T&gt;();"></div><div data-l="            let elem_size = mem::size_of::&lt;T&gt;();"></div><div data-l="            let num_bytes = elem_size * self.cap;"></div><div data-l="            unsafe {"></div><div data-l="                heap::deallocate(self.ptr.as_ptr() as *mut _, num_bytes, align);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<h1>Implementations</h1>
+<br>
+<p>An <s>implementation</s> is an item that associates items with an <i>implementing type</i>.</p>
+<br>
+<p>There are two types of implementations: inherent implementations and <a class="notranslate" href="#4trait">trait</a>
+implementations.</p>
+<br>
+<p>Implementations are defined with the keyword <code>impl</code>.</p>
+<br>
+<h2>Inherent Implementations</h2>
+<br>
+<p>An inherent implementation is defined as the sequence of the <code>impl</code> keyword,
+generic type declarations, a path to a nominal type, a where clause, and a
+bracketed set of associable items.</p>
+<br>
+<p>The nominal type is called the <i>implementing type</i> and the associable items are
+the <i>associated items</i> to the implementing type.</p>
+<br>
+<p>Inherent implementations associate the associated items to the implementing
+type.</p>
+<br>
+<p>The associated item has a path of a path to the implementing type followed by
+the associate item's path component.</p>
+<br>
+<p>Inherent implementations cannot contain associated type aliases.</p>
+<br>
+<p>A type can have multiple inherent implementations.</p>
+<br>
+<p>The implementing type must be defined within the same crate.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {x: i32, y: i32}"></div><div data-l=""></div><div data-l="impl Point {"></div><div data-l="    fn log(&amp;self) {"></div><div data-l="        println!(&quot;Point is at ({}, {})&quot;, self.x, self.y);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let my_point = Point {x: 10, y:11};"></div><div data-l="my_point.log();"></div></div>
+<br>
+<h2>Trait Implementations</h2>
+<br>
+<p>A <i>trait implementation</i> is defined like an inherent implementation except that
+the optional generic type declarations is followed by a <a class="notranslate" href="#4trait">trait</a> followed
+by the keyword <code>for</code>. <!-- To understand this, you have to back-reference to
+the previous section. :( --></p>
+<br>
+<p>The trait is known as the <i>implemented trait</i>.</p>
+<br>
+<p>The implementing type implements the implemented trait.</p>
+<br>
+<p>A trait implementation must define all non-default associated items declared
+by the implemented trait, may redefine default associated items defined by the
+implemented trait, and cannot define any other items.</p>
+<br>
+<p>The path to the associated items is <code>&lt;</code> followed by a path to the implementing
+type followed by <code>as</code> followed by a path to the trait followed by <code>&gt;</code> as a path
+component followed by the associated item's path component.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Copy, Clone)]"></div><div data-l="# struct Point {x: f64, y: f64};"></div><div data-l="# type Surface = i32;"></div><div data-l="# struct BoundingBox {x: f64, y: f64, width: f64, height: f64};"></div><div data-l="# trait Shape { fn draw(&amp;self, Surface); fn bounding_box(&amp;self) -&gt; BoundingBox; }"></div><div data-l="# fn do_draw_circle(s: Surface, c: Circle) { }"></div><div data-l="struct Circle {"></div><div data-l="    radius: f64,"></div><div data-l="    center: Point,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Copy for Circle {}"></div><div data-l=""></div><div data-l="impl Clone for Circle {"></div><div data-l="    fn clone(&amp;self) -&gt; Circle { *self }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Shape for Circle {"></div><div data-l="    fn draw(&amp;self, s: Surface) { do_draw_circle(s, *self); }"></div><div data-l="    fn bounding_box(&amp;self) -&gt; BoundingBox {"></div><div data-l="        let r = self.radius;"></div><div data-l="        BoundingBox {"></div><div data-l="            x: self.center.x - r,"></div><div data-l="            y: self.center.y - r,"></div><div data-l="            width: 2.0 * r,"></div><div data-l="            height: 2.0 * r,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>Trait Implementation Coherence</h3>
+<br>
+<p>A trait implementation is considered incoherent if either the orphan check fails
+or there are overlapping implementation instances.</p>
+<br>
+<p>Two trait implementations overlap when there is a non-empty intersection of the
+traits the implementation is for, the implementations can be instantiated with
+the same type. <!-- This is probably wrong? Source: No two implementations can
+be instantiable with the same set of types for the input type parameters. --></p>
+<br>
+<p>The <code>Orphan Check</code> states that every trait implementation must meet either of
+the following conditions:</p>
+<br>
+<div data-b="1.">The trait being implemented is defined in the same crate.</div>
+<br>
+<div data-b="2.">At least one of either <code>Self</code> or a generic type parameter of the trait must
+ meet the following grammar, where <code>C</code> is a nominal type defined
+ within the containing crate:</div>
+<br>
+<p>   `<code class=2>ignore
+    T = C
+      | &amp;C
+      | &amp;mut C
+      | Box&lt;C&gt;
+   </code>`</p>
+<br>
+<h2>Generic Implementations</h2>
+<br>
+<p>An implementation can take type and lifetime parameters, which can be used in
+the rest of the implementation. Type parameters declared for an implementation
+must be used at least once in either the trait or the implementing type of an
+implementation. Implementation parameters are written directly after the <code>impl</code>
+keyword.</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Seq&lt;T&gt; { fn dummy(&amp;self, _: T) { } }"></div><div data-l="impl&lt;T&gt; Seq&lt;T&gt; for Vec&lt;T&gt; {"></div><div data-l="    /* ... */"></div><div data-l="}"></div><div data-l="impl Seq&lt;bool&gt; for u32 {"></div><div data-l="    /* Treat the integer as a sequence of bits */"></div><div data-l="}"></div></div>
+<br>
+<h2>Attributes on Implementations</h2>
+<br>
+<p>Implementations may contain outer <a class="notranslate" href="#4attributes">attributes</a> before the <code>impl</code> keyword and
+inner <a class="notranslate" href="#4attributes">attributes</a> inside the brackets that contain the associated items. Inner
+attributes must come before any associated items. That attributes that have
+meaning here are <a class="notranslate" href="#4`cfg`">`cfg`</a>, <a class="notranslate" href="#4`deprecated`">`deprecated`</a>, <a class="notranslate" href="#4`doc`">`doc`</a>, and <a class="notranslate" href="#4the lint check
+attributes">the lint check
+attributes</a>.</p>
+<br>
+<a class="notranslate" href="#1items/traits.html">trait</a>
+<a class="notranslate" href="#1attributes.html">attributes</a>
+<a class="notranslate" href="#1attributes.html#conditional-compilation">`cfg`</a>
+<a class="notranslate" href="#1attributes.html#deprecation">`deprecated`</a>
+<a class="notranslate" href="#1attributes.html#documentation">`doc`</a>
+<a class="notranslate" href="#1attributes.html#lint-check-attributes">the lint check attributes</a>

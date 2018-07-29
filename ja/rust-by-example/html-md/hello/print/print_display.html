@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<h1>Display</h1>
+<br>
+<p><code>fmt::Debug</code> hardly looks compact and clean, so it is often advantageous to
+customize the output appearance. This is done by manually implementing
+<a class="notranslate" href="#3fmt"><code>fmt::Display</code></a>, which uses the <code>{}</code> print marker. Implementing it
+looks like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Import (via `use`) the `fmt` module to make it available."></div><div data-l="// ">Import (via <code>use</code>) the <code>fmt</code> module to make it available.</div><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="#// Define a structure which `fmt::Display` will be implemented for. This is simply"></div><div data-l="#// a tuple struct containing an `i32` bound to the name `Structure`."></div><div data-l="// ">Define a structure which <code>fmt::Display</code> will be implemented for. This is simply a tuple struct containing an <code>i32</code> bound to the name <code>Structure</code>.</div><div data-l="struct Structure(i32);"></div><div data-l=""></div><div data-l="#// In order to use the `{}` marker, the trait `fmt::Display` must be implemented"></div><div data-l="#// manually for the type."></div><div data-l="// ">In order to use the <code>{}</code> marker, the trait <code>fmt::Display</code> must be implemented manually for the type.</div><div data-l="impl fmt::Display for Structure {"></div><div data-l="#    // This trait requires `fmt` with this exact signature."></div><div data-l="    // ">This trait requires <code>fmt</code> with this exact signature.</div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="#        // Write strictly the first element into the supplied output"></div><div data-l="#        // stream: `f`. Returns `fmt::Result` which indicates whether the"></div><div data-l="#        // operation succeeded or failed. Note that `write!` uses syntax which"></div><div data-l="#        // is very similar to `println!`."></div><div data-l="        // ">Write strictly the first element into the supplied output stream: <code>f</code>. Returns <code>fmt::Result</code> which indicates whether the operation succeeded or failed. Note that <code>write€</code> uses syntax which is very similar to <code>println€</code>.</div><div data-l="        write!(f, &quot;{}&quot;, self.0)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><code>fmt::Display</code> may be cleaner than <code>fmt::Debug</code> but this presents
+a problem for the <code>std</code> library. How should ambiguous types be displayed?
+For example, if the <code>std</code> library implemented a single style for all
+<code>Vec&lt;T&gt;</code>, what style should it be? Either of these two?</p>
+<br>
+<div data-b="*"><code>Vec&lt;path&gt;</code>: <code>/:/etc:/home/username:/bin</code> (split on <code>:</code>)</div>
+<div data-b="*"><code>Vec&lt;number&gt;</code>: <code>1,2,3</code> (split on <code>,</code>)</div>
+<br>
+<p>No, because there is no ideal style for all types and the <code>std</code> library
+doesn't presume to dictate one. <code>fmt::Display</code> is not implemented for <code>Vec&lt;T&gt;</code>
+or for any other generic containers. <code>fmt::Debug</code> must then be used for these
+generic cases.</p>
+<br>
+<p>This is not a problem though because for any new <i>container</i> type which is
+<i>not</i> generic,<code>fmt::Display</code> can be implemented.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#//use std::fmt; // Import `fmt`"></div><div data-l="use std::fmt; // ">Import <code>fmt</code></div><div data-l=""></div><div data-l="#// A structure holding two numbers. `Debug` will be derived so the results can"></div><div data-l="#// be contrasted with `Display`."></div><div data-l="// ">A structure holding two numbers. <code>Debug</code> will be derived so the results can be contrasted with <code>Display</code>.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct MinMax(i64, i64);"></div><div data-l=""></div><div data-l="#// Implement `Display` for `MinMax`."></div><div data-l="// ">Implement <code>Display</code> for <code>MinMax</code>.</div><div data-l="impl fmt::Display for MinMax {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="#        // Use `self.number` to refer to each positional data point."></div><div data-l="        // ">Use <code>self.number</code> to refer to each positional data point.</div><div data-l="        write!(f, &quot;({}, {})&quot;, self.0, self.1)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Define a structure where the fields are nameable for comparison."></div><div data-l="// ">Define a structure where the fields are nameable for comparison.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct Point2D {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Similarly, implement for Point2D"></div><div data-l="// ">Similarly, implement for Point2D</div><div data-l="impl fmt::Display for Point2D {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="#        // Customize so only `x` and `y` are denoted."></div><div data-l="        // ">Customize so only <code>x</code> and <code>y</code> are denoted.</div><div data-l="        write!(f, &quot;x: {}, y: {}&quot;, self.x, self.y)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let minmax = MinMax(0, 14);"></div><div data-l=""></div><div data-l="    println!(&quot;Compare structures:&quot;);"></div><div data-l="    println!(&quot;Display: {}&quot;, minmax);"></div><div data-l="    println!(&quot;Debug: {:?}&quot;, minmax);"></div><div data-l=""></div><div data-l="    let big_range =   MinMax(-300, 300);"></div><div data-l="    let small_range = MinMax(-3, 3);"></div><div data-l=""></div><div data-l="    println!(&quot;The big range is {big} and the small is {small}&quot;,"></div><div data-l="             small = small_range,"></div><div data-l="             big = big_range);"></div><div data-l=""></div><div data-l="    let point = Point2D { x: 3.3, y: 7.2 };"></div><div data-l=""></div><div data-l="    println!(&quot;Compare points:&quot;);"></div><div data-l="    println!(&quot;Display: {}&quot;, point);"></div><div data-l="    println!(&quot;Debug: {:?}&quot;, point);"></div><div data-l=""></div><div data-l="#    // Error. Both `Debug` and `Display` were implemented but `{:b}`"></div><div data-l="#    // requires `fmt::Binary` to be implemented. This will not work."></div><div data-l="#    // println!(&quot;What does Point2D look like in binary: {:b}?&quot;, point);"></div><div data-l="    // ">Error. Both <code>Debug</code> and <code>Display</code> were implemented but <code>{:b}</code> requires <code>fmt::Binary</code> to be implemented. This will not work. println!(&quot;What does Point2D look like in binary: {:b}?&quot;, point);</div><div data-l="}"></div></div>
+<br>
+<p>So, <code>fmt::Display</code> has been implemented but <code>fmt::Binary</code> has not, and
+therefore cannot be used. <code>std::fmt</code> has many such <a class="notranslate" href="#3traits"><code>traits</code></a> and
+each requires its own implementation. This is detailed further in
+<a class="notranslate" href="#3fmt"><code>std::fmt</code></a>.</p>
+<br>
+<h3>Activity</h3>
+<br>
+<p>After checking the output of the above example, use the <code>Point2D</code> struct as
+guide to add a Complex struct to the example. When printed in the same
+way, the output should be:</p>
+<br>
+<div data-lang="txt"><div data-l="Display: 3.3 +7.2i"></div><div data-l="Debug: Complex { real: 3.3, imag: 7.2 }"></div></div>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3derive"><code>derive</code></a>, <a class="notranslate" href="#3fmt"><code>std::fmt</code></a>, <a class="notranslate" href="#4macros">macros</a>, <a class="notranslate" href="#3structs"><code>struct</code></a>,
+<a class="notranslate" href="#3traits"><code>trait</code></a>, and <a class="notranslate" href="#3use">use</a></p>
+<br>
+<a class="notranslate" href="#1trait/derive.html">derive</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/">fmt</a>
+<a class="notranslate" href="#1macros.html">macros</a>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1trait.html">traits</a>
+<a class="notranslate" href="#1mod/use.html">use</a>

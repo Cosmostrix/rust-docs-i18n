@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Type anonymity</h1>
+<br>
+<p>Closures succinctly capture variables from enclosing scopes. Does this have
+any consequences? It surely does. Observe how using a closure as a function
+parameter requires <a class="notranslate" href="#4generics">generics</a>, which is necessary because of how they are
+defined:</p>
+<br>
+<div data-lang="rust"><div data-l="#// `F` must be generic."></div><div data-l="// "><code>F</code> must be generic.</div><div data-l="fn apply&lt;F&gt;(f: F) where"></div><div data-l="    F: FnOnce() {"></div><div data-l="    f();"></div><div data-l="}"></div></div>
+<br>
+<p>When a closure is defined, the compiler implicitly creates a new
+anonymous structure to store the captured variables inside, meanwhile
+implementing the functionality via one of the <code>traits</code>: <code>Fn</code>, <code>FnMut</code>, or
+<code>FnOnce</code> for this unknown type. This type is assigned to the variable which
+is stored until calling.</p>
+<br>
+<p>Since this new type is of unknown type, any usage in a function will require
+generics. However, an unbounded type parameter <code>&lt;T&gt;</code> would still be ambiguous
+and not be allowed. Thus, bounding by one of the <code>traits</code>: <code>Fn</code>, <code>FnMut</code>, or
+<code>FnOnce</code> (which it implements) is sufficient to specify its type.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// `F` must implement `Fn` for a closure which takes no"></div><div data-l="#// inputs and returns nothing - exactly what is required"></div><div data-l="#// for `print`."></div><div data-l="// "><code>F</code> must implement <code>Fn</code> for a closure which takes no inputs and returns nothing - exactly what is required for <code>print</code>.</div><div data-l="fn apply&lt;F&gt;(f: F) where"></div><div data-l="    F: Fn() {"></div><div data-l="    f();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 7;"></div><div data-l=""></div><div data-l="#    // Capture `x` into an anonymous type and implement"></div><div data-l="#    // `Fn` for it. Store it in `print`."></div><div data-l="    // ">Capture <code>x</code> into an anonymous type and implement <code>Fn</code> for it. Store it in <code>print</code>.</div><div data-l="    let print = || println!(&quot;{}&quot;, x);"></div><div data-l=""></div><div data-l="    apply(print);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3thorough_analysis">A thorough analysis</a>, <a class="notranslate" href="#3fn"><code>Fn</code></a>, <a class="notranslate" href="#3fn_mut"><code>FnMut</code></a>,
+and <a class="notranslate" href="#3fn_once"><code>FnOnce</code></a></p>
+<br>
+<a class="notranslate" href="#1generics.html">generics</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">fn</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnMut.html">fn_mut</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnOnce.html">fn_once</a>
+<a class="notranslate" href="#1https://huonw.github.io/blog/2015/05/finding-closure-in-rust/">thorough_analysis</a>

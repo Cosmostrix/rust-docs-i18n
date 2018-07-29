@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Declare lazily evaluated constant</h2>
+<br>
+<p><a href="#3lazy_static">!<a class="notranslate" href="#4lazy_static-badge">lazy_static-badge</a></a> <a href="#3cat-caching">!<a class="notranslate" href="#4cat-caching-badge">cat-caching-badge</a></a> <a href="#3cat-rust-patterns">!<a class="notranslate" href="#4cat-rust-patterns-badge">cat-rust-patterns-badge</a></a></p>
+<br>
+<p>Declares a lazily evaluated constant <a class="notranslate" href="#4`HashMap`">`HashMap`</a>. The <a class="notranslate" href="#4`HashMap`">`HashMap`</a> will
+be evaluated once and stored behind a global static reference.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate lazy_static;"></div><div data-l=""></div><div data-l="use std::collections::HashMap;"></div><div data-l=""></div><div data-l="lazy_static! {"></div><div data-l="    static ref PRIVILEGES: HashMap&lt;&amp;'static str, Vec&lt;&amp;'static str&gt;&gt; = {"></div><div data-l="        let mut map = HashMap::new();"></div><div data-l="        map.insert(&quot;James&quot;, vec![&quot;user&quot;, &quot;admin&quot;]);"></div><div data-l="        map.insert(&quot;Jim&quot;, vec![&quot;user&quot;]);"></div><div data-l="        map"></div><div data-l="    };"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn show_access(name: &amp;str) {"></div><div data-l="    let access = PRIVILEGES.get(name);"></div><div data-l="    println!(&quot;{}: {:?}&quot;, name, access);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let access = PRIVILEGES.get(&quot;James&quot;);"></div><div data-l="    println!(&quot;James: {:?}&quot;, access);"></div><div data-l=""></div><div data-l="    show_access(&quot;Jim&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/struct.HashMap.html">`HashMap`</a>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h2>Continuously process child process' outputs</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>In <a href="#2#run-an-external-command-and-process-stdout">Run an external command and process stdout</a>,
+processing doesn't start until external <a class="notranslate" href="#4`Command`">`Command`</a> is finished.
+The recipe below calls <a class="notranslate" href="#4`Stdio::piped`">`Stdio::piped`</a> to create a pipe, and reads
+<code>stdout</code> continuously as soon as the <a class="notranslate" href="#4`BufReader`">`BufReader`</a> is updated.</p>
+<br>
+<p>The below recipe is equivalent to the Unix shell command
+<code>journalctl | grep usb</code>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::process::{Command, Stdio};"></div><div data-l="use std::io::{BufRead, BufReader};"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let stdout = Command::new(&quot;journalctl&quot;)"></div><div data-l="        .stdout(Stdio::piped())"></div><div data-l="        .spawn()?"></div><div data-l="        .stdout"></div><div data-l="        .ok_or_else(|| &quot;Could not capture standard output.&quot;)?;"></div><div data-l=""></div><div data-l="    let reader = BufReader::new(stdout);"></div><div data-l=""></div><div data-l="    reader"></div><div data-l="        .lines()"></div><div data-l="        .filter_map(|line| line.ok())"></div><div data-l="        .filter(|line| line.find(&quot;usb&quot;).is_some())"></div><div data-l="        .for_each(|line| println!(&quot;{}&quot;, line));"></div><div data-l=""></div><div data-l="     Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufReader.html">`BufReader`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Command.html">`Command`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Stdio.html">`Stdio::piped`</a>

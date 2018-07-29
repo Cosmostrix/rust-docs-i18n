@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<h2>Advanced Functions and Closures</h2>
+<br>
+<p>Finally, we’ll explore some advanced features related to functions and
+closures, which include function pointers and returning closures.</p>
+<br>
+<h3>Function Pointers</h3>
+<br>
+<p>We’ve talked about how to pass closures to functions; you can also pass regular
+functions to functions! This technique is useful when you want to pass a
+function you’ve already defined rather than defining a new closure. Doing this
+with function pointers will allow you to use functions as arguments to other
+functions. Functions coerce to the type <code>fn</code> (with a lowercase f), not to be
+confused with the <code>Fn</code> closure trait. The <code>fn</code> type is called a <i>function
+pointer</i>. The syntax for specifying that a parameter is a function pointer is
+similar to that of closures, as shown in Listing 19-35.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn do_twice(f: fn(i32) -&gt; i32, arg: i32) -&gt; i32 {"></div><div data-l="    f(arg) + f(arg)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let answer = do_twice(add_one, 5);"></div><div data-l=""></div><div data-l="    println!(&quot;The answer is: {}&quot;, answer);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 19-35: Using the <code>fn</code> type to accept a function
+pointer as an argument</span></p>
+<br>
+<p>This code prints <code>The answer is: 12</code>. We specify that the parameter <code>f</code> in
+<code>do_twice</code> is an <code>fn</code> that takes one parameter of type <code>i32</code> and returns an
+<code>i32</code>. We can then call <code>f</code> in the body of <code>do_twice</code>. In <code>main</code>, we can pass
+the function name <code>add_one</code> as the first argument to <code>do_twice</code>.</p>
+<br>
+<p>Unlike closures, <code>fn</code> is a type rather than a trait, so we specify <code>fn</code> as the
+parameter type directly rather than declaring a generic type parameter with one
+of the <code>Fn</code> traits as a trait bound.</p>
+<br>
+<p>Function pointers implement all three of the closure traits (<code>Fn</code>, <code>FnMut</code>, and
+<code>FnOnce</code>), so you can always pass a function pointer as an argument for a
+function that expects a closure. It’s best to write functions using a generic
+type and one of the closure traits so your functions can accept either
+functions or closures.</p>
+<br>
+<p>An example of where you would want to only accept <code>fn</code> and not closures is when
+interfacing with external code that doesn’t have closures: C functions can
+accept functions as arguments, but C doesn’t have closures.</p>
+<br>
+<p>As an example of where you could use either a closure defined inline or a named
+function, let’s look at a use of <code>map</code>. To use the <code>map</code> function to turn a
+vector of numbers into a vector of strings, we could use a closure, like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let list_of_numbers = vec![1, 2, 3];"></div><div data-l="let list_of_strings: Vec&lt;String&gt; = list_of_numbers"></div><div data-l="    .iter()"></div><div data-l="    .map(|i| i.to_string())"></div><div data-l="    .collect();"></div></div>
+<br>
+<p>Or we could name a function as the argument to <code>map</code> instead of the closure,
+like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let list_of_numbers = vec![1, 2, 3];"></div><div data-l="let list_of_strings: Vec&lt;String&gt; = list_of_numbers"></div><div data-l="    .iter()"></div><div data-l="    .map(ToString::to_string)"></div><div data-l="    .collect();"></div></div>
+<br>
+<p>Note that we must use the fully qualified syntax that we talked about earlier
+in the “Advanced Traits” section because there are multiple functions available
+named <code>to_string</code>. Here, we’re using the <code>to_string</code> function defined in the
+<code>ToString</code> trait, which the standard library has implemented for any type that
+implements <code>Display</code>.</p>
+<br>
+<p>Some people prefer this style, and some people prefer to use closures. They end
+up compiling to the same code, so use whichever style is clearer to you.</p>
+<br>
+<h3>Returning Closures</h3>
+<br>
+<p>Closures are represented by traits, which means you can’t return closures
+directly. In most cases where you might want to return a trait, you can instead
+use the concrete type that implements the trait as the return value of the
+function. But you can’t do that with closures because they don’t have a
+concrete type that is returnable; you’re not allowed to use the function
+pointer <code>fn</code> as a return type, for example.</p>
+<br>
+<p>The following code tries to return a closure directly, but it won’t compile:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn returns_closure() -&gt; Fn(i32) -&gt; i32 {"></div><div data-l="    |x| x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>The compiler error is as follows:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0277]: the trait bound `std::ops::Fn(i32) -&gt; i32 + 'static:"></div><div data-l="std::marker::Sized` is not satisfied"></div><div data-l=" --&gt;"></div><div data-l="  |"></div><div data-l="1 | fn returns_closure() -&gt; Fn(i32) -&gt; i32 {"></div><div data-l="  |                         ^^^^^^^^^^^^^^ `std::ops::Fn(i32) -&gt; i32 + 'static`"></div><div data-l="  does not have a constant size known at compile-time"></div><div data-l="  |"></div><div data-l="  = help: the trait `std::marker::Sized` is not implemented for"></div><div data-l="  `std::ops::Fn(i32) -&gt; i32 + 'static`"></div><div data-l="  = note: the return type of a function must have a statically known size"></div></div>
+<br>
+<p>The error references the <code>Sized</code> trait again! Rust doesn’t know how much space
+it will need to store the closure. We saw a solution to this problem earlier.
+We can use a trait object:</p>
+<br>
+<div data-lang="rust"><div data-l="fn returns_closure() -&gt; Box&lt;Fn(i32) -&gt; i32&gt; {"></div><div data-l="    Box::new(|x| x + 1)"></div><div data-l="}"></div></div>
+<br>
+<p>This code will compile just fine. For more about trait objects, refer to the
+“Using Trait Objects That Allow for Values of Different Types” section in
+Chapter 17.</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>Whew! Now you have some features of Rust in your toolbox that you won’t use
+often, but you’ll know they’re available in very particular circumstances.
+We’ve introduced several complex topics so that when you encounter them in
+error message suggestions or in other peoples’ code, you’ll be able to
+recognize these concepts and syntax. Use this chapter as a reference to guide
+you to solutions.</p>
+<br>
+<p>Next, we’ll put everything we’ve discussed throughout the book into practice
+and do one more project!</p>

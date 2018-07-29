@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<h1>Rust 2018 Feature Status</h1>
+<br>
+<h2>Language</h2>
+<br>
+<a class="notranslate" href="#1https://blog.rust-lang.org/2018/05/10/Rust-1.26.html">Shipped, 1.26</a>
+<a class="notranslate" href="#1https://blog.rust-lang.org/2018/06/21/Rust-1.27.html">Shipped, 1.27</a>
+<br>
+<a class="notranslate" href="#12018/transitioning/traits/impl-trait.html">`impl Trait`</a>
+<a class="notranslate" href="#12018/transitioning/slice-patterns.html">Basic slice patterns</a>
+<a class="notranslate" href="#12018/transitioning/ownership-and-lifetimes/default-match-bindings.html">Default match bindings</a>
+<a class="notranslate" href="#12018/transitioning/ownership-and-lifetimes/anonymous-lifetime.html">Anonymous lifetimes</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1260-2018-05-10">relnotes_1.26</a>
+<a class="notranslate" href="#12018/transitioning/traits/dyn-trait.html">`dyn Trait`</a>
+<a class="notranslate" href="#12018/transitioning/errors/question-mark.html">`?` in `main`/tests</a>
+<a class="notranslate" href="#12018/transitioning/modules/path-clarity.html">Module system path changes</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44660">issue#44660</a>
+<a class="notranslate" href="#12018/transitioning/modules/macros.html">Import macros via `use`</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/35896">issue#35896</a>
+<a class="notranslate" href="#12018/transitioning/ownership-and-lifetimes/in-band-lifetimes.html">In-band lifetimes</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44524">issue#44524</a>
+<a class="notranslate" href="#12018/transitioning/ownership-and-lifetimes/lifetime-elision-in-impl.html">Lifetime elision in `impl`s</a>
+<a class="notranslate" href="#12018/transitioning/raw-identifiers.html">Raw identifiers</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/48589">issue#48589</a>
+<a class="notranslate" href="#1http://smallcultfollowing.com/babysteps/blog/2018/06/15/mir-based-borrow-check-nll-status-update/">nll_status</a>
+<a class="notranslate" href="#12018/transitioning/ownership-and-lifetimes/struct-inference.html">`T: 'a` inference in `struct`s</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44493">issue#44493</a>
+<a class="notranslate" href="#12018/transitioning/concurrency/async-await.html">`async`/`await`</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/50547">issue#50547</a>
+<br>
+<div data-tbl><div> <b>Feature</b> </div><div> <b>Status</b> </div><div> <b>Minimum Edition</b> </div></div>
+<div data-tbl><div> ----------- </div><div> ---------- </div><div> -------------------------- </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4`impl Trait`">`impl Trait`</a> </div><div> <a class="notranslate" href="#4Shipped, 1.26">Shipped, 1.26</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Basic slice patterns">Basic slice patterns</a> </div><div> <a class="notranslate" href="#4Shipped, 1.26">Shipped, 1.26</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Default match bindings">Default match bindings</a> </div><div> <a class="notranslate" href="#4Shipped, 1.26">Shipped, 1.26</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Anonymous lifetimes">Anonymous lifetimes</a> </div><div> <a href="#3relnotes_1.26">Shipped, 1.26</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4`dyn Trait`">`dyn Trait`</a> </div><div> <a class="notranslate" href="#4Shipped, 1.27">Shipped, 1.27</a> </div><div> 2015 </div></div>
+<div data-tbl><div> SIMD support </div><div> <a class="notranslate" href="#4Shipped, 1.27">Shipped, 1.27</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4`?` in `main`/tests">`?` in `main`/tests</a> </div><div> <a href="#3Shipped, 1.26">Shipping, 1.26</a> and 1.28 </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4In-band lifetimes">In-band lifetimes</a> </div><div> Unstable; <a href="#3issue#44524">tracking issue</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Lifetime elision in `impl`s">Lifetime elision in `impl`s</a> </div><div> Unstable; <a href="#3issue#44524">tracking issue</a> </div><div> 2015 </div></div>
+<div data-tbl><div> Non-lexical lifetimes </div><div> <a href="#3nll_status">Implemented but not ready for preview</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4`T: 'a` inference in `struct`s">`T: 'a` inference in `struct`s</a> </div><div> Unstable; <a href="#3issue#44493">tracking issue</a> </div><div> 2015 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Raw identifiers">Raw identifiers</a> </div><div> Unstable; <a href="#3issue#48589">tracking issue</a> </div><div> ? </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Import macros via `use`">Import macros via `use`</a> </div><div> Unstable; <a href="#3issue#35896">tracking issue</a> </div><div> ? </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Module system path changes">Module system path changes</a> </div><div> Unstable; <a href="#3issue#44660">tracking issue</a> </div><div> 2018 </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4`async`/`await`">`async`/`await`</a> </div><div> <a href="#3issue#50547">Not fully implemented</a> </div><div> 2018 </div></div>
+<br>
+<p>While some of these features are already available in Rust 2015, they are tracked here
+because they are being promoted as part of the Rust 2018 edition.  Accordingly, they
+will be discussed in subsequent sections of this guide book. The features marked as
+&quot;Shipped&quot; are all available today in stable Rust, so you can start using them right now!</p>
+<br>
+<h2>Standard library</h2>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/49668">issue#49668</a>
+<br>
+<div data-tbl><div> <b>Feature</b> </div><div> <b>Status</b> </div></div>
+<div data-tbl><div> ----------- </div><div> ---------- </div></div>
+<div data-tbl><div> <a href="#3issue#49668">Custom global allocators</a> </div><div> Will ship in 1.28 </div></div>
+<br>
+<h2>Tooling</h2>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rls">RLS</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rls/milestone/7">1.0 milestone</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rustfmt">rustfmt</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/2436">style guide RFC</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/2437">stability RFC</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rust-clippy">Clippy</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/2476">RFC#2476</a>
+<br>
+<div data-tbl><div> <b>Tool</b> </div><div> <b>Status</b> </div></div>
+<div data-tbl><div> ----------- </div><div> ---------- </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4RLS">RLS</a> 1.0 </div><div> Feature-complete; see <a class="notranslate" href="#41.0 milestone">1.0 milestone</a> </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4rustfmt">rustfmt</a> 1.0 </div><div> Finalizing spec; <a href="#2https://github.com/rust-lang-nursery/rustfmt/milestone/2">1.0 milestone</a>, <a class="notranslate" href="#4style guide RFC">style guide RFC</a>, <a class="notranslate" href="#4stability RFC">stability RFC</a> </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Clippy">Clippy</a> 1.0 </div><div> <a class="notranslate" href="#3RFC#2476">RFC</a> </div></div>
+<br>
+<h2>Documentation</h2>
+<br>
+<a class="notranslate" href="#1https://rust-lang-nursery.github.io/edition-guide/">Edition Guide</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/book/">TRPL</a>
+<br>
+<div data-tbl><div> <b>Tool</b> </div><div> <b>Status</b> </div></div>
+<div data-tbl><div> ----------- </div><div> ---------- </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4Edition Guide">Edition Guide</a> </div><div> Initial draft complete </div></div>
+<div data-tbl><div> <a class="notranslate" href="#4TRPL">TRPL</a> </div><div> Updated as features stabilize </div></div>
+<br>
+<h2>Web site</h2>
+<br>
+<p>The visual design is being finalized, and early rounds of content brainstorming are complete.</p>

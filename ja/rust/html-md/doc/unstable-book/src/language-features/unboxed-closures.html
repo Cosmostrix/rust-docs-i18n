@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>unboxed_closures</code></h1>
+<br>
+<p>The tracking issue for this feature is <a class="notranslate" href="#4#29625">#29625</a></p>
+<br>
+<p>See Also: <a class="notranslate" href="#2library-features/fn-traits.html"><code>fn_traits</code></a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29625">#29625</a>
+<br>
+<p>----</p>
+<br>
+<p>The <code>unboxed_closures</code> feature allows you to write functions using the <code>&quot;rust-call&quot;</code> ABI,
+required for implementing the <a class="notranslate" href="#4`Fn*`">`Fn*`</a> family of traits. <code>&quot;rust-call&quot;</code> functions must have 
+exactly one (non self) argument, a tuple representing the argument list.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">`Fn*`</a>
+<br>
+<div data-lang="rust"><div data-l="#![feature(unboxed_closures)]"></div><div data-l=""></div><div data-l="extern &quot;rust-call&quot; fn add_args(args: (u32, u32)) -&gt; u32 {"></div><div data-l="    args.0 + args.1"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {}"></div></div>

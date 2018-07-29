@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<h2>Dependencies</h2>
+<br>
+<p><a class="notranslate" href="#4crates.io">crates.io</a> is the Rust community's central package registry that serves as a
+location to discover and download packages. <code>cargo</code> is configured to use it by
+default to find requested packages.</p>
+<br>
+<p>To depend on a library hosted on <a class="notranslate" href="#4crates.io">crates.io</a>, add it to your <code>Cargo.toml</code>.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/">crates.io</a>
+<br>
+<h3>Adding a dependency</h3>
+<br>
+<p>If your <code>Cargo.toml</code> doesn't already have a <code>[dependencies]</code> section, add that,
+then list the crate name and version that you would like to use. This example
+adds a dependency of the <code>time</code> crate:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l="time = &quot;0.1.12&quot;"></div></div>
+<br>
+<p>The version string is a <a class="notranslate" href="#4semver">semver</a> version requirement. The <a class="notranslate" href="#2reference/specifying-dependencies.html">specifying
+dependencies</a> docs have more information about
+the options you have here.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/steveklabnik/semver#requirements">semver</a>
+<br>
+<p>If we also wanted to add a dependency on the <code>regex</code> crate, we would not need
+to add <code>[dependencies]</code> for each crate listed. Here's what your whole
+<code>Cargo.toml</code> file would look like with dependencies on the <code>time</code> and <code>regex</code>
+crates:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="time = &quot;0.1.12&quot;"></div><div data-l="regex = &quot;0.1.41&quot;"></div></div>
+<br>
+<p>Re-run <code>cargo build</code>, and Cargo will fetch the new dependencies and all of
+their dependencies, compile them all, and update the <code>Cargo.lock</code>:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo build"></div><div data-l="      Updating registry `https://github.com/rust-lang/crates.io-index`"></div><div data-l="   Downloading memchr v0.1.5"></div><div data-l="   Downloading libc v0.1.10"></div><div data-l="   Downloading regex-syntax v0.2.1"></div><div data-l="   Downloading memchr v0.1.5"></div><div data-l="   Downloading aho-corasick v0.3.0"></div><div data-l="   Downloading regex v0.1.41"></div><div data-l="     Compiling memchr v0.1.5"></div><div data-l="     Compiling libc v0.1.10"></div><div data-l="     Compiling regex-syntax v0.2.1"></div><div data-l="     Compiling memchr v0.1.5"></div><div data-l="     Compiling aho-corasick v0.3.0"></div><div data-l="     Compiling regex v0.1.41"></div><div data-l="     Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div></div>
+<br>
+<p>Our <code>Cargo.lock</code> contains the exact information about which revision of all of
+these dependencies we used.</p>
+<br>
+<p>Now, if <code>regex</code> gets updated, we will still build with the same revision until
+we choose to <code>cargo update</code>.</p>
+<br>
+<p>You can now use the <code>regex</code> library using <code>extern crate</code> in <code>main.rs</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate regex;"></div><div data-l=""></div><div data-l="use regex::Regex;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let re = Regex::new(r&quot;^\d{4}-\d{2}-\d{2}$&quot;).unwrap();"></div><div data-l="    println!(&quot;Did our date match? {}&quot;, re.is_match(&quot;2014-01-01&quot;));"></div><div data-l="}"></div></div>
+<br>
+<p>Running it will show:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo run"></div><div data-l="   Running `target/hello_world`"></div><div data-l="Did our date match? true"></div></div>

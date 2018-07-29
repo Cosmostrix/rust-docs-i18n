@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>Map-reduce in parallel</h2>
+<br>
+<p><a href="#3rayon">!<a class="notranslate" href="#4rayon-badge">rayon-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>This example uses <a class="notranslate" href="#4`rayon::filter`">`rayon::filter`</a>, <a class="notranslate" href="#4`rayon::map`">`rayon::map`</a>, and <a class="notranslate" href="#4`rayon::reduce`">`rayon::reduce`</a>
+to calculate the average age of <code>Person</code> objects whose age is over 30.</p>
+<br>
+<p><a class="notranslate" href="#4`rayon::filter`">`rayon::filter`</a> returns elements from a collection that satisfy the given
+predicate.  <a class="notranslate" href="#4`rayon::map`">`rayon::map`</a> performs an operation on every element, creating a
+new iteration, and <a class="notranslate" href="#4`rayon::reduce`">`rayon::reduce`</a> performs an operation given the previous
+reduction and the current element.  Also shows use of <a class="notranslate" href="#4`rayon::sum`">`rayon::sum`</a>,
+which has the same result as the reduce operation in this example.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rayon;"></div><div data-l=""></div><div data-l="use rayon::prelude::*;"></div><div data-l=""></div><div data-l="struct Person {"></div><div data-l="    age: u32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v: Vec&lt;Person&gt; = vec!["></div><div data-l="        Person { age: 23 },"></div><div data-l="        Person { age: 19 },"></div><div data-l="        Person { age: 42 },"></div><div data-l="        Person { age: 17 },"></div><div data-l="        Person { age: 17 },"></div><div data-l="        Person { age: 31 },"></div><div data-l="        Person { age: 30 },"></div><div data-l="    ];"></div><div data-l=""></div><div data-l="    let num_over_30 = v.par_iter().filter(|&amp;x| x.age &gt; 30).count() as f32;"></div><div data-l="    let sum_over_30 = v.par_iter()"></div><div data-l="        .map(|x| x.age)"></div><div data-l="        .filter(|&amp;x| x &gt; 30)"></div><div data-l="        .reduce(|| 0, |x, y| x + y);"></div><div data-l=""></div><div data-l="    let alt_sum_30: u32 = v.par_iter()"></div><div data-l="        .map(|x| x.age)"></div><div data-l="        .filter(|&amp;x| x &gt; 30)"></div><div data-l="        .sum();"></div><div data-l=""></div><div data-l="    let avg_over_30 = sum_over_30 as f32 / num_over_30;"></div><div data-l="    let alt_avg_over_30 = alt_sum_30 as f32/ num_over_30;"></div><div data-l=""></div><div data-l="    assert!((avg_over_30 - alt_avg_over_30).abs() &lt; std::f32::EPSILON);"></div><div data-l="    println!(&quot;The average age of people older than 30 is {}&quot;, avg_over_30);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.filter">`rayon::filter`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.map">`rayon::map`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.reduce">`rayon::reduce`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.sum">`rayon::sum`</a>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h1>Introducing <code>?</code></h1>
+<br>
+<p>Sometimes we just want the simplicity of <code>unwrap</code> without the possibility of
+a <code>panic</code>. Until now, <code>unwrap</code> has forced us to nest deeper and deeper when
+what we really wanted was to get the variable <i>out</i>. This is exactly the purpose of <code>?</code>.</p>
+<br>
+<p>Upon finding an <code>Err</code>, there are two valid actions to take:</p>
+<br>
+<div data-b="1."><code>panic€</code> which we already decided to try to avoid if possible</div>
+<div data-b="2."><code>return</code> because an <code>Err</code> means it cannot be handled</div>
+<br>
+<p><code>?</code> is <i>almost</i><a class="notranslate" href="#4^†">^†</a> exactly equivalent to an <code>unwrap</code> which <code>return</code>s
+instead of <code>panic</code>s on <code>Err</code>s. Let's see how we can simplify the earlier
+example that used combinators:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn multiply(first_number_str: &amp;str, second_number_str: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {"></div><div data-l="    let first_number = first_number_str.parse::&lt;i32&gt;()?;"></div><div data-l="    let second_number = second_number_str.parse::&lt;i32&gt;()?;"></div><div data-l=""></div><div data-l="    Ok(first_number * second_number)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(result: Result&lt;i32, ParseIntError&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;n is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    print(multiply(&quot;10&quot;, &quot;2&quot;));"></div><div data-l="    print(multiply(&quot;t&quot;, &quot;2&quot;));"></div><div data-l="}"></div></div>
+<br>
+<h2>The <code>try€</code> macro</h2>
+<br>
+<p>Before there was <code>?</code>, the same functionality was achieved with the <code>try€</code> macro.
+The <code>?</code> operator is now recommended, but you may still find <code>try€</code> when looking
+at older code. The same <code>multiply</code> function from the previous example
+would look like this using <code>try€</code>:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn multiply(first_number_str: &amp;str, second_number_str: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {"></div><div data-l="    let first_number = try!(first_number_str.parse::&lt;i32&gt;());"></div><div data-l="    let second_number = try!(second_number_str.parse::&lt;i32&gt;());"></div><div data-l=""></div><div data-l="    Ok(first_number * second_number)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(result: Result&lt;i32, ParseIntError&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;n is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    print(multiply(&quot;10&quot;, &quot;2&quot;));"></div><div data-l="    print(multiply(&quot;t&quot;, &quot;2&quot;));"></div><div data-l="}"></div></div>
+<br>
+<br>
+<a class="notranslate" href="#1See [re-enter ?][re_enter_?] for more details.">^†</a>
+<br>
+<a class="notranslate" href="#1error/multiple_error_types/reenter_question_mark.html">re_enter_?</a>

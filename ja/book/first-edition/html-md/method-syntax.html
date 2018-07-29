@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<h1>Method Syntax</h1>
+<br>
+<p>Functions are great, but if you want to call a bunch of them on some data, it
+can be awkward. Consider this code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="baz(bar(foo));"></div></div>
+<br>
+<p>We would read this left-to-right, and so we see ‘baz bar foo’. But this isn’t the
+order that the functions would get called in, that’s inside-out: ‘foo bar baz’.
+Wouldn’t it be nice if we could do this instead?</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="foo.bar().baz();"></div></div>
+<br>
+<p>Luckily, as you may have guessed with the leading question, you can! Rust provides
+the ability to use this ‘method call syntax’ via the <code>impl</code> keyword.</p>
+<br>
+<h1>Method calls</h1>
+<br>
+<p>Here’s how it works:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = Circle { x: 0.0, y: 0.0, radius: 2.0 };"></div><div data-l="    println!(&quot;{}&quot;, c.area());"></div><div data-l="}"></div></div>
+<br>
+<p>This will print <code>12.566371</code>.</p>
+<br>
+<p>We’ve made a <code>struct</code> that represents a circle. We then write an <code>impl</code> block,
+and inside it, define a method, <code>area</code>.</p>
+<br>
+<p>Methods take a special first parameter, of which there are three variants:
+<code>self</code>, <code>&amp;self</code>, and <code>&amp;mut self</code>. You can think of this first parameter as
+being the <code>foo</code> in <code>foo.bar()</code>. The three variants correspond to the three
+kinds of things <code>foo</code> could be: <code>self</code> if it’s a value on the stack,
+<code>&amp;self</code> if it’s a reference, and <code>&amp;mut self</code> if it’s a mutable reference.
+Because we took the <code>&amp;self</code> parameter to <code>area</code>, we can use it like any
+other parameter. Because we know it’s a <code>Circle</code>, we can access the <code>radius</code>
+like we would with any other <code>struct</code>.</p>
+<br>
+<p>We should default to using <code>&amp;self</code>, as you should prefer borrowing over taking
+ownership, as well as taking immutable references over mutable ones. Here’s an
+example of all three variants:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn reference(&amp;self) {"></div><div data-l="       println!(&quot;taking self by reference!&quot;);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn mutable_reference(&amp;mut self) {"></div><div data-l="       println!(&quot;taking self by mutable reference!&quot;);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn takes_ownership(self) {"></div><div data-l="       println!(&quot;taking ownership of self!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>You can use as many <code>impl</code> blocks as you’d like. The previous example could
+have also been written like this:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn reference(&amp;self) {"></div><div data-l="       println!(&quot;taking self by reference!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn mutable_reference(&amp;mut self) {"></div><div data-l="       println!(&quot;taking self by mutable reference!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn takes_ownership(self) {"></div><div data-l="       println!(&quot;taking ownership of self!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h1>Chaining method calls</h1>
+<br>
+<p>So, now we know how to call a method, such as <code>foo.bar()</code>. But what about our
+original example, <code>foo.bar().baz()</code>? This is called ‘method chaining’. Let’s
+look at an example:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn grow(&amp;self, increment: f64) -&gt; Circle {"></div><div data-l="        Circle { x: self.x, y: self.y, radius: self.radius + increment }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = Circle { x: 0.0, y: 0.0, radius: 2.0 };"></div><div data-l="    println!(&quot;{}&quot;, c.area());"></div><div data-l=""></div><div data-l="    let d = c.grow(2.0).area();"></div><div data-l="    println!(&quot;{}&quot;, d);"></div><div data-l="}"></div></div>
+<br>
+<p>Check the return type:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Circle;"></div><div data-l="# impl Circle {"></div><div data-l="fn grow(&amp;self, increment: f64) -&gt; Circle {"></div><div data-l="# Circle } }"></div></div>
+<br>
+<p>We say we’re returning a <code>Circle</code>. With this method, we can grow a new
+<code>Circle</code> to any arbitrary size.</p>
+<br>
+<h1>Associated functions</h1>
+<br>
+<p>You can also define associated functions that do not take a <code>self</code> parameter.
+Here’s a pattern that’s very common in Rust code:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn new(x: f64, y: f64, radius: f64) -&gt; Circle {"></div><div data-l="        Circle {"></div><div data-l="            x: x,"></div><div data-l="            y: y,"></div><div data-l="            radius: radius,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = Circle::new(0.0, 0.0, 2.0);"></div><div data-l="}"></div></div>
+<br>
+<p>This ‘associated function’ builds a new <code>Circle</code> for us. Note that associated
+functions are called with the <code>Struct::function()</code> syntax, rather than the
+<code>ref.method()</code> syntax. Some other languages call associated functions ‘static
+methods’.</p>
+<br>
+<h1>Builder Pattern</h1>
+<br>
+<p>Let’s say that we want our users to be able to create <code>Circle</code>s, but we will
+allow them to only set the properties they care about. Otherwise, the <code>x</code>
+and <code>y</code> attributes will be <code>0.0</code>, and the <code>radius</code> will be <code>1.0</code>. Rust doesn’t
+have method overloading, named arguments, or variable arguments. We employ
+the builder pattern instead. It looks like this:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct CircleBuilder {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl CircleBuilder {"></div><div data-l="    fn new() -&gt; CircleBuilder {"></div><div data-l="        CircleBuilder { x: 0.0, y: 0.0, radius: 1.0, }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn x(&amp;mut self, coordinate: f64) -&gt; &amp;mut CircleBuilder {"></div><div data-l="        self.x = coordinate;"></div><div data-l="        self"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn y(&amp;mut self, coordinate: f64) -&gt; &amp;mut CircleBuilder {"></div><div data-l="        self.y = coordinate;"></div><div data-l="        self"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn radius(&amp;mut self, radius: f64) -&gt; &amp;mut CircleBuilder {"></div><div data-l="        self.radius = radius;"></div><div data-l="        self"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn finalize(&amp;self) -&gt; Circle {"></div><div data-l="        Circle { x: self.x, y: self.y, radius: self.radius }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = CircleBuilder::new()"></div><div data-l="                .x(1.0)"></div><div data-l="                .y(2.0)"></div><div data-l="                .radius(2.0)"></div><div data-l="                .finalize();"></div><div data-l=""></div><div data-l="    println!(&quot;area: {}&quot;, c.area());"></div><div data-l="    println!(&quot;x: {}&quot;, c.x);"></div><div data-l="    println!(&quot;y: {}&quot;, c.y);"></div><div data-l="}"></div></div>
+<br>
+<p>What we’ve done here is make another <code>struct</code>, <code>CircleBuilder</code>. We’ve defined our
+builder methods on it. We’ve also defined our <code>area()</code> method on <code>Circle</code>. We
+also made one more method on <code>CircleBuilder</code>: <code>finalize()</code>. This method creates
+our final <code>Circle</code> from the builder. Now, we’ve used the type system to enforce
+our concerns: we can use the methods on <code>CircleBuilder</code> to constrain making
+<code>Circle</code>s in any way we choose.</p>

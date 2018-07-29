@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<h1><code>link_args</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29596">#29596</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29596">#29596</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>You can tell <code>rustc</code> how to customize linking, and that is via the <code>link_args</code>
+attribute. This attribute is applied to <code>extern</code> blocks and specifies raw flags
+which need to get passed to the linker when producing an artifact. An example
+usage would be:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#![feature(link_args)]"></div><div data-l=""></div><div data-l="#[link_args = &quot;-foo -bar -baz&quot;]"></div><div data-l="extern {}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>Note that this feature is currently hidden behind the <code>feature(link_args)</code> gate
+because this is not a sanctioned way of performing linking. Right now <code>rustc</code>
+shells out to the system linker (<code>gcc</code> on most systems, <code>link.exe</code> on MSVC), so
+it makes sense to provide extra command line arguments, but this will not
+always be the case. In the future <code>rustc</code> may use LLVM directly to link native
+libraries, in which case <code>link_args</code> will have no meaning. You can achieve the
+same effect as the <code>link_args</code> attribute with the <code>-C link-args</code> argument to
+<code>rustc</code>.</p>
+<br>
+<p>It is highly recommended to <i>not</i> use this attribute, and rather use the more
+formal <code>#[link(...)]</code> attribute on <code>extern</code> blocks instead.</p>

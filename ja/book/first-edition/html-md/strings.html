@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<h1>Strings</h1>
+<br>
+<p>Strings are an important concept for any programmer to master. Rust’s string
+handling system is a bit different from other languages, due to its systems
+focus. Any time you have a data structure of variable size, things can get
+tricky, and strings are a re-sizable data structure. That being said, Rust’s
+strings also work differently than in some other systems languages, such as C.</p>
+<br>
+<p>Let’s dig into the details. A ‘string’ is a sequence of Unicode scalar values
+encoded as a stream of UTF-8 bytes. All strings are guaranteed to be a valid
+encoding of UTF-8 sequences. Additionally, unlike some systems languages,
+strings are not NUL-terminated and can contain NUL bytes.</p>
+<br>
+<p>Rust has two main types of strings: <code>&amp;str</code> and <code>String</code>. Let’s talk about
+<code>&amp;str</code> first. These are called ‘string slices’. A string slice has a fixed
+size, and cannot be mutated. It is a reference to a sequence of UTF-8 bytes.</p>
+<br>
+<div data-lang="rust"><div data-l="#//let greeting = &quot;Hello there.&quot;; // greeting: &amp;'static str"></div><div data-l="let greeting = &quot;Hello there.&quot;; // ">greeting: &amp;'static str</div></div>
+<br>
+<p><code>&quot;Hello there.&quot;</code> is a string literal and its type is <code>&amp;'static str</code>. A string
+literal is a string slice that is statically allocated, meaning that it’s saved
+inside our compiled program, and exists for the entire duration it runs. The
+<code>greeting</code> binding is a reference to this statically allocated string. Any
+function expecting a string slice will also accept a string literal.</p>
+<br>
+<p>String literals can span multiple lines. There are two forms. The first will
+include the newline and the leading spaces:</p>
+<br>
+<div data-lang="rust"><div data-l="let s = &quot;foo"></div><div data-l="    bar&quot;;"></div><div data-l=""></div><div data-l="assert_eq!(&quot;foo\n    bar&quot;, s);"></div></div>
+<br>
+<p>The second, with a <code>\</code>, trims the spaces and the newline:</p>
+<br>
+<div data-lang="rust"><div data-l="let s = &quot;foo\"></div><div data-l="    bar&quot;;"></div><div data-l=""></div><div data-l="assert_eq!(&quot;foobar&quot;, s);"></div></div>
+<br>
+<p>Note that you normally cannot access a <code>str</code> directly, but only through a <code>&amp;str</code>
+reference. This is because <code>str</code> is an unsized type which requires additional
+runtime information to be usable. For more information see the chapter on
+<a href="#3ut">unsized types</a>.</p>
+<br>
+<p>Rust has more than only <code>&amp;str</code>s though. A <code>String</code> is a heap-allocated string.
+This string is growable, and is also guaranteed to be UTF-8. <code>String</code>s are
+commonly created by converting from a string slice using the <code>to_string</code>
+method.</p>
+<br>
+<div data-lang="rust"><div data-l="#//let mut s = &quot;Hello&quot;.to_string(); // mut s: String"></div><div data-l="let mut s = &quot;Hello&quot;.to_string(); // ">mut s: String</div><div data-l="println!(&quot;{}&quot;, s);"></div><div data-l=""></div><div data-l="s.push_str(&quot;, world.&quot;);"></div><div data-l="println!(&quot;{}&quot;, s);"></div></div>
+<br>
+<p><code>String</code>s will coerce into <code>&amp;str</code> with an <code>&amp;</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn takes_slice(slice: &amp;str) {"></div><div data-l="    println!(&quot;Got: {}&quot;, slice);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let s = &quot;Hello&quot;.to_string();"></div><div data-l="    takes_slice(&amp;s);"></div><div data-l="}"></div></div>
+<br>
+<p>This coercion does not happen for functions that accept one of <code>&amp;str</code>’s traits
+instead of <code>&amp;str</code>. For example, <a class="notranslate" href="#3connect"><code>TcpStream::connect</code></a> has a parameter
+of type <code>ToSocketAddrs</code>. A <code>&amp;str</code> is okay but a <code>String</code> must be explicitly
+converted using <code>&amp;*</code>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::net::TcpStream;"></div><div data-l=""></div><div data-l="#//TcpStream::connect(&quot;192.168.0.1:3000&quot;); // Parameter is of type &amp;str."></div><div data-l="TcpStream::connect(&quot;192.168.0.1:3000&quot;); // ">Parameter is of type &amp;str.</div><div data-l=""></div><div data-l="let addr_string = &quot;192.168.0.1:3000&quot;.to_string();"></div><div data-l="#//TcpStream::connect(&amp;*addr_string); // Convert `addr_string` to &amp;str."></div><div data-l="TcpStream::connect(&amp;*addr_string); // ">Convert <code>addr_string</code> to &amp;str.</div></div>
+<br>
+<p>Viewing a <code>String</code> as a <code>&amp;str</code> is cheap, but converting the <code>&amp;str</code> to a
+<code>String</code> involves allocating memory. No reason to do that unless you have to!</p>
+<br>
+<h2>Indexing</h2>
+<br>
+<p>Because strings are valid UTF-8, they do not support indexing:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let s = &quot;hello&quot;;"></div><div data-l=""></div><div data-l="#//println!(&quot;The first letter of s is {}&quot;, s[0]); // ERROR!!!"></div><div data-l="println!(&quot;The first letter of s is {}&quot;, s[0]); // ">ERROR!!!</div></div>
+<br>
+<p>Usually, access to a vector with <code>[]</code> is very fast. But, because each character
+in a UTF-8 encoded string can be multiple bytes, you have to walk over the
+string to find the nᵗʰ letter of a string. This is a significantly more
+expensive operation, and we don’t want to be misleading. Furthermore, ‘letter’
+isn’t something defined in Unicode, exactly. We can choose to look at a string as
+individual bytes, or as codepoints:</p>
+<br>
+<div data-lang="rust"><div data-l="let hachiko = &quot;忠犬ハチ公&quot;;"></div><div data-l=""></div><div data-l="for b in hachiko.as_bytes() {"></div><div data-l="    print!(&quot;{}, &quot;, b);"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;&quot;);"></div><div data-l=""></div><div data-l="for c in hachiko.chars() {"></div><div data-l="    print!(&quot;{}, &quot;, c);"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;&quot;);"></div></div>
+<br>
+<p>This prints:</p>
+<br>
+<div data-lang="text"><div data-l="229, 191, 160, 231, 138, 172, 227, 131, 143, 227, 131, 129, 229, 133, 172,"></div><div data-l="忠, 犬, ハ, チ, 公,"></div></div>
+<br>
+<p>As you can see, there are more bytes than <code>char</code>s.</p>
+<br>
+<p>You can get something similar to an index like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# let hachiko = &quot;忠犬ハチ公&quot;;"></div><div data-l="#//let dog = hachiko.chars().nth(1); // Kinda like `hachiko[1]`."></div><div data-l="let dog = hachiko.chars().nth(1); // ">Kinda like <code>hachiko[1]</code>.</div></div>
+<br>
+<p>This emphasizes that we have to walk from the beginning of the list of <code>chars</code>.</p>
+<br>
+<h2>Slicing</h2>
+<br>
+<p>You can get a slice of a string with the slicing syntax:</p>
+<br>
+<div data-lang="rust"><div data-l="let dog = &quot;hachiko&quot;;"></div><div data-l="let hachi = &amp;dog[0..5];"></div></div>
+<br>
+<p>But note that these are <s>byte</s> offsets, not <s>character</s> offsets. So
+this will fail at runtime:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="let dog = &quot;忠犬ハチ公&quot;;"></div><div data-l="let hachi = &amp;dog[0..2];"></div></div>
+<br>
+<p>with this error:</p>
+<br>
+<div data-lang="text"><div data-l="thread 'main' panicked at 'byte index 2 is not a char boundary; it is inside '忠'"></div><div data-l="(bytes 0..3) of `忠犬ハチ公`'"></div></div>
+<br>
+<h2>Concatenation</h2>
+<br>
+<p>If you have a <code>String</code>, you can concatenate a <code>&amp;str</code> to the end of it:</p>
+<br>
+<div data-lang="rust"><div data-l="let hello = &quot;Hello &quot;.to_string();"></div><div data-l="let world = &quot;world!&quot;;"></div><div data-l=""></div><div data-l="let hello_world = hello + world;"></div></div>
+<br>
+<p>But if you have two <code>String</code>s, you need an <code>&amp;</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let hello = &quot;Hello &quot;.to_string();"></div><div data-l="let world = &quot;world!&quot;.to_string();"></div><div data-l=""></div><div data-l="let hello_world = hello + &amp;world;"></div></div>
+<br>
+<p>This is because <code>&amp;String</code> can automatically coerce to a <code>&amp;str</code>. This is a
+feature called ‘<a href="#3dc"><code>Deref</code> coercions</a>’.</p>
+<br>
+<a class="notranslate" href="#1unsized-types.html">ut</a>
+<a class="notranslate" href="#1deref-coercions.html">dc</a>
+<a class="notranslate" href="#1../../std/net/struct.TcpStream.html#method.connect">connect</a>

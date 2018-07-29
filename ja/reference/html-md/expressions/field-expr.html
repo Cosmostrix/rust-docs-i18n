@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<h1>Field access expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>FieldExpression</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>.</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a></p></blockquote>
+<br>
+<p>A <s>field expression</s> consists of an expression followed by a single dot and an
+<a class="notranslate" href="#4identifier">identifier</a>, when not immediately followed by a parenthesized expression-list
+(the latter is always a <a class="notranslate" href="#4method call expression">method call expression</a>). A field expression denotes a
+field of a <a class="notranslate" href="#4struct">struct</a> or <a class="notranslate" href="#4union">union</a>. To call a function stored in a struct,
+parentheses are needed around the field expression.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mystruct.myfield;"></div><div data-l="foo().x;"></div><div data-l="(Struct {a: 10, b: 20}).a;"></div><div data-l="#//mystruct.method();          // Method expression"></div><div data-l="mystruct.method();          // ">Method expression</div><div data-l="#//(mystruct.function_field)() // Call expression containing a field expression"></div><div data-l="(mystruct.function_field)() // ">Call expression containing a field expression</div></div>
+<br>
+<p>A field access is a <a class="notranslate" href="#4place expression">place expression</a> referring to the location of that field.
+When the subexpression is <a class="notranslate" href="#4mutable">mutable</a>, the field expression is also mutable.</p>
+<br>
+<p>Also, if the type of the expression to the left of the dot is a pointer, it is
+automatically dereferenced as many times as necessary to make the field access
+possible. In cases of ambiguity, we prefer fewer autoderefs to more.</p>
+<br>
+<p>Finally, the fields of a struct or a reference to a struct are treated as
+separate entities when borrowing. If the struct does not implement
+<a class="notranslate" href="#2special-types-and-traits.html#drop"><code>Drop</code></a> and is stored in a local variable,
+this also applies to moving out of each of its fields. This also does not apply
+if automatic dereferencing is done though user defined types.</p>
+<br>
+<div data-lang="rust"><div data-l="struct A { f1: String, f2: String, f3: String }"></div><div data-l="let mut x: A;"></div><div data-l="# x = A {"></div><div data-l="#     f1: &quot;f1&quot;.to_string(),"></div><div data-l="#     f2: &quot;f2&quot;.to_string(),"></div><div data-l="#     f3: &quot;f3&quot;.to_string()"></div><div data-l="# };"></div><div data-l="#//let a: &amp;mut String = &amp;mut x.f1; // x.f1 borrowed mutably"></div><div data-l="let a: &amp;mut String = &amp;mut x.f1; // ">x.f1 borrowed mutably</div><div data-l="#//let b: &amp;String = &amp;x.f2;         // x.f2 borrowed immutably"></div><div data-l="let b: &amp;String = &amp;x.f2;         // ">x.f2 borrowed immutably</div><div data-l="#//let c: &amp;String = &amp;x.f2;         // Can borrow again"></div><div data-l="let c: &amp;String = &amp;x.f2;         // ">Can borrow again</div><div data-l="#//let d: String = x.f3;           // Move out of x.f3"></div><div data-l="let d: String = x.f3;           // ">Move out of x.f3</div></div>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1expressions/method-call-expr.html">method call expression</a>
+<a class="notranslate" href="#1items/structs.html">struct</a>
+<a class="notranslate" href="#1items/unions.html">union</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">place expression</a>
+<a class="notranslate" href="#1expressions.html#mutability">mutable</a>

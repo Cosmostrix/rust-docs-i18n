@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<h1>Command-line arguments</h1>
+<br>
+<p>Here's a list of command-line arguments to <code>rustc</code> and what they do.</p>
+<br>
+<h2><code>-h</code>/<code>--help</code>: get help</h2>
+<br>
+<p>This flag will print out help information for <code>rustc</code>.</p>
+<br>
+<h2><code>--cfg</code>: configure the compilation environment</h2>
+<br>
+<p>This flag can turn on or off various <code>#[cfg]</code> settings.</p>
+<br>
+<h2><code>-L</code>: add a directory to the library search path</h2>
+<br>
+<p>When looking for external crates, a directory passed to this flag will be searched.</p>
+<br>
+<h2><code>-l</code>: link the generated crate to a native library</h2>
+<br>
+<p>This flag allows you to specify linking to a specific native library when building
+a crate.</p>
+<br>
+<h2><code>--crate-type</code>: a list of types of crates for the compiler to emit</h2>
+<br>
+<p>This instructs <code>rustc</code> on which crate type to build.</p>
+<br>
+<h2><code>--crate-name</code>: specify the name of the crate being built</h2>
+<br>
+<p>This informs <code>rustc</code> of the name of your crate.</p>
+<br>
+<h2><code>--emit</code>: emit output other than a crate</h2>
+<br>
+<p>Instead of producing a crate, this flag can print out things like the assembly or LLVM-IR.</p>
+<br>
+<h2><code>--print</code>: print compiler information</h2>
+<br>
+<p>This flag prints out various information about the compiler.</p>
+<br>
+<h2><code>-g</code>: include debug information</h2>
+<br>
+<p>A synonym for <code>-C debug-level=2</code>.</p>
+<br>
+<h2><code>-O</code>: optimize your code</h2>
+<br>
+<p>A synonym for <code>-C opt-level=2</code>.</p>
+<br>
+<h2><code>-o</code>: filename of the output</h2>
+<br>
+<p>This flag controls the output filename.</p>
+<br>
+<h2><code>--out-dir</code>: directory to write the output in</h2>
+<br>
+<p>The outputted crate will be written to this directory.</p>
+<br>
+<h2><code>--explain</code>: provide a detailed explanation of an error message</h2>
+<br>
+<p>Each error of <code>rustc</code>'s comes with an error code; this will print
+out a longer explanation of a given error.</p>
+<br>
+<h2><code>--test</code>: build a test harness</h2>
+<br>
+<p>When compiling this crate, <code>rustc</code> will ignore your <code>main</code> function
+and instead produce a test harness.</p>
+<br>
+<h2><code>--target</code>: select a target triple to build</h2>
+<br>
+<p>This controls which <a class="notranslate" href="#2targets/index.html">target</a> to produce.</p>
+<br>
+<h2><code>-W</code>: set lint warnings</h2>
+<br>
+<p>This flag will set which lints should be set to the <a href="#2lints/levels.html#warn">warn level</a>.</p>
+<br>
+<h2><code>-A</code>: set lint allowed</h2>
+<br>
+<p>This flag will set which lints should be set to the <a href="#2lints/levels.html#allow">allow level</a>.</p>
+<br>
+<h2><code>-D</code>: set lint denied</h2>
+<br>
+<p>This flag will set which lints should be set to the <a href="#2lints/levels.html#deny">deny level</a>.</p>
+<br>
+<h2><code>-F</code>: set lint forbidden</h2>
+<br>
+<p>This flag will set which lints should be set to the <a href="#2lints/levels.html#forbid">forbid level</a>.</p>
+<br>
+<h2><code>--cap-lints</code>: set the most restrictive lint level</h2>
+<br>
+<p>This flag lets you 'cap' lints, for more, <a href="#2lints/levels.html#capping-lints">see here</a>.</p>
+<br>
+<h2><code>-C</code>/<code>--codegen</code>: code generation options</h2>
+<br>
+<p>This flag will allow you to set <a href="#2codegen-options/index.html">codegen options</a>.</p>
+<br>
+<h2><code>-V</code>/<code>--version</code>: print a version</h2>
+<br>
+<p>This flag will print out <code>rustc</code>'s version.</p>
+<br>
+<h2><code>-v</code>/<code>--verbose</code>: use verbose output</h2>
+<br>
+<p>This flag, when combined with other flags, makes them produce extra output.</p>
+<br>
+<h2><code>--extern</code>: specify where an external library is located</h2>
+<br>
+<p>This flag allows you to pass the name and location of an external crate that will
+be linked into the crate you're buildling.</p>
+<br>
+<h2><code>--sysroot</code>: Override the system root</h2>
+<br>
+<p>The &quot;sysroot&quot; is where <code>rustc</code> looks for the crates that come with the Rust
+distribution; this flag allows that to be overridden.</p>
+<br>
+<h2><code>--error-format</code>: control how errors are produced</h2>
+<br>
+<p>This flag lets you control the format of errors.</p>
+<br>
+<h2><code>--color</code>: configure coloring of output</h2>
+<br>
+<p>This flag lets you control color settings of the output.</p>

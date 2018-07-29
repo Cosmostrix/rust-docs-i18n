@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h2>Comments</h2>
+<br>
+<p>All programmers strive to make their code easy to understand, but sometimes
+extra explanation is warranted. In these cases, programmers leave notes, or
+<i>comments</i>, in their source code that the compiler will ignore but people
+reading the source code may find useful.</p>
+<br>
+<p>Here’s a simple comment:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Hello, world."></div><div data-l="// ">Hello, world.</div></div>
+<br>
+<p>In Rust, comments must start with two slashes and continue until the end of the
+line. For comments that extend beyond a single line, you’ll need to include
+<code>//</code> on each line, like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#// So we’re doing something complicated here, long enough that we need"></div><div data-l="#// multiple lines of comments to do it! Whew! Hopefully, this comment will"></div><div data-l="#// explain what’s going on."></div><div data-l="// ">So we’re doing something complicated here, long enough that we need multiple lines of comments to do it! Whew! Hopefully, this comment will explain what’s going on.</div></div>
+<br>
+<p>Comments can also be placed at the end of lines containing code:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="#//    let lucky_number = 7; // I’m feeling lucky today."></div><div data-l="    let lucky_number = 7; // ">I’m feeling lucky today.</div><div data-l="}"></div></div>
+<br>
+<p>But you’ll more often see them used in this format, with the comment on a
+separate line above the code it’s annotating:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="#    // I’m feeling lucky today."></div><div data-l="    // ">I’m feeling lucky today.</div><div data-l="    let lucky_number = 7;"></div><div data-l="}"></div></div>
+<br>
+<p>Rust also has another kind of comment, documentation comments, which we’ll
+discuss in Chapter 14.</p>

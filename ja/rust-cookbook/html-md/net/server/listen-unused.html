@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h2>Listen on unused port TCP/IP</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>In this example, the port is displayed on the console, and the program will
+listen until a request is made.  <code>SocketAddrV4</code> assigns a random port when
+setting port to 0.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::net::{SocketAddrV4, Ipv4Addr, TcpListener};"></div><div data-l="use std::io::Read;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(::std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let loopback = Ipv4Addr::new(127, 0, 0, 1);"></div><div data-l="    let socket = SocketAddrV4::new(loopback, 0);"></div><div data-l="    let listener = TcpListener::bind(socket)?;"></div><div data-l="    let port = listener.local_addr()?;"></div><div data-l="    println!(&quot;Listening on {}, access this port to end the program&quot;, port);"></div><div data-l="    let (mut tcp_stream, addr) = listener.accept()?; //block  until requested"></div><div data-l="    println!(&quot;Connection received! {:?} is sending data.&quot;, addr);"></div><div data-l="    let mut input = String::new();"></div><div data-l="    let _ = tcp_stream.read_to_string(&amp;mut input)?;"></div><div data-l="    println!(&quot;{:?} says {}&quot;, addr, input);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>

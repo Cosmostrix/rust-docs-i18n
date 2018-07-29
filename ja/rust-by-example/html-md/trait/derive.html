@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<h1>Derive</h1>
+<br>
+<p>The compiler is capable of providing basic implementations for some traits via
+the <code>#[derive]</code> <a class="notranslate" href="#3attribute">attribute</a>. These traits can still be
+manually implemented if a more complex behavior is required.</p>
+<br>
+<p>The following is a list of derivable traits:
+* Comparison traits:
+  <a class="notranslate" href="#3eq"><code>Eq</code></a>, <a class="notranslate" href="#3partial-eq"><code>PartialEq</code></a>, <a class="notranslate" href="#3ord"><code>Ord</code></a>, <a class="notranslate" href="#3partial-ord"><code>PartialOrd</code></a>
+* <a class="notranslate" href="#3clone"><code>Clone</code></a>, to create <code>T</code> from <code>&amp;T</code> via a copy.
+* <a class="notranslate" href="#3copy"><code>Copy</code></a>, to give a type 'copy semantics' instead of 'move semantics'
+* <a class="notranslate" href="#3hash"><code>Hash</code></a>, to compute a hash from <code>&amp;T</code>.
+* <a class="notranslate" href="#3default"><code>Default</code></a>, to create an empty instance of a data type.
+* <a class="notranslate" href="#3debug"><code>Debug</code></a>, to format a value using the <code>{:?}</code> formatter.
+ 
+`<code class=2>rust,example
+// `Centimeters`, a tuple struct that can be compared
+#[derive(PartialEq, PartialOrd)]
+struct Centimeters(f64);
+
+// `Inches`, a tuple struct that can be printed
+#[derive(Debug)]
+struct Inches(i32);
+
+impl Inches {
+    fn to_centimeters(&amp;self) -&gt; Centimeters {
+        let &amp;Inches(inches) = self;
+
+        Centimeters(inches as f64 * 2.54)
+    }
+}
+
+// `Seconds`, a tuple struct no additional attributes
+struct Seconds(i32);
+
+fn main() {
+    let _one_second = Seconds(1);
+
+    // Error: `Seconds` can't be printed; it doesn't implement the `Debug` trait
+    //println!(&quot;One second looks like: {:?}&quot;, _one_second);
+    // TODO ^ Try uncommenting this line
+
+    // Error: `Seconds` can't be compared; it doesn't implement the `PartialEq` trait
+    //let _this_is_true = (_one_second == _one_second);
+    // TODO ^ Try uncommenting this line
+
+    let foot = Inches(12);
+
+    println!(&quot;One foot equals {:?}&quot;, foot);
+
+    let meter = Centimeters(100.0);
+
+    let cmp =
+        if foot.to_centimeters() &lt; meter {
+            &quot;smaller&quot;
+        } else {
+            &quot;bigger&quot;
+        };
+
+    println!(&quot;One foot is {} than one meter.&quot;, cmp);
+}
+</code>`</p>
+<br>
+<h3>See also:</h3>
+<p><a class="notranslate" href="#3derive"><code>derive</code></a></p>
+<br>
+<a class="notranslate" href="#1attribute.html">attribute</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.Eq.html">eq</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.PartialEq.html">partial-eq</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.Ord.html">ord</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html">partial-ord</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/clone/trait.Clone.html">clone</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/marker/trait.Copy.html">copy</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/hash/trait.Hash.html">hash</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/default/trait.Default.html">default</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/trait.Debug.html">debug</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/attributes.html#derive">derive</a>

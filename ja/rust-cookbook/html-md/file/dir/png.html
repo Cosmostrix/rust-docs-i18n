@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Find all png files recursively</h2>
+<br>
+<p><a href="#3glob">!<a class="notranslate" href="#4glob-badge">glob-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Recursively find all PNG files in the current directory.
+In this case, the <code>**</code> pattern matches the current directory and all subdirectories.</p>
+<br>
+<p>Use the <code>**</code> pattern in any path portion. For example, <code>/media/**/*.png</code>
+matches all PNGs in <code>media</code> and it's subdirectories.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate glob;"></div><div data-l=""></div><div data-l="use glob::glob;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Glob(glob::GlobError);"></div><div data-l="#         Pattern(glob::PatternError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    for entry in glob(&quot;**/*.png&quot;)? {"></div><div data-l="        println!(&quot;{}&quot;, entry?.display());"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>

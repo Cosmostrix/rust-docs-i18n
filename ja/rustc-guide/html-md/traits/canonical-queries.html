@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<h1>Canonical queries</h1>
+<br>
+<p>The &quot;start&quot; of the trait system is the <b>canonical query</b> (these are
+both queries in the more general sense of the word – something you
+would like to know the answer to – and in the
+<a href="#2./query.html">rustc-specific sense</a>).  The idea is that the type
+checker or other parts of the system, may in the course of doing their
+thing want to know whether some trait is implemented for some type
+(e.g., is <code>u32: Debug</code> true?). Or they may want to
+<a href="#2./traits/associated-types.html">normalize some associated type</a>.</p>
+<br>
+<p>This section covers queries at a fairly high level of abstraction. The
+subsections look a bit more closely at how these ideas are implemented
+in rustc.</p>
+<br>
+<h2>The traditional, interactive Prolog query</h2>
+<br>
+<p>In a traditional Prolog system, when you start a query, the solver
+will run off and start supplying you with every possible answer it can
+find. So given something like this:</p>
+<br>
+<div data-lang="text"><div data-l="?- Vec&lt;i32&gt;: AsRef&lt;?U&gt;"></div></div>
+<br>
+<p>The solver might answer:</p>
+<br>
+<div data-lang="text"><div data-l="Vec&lt;i32&gt;: AsRef&lt;[i32]&gt;"></div><div data-l="    continue? (y/n)"></div></div>
+<br>
+<p>This <code>continue</code> bit is interesting. The idea in Prolog is that the
+solver is finding <b>all possible</b> instantiations of your query that
+are true. In this case, if we instantiate <code>?U = [i32]</code>, then the query
+is true (note that a traditional Prolog interface does not, directly,
+tell us a value for <code>?U</code>, but we can infer one by unifying the
+response with our original query – Rust's solver gives back a
+substitution instead). If we were to hit <code>y</code>, the solver might then
+give us another possible answer:</p>
+<br>
+<div data-lang="text"><div data-l="Vec&lt;i32&gt;: AsRef&lt;Vec&lt;i32&gt;&gt;"></div><div data-l="    continue? (y/n)"></div></div>
+<br>
+<p>This answer derives from the fact that there is a reflexive impl
+(<code>impl&lt;T&gt; AsRef&lt;T&gt; for T</code>) for <code>AsRef</code>. If were to hit <code>y</code> again,
+then we might get back a negative response:</p>
+<br>
+<div data-lang="text"><div data-l="no"></div></div>
+<br>
+<p>Naturally, in some cases, there may be no possible answers, and hence
+the solver will just give me back <code>no</code> right away:</p>
+<br>
+<div data-lang="text"><div data-l="?- Box&lt;i32&gt;: Copy"></div><div data-l="    no"></div></div>
+<br>
+<p>In some cases, there might be an infinite number of responses. So for
+example if I gave this query, and I kept hitting <code>y</code>, then the solver
+would never stop giving me back answers:</p>
+<br>
+<div data-lang="text"><div data-l="?- Vec&lt;?U&gt;: Clone"></div><div data-l="    Vec&lt;i32&gt;: Clone"></div><div data-l="        continue? (y/n)"></div><div data-l="    Vec&lt;Box&lt;i32&gt;&gt;: Clone"></div><div data-l="        continue? (y/n)"></div><div data-l="    Vec&lt;Box&lt;Box&lt;i32&gt;&gt;&gt;: Clone"></div><div data-l="        continue? (y/n)"></div><div data-l="    Vec&lt;Box&lt;Box&lt;Box&lt;i32&gt;&gt;&gt;&gt;: Clone"></div><div data-l="        continue? (y/n)"></div></div>
+<br>
+<p>As you can imagine, the solver will gleefully keep adding another
+layer of <code>Box</code> until we ask it to stop, or it runs out of memory.</p>
+<br>
+<p>Another interesting thing is that queries might still have variables
+in them. For example:</p>
+<br>
+<div data-lang="text"><div data-l="?- Rc&lt;?T&gt;: Clone"></div></div>
+<br>
+<p>might produce the answer:</p>
+<br>
+<div data-lang="text"><div data-l="Rc&lt;?T&gt;: Clone"></div><div data-l="    continue? (y/n)"></div></div>
+<br>
+<p>After all, <code>Rc&lt;?T&gt;</code> is true <b>no matter what type `?T` is</b>.</p>
+<br>
+<p><a name="query-response"></a></p>
+<br>
+<h2>A trait query in rustc</h2>
+<br>
+<p>The trait queries in rustc work somewhat differently. Instead of
+trying to enumerate <b>all possible</b> answers for you, they are looking
+for an <b>unambiguous</b> answer. In particular, when they tell you the
+value for a type variable, that means that this is the <b>only possible
+instantiation</b> that you could use, given the current set of impls and
+where-clauses, that would be provable. (Internally within the solver,
+though, they can potentially enumerate all possible answers. See
+<a href="#2./traits/slg.html">the description of the SLG solver</a> for details.)</p>
+<br>
+<p>The response to a trait query in rustc is typically a
+<code>Result&lt;QueryResult&lt;T&gt;, NoSolution&gt;</code> (where the <code>T</code> will vary a bit
+depending on the query itself). The <code>Err(NoSolution)</code> case indicates
+that the query was false and had no answers (e.g., <code>Box&lt;i32&gt;: Copy</code>).
+Otherwise, the <code>QueryResult</code> gives back information about the possible answer(s)
+we did find. It consists of four parts:</p>
+<br>
+<div data-b="-"><b>Certainty:</b> tells you how sure we are of this answer. It can have two
+values:</div>
+<div data-b="  -"><code>Proven</code> means that the result is known to be true.</div>
+<div data-b="    -">This might be the result for trying to prove <code>Vec&lt;i32&gt;: Clone</code>,
+say, or <code>Rc&lt;?T&gt;: Clone</code>.</div>
+<div data-b="  -"><code>Ambiguous</code> means that there were things we could not yet prove to
+be either true <i>or</i> false, typically because more type information
+was needed. (We'll see an example shortly.)</div>
+<div data-b="    -">This might be the result for trying to prove <code>Vec&lt;?T&gt;: Clone</code>.</div>
+<div data-b="-"><b>Var values:</b> Values for each of the unbound inference variables
+(like <code>?T</code>) that appeared in your original query. (Remember that in Prolog,
+we had to infer these.)</div>
+<div data-b="  -">As we'll see in the example below, we can get back var values even
+for <code>Ambiguous</code> cases.</div>
+<div data-b="-"><b>Region constraints:</b> these are relations that must hold between
+the lifetimes that you supplied as inputs. We'll ignore these here,
+but see the
+<a href="#2./traits/regions.html">section on handling regions in traits</a> for
+more details.</div>
+<div data-b="-"><b>Value:</b> The query result also comes with a value of type <code>T</code>. For
+some specialized queries – like normalizing associated types –
+this is used to carry back an extra result, but it's often just
+<code>()</code>.</div>
+<br>
+<h3>Examples</h3>
+<br>
+<p>Let's work through an example query to see what all the parts mean.
+Consider <a href="#3borrow">the <code>Borrow</code> trait</a>. This trait has a number of
+impls; among them, there are these two (for clarify, I've written the
+<code>Sized</code> bounds explicitly):</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/borrow/trait.Borrow.html">borrow</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Borrow&lt;T&gt; for T where T: ?Sized"></div><div data-l="impl&lt;T&gt; Borrow&lt;[T]&gt; for Vec&lt;T&gt; where T: Sized"></div></div>
+<br>
+<p><b>Example 1.</b> Imagine we are type-checking this (rather artificial)
+bit of code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;A, B&gt;(a: A, vec_b: Option&lt;B&gt;) where A: Borrow&lt;B&gt; { }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#//    let mut t: Vec&lt;_&gt; = vec![]; // Type: Vec&lt;?T&gt;"></div><div data-l="    let mut t: Vec&lt;_&gt; = vec![]; // ">Type: Vec<?T></div><div data-l="#//    let mut u: Option&lt;_&gt; = None; // Type: Option&lt;?U&gt;"></div><div data-l="    let mut u: Option&lt;_&gt; = None; // ">Type: Option<?U></div><div data-l="#//    foo(t, u); // Example 1: requires `Vec&lt;?T&gt;: Borrow&lt;?U&gt;`"></div><div data-l="    foo(t, u); // ">Example 1: requires <code>Vec&lt;?T&gt;: Borrow&lt;?U&gt;</code></div><div data-l="    ..."></div><div data-l="}"></div></div>
+<br>
+<p>As the comments indicate, we first create two variables <code>t</code> and <code>u</code>;
+<code>t</code> is an empty vector and <code>u</code> is a <code>None</code> option. Both of these
+variables have unbound inference variables in their type: <code>?T</code>
+represents the elements in the vector <code>t</code> and <code>?U</code> represents the
+value stored in the option <code>u</code>.  Next, we invoke <code>foo</code>; comparing the
+signature of <code>foo</code> to its arguments, we wind up with <code>A = Vec&lt;?T&gt;</code> and
+<code>B = ?U</code>.Therefore, the where clause on <code>foo</code> requires that <code>Vec&lt;?T&gt;:
+Borrow&lt;?U&gt;</code>. This is thus our first example trait query.</p>
+<br>
+<p>There are many possible solutions to the query <code>Vec&lt;?T&gt;: Borrow&lt;?U&gt;</code>;
+for example:</p>
+<br>
+<div data-b="-"><code>?U = Vec&lt;?T&gt;</code>,</div>
+<div data-b="-"><code>?U = [?T]</code>,</div>
+<div data-b="-"><code>?T = u32, ?U = [u32]</code></div>
+<div data-b="-">and so forth.</div>
+<br>
+<p>Therefore, the result we get back would be as follows (I'm going to
+ignore region constraints and the &quot;value&quot;):</p>
+<br>
+<div data-b="-">Certainty: <code>Ambiguous</code> – we're not sure yet if this holds</div>
+<div data-b="-">Var values: <code>[?T = ?T, ?U = ?U]</code> – we learned nothing about the values of
+the variables</div>
+<br>
+<p>In short, the query result says that it is too soon to say much about
+whether this trait is proven. During type-checking, this is not an
+immediate error: instead, the type checker would hold on to this
+requirement (<code>Vec&lt;?T&gt;: Borrow&lt;?U&gt;</code>) and wait. As we'll see in the next
+example, it may happen that <code>?T</code> and <code>?U</code> wind up constrained from
+other sources, in which case we can try the trait query again.</p>
+<br>
+<p><b>Example 2.</b> We can now extend our previous example a bit,
+and assign a value to <code>u</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;A, B&gt;(a: A, vec_b: Option&lt;B&gt;) where A: Borrow&lt;B&gt; { }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // What we saw before:"></div><div data-l="    // ">What we saw before:</div><div data-l="#//    let mut t: Vec&lt;_&gt; = vec![]; // Type: Vec&lt;?T&gt;"></div><div data-l="    let mut t: Vec&lt;_&gt; = vec![]; // ">Type: Vec<?T></div><div data-l="#//    let mut u: Option&lt;_&gt; = None; // Type: Option&lt;?U&gt;"></div><div data-l="    let mut u: Option&lt;_&gt; = None; // ">Type: Option<?U></div><div data-l="#//    foo(t, u); // `Vec&lt;?T&gt;: Borrow&lt;?U&gt;` =&gt; ambiguous"></div><div data-l="    foo(t, u); // "><code>Vec&lt;?T&gt;: Borrow&lt;?U&gt;</code> =&gt; ambiguous</div><div data-l=""></div><div data-l="#    // New stuff:"></div><div data-l="    // ">New stuff:</div><div data-l="#//    u = Some(vec![]); // ?U = Vec&lt;?V&gt;"></div><div data-l="    u = Some(vec![]); // ">?U = Vec<?V></div><div data-l="}"></div></div>
+<br>
+<p>As a result of this assignment, the type of <code>u</code> is forced to be
+<code>Option&lt;Vec&lt;?V&gt;&gt;</code>, where <code>?V</code> represents the element type of the
+vector. This in turn implies that <code>?U</code> is <a class="notranslate" href="#4unified">unified</a> to <code>Vec&lt;?V&gt;</code>.</p>
+<br>
+<a class="notranslate" href="#1./type-checking.html">unified</a>
+<br>
+<p>Let's suppose that the type checker decides to revisit the
+&quot;as-yet-unproven&quot; trait obligation we saw before, <code>Vec&lt;?T&gt;:
+Borrow&lt;?U&gt;</code>. <code>?U</code> is no longer an unbound inference variable; it now
+has a value, <code>Vec&lt;?V&gt;</code>. So, if we &quot;refresh&quot; the query with that value, we get:</p>
+<br>
+<div data-lang="text"><div data-l="Vec&lt;?T&gt;: Borrow&lt;Vec&lt;?V&gt;&gt;"></div></div>
+<br>
+<p>This time, there is only one impl that applies, the reflexive impl:</p>
+<br>
+<div data-lang="text"><div data-l="impl&lt;T&gt; Borrow&lt;T&gt; for T where T: ?Sized"></div></div>
+<br>
+<p>Therefore, the trait checker will answer:</p>
+<br>
+<div data-b="-">Certainty: <code>Proven</code></div>
+<div data-b="-">Var values: <code>[?T = ?T, ?V = ?T]</code></div>
+<br>
+<p>Here, it is saying that we have indeed proven that the obligation
+holds, and we also know that <code>?T</code> and <code>?V</code> are the same type (but we
+don't know what that type is yet!).</p>
+<br>
+<p>(In fact, as the function ends here, the type checker would give an
+error at this point, since the element types of <code>t</code> and <code>u</code> are still
+not yet known, even though they are known to be the same.)</p>
+<br>
+<br>

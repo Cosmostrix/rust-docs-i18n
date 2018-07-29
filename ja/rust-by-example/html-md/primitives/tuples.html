@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<h1>Tuples</h1>
+<br>
+<p>A tuple is a collection of values of different types. Tuples are constructed
+using parentheses <code>()</code>, and each tuple itself is a value with type signature
+<code>(T1, T2, ...)</code>, where <code>T1</code>, <code>T2</code> are the types of its members. Functions can
+use tuples to return multiple values, as tuples can hold any number of values.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// Tuples can be used as function arguments and as return values"></div><div data-l="// ">Tuples can be used as function arguments and as return values</div><div data-l="fn reverse(pair: (i32, bool)) -&gt; (bool, i32) {"></div><div data-l="#    // `let` can be used to bind the members of a tuple to variables"></div><div data-l="    // "><code>let</code> can be used to bind the members of a tuple to variables</div><div data-l="    let (integer, boolean) = pair;"></div><div data-l=""></div><div data-l="    (boolean, integer)"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// The following struct is for the activity."></div><div data-l="// ">The following struct is for the activity.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct Matrix(f32, f32, f32, f32);"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // A tuple with a bunch of different types"></div><div data-l="    // ">A tuple with a bunch of different types</div><div data-l="    let long_tuple = (1u8, 2u16, 3u32, 4u64,"></div><div data-l="                      -1i8, -2i16, -3i32, -4i64,"></div><div data-l="                      0.1f32, 0.2f64,"></div><div data-l="                      'a', true);"></div><div data-l=""></div><div data-l="#    // Values can be extracted from the tuple using tuple indexing"></div><div data-l="    // ">Values can be extracted from the tuple using tuple indexing</div><div data-l="    println!(&quot;long tuple first value: {}&quot;, long_tuple.0);"></div><div data-l="    println!(&quot;long tuple second value: {}&quot;, long_tuple.1);"></div><div data-l=""></div><div data-l="#    // Tuples can be tuple members"></div><div data-l="    // ">Tuples can be tuple members</div><div data-l="    let tuple_of_tuples = ((1u8, 2u16, 2u32), (4u64, -1i8), -2i16);"></div><div data-l=""></div><div data-l="#    // Tuples are printable"></div><div data-l="    // ">Tuples are printable</div><div data-l="    println!(&quot;tuple of tuples: {:?}&quot;, tuple_of_tuples);"></div><div data-l="    "></div><div data-l="#    // But long Tuples cannot be printed"></div><div data-l="#    // let too_long_tuple = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);"></div><div data-l="#    // println!(&quot;too long tuple: {:?}&quot;, too_long_tuple);"></div><div data-l="#    // TODO ^ Uncomment the above 2 lines to see the compiler error"></div><div data-l="    // ">But long Tuples cannot be printed let too_long_tuple = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13); println!(&quot;too long tuple: {:?}&quot;, too_long_tuple); TODO ^ Uncomment the above 2 lines to see the compiler error</div><div data-l=""></div><div data-l="    let pair = (1, true);"></div><div data-l="    println!(&quot;pair is {:?}&quot;, pair);"></div><div data-l=""></div><div data-l="    println!(&quot;the reversed pair is {:?}&quot;, reverse(pair));"></div><div data-l=""></div><div data-l="#    // To create one element tuples, the comma is required to tell them apart"></div><div data-l="#    // from a literal surrounded by parentheses"></div><div data-l="    // ">To create one element tuples, the comma is required to tell them apart from a literal surrounded by parentheses</div><div data-l="    println!(&quot;one element tuple: {:?}&quot;, (5u32,));"></div><div data-l="    println!(&quot;just an integer: {:?}&quot;, (5u32));"></div><div data-l=""></div><div data-l="    //tuples can be destructured to create bindings"></div><div data-l="    let tuple = (1, &quot;hello&quot;, 4.5, true);"></div><div data-l=""></div><div data-l="    let (a, b, c, d) = tuple;"></div><div data-l="    println!(&quot;{:?}, {:?}, {:?}, {:?}&quot;, a, b, c, d);"></div><div data-l=""></div><div data-l="    let matrix = Matrix(1.1, 1.2, 2.1, 2.2);"></div><div data-l="    println!(&quot;{:?}&quot;, matrix);"></div><div data-l=""></div><div data-l="}"></div></div>
+<br>
+<h3>Activity</h3>
+<br>
+<div data-b=" 1."><i>Recap</i>: Add the <code>fmt::Display</code> trait to the Matrix <code>struct</code> in the above example,
+ so that if you switch from printing the debug format <code>{:?}</code> to the display
+ format <code>{}</code>, you see the following output:</div>
+<br>
+<p>    `<code class=2>text
+    ( 1.1 1.2 )
+    ( 2.1 2.2 )
+    </code>`</p>
+<br>
+<p>    You may want to refer back to the example for <a href="#3print_display">print display</a>.
+ 2. Add a <code>transpose</code> function using the <code>reverse</code> function as a template, which
+    accepts a matrix as an argument, and returns a matrix in which two elements
+    have been swapped. For example:</p>
+<br>
+<p>    `<code class=2>rust,ignore
+    println!(&quot;Matrix:\n{}&quot;, matrix);
+    println!(&quot;Transpose:\n{}&quot;, transpose(matrix));
+    </code>`</p>
+<br>
+<p>    results in the output:</p>
+<br>
+<p>    `<code class=2>text
+    Matrix:
+    ( 1.1 1.2 )
+    ( 2.1 2.2 )
+    Transpose:
+    ( 1.1 2.1 )
+    ( 1.2 2.2 )
+    </code>`</p>
+<br>
+<a class="notranslate" href="#1hello/print/print_display.html">print_display</a>

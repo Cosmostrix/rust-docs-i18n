@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<h1>Structs</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Struct</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <s>StructStruct</s>\
+&amp;nbsp;&amp;nbsp; | <s>TupleStruct</s></p>
+<br>
+<p><s>StructStruct</s> :\
+&amp;nbsp;&amp;nbsp; <code>struct</code>
+  <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;
+  <a class="notranslate" href="#4_Generics_">_Generics_</a><sup>?</sup>
+  <a class="notranslate" href="#4_WhereClause_">_WhereClause_</a><sup>?</sup>
+  ( <code>{</code> <s>StructFields</s><sup>?</sup> <code>}</code> | <code>;</code> )</p>
+<br>
+<p><s>TupleStruct</s> :\
+&amp;nbsp;&amp;nbsp; <code>struct</code>
+  <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;
+  <a class="notranslate" href="#4_Generics_">_Generics_</a><sup>?</sup>
+  <code>(</code> <s>TupleFields</s><sup>?</sup> <code>)</code>
+  <a class="notranslate" href="#4_WhereClause_">_WhereClause_</a><sup>?</sup>
+  <code>;</code></p>
+<br>
+<p><s>StructFields</s> :\
+&amp;nbsp;&amp;nbsp; <s>StructField</s> (<code>,</code> <s>StructField</s>)<sup>\<i>&lt;/sup&gt; `,`&lt;sup&gt;?&lt;/sup&gt;
+
+_StructField_ :\
+&amp;nbsp;&amp;nbsp; [_OuterAttribute_]&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Visibility_">_Visibility_</a>
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> <code>:</code> <a class="notranslate" href="#4_Type_">_Type_</a></p>
+<br>
+<p><s>TupleFields</s> :\
+&amp;nbsp;&amp;nbsp; <s>TupleField</s> (<code>,</code> <s>TupleField</s>)<sup>\<i>&lt;/sup&gt; `,`&lt;sup&gt;?&lt;/sup&gt;
+
+_TupleField_ :\
+&amp;nbsp;&amp;nbsp; [_OuterAttribute_]&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Visibility_">_Visibility_</a>
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Type_">_Type_</a></p></blockquote>
+<br>
+<p>A <s>struct</s> is a nominal <a class="notranslate" href="#4struct type">struct type</a> defined with the keyword <code>struct</code>.</p>
+<br>
+<p>An example of a <code>struct</code> item and its use:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {x: i32, y: i32}"></div><div data-l="let p = Point {x: 10, y: 11};"></div><div data-l="let px: i32 = p.x;"></div></div>
+<br>
+<p>A <s>tuple struct</s> is a nominal <a class="notranslate" href="#4tuple type">tuple type</a>, also defined with the keyword
+<code>struct</code>. For example:</p>
+<br>
+<a class="notranslate" href="#1types.html#struct-types">struct type</a>
+<a class="notranslate" href="#1types.html#tuple-types">tuple type</a>
+<br>
+<div data-lang="rust"><div data-l="struct Point(i32, i32);"></div><div data-l="let p = Point(10, 11);"></div><div data-l="let px: i32 = match p { Point(x, _) =&gt; x };"></div></div>
+<br>
+<p>A <s>unit-like struct</s> is a struct without any fields, defined by leaving off the
+list of fields entirely. Such a struct implicitly defines a constant of its
+type with the same name. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Cookie;"></div><div data-l="let c = [Cookie, Cookie {}, Cookie, Cookie {}];"></div></div>
+<br>
+<p>is equivalent to</p>
+<br>
+<div data-lang="rust"><div data-l="struct Cookie {}"></div><div data-l="const Cookie: Cookie = Cookie {};"></div><div data-l="let c = [Cookie, Cookie {}, Cookie, Cookie {}];"></div></div>
+<br>
+<p>The precise memory layout of a struct is not specified. One can specify a
+particular layout using the <a class="notranslate" href="#4`repr` attribute">`repr` attribute</a>.</p>
+<br>
+<a class="notranslate" href="#1attributes.html#ffi-attributes">`repr` attribute</a>
+<br>
+<a class="notranslate" href="#1attributes.html">_OuterAttribute_</a>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1items/generics.html">_Generics_</a>
+<a class="notranslate" href="#1items/generics.html#where-clauses">_WhereClause_</a>
+<a class="notranslate" href="#1visibility-and-privacy.html">_Visibility_</a>
+<a class="notranslate" href="#1types.html">_Type_</a>

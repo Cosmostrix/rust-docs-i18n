@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1><code>extern_absolute_paths</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44660">#44660</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44660">#44660</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>extern_absolute_paths</code> feature enables mode allowing to refer to names from other crates
+&quot;inline&quot;, without introducing <code>extern crate</code> items, using absolute paths like <code>::my_crate::a::b</code>.</p>
+<br>
+<p><code>::my_crate::a::b</code> will resolve to path <code>a::b</code> in crate <code>my_crate</code>.</p>
+<br>
+<p><code>feature(crate_in_paths)</code> can be used in <code>feature(extern_absolute_paths)</code> mode for referring
+to absolute paths in the local crate (<code>::crate::a::b</code>).</p>
+<br>
+<p><code>feature(extern_in_paths)</code> provides the same effect by using keyword <code>extern</code> to refer to
+paths from other crates (<code>extern::my_crate::a::b</code>).</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(extern_absolute_paths)]"></div><div data-l=""></div><div data-l="#// Suppose we have a dependency crate `xcrate` available through `Cargo.toml`, or `--extern`"></div><div data-l="#// options, or standard Rust distribution, or some other means."></div><div data-l="// ">Suppose we have a dependency crate <code>xcrate</code> available through <code>Cargo.toml</code>, or <code>--extern</code> options, or standard Rust distribution, or some other means.</div><div data-l=""></div><div data-l="use xcrate::Z;"></div><div data-l=""></div><div data-l="fn f() {"></div><div data-l="    use xcrate;"></div><div data-l="    use xcrate as ycrate;"></div><div data-l="    let s = xcrate::S;"></div><div data-l="    assert_eq!(format!(&quot;{:?}&quot;, s), &quot;S&quot;);"></div><div data-l="    let z = ycrate::Z;"></div><div data-l="    assert_eq!(format!(&quot;{:?}&quot;, z), &quot;Z&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let s = ::xcrate::S;"></div><div data-l="    assert_eq!(format!(&quot;{:?}&quot;, s), &quot;S&quot;);"></div><div data-l="    let z = Z;"></div><div data-l="    assert_eq!(format!(&quot;{:?}&quot;, z), &quot;Z&quot;);"></div><div data-l="}"></div></div>

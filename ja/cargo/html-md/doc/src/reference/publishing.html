@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<h2>Publishing on crates.io</h2>
+<br>
+<p>Once you've got a library that you'd like to share with the world, it's time to
+publish it on <a class="notranslate" href="#4crates.io">crates.io</a>! Publishing a crate is when a specific
+version is uploaded to be hosted on <a class="notranslate" href="#4crates.io">crates.io</a>.</p>
+<br>
+<p>Take care when publishing a crate, because a publish is <b>permanent</b>. The
+version can never be overwritten, and the code cannot be deleted. There is no
+limit to the number of versions which can be published, however.</p>
+<br>
+<h3>Before your first publish</h3>
+<br>
+<p>First thing’s first, you’ll need an account on <a class="notranslate" href="#4crates.io">crates.io</a> to acquire
+an API token. To do so, <a href="#3crates.io">visit the home page</a> and log in via a GitHub
+account (required for now). After this, visit your <a class="notranslate" href="#2https://crates.io/me">Account
+Settings</a> page and run the <code>cargo login</code> command
+specified.</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo login abcdefghijklmnopqrstuvwxyz012345"></div></div>
+<br>
+<p>This command will inform Cargo of your API token and store it locally in your
+<code>~/.cargo/credentials</code> (previously it was <code>~/.cargo/config</code>).  Note that this
+token is a <b>secret</b> and should not be shared with anyone else. If it leaks for
+any reason, you should regenerate it immediately.</p>
+<br>
+<h3>Before publishing a new crate</h3>
+<br>
+<p>Keep in mind that crate names on <a class="notranslate" href="#4crates.io">crates.io</a> are allocated on a first-come-first-
+serve basis. Once a crate name is taken, it cannot be used for another crate.</p>
+<br>
+<h4>Packaging a crate</h4>
+<br>
+<p>The next step is to package up your crate into a format that can be uploaded to
+<a class="notranslate" href="#4crates.io">crates.io</a>. For this we’ll use the <code>cargo package</code> subcommand. This will take
+our entire crate and package it all up into a <code>*.crate</code> file in the
+<code>target/package</code> directory.</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo package"></div></div>
+<br>
+<p>As an added bonus, the <code>*.crate</code> will be verified independently of the current
+source tree. After the <code>*.crate</code> is created, it’s unpacked into
+<code>target/package</code> and then built from scratch to ensure that all necessary files
+are there for the build to succeed. This behavior can be disabled with the
+<code>--no-verify</code> flag.</p>
+<br>
+<p>Now’s a good time to take a look at the <code>*.crate</code> file to make sure you didn’t
+accidentally package up that 2GB video asset, or large data files used for code
+generation, integration tests, or benchmarking.  There is currently a 10MB
+upload size limit on <code>*.crate</code> files. So, if the size of <code>tests</code> and <code>benches</code>
+directories and their dependencies are up to a couple of MBs, you can keep them
+in your package; otherwise, better to exclude them.</p>
+<br>
+<p>Cargo will automatically ignore files ignored by your version control system
+when packaging, but if you want to specify an extra set of files to ignore you
+can use the <code>exclude</code> key in the manifest:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="# ..."></div><div data-l="exclude = ["></div><div data-l="    &quot;public/assets/*&quot;,"></div><div data-l="    &quot;videos/*&quot;,"></div><div data-l="]"></div></div>
+<br>
+<p>The syntax of each element in this array is what
+<a class="notranslate" href="#2https://github.com/rust-lang/glob">rust-lang/glob</a> accepts. If you’d rather
+roll with a whitelist instead of a blacklist, Cargo also supports an <code>include</code>
+key, which if set, overrides the <code>exclude</code> key:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="# ..."></div><div data-l="include = ["></div><div data-l="    &quot;**/*.rs&quot;,"></div><div data-l="    &quot;Cargo.toml&quot;,"></div><div data-l="]"></div></div>
+<br>
+<h3>Uploading the crate</h3>
+<br>
+<p>Now that we’ve got a <code>*.crate</code> file ready to go, it can be uploaded to
+<a class="notranslate" href="#4crates.io">crates.io</a> with the <code>cargo publish</code> command. And that’s it, you’ve now published
+your first crate!</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo publish"></div></div>
+<br>
+<p>If you’d like to skip the <code>cargo package</code> step, the <code>cargo publish</code> subcommand
+will automatically package up the local crate if a copy isn’t found already.</p>
+<br>
+<p>Be sure to check out the <a href="#2reference/manifest.html#package-metadata">metadata you can
+specify</a> to ensure your crate can be
+discovered more easily!</p>
+<br>
+<h3>Publishing a new version of an existing crate</h3>
+<br>
+<p>In order to release a new version, change the <code>version</code> value specified in your
+<code>Cargo.toml</code> manifest. Keep in mind <a href="#2reference/manifest.html#the-version-field">the semver
+rules</a>. Then optionally run <code>cargo package</code> if
+you want to inspect the <code>*.crate</code> file for the new version before publishing,
+and run <code>cargo publish</code> to upload the new version.</p>
+<br>
+<h3>Managing a crates.io-based crate</h3>
+<br>
+<p>Management of crates is primarily done through the command line <code>cargo</code> tool
+rather than the <a class="notranslate" href="#4crates.io">crates.io</a> web interface. For this, there are a few subcommands
+to manage a crate.</p>
+<br>
+<h4><code>cargo yank</code></h4>
+<br>
+<p>Occasions may arise where you publish a version of a crate that actually ends up
+being broken for one reason or another (syntax error, forgot to include a file,
+etc.). For situations such as this, Cargo supports a “yank” of a version of a
+crate.</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo yank --vers 1.0.1"></div><div data-l="$ cargo yank --vers 1.0.1 --undo"></div></div>
+<br>
+<p>A yank <b>does not</b> delete any code. This feature is not intended for deleting
+accidentally uploaded secrets, for example. If that happens, you must reset
+those secrets immediately.</p>
+<br>
+<p>The semantics of a yanked version are that no new dependencies can be created
+against that version, but all existing dependencies continue to work. One of the
+major goals of <a class="notranslate" href="#4crates.io">crates.io</a> is to act as a permanent archive of crates that does
+not change over time, and allowing deletion of a version would go against this
+goal. Essentially a yank means that all projects with a <code>Cargo.lock</code> will not
+break, while any future <code>Cargo.lock</code> files generated will not list the yanked
+version.</p>
+<br>
+<h4><code>cargo owner</code></h4>
+<br>
+<p>A crate is often developed by more than one person, or the primary maintainer
+may change over time! The owner of a crate is the only person allowed to publish
+new versions of the crate, but an owner may designate additional owners.</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo owner --add my-buddy"></div><div data-l="$ cargo owner --remove my-buddy"></div><div data-l="$ cargo owner --add github:rust-lang:owners"></div><div data-l="$ cargo owner --remove github:rust-lang:owners"></div></div>
+<br>
+<p>The owner IDs given to these commands must be GitHub user names or GitHub teams.</p>
+<br>
+<p>If a user name is given to <code>--add</code>, that user becomes a “named” owner, with
+full rights to the crate. In addition to being able to publish or yank versions
+of the crate, they have the ability to add or remove owners, <i>including</i> the
+owner that made <i>them</i> an owner. Needless to say, you shouldn’t make people you
+don’t fully trust into a named owner. In order to become a named owner, a user
+must have logged into <a class="notranslate" href="#4crates.io">crates.io</a> previously.</p>
+<br>
+<p>If a team name is given to <code>--add</code>, that team becomes a “team” owner, with
+restricted right to the crate. While they have permission to publish or yank
+versions of the crate, they <i>do not</i> have the ability to add or remove owners.
+In addition to being more convenient for managing groups of owners, teams are
+just a bit more secure against owners becoming malicious.</p>
+<br>
+<p>The syntax for teams is currently <code>github:org:team</code> (see examples above).
+In order to add a team as an owner one must be a member of that team. No
+such restriction applies to removing a team as an owner.</p>
+<br>
+<h3>GitHub permissions</h3>
+<br>
+<p>Team membership is not something GitHub provides simple public access to, and it
+is likely for you to encounter the following message when working with them:</p>
+<br>
+<blockquote><p>It looks like you don’t have permission to query a necessary property from
+GitHub to complete this request. You may need to re-authenticate on <a class="notranslate" href="#4crates.io">crates.io</a>
+to grant permission to read GitHub org memberships. Just go to
+https://crates.io/login</p></blockquote>
+<br>
+<p>This is basically a catch-all for “you tried to query a team, and one of the
+five levels of membership access control denied this”. That is not an
+exaggeration. GitHub’s support for team access control is Enterprise Grade.</p>
+<br>
+<p>The most likely cause of this is simply that you last logged in before this
+feature was added. We originally requested <i>no</i> permissions from GitHub when
+authenticating users, because we didn’t actually ever use the user’s token for
+anything other than logging them in. However to query team membership on your
+behalf, we now require <a href="#3oauth-scopes">the <code>read:org</code> scope</a>.</p>
+<br>
+<p>You are free to deny us this scope, and everything that worked before teams
+were introduced will keep working. However you will never be able to add a team
+as an owner, or publish a crate as a team owner. If you ever attempt to do this,
+you will get the error above. You may also see this error if you ever try to
+publish a crate that you don’t own at all, but otherwise happens to have a team.</p>
+<br>
+<p>If you ever change your mind, or just aren’t sure if <a class="notranslate" href="#4crates.io">crates.io</a> has sufficient
+permission, you can always go to https://crates.io/login, which will prompt you
+for permission if <a class="notranslate" href="#4crates.io">crates.io</a> doesn’t have all the scopes it would like to.</p>
+<br>
+<p>An additional barrier to querying GitHub is that the organization may be
+actively denying third party access. To check this, you can go to:</p>
+<br>
+<p>    https://github.com/organizations/:org/settings/oauth_application_policy</p>
+<br>
+<p>where <code>:org</code> is the name of the organization (e.g. rust-lang). You may see
+something like:</p>
+<br>
+<p>!<a href="#2images/org-level-acl.png">Organization Access Control</a></p>
+<br>
+<p>Where you may choose to explicitly remove <a class="notranslate" href="#4crates.io">crates.io</a> from your organization’s
+blacklist, or simply press the “Remove Restrictions” button to allow all third
+party applications to access this data.</p>
+<br>
+<p>Alternatively, when <a class="notranslate" href="#4crates.io">crates.io</a> requested the <code>read:org</code> scope, you could have
+explicitly whitelisted <a class="notranslate" href="#4crates.io">crates.io</a> querying the org in question by pressing
+the “Grant Access” button next to its name:</p>
+<br>
+<p>!<a href="#2images/auth-level-acl.png">Authentication Access Control</a></p>
+<br>
+<a class="notranslate" href="#1https://crates.io/">crates.io</a>
+<a class="notranslate" href="#1https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/">oauth-scopes</a>

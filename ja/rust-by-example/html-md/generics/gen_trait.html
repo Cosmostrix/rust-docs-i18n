@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Traits</h1>
+<br>
+<p>Of course <code>trait</code>s can also be generic. Here we define one which reimplements
+the <code>Drop</code> <code>trait</code> as a generic method to <code>drop</code> itself and an input.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// Non-copyable types."></div><div data-l="// ">Non-copyable types.</div><div data-l="struct Empty;"></div><div data-l="struct Null;"></div><div data-l=""></div><div data-l="#// A trait generic over `T`."></div><div data-l="// ">A trait generic over <code>T</code>.</div><div data-l="trait DoubleDrop&lt;T&gt; {"></div><div data-l="#    // Define a method on the caller type which takes an"></div><div data-l="#    // additional single parameter `T` and does nothing with it."></div><div data-l="    // ">Define a method on the caller type which takes an additional single parameter <code>T</code> and does nothing with it.</div><div data-l="    fn double_drop(self, _: T);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Implement `DoubleDrop&lt;T&gt;` for any generic parameter `T` and"></div><div data-l="#// caller `U`."></div><div data-l="// ">Implement <code>DoubleDrop&lt;T&gt;</code> for any generic parameter <code>T</code> and caller <code>U</code>.</div><div data-l="impl&lt;T, U&gt; DoubleDrop&lt;T&gt; for U {"></div><div data-l="#    // This method takes ownership of both passed arguments,"></div><div data-l="#    // deallocating both."></div><div data-l="    // ">This method takes ownership of both passed arguments, deallocating both.</div><div data-l="    fn double_drop(self, _: T) {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let empty = Empty;"></div><div data-l="    let null  = Null;"></div><div data-l=""></div><div data-l="#    // Deallocate `empty` and `null`."></div><div data-l="    // ">Deallocate <code>empty</code> and <code>null</code>.</div><div data-l="    empty.double_drop(null);"></div><div data-l=""></div><div data-l="    //empty;"></div><div data-l="    //null;"></div><div data-l="#    // ^ TODO: Try uncommenting these lines."></div><div data-l="    // ">^ TODO: Try uncommenting these lines.</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3Drop"><code>Drop</code></a>, <a class="notranslate" href="#3structs"><code>struct</code></a>, and <a class="notranslate" href="#3traits"><code>trait</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Drop.html">Drop</a>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1trait.html">traits</a>

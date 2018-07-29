@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Lints</h1>
+<br>
+<p>In software, a &quot;lint&quot; is a tool used to help improve your source code. The
+Rust compiler contains a number of lints, and when it compiles your code, it will
+also run the lints. These lints may produce a warning, an error, or nothing at all,
+depending on how you've configured things.</p>
+<br>
+<p>Here's a small example:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cat main.rs"></div><div data-l="fn main() {"></div><div data-l="    let x = 5;"></div><div data-l="}"></div><div data-l="&gt; rustc main.rs"></div><div data-l="warning: unused variable: `x`"></div><div data-l=" --&gt; main.rs:2:9"></div><div data-l="  |"></div><div data-l="2 |     let x = 5;"></div><div data-l="  |         ^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(unused_variables)] on by default"></div><div data-l="  = note: to avoid this warning, consider using `_x` instead"></div></div>
+<br>
+<p>This is the <code>unused_variables</code> lint, and it tells you that you've introduced
+a variable that you don't use in your code. That's not <i>wrong</i>, so it's not
+an error, but it might be a bug, so you get a warning.</p>

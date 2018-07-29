@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<h2>Data Types</h2>
+<br>
+<p>Every value in Rust is of a certain <i>data type</i>, which tells Rust what kind of
+data is being specified so it knows how to work with that data. We’ll look at
+two data type subsets: scalar and compound.</p>
+<br>
+<p>Keep in mind that Rust is a <i>statically typed</i> language, which means that it
+must know the types of all variables at compile time. The compiler can usually
+infer what type we want to use based on the value and how we use it. In cases
+when many types are possible, such as when we converted a <code>String</code> to a numeric
+type using <code>parse</code> in the “Comparing the Guess to the Secret Number” section in
+Chapter 2, we must add a type annotation, like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let guess: u32 = &quot;42&quot;.parse().expect(&quot;Not a number!&quot;);"></div></div>
+<br>
+<p>If we don’t add the type annotation here, Rust will display the following
+error, which means the compiler needs more information from us to know which
+type we want to use:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0282]: type annotations needed"></div><div data-l=" --&gt; src/main.rs:2:9"></div><div data-l="  |"></div><div data-l="2 |     let guess = &quot;42&quot;.parse().expect(&quot;Not a number!&quot;);"></div><div data-l="  |         ^^^^^"></div><div data-l="  |         |"></div><div data-l="  |         cannot infer type for `_`"></div><div data-l="  |         consider giving `guess` a type"></div></div>
+<br>
+<p>You’ll see different type annotations for other data types.</p>
+<br>
+<h3>Scalar Types</h3>
+<br>
+<p>A <i>scalar</i> type represents a single value. Rust has four primary scalar types:
+integers, floating-point numbers, Booleans, and characters. You may recognize
+these from other programming languages. Let’s jump into how they work in Rust.</p>
+<br>
+<h4>Integer Types</h4>
+<br>
+<p>An <i>integer</i> is a number without a fractional component. We used one integer
+type in Chapter 2, the <code>u32</code> type. This type declaration indicates that the
+value it’s associated with should be an unsigned integer (signed integer types
+start with <code>i</code>, instead of <code>u</code>) that takes up 32 bits of space. Table 3-1 shows
+the built-in integer types in Rust. Each variant in the Signed and Unsigned
+columns (for example, <code>i16</code>) can be used to declare the type of an integer
+value.</p>
+<br>
+<p><span class="caption">Table 3-1: Integer Types in Rust</span></p>
+<br>
+<div data-tbl><div> Length </div><div> Signed  </div><div> Unsigned </div></div>
+<div data-tbl><div>--------</div><div>---------</div><div>----------</div></div>
+<div data-tbl><div> 8-bit  </div><div> <code>i8</code>    </div><div> <code>u8</code>     </div></div>
+<div data-tbl><div> 16-bit </div><div> <code>i16</code>   </div><div> <code>u16</code>    </div></div>
+<div data-tbl><div> 32-bit </div><div> <code>i32</code>   </div><div> <code>u32</code>    </div></div>
+<div data-tbl><div> 64-bit </div><div> <code>i64</code>   </div><div> <code>u64</code>    </div></div>
+<div data-tbl><div> arch   </div><div> <code>isize</code> </div><div> <code>usize</code>  </div></div>
+<br>
+<p>Each variant can be either signed or unsigned and has an explicit size.
+<i>Signed</i> and <i>unsigned</i> refer to whether it’s possible for the number to be
+negative or positive—in other words, whether the number needs to have a sign
+with it (signed) or whether it will only ever be positive and can therefore be
+represented without a sign (unsigned). It’s like writing numbers on paper: when
+the sign matters, a number is shown with a plus sign or a minus sign; however,
+when it’s safe to assume the number is positive, it’s shown with no sign.
+Signed numbers are stored using two’s complement representation (if you’re
+unsure what this is, you can search for it online; an explanation is outside
+the scope of this book).</p>
+<br>
+<p>Each signed variant can store numbers from -(2<sup>n - 1</sup>) to 2<sup>n -
+1</sup> - 1 inclusive, where <i>n</i> is the number of bits that variant uses. So an
+<code>i8</code> can store numbers from -(2<sup>7</sup>) to 2<sup>7</sup> - 1, which equals
+-128 to 127. Unsigned variants can store numbers from 0 to 2<sup>n</sup> - 1,
+so a <code>u8</code> can store numbers from 0 to 2<sup>8</sup> - 1, which equals 0 to 255.</p>
+<br>
+<p>Additionally, the <code>isize</code> and <code>usize</code> types depend on the kind of computer your
+program is running on: 64 bits if you’re on a 64-bit architecture and 32 bits
+if you’re on a 32-bit architecture.</p>
+<br>
+<p>You can write integer literals in any of the forms shown in Table 3-2. Note
+that all number literals except the byte literal allow a type suffix, such as
+<code>57u8</code>, and <code>_</code> as a visual separator, such as <code>1_000</code>.</p>
+<br>
+<p><span class="caption">Table 3-2: Integer Literals in Rust</span></p>
+<br>
+<div data-tbl><div> Number literals  </div><div> Example       </div></div>
+<div data-tbl><div>------------------</div><div>---------------</div></div>
+<div data-tbl><div> Decimal          </div><div> <code>98_222</code>      </div></div>
+<div data-tbl><div> Hex              </div><div> <code>0xff</code>        </div></div>
+<div data-tbl><div> Octal            </div><div> <code>0o77</code>        </div></div>
+<div data-tbl><div> Binary           </div><div> <code>0b1111_0000</code> </div></div>
+<div data-tbl><div> Byte (<code>u8</code> only) </div><div> <code>b'A'</code>        </div></div>
+<br>
+<p>So how do you know which type of integer to use? If you’re unsure, Rust’s
+defaults are generally good choices, and integer types default to <code>i32</code>: this
+type is generally the fastest, even on 64-bit systems. The primary situation in
+which you’d use <code>isize</code> or <code>usize</code> is when indexing some sort of collection.</p>
+<br>
+<h4>Floating-Point Types</h4>
+<br>
+<p>Rust also has two primitive types for <i>floating-point numbers</i>, which are
+numbers with decimal points. Rust’s floating-point types are <code>f32</code> and <code>f64</code>,
+which are 32 bits and 64 bits in size, respectively. The default type is <code>f64</code>
+because on modern CPUs it’s roughly the same speed as <code>f32</code> but is capable of
+more precision.</p>
+<br>
+<p>Here’s an example that shows floating-point numbers in action:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="#//    let x = 2.0; // f64"></div><div data-l="    let x = 2.0; // ">f64</div><div data-l=""></div><div data-l="#//    let y: f32 = 3.0; // f32"></div><div data-l="    let y: f32 = 3.0; // ">f32</div><div data-l="}"></div></div>
+<br>
+<p>Floating-point numbers are represented according to the IEEE-754 standard. The
+<code>f32</code> type is a single-precision float, and <code>f64</code> has double precision.</p>
+<br>
+<h4>Numeric Operations</h4>
+<br>
+<p>Rust supports the basic mathematical operations you’d expect for all of the
+number types: addition, subtraction, multiplication, division, and remainder.
+The following code shows how you’d use each one in a <code>let</code> statement:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="#    // addition"></div><div data-l="    // ">addition</div><div data-l="    let sum = 5 + 10;"></div><div data-l=""></div><div data-l="#    // subtraction"></div><div data-l="    // ">subtraction</div><div data-l="    let difference = 95.5 - 4.3;"></div><div data-l=""></div><div data-l="#    // multiplication"></div><div data-l="    // ">multiplication</div><div data-l="    let product = 4 * 30;"></div><div data-l=""></div><div data-l="#    // division"></div><div data-l="    // ">division</div><div data-l="    let quotient = 56.7 / 32.2;"></div><div data-l=""></div><div data-l="#    // remainder"></div><div data-l="    // ">remainder</div><div data-l="    let remainder = 43 % 5;"></div><div data-l="}"></div></div>
+<br>
+<p>Each expression in these statements uses a mathematical operator and evaluates
+to a single value, which is then bound to a variable. Appendix B contains a
+list of all operators that Rust provides.</p>
+<br>
+<h4>The Boolean Type</h4>
+<br>
+<p>As in most other programming languages, a Boolean type in Rust has two possible
+values: <code>true</code> and <code>false</code>. The Boolean type in Rust is specified using <code>bool</code>.
+For example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let t = true;"></div><div data-l=""></div><div data-l="#//    let f: bool = false; // with explicit type annotation"></div><div data-l="    let f: bool = false; // ">with explicit type annotation</div><div data-l="}"></div></div>
+<br>
+<p>The main way to use Boolean values is through conditionals, such as an <code>if</code>
+expression. We’ll cover how <code>if</code> expressions work in Rust in the “Control Flow”
+section.</p>
+<br>
+<h4>The Character Type</h4>
+<br>
+<p>So far we’ve worked only with numbers, but Rust supports letters too. Rust’s
+<code>char</code> type is the language’s most primitive alphabetic type, and the following
+code shows one way to use it. (Note that the <code>char</code> type is specified with
+single quotes, as opposed to strings, which use double quotes.)</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let c = 'z';"></div><div data-l="    let z = 'ℤ';"></div><div data-l="    let heart_eyed_cat = '😻';"></div><div data-l="}"></div></div>
+<br>
+<p>Rust’s <code>char</code> type represents a Unicode Scalar Value, which means it can
+represent a lot more than just ASCII. Accented letters; Chinese, Japanese, and
+Korean characters; emoji; and zero-width spaces are all valid <code>char</code> values in
+Rust. Unicode Scalar Values range from <code>U+0000</code> to <code>U+D7FF</code> and <code>U+E000</code> to
+<code>U+10FFFF</code> inclusive. However, a “character” isn’t really a concept in Unicode,
+so your human intuition for what a “character” is may not match up with what a
+<code>char</code> is in Rust. We’ll discuss this topic in detail in “Strings” in Chapter 8.</p>
+<br>
+<h3>Compound Types</h3>
+<br>
+<p><i>Compound types</i> can group multiple values into one type. Rust has two
+primitive compound types: tuples and arrays.</p>
+<br>
+<h4>The Tuple Type</h4>
+<br>
+<p>A tuple is a general way of grouping together some number of other values with
+a variety of types into one compound type.</p>
+<br>
+<p>We create a tuple by writing a comma-separated list of values inside
+parentheses. Each position in the tuple has a type, and the types of the
+different values in the tuple don’t have to be the same. We’ve added optional
+type annotations in this example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let tup: (i32, f64, u8) = (500, 6.4, 1);"></div><div data-l="}"></div></div>
+<br>
+<p>The variable <code>tup</code> binds to the entire tuple, because a tuple is considered a
+single compound element. To get the individual values out of a tuple, we can
+use pattern matching to destructure a tuple value, like this:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let tup = (500, 6.4, 1);"></div><div data-l=""></div><div data-l="    let (x, y, z) = tup;"></div><div data-l=""></div><div data-l="    println!(&quot;The value of y is: {}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>This program first creates a tuple and binds it to the variable <code>tup</code>. It then
+uses a pattern with <code>let</code> to take <code>tup</code> and turn it into three separate
+variables, <code>x</code>, <code>y</code>, and <code>z</code>. This is called <i>destructuring</i>, because it breaks
+the single tuple into three parts. Finally, the program prints the value of
+<code>y</code>, which is <code>6.4</code>.</p>
+<br>
+<p>In addition to destructuring through pattern matching, we can access a tuple
+element directly by using a period (<code>.</code>) followed by the index of the value we
+want to access. For example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x: (i32, f64, u8) = (500, 6.4, 1);"></div><div data-l=""></div><div data-l="    let five_hundred = x.0;"></div><div data-l=""></div><div data-l="    let six_point_four = x.1;"></div><div data-l=""></div><div data-l="    let one = x.2;"></div><div data-l="}"></div></div>
+<br>
+<p>This program creates a tuple, <code>x</code>, and then makes new variables for each
+element by using their index. As with most programming languages, the first
+index in a tuple is 0.</p>
+<br>
+<h4>The Array Type</h4>
+<br>
+<p>Another way to have a collection of multiple values is with an <i>array</i>. Unlike
+a tuple, every element of an array must have the same type. Arrays in Rust are
+different from arrays in some other languages because arrays in Rust have a
+fixed length: once declared, they cannot grow or shrink in size.</p>
+<br>
+<p>In Rust, the values going into an array are written as a comma-separated list
+inside square brackets:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = [1, 2, 3, 4, 5];"></div><div data-l="}"></div></div>
+<br>
+<p>Arrays are useful when you want your data allocated on the stack rather than
+the heap (we will discuss the stack and the heap more in Chapter 4) or when
+you want to ensure you always have a fixed number of elements. An array isn’t
+as flexible as the vector type, though. A vector is a similar collection type
+provided by the standard library that <i>is</i> allowed to grow or shrink in size.
+If you’re unsure whether to use an array or a vector, you should probably use a
+vector. Chapter 8 discusses vectors in more detail.</p>
+<br>
+<p>An example of when you might want to use an array rather than a vector is in a
+program that needs to know the names of the months of the year. It’s very
+unlikely that such a program will need to add or remove months, so you can use
+an array because you know it will always contain 12 items:</p>
+<br>
+<div data-lang="rust"><div data-l="let months = [&quot;January&quot;, &quot;February&quot;, &quot;March&quot;, &quot;April&quot;, &quot;May&quot;, &quot;June&quot;, &quot;July&quot;,"></div><div data-l="              &quot;August&quot;, &quot;September&quot;, &quot;October&quot;, &quot;November&quot;, &quot;December&quot;];"></div></div>
+<br>
+<h5>Accessing Array Elements</h5>
+<br>
+<p>An array is a single chunk of memory allocated on the stack. You can access
+elements of an array using indexing, like this:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = [1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="    let first = a[0];"></div><div data-l="    let second = a[1];"></div><div data-l="}"></div></div>
+<br>
+<p>In this example, the variable named <code>first</code> will get the value <code>1</code>, because
+that is the value at index <code>[0]</code> in the array. The variable named <code>second</code> will
+get the value <code>2</code> from index <code>[1]</code> in the array.</p>
+<br>
+<h5>Invalid Array Element Access</h5>
+<br>
+<p>What happens if you try to access an element of an array that is past the end
+of the array? Say you change the example to the following code, which will
+compile but exit with an error when it runs:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let a = [1, 2, 3, 4, 5];"></div><div data-l="    let index = 10;"></div><div data-l=""></div><div data-l="    let element = a[index];"></div><div data-l=""></div><div data-l="    println!(&quot;The value of element is: {}&quot;, element);"></div><div data-l="}"></div></div>
+<br>
+<p>Running this code using <code>cargo run</code> produces the following result:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling arrays v0.1.0 (file:///projects/arrays)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/arrays`"></div><div data-l="thread '&lt;main&gt;' panicked at 'index out of bounds: the len is 5 but the index is"></div><div data-l=" 10', src/main.rs:6"></div><div data-l="note: Run with `RUST_BACKTRACE=1` for a backtrace."></div></div>
+<br>
+<p>The compilation didn’t produce any errors, but the program resulted in a
+<i>runtime</i> error and didn’t exit successfully. When you attempt to access an
+element using indexing, Rust will check that the index you’ve specified is less
+than the array length. If the index is greater than the length, Rust will
+<i>panic</i>, which is the term Rust uses when a program exits with an error.</p>
+<br>
+<p>This is the first example of Rust’s safety principles in action. In many
+low-level languages, this kind of check is not done, and when you provide an
+incorrect index, invalid memory can be accessed. Rust protects you against this
+kind of error by immediately exiting instead of allowing the memory access and
+continuing. Chapter 9 discusses more of Rust’s error handling.</p>

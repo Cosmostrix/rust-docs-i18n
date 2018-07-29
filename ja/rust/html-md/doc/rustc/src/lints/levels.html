@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<h1>Lint levels</h1>
+<br>
+<p>In <code>rustc</code>, lints are divided into four <i>levels</i>:</p>
+<br>
+<div data-b="1.">allow</div>
+<div data-b="2.">warn</div>
+<div data-b="3.">deny</div>
+<div data-b="4.">forbid</div>
+<br>
+<p>Each lint has a default level (explained in the lint listing later in this
+chapter), and the compiler has a default warning level. First, let's explain
+what these levels mean, and then we'll talk about configuration.</p>
+<br>
+<h2>allow</h2>
+<br>
+<p>These lints exist, but by default, do nothing. For example, consider this
+source:</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn foo() {}"></div></div>
+<br>
+<p>Compiling this file produces no warnings:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc lib.rs --crate-type=lib"></div><div data-l="$"></div></div>
+<br>
+<p>But this code violates the <code>missing_docs</code> lint.</p>
+<br>
+<p>These lints exist mostly to be manually turned on via configuration, as we'll
+talk about later in this section.</p>
+<br>
+<h2>warn</h2>
+<br>
+<p>The 'warn' lint level will produce a warning if you violate the lint. For example,
+this code runs afoul of the <code>unused_variable</code> lint:</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn foo() {"></div><div data-l="    let x = 5;"></div><div data-l="}"></div></div>
+<br>
+<p>This will produce this warning:</p>
+<br>
+<div data-lang="console"><div data-l="$ rustc lib.rs --crate-type=lib"></div><div data-l="warning: unused variable: `x`"></div><div data-l=" --&gt; lib.rs:2:9"></div><div data-l="  |"></div><div data-l="2 |     let x = 5;"></div><div data-l="  |         ^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(unused_variables)] on by default"></div><div data-l="  = note: to avoid this warning, consider using `_x` instead"></div></div>
+<br>
+<h2>deny</h2>
+<br>
+<p>A 'deny' lint produces an error if you violate it. For example, this code
+runs into the <code>exceeding_bitshifts</code> lint.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    100u8 &lt;&lt; 10;"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="&gt; rustc main.rs"></div><div data-l="error: bitshift exceeds the type's number of bits"></div><div data-l=" --&gt; main.rs:2:13"></div><div data-l="  |"></div><div data-l="2 |     100u8 &lt;&lt; 10;"></div><div data-l="  |     ^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: #[deny(exceeding_bitshifts)] on by default"></div></div>
+<br>
+<p>What's the difference between an error from a lint and a regular old error?
+Lints are configurable via levels, so in a similar way to 'allow' lints,
+warnings that are 'deny' by default let you allow them. Similarly, you may
+wish to set up a lint that is <code>warn</code> by default to produce an error instead.
+This lint level gives you that.</p>
+<br>
+<h2>forbid</h2>
+<br>
+<p>'forbid' is a special lint level that's stronger than 'deny'. It's the same
+as 'deny' in that a lint at this level will produce an error, but unlike the
+'deny' level, the 'forbid' level can not be overridden to be anything lower
+than an error.</p>
+<br>
+<h2>Configuring warning levels</h2>
+<br>
+<p>Remember our <code>missing_docs</code> example from the 'allow' lint level?</p>
+<br>
+<div data-lang="bash"><div data-l="$ cat lib.rs"></div><div data-l="pub fn foo() {}"></div><div data-l="$ rustc lib.rs --crate-type=lib"></div><div data-l="$"></div></div>
+<br>
+<p>We can configure this lint to operate at a higher level, both with
+compiler flags, as well as with an attribute in the source code.</p>
+<br>
+<p>You can also &quot;cap&quot; lints so that the compiler can choose to ignore
+certain lint levels. We'll talk about that last.</p>
+<br>
+<h3>Via compiler flag</h3>
+<br>
+<p>The <code>-A</code>, <code>-W</code>, <code>-D</code>, and <code>-F</code> flags let you turn one or more lints
+into allowed, warning, deny, or forbid levels, like this:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc lib.rs --crate-type=lib -W missing-docs"></div><div data-l="warning: missing documentation for crate"></div><div data-l=" --&gt; lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: requested on the command line with `-W missing-docs`"></div><div data-l=""></div><div data-l="warning: missing documentation for a function"></div><div data-l=" --&gt; lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div><div data-l="&gt; rustc lib.rs --crate-type=lib -D missing-docs"></div><div data-l="error: missing documentation for crate"></div><div data-l=" --&gt; lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: requested on the command line with `-D missing-docs`"></div><div data-l=""></div><div data-l="error: missing documentation for a function"></div><div data-l=" --&gt; lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div><div data-l=""></div><div data-l="error: aborting due to 2 previous errors"></div></div>
+<br>
+<p>You can also pass each flag more than once for changing multiple lints:</p>
+<br>
+<div data-lang="bash"><div data-l="rustc lib.rs --crate-type=lib -D missing-docs -D unused-variables"></div></div>
+<br>
+<p>And of course, you can mix these four flags together:</p>
+<br>
+<div data-lang="bash"><div data-l="rustc lib.rs --crate-type=lib -D missing-docs -A unused-variables"></div></div>
+<br>
+<h3>Via an attribute</h3>
+<br>
+<p>You can also modify the lint level with a crate-wide attribute:</p>
+<br>
+<div data-lang="bash"><div data-l="&gt; cat lib.rs"></div><div data-l="#![warn(missing_docs)]"></div><div data-l=""></div><div data-l="pub fn foo() {}"></div><div data-l="$ rustc lib.rs --crate-type=lib"></div><div data-l="warning: missing documentation for crate"></div><div data-l=" --&gt; lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | / #![warn(missing_docs)]"></div><div data-l="2 | |"></div><div data-l="3 | | pub fn foo() {}"></div><div data-l="  | |_______________^"></div><div data-l="  |"></div><div data-l="note: lint level defined here"></div><div data-l=" --&gt; lib.rs:1:9"></div><div data-l="  |"></div><div data-l="1 | #![warn(missing_docs)]"></div><div data-l="  |         ^^^^^^^^^^^^"></div><div data-l=""></div><div data-l="warning: missing documentation for a function"></div><div data-l=" --&gt; lib.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | pub fn foo() {}"></div><div data-l="  | ^^^^^^^^^^^^"></div></div>
+<br>
+<p>All four, <code>warn</code>, <code>allow</code>, <code>deny</code>, and <code>forbid</code> all work this way.</p>
+<br>
+<p>You can also pass in multiple lints per attribute:</p>
+<br>
+<div data-lang="rust"><div data-l="#![warn(missing_docs, unused_variables)]"></div><div data-l=""></div><div data-l="pub fn foo() {}"></div></div>
+<br>
+<p>And use multiple attributes together:</p>
+<br>
+<div data-lang="rust"><div data-l="#![warn(missing_docs)]"></div><div data-l="#![deny(unused_variables)]"></div><div data-l=""></div><div data-l="pub fn foo() {}"></div></div>
+<br>
+<h3>Capping lints</h3>
+<br>
+<p><code>rustc</code> supports a flag, <code>--cap-lints LEVEL</code> that sets the &quot;lint cap level.&quot;
+This is the maximum level for all lints. So for example, if we take our
+code sample from the &quot;deny&quot; lint level above:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    100u8 &lt;&lt; 10;"></div><div data-l="}"></div></div>
+<br>
+<p>And we compile it, capping lints to warn:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc lib.rs --cap-lints warn"></div><div data-l="warning: bitshift exceeds the type's number of bits"></div><div data-l=" --&gt; lib.rs:2:5"></div><div data-l="  |"></div><div data-l="2 |     100u8 &lt;&lt; 10;"></div><div data-l="  |     ^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(exceeding_bitshifts)] on by default"></div><div data-l=""></div><div data-l="warning: this expression will panic at run-time"></div><div data-l=" --&gt; lib.rs:2:5"></div><div data-l="  |"></div><div data-l="2 |     100u8 &lt;&lt; 10;"></div><div data-l="  |     ^^^^^^^^^^^ attempt to shift left with overflow"></div></div>
+<br>
+<p>It now only warns, rather than errors. We can go further and allow all lints:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc lib.rs --cap-lints allow"></div><div data-l="$"></div></div>
+<br>
+<p>This feature is used heavily by Cargo; it will pass <code>--cap-lints allow</code> when
+compiling your dependencies, so that if they have any warnings, they do not
+pollute the output of your build.</p>

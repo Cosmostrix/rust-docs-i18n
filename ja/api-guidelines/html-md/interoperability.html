@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<h1>Interoperability</h1>
+<br>
+<br>
+<p><a id="c-common-traits"></a>
+## Types eagerly implement common traits (C-COMMON-TRAITS)</p>
+<br>
+<p>Rust's trait system does not allow <s>orphans</s>: roughly, every <code>impl</code> must live
+either in the crate that defines the trait or the implementing type.
+Consequently, crates that define new types should eagerly implement all
+applicable, common traits.</p>
+<br>
+<p>To see why, consider the following situation:</p>
+<br>
+<div data-b="*">Crate <code>std</code> defines trait <code>Display</code>.</div>
+<div data-b="*">Crate <code>url</code> defines type <code>Url</code>, without implementing <code>Display</code>.</div>
+<div data-b="*">Crate <code>webapp</code> imports from both <code>std</code> and <code>url</code>,</div>
+<br>
+<p>There is no way for <code>webapp</code> to add <code>Display</code> to <code>url</code>, since it defines
+neither. (Note: the newtype pattern can provide an efficient, but inconvenient
+workaround.)</p>
+<br>
+<p>The most important common traits to implement from <code>std</code> are:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/marker/trait.Copy.html"><code>Copy</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/clone/trait.Clone.html"><code>Clone</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/cmp/trait.Eq.html"><code>Eq</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/cmp/trait.PartialEq.html"><code>PartialEq</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/cmp/trait.Ord.html"><code>Ord</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html"><code>PartialOrd</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/hash/trait.Hash.html"><code>Hash</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.Debug.html"><code>Debug</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.Display.html"><code>Display</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/default/trait.Default.html"><code>Default</code></a></div>
+<br>
+<p>Note that it is common and expected for types to implement both
+<code>Default</code> and an empty <code>new</code> constructor. <code>new</code> is the constructor
+convention in Rust, and users expect it to exist, so if it is
+reasonable for the basic constructor to take no arguments, then it
+should, even if it is functionally identical to <code>default</code>.</p>
+<br>
+<br>
+<p><a id="c-conv-traits"></a>
+## Conversions use the standard traits <code>From</code>, <code>AsRef</code>, <code>AsMut</code> (C-CONV-TRAITS)</p>
+<br>
+<p>The following conversion traits should be implemented where it makes sense:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.From.html"><code>From</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.TryFrom.html"><code>TryFrom</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.AsRef.html"><code>AsRef</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.AsMut.html"><code>AsMut</code></a></div>
+<br>
+<p>The following conversion traits should never be implemented:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.Into.html"><code>Into</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/convert/trait.TryInto.html"><code>TryInto</code></a></div>
+<br>
+<p>These traits have a blanket impl based on <code>From</code> and <code>TryFrom</code>. Implement those
+instead.</p>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><code>From&lt;u16&gt;</code> is implemented for <code>u32</code> because a smaller integer can always be
+converted to a bigger integer.</div>
+<div data-b="-"><code>From&lt;u32&gt;</code> is <i>not</i> implemented for <code>u16</code> because the conversion may not be
+possible if the integer is too big.</div>
+<div data-b="-"><code>TryFrom&lt;u32&gt;</code> is implemented for <code>u16</code> and returns an error if the integer is
+too big to fit in <code>u16</code>.</div>
+<div data-b="-"><a class="notranslate" href="#4`From<Ipv6Addr>`">`From<Ipv6Addr>`</a> is implemented for <a class="notranslate" href="#4`IpAddr`">`IpAddr`</a>, which is a type that can
+represent both v4 and v6 IP addresses.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/net/struct.Ipv6Addr.html">`From&lt;Ipv6Addr&gt;`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/net/enum.IpAddr.html">`IpAddr`</a>
+<br>
+<br>
+<p><a id="c-collect"></a>
+## Collections implement <code>FromIterator</code> and <code>Extend</code> (C-COLLECT)</p>
+<br>
+<p><a class="notranslate" href="#4`FromIterator`">`FromIterator`</a> and <a class="notranslate" href="#4`Extend`">`Extend`</a> enable collections to be used conveniently with
+the following iterator methods:</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.FromIterator.html">`FromIterator`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Extend.html">`Extend`</a>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect"><code>Iterator::collect</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.partition"><code>Iterator::partition</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.unzip"><code>Iterator::unzip</code></a></div>
+<br>
+<p><code>FromIterator</code> is for creating a new collection containing items from an
+iterator, and <code>Extend</code> is for adding items from an iterator onto an existing
+collection.</p>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`Vec<T>`">`Vec<T>`</a> implements both <code>FromIterator&lt;T&gt;</code> and <code>Extend&lt;T&gt;</code>.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html">`Vec&lt;T&gt;`</a>
+<br>
+<br>
+<p><a id="c-serde"></a>
+## Data structures implement Serde's <code>Serialize</code>, <code>Deserialize</code> (C-SERDE)</p>
+<br>
+<p>Types that play the role of a data structure should implement <a class="notranslate" href="#4`Serialize`">`Serialize`</a> and
+<a class="notranslate" href="#4`Deserialize`">`Deserialize`</a>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.serde.rs/serde/trait.Serialize.html">`Serialize`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde/trait.Deserialize.html">`Deserialize`</a>
+<br>
+<p>There is a continuum of types between things that are clearly a data structure
+and things that are clearly not, with gray area in between. <a class="notranslate" href="#4`LinkedHashMap`">`LinkedHashMap`</a>
+and <a class="notranslate" href="#4`IpAddr`">`IpAddr`</a> are data structures. It would be completely reasonable for
+somebody to want to read in a <code>LinkedHashMap</code> or <code>IpAddr</code> from a JSON file, or
+send one over IPC to another process. <a class="notranslate" href="#4`LittleEndian`">`LittleEndian`</a> is not a data structure.
+It is a marker used by the <code>byteorder</code> crate to optimize at compile time for
+bytes in a particular order, and in fact an instance of <code>LittleEndian</code> can never
+exist at runtime. So these are clear-cut examples; the #rust or #serde IRC
+channels can help assess more ambiguous cases if necessary.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/linked-hash-map/0.4.2/linked_hash_map/struct.LinkedHashMap.html">`LinkedHashMap`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/net/enum.IpAddr.html">`IpAddr`</a>
+<a class="notranslate" href="#1https://docs.rs/byteorder/1.0.0/byteorder/enum.LittleEndian.html">`LittleEndian`</a>
+<br>
+<p>If a crate does not already depend on Serde for other reasons, it may wish to
+gate Serde impls behind a Cargo cfg. This way downstream libraries only need to
+pay the cost of compiling Serde if they need those impls to exist.</p>
+<br>
+<p>For consistency with other Serde-based libraries, the name of the Cargo cfg
+should be simply <code>&quot;serde&quot;</code>. Do not use a different name for the cfg like
+<code>&quot;serde_impls&quot;</code> or <code>&quot;serde_serialization&quot;</code>.</p>
+<br>
+<p>The canonical implementation looks like this when not using derive:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l="serde = { version = &quot;1.0&quot;, optional = true }"></div></div>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(feature = &quot;serde&quot;)]"></div><div data-l="extern crate serde;"></div><div data-l=""></div><div data-l="struct T { /* ... */ }"></div><div data-l=""></div><div data-l="#[cfg(feature = &quot;serde&quot;)]"></div><div data-l="impl Serialize for T { /* ... */ }"></div><div data-l=""></div><div data-l="#[cfg(feature = &quot;serde&quot;)]"></div><div data-l="impl&lt;'de&gt; Deserialize&lt;'de&gt; for T { /* ... */ }"></div></div>
+<br>
+<p>And when using derive:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l="serde = { version = &quot;1.0&quot;, optional = true, features = [&quot;derive&quot;] }"></div></div>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(feature = &quot;serde&quot;)]"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde;"></div><div data-l=""></div><div data-l="#[cfg_attr(feature = &quot;serde&quot;, derive(Serialize, Deserialize))]"></div><div data-l="struct T { /* ... */ }"></div></div>
+<br>
+<br>
+<p><a id="c-send-sync"></a>
+## Types are <code>Send</code> and <code>Sync</code> where possible (C-SEND-SYNC)</p>
+<br>
+<p><a class="notranslate" href="#4`Send`">`Send`</a> and <a class="notranslate" href="#4`Sync`">`Sync`</a> are automatically implemented when the compiler determines
+it is appropriate.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Send.html">`Send`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Sync.html">`Sync`</a>
+<br>
+<p>In types that manipulate raw pointers, be vigilant that the <code>Send</code> and <code>Sync</code>
+status of your type accurately reflects its thread safety characteristics. Tests
+like the following can help catch unintentional regressions in whether the type
+implements <code>Send</code> or <code>Sync</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="#[test]"></div><div data-l="fn test_send() {"></div><div data-l="    fn assert_send&lt;T: Send&gt;() {}"></div><div data-l="    assert_send::&lt;MyStrangeType&gt;();"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn test_sync() {"></div><div data-l="    fn assert_sync&lt;T: Sync&gt;() {}"></div><div data-l="    assert_sync::&lt;MyStrangeType&gt;();"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-good-err"></a>
+## Error types are meaningful and well-behaved (C-GOOD-ERR)</p>
+<br>
+<p>An error type is any type <code>E</code> used in a <code>Result&lt;T, E&gt;</code> returned by any public
+function of your crate. Error types should always implement the
+<a class="notranslate" href="#4`std::error::Error`">`std::error::Error`</a> trait which is the mechanism by which error handling
+libraries like <a class="notranslate" href="#4`error-chain`">`error-chain`</a> abstract over different types of errors, and
+which allows the error to be used as the <a class="notranslate" href="#4`cause()`">`cause()`</a> of another error.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html">`std::error::Error`</a>
+<a class="notranslate" href="#1https://docs.rs/error-chain">`error-chain`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html#method.cause">`cause()`</a>
+<br>
+<p>Additionally, error types should implement the <a class="notranslate" href="#4`Send`">`Send`</a> and <a class="notranslate" href="#4`Sync`">`Sync`</a> traits. An
+error that is not <code>Send</code> cannot be returned by a thread run with
+<a class="notranslate" href="#4`thread::spawn`">`thread::spawn`</a>. An error that is not <code>Sync</code> cannot be passed across threads
+using an <a class="notranslate" href="#4`Arc`">`Arc`</a>. These are common requirements for basic error handling in a
+multithreaded application.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Send.html">`Send`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/marker/trait.Sync.html">`Sync`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/thread/fn.spawn.html">`thread::spawn`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/sync/struct.Arc.html">`Arc`</a>
+<br>
+<p><code>Send</code> and <code>Sync</code> are also important for being able to package a custom error
+into an IO error using <a class="notranslate" href="#4`std::io::Error::new`">`std::io::Error::new`</a>, which requires a trait bound of
+<code>Error + Send + Sync</code>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.Error.html#method.new">`std::io::Error::new`</a>
+<br>
+<p>One place to be vigilant about this guideline is in functions that return Error
+trait objects, for example <a class="notranslate" href="#4`reqwest::Error::get_ref`">`reqwest::Error::get_ref`</a>. Typically <code>Error +
+Send + Sync + 'static</code> will be the most useful for callers. The addition of
+<code>'static</code> allows the trait object to be used with <a class="notranslate" href="#4`Error::downcast_ref`">`Error::downcast_ref`</a>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/reqwest/0.7.2/reqwest/struct.Error.html#method.get_ref">`reqwest::Error::get_ref`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html#method.downcast_ref-2">`Error::downcast_ref`</a>
+<br>
+<p>Never use <code>()</code> as an error type, even where there is no useful additional
+information for the error to carry.</p>
+<br>
+<div data-b="-"><code>()</code> does not implement <code>Error</code> so it cannot be used with error handling
+libraries like <code>error-chain</code>.</div>
+<div data-b="-"><code>()</code> does not implement <code>Display</code> so a user would need to write an error
+message of their own if they want to fail because of the error.</div>
+<div data-b="-"><code>()</code> has an unhelpful <code>Debug</code> representation for users that decide to
+<code>unwrap()</code> the error.</div>
+<div data-b="-">It would not be semantically meaningful for a downstream library to implement
+<code>From&lt;()&gt;</code> for their error type, so <code>()</code> as an error type cannot be used with
+the <code>?</code> operator.</div>
+<br>
+<p>Instead, define a meaningful error type specific to your crate or to the
+individual function. Provide appropriate <code>Error</code> and <code>Display</code> impls. If there
+is no useful information for the error to carry, it can be implemented as a unit
+struct.</p>
+<br>
+<div data-lang="rust"><div data-l="use std::error::Error;"></div><div data-l="use std::fmt::Display;"></div><div data-l=""></div><div data-l="#// Instead of this..."></div><div data-l="// ">Instead of this...</div><div data-l="fn do_the_thing() -&gt; Result&lt;Wow, ()&gt;"></div><div data-l=""></div><div data-l="#// Prefer this..."></div><div data-l="// ">Prefer this...</div><div data-l="fn do_the_thing() -&gt; Result&lt;Wow, DoError&gt;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct DoError;"></div><div data-l=""></div><div data-l="impl Display for DoError { /* ... */ }"></div><div data-l="impl Error for DoError { /* ... */ }"></div></div>
+<br>
+<p>The error message given by the <code>Display</code> representation of an error type should
+be lowercase without trailing punctuation, and typically concise.</p>
+<br>
+<p>The message given by <a class="notranslate" href="#4`Error::description()`">`Error::description()`</a> does not matter. Users should
+always use <code>Display</code> instead of <code>description()</code> to print the error. A low-effort
+description like <code>&quot;JSON error&quot;</code> is sufficient.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html#tymethod.description">`Error::description()`</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`ParseBoolError`">`ParseBoolError`</a> is returned when failing to parse a bool from a string.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/str/struct.ParseBoolError.html">`ParseBoolError`</a>
+<br>
+<h3>Examples of error messages</h3>
+<br>
+<div data-b="-">&quot;unexpected end of file&quot;</div>
+<div data-b="-">&quot;provided string was not \<code>true\</code> or \<code>false\</code>&quot;</div>
+<div data-b="-">&quot;invalid IP address syntax&quot;</div>
+<div data-b="-">&quot;second time provided was later than self&quot;</div>
+<div data-b="-">&quot;invalid UTF-8 sequence of {} bytes from index {}&quot;</div>
+<div data-b="-">&quot;environment variable was not valid unicode: {:?}&quot;</div>
+<br>
+<br>
+<p><a id="c-num-fmt"></a>
+## Binary number types provide <code>Hex</code>, <code>Octal</code>, <code>Binary</code> formatting (C-NUM-FMT)</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.UpperHex.html"><code>std::fmt::UpperHex</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.LowerHex.html"><code>std::fmt::LowerHex</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.Octal.html"><code>std::fmt::Octal</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/fmt/trait.Binary.html"><code>std::fmt::Binary</code></a></div>
+<br>
+<p>These traits control the representation of a type under the <code>{:X}</code>, <code>{:x}</code>,
+<code>{:o}</code>, and <code>{:b}</code> format specifiers.</p>
+<br>
+<p>Implement these traits for any number type on which you would consider doing
+bitwise manipulations like <code>|</code> or <code>&amp;</code>. This is especially appropriate for
+bitflag types. Numeric quantity types like <code>struct Nanoseconds(u64)</code> probably do
+not need these.</p>
+<br>
+<p><a id="c-rw-value"></a>
+## Generic reader/writer functions take <code>R: Read</code> and <code>W: Write</code> by value (C-RW-VALUE)</p>
+<br>
+<p>The standard library contains these two impls:</p>
+<br>
+<div data-lang="rust"><div data-l="impl&lt;'a, R: Read + ?Sized&gt; Read for &amp;'a mut R { /* ... */ }"></div><div data-l=""></div><div data-l="impl&lt;'a, W: Write + ?Sized&gt; Write for &amp;'a mut W { /* ... */ }"></div></div>
+<br>
+<p>That means any function that accepts <code>R: Read</code> or <code>W: Write</code> generic parameters
+by value can be called with a mut reference if necessary.</p>
+<br>
+<p>In the documentation of such functions, briefly remind users that a mut
+reference can be passed. New Rust users often struggle with this. They may have
+opened a file and want to read multiple pieces of data out of it, but the
+function to read one piece consumes the reader by value, so they are stuck. The
+solution would be to leverage one of the above impls and pass <code>&amp;mut f</code> instead
+of <code>f</code> as the reader parameter.</p>
+<br>
+<h3>Examples</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`flate2::read::GzDecoder::new`">`flate2::read::GzDecoder::new`</a></div>
+<div data-b="-"><a class="notranslate" href="#4`flate2::write::GzEncoder::new`">`flate2::write::GzEncoder::new`</a></div>
+<div data-b="-"><a class="notranslate" href="#4`serde_json::from_reader`">`serde_json::from_reader`</a></div>
+<div data-b="-"><a class="notranslate" href="#4`serde_json::to_writer`">`serde_json::to_writer`</a></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/flate2/0.2/flate2/read/struct.GzDecoder.html#method.new">`flate2::read::GzDecoder::new`</a>
+<a class="notranslate" href="#1https://docs.rs/flate2/0.2/flate2/write/struct.GzEncoder.html#method.new">`flate2::write::GzEncoder::new`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/fn.from_reader.html">`serde_json::from_reader`</a>
+<a class="notranslate" href="#1https://docs.serde.rs/serde_json/fn.to_writer.html">`serde_json::to_writer`</a>

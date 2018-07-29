@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<h1><code>compiler_builtins_lib</code></h1>
+<br>
+<p>The tracking issue for this feature is: None.</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>This feature is required to link to the <code>compiler_builtins</code> crate which contains
+&quot;compiler intrinsics&quot;. Compiler intrinsics are software implementations of basic
+operations like multiplication of <code>u64</code>s. These intrinsics are only required on
+platforms where these operations don't directly map to a hardware instruction.</p>
+<br>
+<p>You should never need to explicitly link to the <code>compiler_builtins</code> crate when
+building &quot;std&quot; programs as <code>compiler_builtins</code> is already in the dependency
+graph of <code>std</code>. But you may need it when building <code>no_std</code> <b>binary</b> crates. If
+you get a <i>linker</i> error like:</p>
+<br>
+<div data-lang=" text"><div data-l="$PWD/src/main.rs:11: undefined reference to `__aeabi_lmul'"></div><div data-l="$PWD/src/main.rs:11: undefined reference to `__aeabi_uldivmod'"></div></div>
+<br>
+<p>That means that you need to link to this crate.</p>
+<br>
+<p>When you link to this crate, make sure it only appears once in your crate
+dependency graph. Also, it doesn't matter where in the dependency graph you
+place the <code>compiler_builtins</code> crate.</p>
+<br>
+<p><!-- NOTE(ignore) doctests don't support `no_std` binaries --></p>
+<br>
+<div data-lang=" rust,ignore"><div data-l="#![feature(compiler_builtins_lib)]"></div><div data-l="#![no_std]"></div><div data-l=""></div><div data-l="extern crate compiler_builtins;"></div></div>

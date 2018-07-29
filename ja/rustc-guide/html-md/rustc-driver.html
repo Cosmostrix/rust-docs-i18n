@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<h1>The Rustc Driver</h1>
+<br>
+<p>The <a class="notranslate" href="#4`rustc_driver`">`rustc_driver`</a> is essentially <code>rustc</code>'s <code>main()</code> function. It acts as
+the glue for running the various phases of the compiler in the correct order,
+managing state such as the <a class="notranslate" href="#4`CodeMap`">`CodeMap`</a> \(maps AST nodes to source code),
+<a class="notranslate" href="#4`Session`">`Session`</a> \(general build context and error messaging) and the <a class="notranslate" href="#4`TyCtxt`">`TyCtxt`</a>
+\(the &quot;typing context&quot;, allowing you to query the type system and other cool
+stuff). The <code>rustc_driver</code> crate also provides external users with a method
+for running code at particular times during the compilation process, allowing
+third parties to effectively use <code>rustc</code>'s internals as a library for
+analysing a crate or emulating the compiler in-process (e.g. the RLS).</p>
+<br>
+<p>For those using <code>rustc</code> as a library, the <code>run_compiler()</code> function is the main
+entrypoint to the compiler. Its main parameters are a list of command-line
+arguments and a reference to something which implements the <code>CompilerCalls</code>
+trait. A <code>CompilerCalls</code> creates the overall <code>CompileController</code>, letting it
+govern which compiler passes are run and attach callbacks to be fired at the end
+of each phase.</p>
+<br>
+<p>From <code>rustc_driver</code>'s perspective, the main phases of the compiler are:</p>
+<br>
+<div data-b="1."><i>Parse Input:</i> Initial crate parsing</div>
+<div data-b="2."><i>Configure and Expand:</i> Resolve <code>#[cfg]</code> attributes, name resolution, and
+ expand macros</div>
+<div data-b="3."><i>Run Analysis Passes:</i> Run trait resolution, typechecking, region checking
+ and other miscellaneous analysis passes on the crate</div>
+<div data-b="4."><i>Translate to LLVM:</i> Translate to the in-memory form of LLVM IR and turn it
+ into an executable/object files</div>
+<br>
+<p>The <code>CompileController</code> then gives users the ability to inspect the ongoing
+compilation process</p>
+<br>
+<div data-b="-">after parsing</div>
+<div data-b="-">after AST expansion</div>
+<div data-b="-">after HIR lowering</div>
+<div data-b="-">after analysis, and</div>
+<div data-b="-">when compilation is done</div>
+<br>
+<p>The <code>CompileState</code>'s various <code>state_after_*()</code> constructors can be inspected to
+determine what bits of information are available to which callback.</p>
+<br>
+<p>For a more detailed explanation on using <code>rustc_driver</code>, check out the
+<a class="notranslate" href="#4stupid-stats">stupid-stats</a> guide by <code>@nrc</code> (attached as <a class="notranslate" href="#4Appendix A">Appendix A</a>).</p>
+<br>
+<blockquote><p><b>Warning:</b> By its very nature, the internal compiler APIs are always going
+to be unstable. That said, we do try not to break things unnecessarily.</p></blockquote>
+<br>
+<h2>A Note On Lifetimes</h2>
+<br>
+<p>The Rust compiler is a fairly large program containing lots of big data
+structures (e.g. the AST, HIR, and the type system) and as such, arenas and
+references are heavily relied upon to minimize unnecessary memory use. This
+manifests itself in the way people can plug into the compiler, preferring a
+&quot;push&quot;-style API (callbacks) instead of the more Rust-ic &quot;pull&quot; style (think
+the <code>Iterator</code> trait).</p>
+<br>
+<p>For example the <a class="notranslate" href="#4`CompileState`">`CompileState`</a>, the state passed to callbacks after each
+phase, is essentially just a box of optional references to pieces inside the
+compiler. The lifetime bound on the <code>CompilerCalls</code> trait then helps to ensure
+compiler internals don't &quot;escape&quot; the compiler (e.g. if you tried to keep a
+reference to the AST after the compiler is finished), while still letting users
+record <i>some</i> state for use after the <code>run_compiler()</code> function finishes.</p>
+<br>
+<p>Thread-local storage and interning are used a lot through the compiler to reduce
+duplication while also preventing a lot of the ergonomic issues due to many
+pervasive lifetimes. The <code>rustc::ty::tls</code> module is used to access these
+thread-locals, although you should rarely need to touch it.</p>
+<br>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc_driver/">`rustc_driver`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc_driver/driver/struct.CompileState.html">`CompileState`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc/session/struct.Session.html">`Session`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc/ty/struct.TyCtxt.html">`TyCtxt`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/codemap/struct.CodeMap.html">`CodeMap`</a>
+<a class="notranslate" href="#1https://github.com/nrc/stupid-stats">stupid-stats</a>
+<a class="notranslate" href="#1appendix/stupid-stats.html">Appendix A</a>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<h1>Future proofing</h1>
+<br>
+<br>
+<p><a id="c-sealed"></a>
+## Sealed traits protect against downstream implementations (C-SEALED)</p>
+<br>
+<p>Some traits are only meant to be implemented within the crate that defines them.
+In such cases, we can retain the ability to make changes to the trait in a
+non-breaking way by using the sealed trait pattern.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// This trait is sealed and cannot be implemented for types outside this crate."></div><div data-l="/// ">This trait is sealed and cannot be implemented for types outside this crate.</div><div data-l="pub trait TheTrait: private::Sealed {"></div><div data-l="#    // Zero or more methods that the user is allowed to call."></div><div data-l="    // ">Zero or more methods that the user is allowed to call.</div><div data-l="    fn ...();"></div><div data-l=""></div><div data-l="#    // Zero or more private methods, not allowed for user to call."></div><div data-l="    // ">Zero or more private methods, not allowed for user to call.</div><div data-l="    #[doc(hidden)]"></div><div data-l="    fn ...();"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Implement for some types."></div><div data-l="// ">Implement for some types.</div><div data-l="impl TheTrait for usize {"></div><div data-l="    /* ... */"></div><div data-l="}"></div><div data-l=""></div><div data-l="mod private {"></div><div data-l="    pub trait Sealed {}"></div><div data-l=""></div><div data-l="#    // Implement for those same types, but no others."></div><div data-l="    // ">Implement for those same types, but no others.</div><div data-l="    impl Sealed for usize {}"></div><div data-l="}"></div></div>
+<br>
+<p>The empty private <code>Sealed</code> supertrait cannot be named by downstream crates, so
+we are guaranteed that implementations of <code>Sealed</code> (and therefore <code>TheTrait</code>)
+only exist in the current crate. We are free to add methods to <code>TheTrait</code> in a
+non-breaking release even though that would ordinarily be a breaking change for
+traits that are not sealed. Also we are free to change the signature of methods
+that are not publicly documented.</p>
+<br>
+<p>Note that removing a public method or changing the signature of a public method
+in a sealed trait are still breaking changes.</p>
+<br>
+<p>To avoid frustrated users trying to implement the trait, it should be documented
+in rustdoc that the trait is sealed and not meant to be implemented outside of
+the current crate.</p>
+<br>
+<h3>Examples</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://docs.serde.rs/serde_json/value/trait.Index.html"><code>serde_json::value::Index</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://docs.rs/byteorder/1.1.0/byteorder/trait.ByteOrder.html"><code>byteorder::ByteOrder</code></a></div>
+<br>
+<br>
+<p><a id="c-struct-private"></a>
+## Structs have private fields (C-STRUCT-PRIVATE)</p>
+<br>
+<p>Making a field public is a strong commitment: it pins down a representation
+choice, <s>and</s> prevents the type from providing any validation or maintaining any
+invariants on the contents of the field, since clients can mutate it arbitrarily.</p>
+<br>
+<p>Public fields are most appropriate for <code>struct</code> types in the C spirit: compound,
+passive data structures. Otherwise, consider providing getter/setter methods and
+hiding fields instead.</p>
+<br>
+<br>
+<p><a id="c-newtype-hide"></a>
+## Newtypes encapsulate implementation details (C-NEWTYPE-HIDE)</p>
+<br>
+<p>A newtype can be used to hide representation details while making precise
+promises to the client.</p>
+<br>
+<p>For example, consider a function <code>my_transform</code> that returns a compound iterator
+type.</p>
+<br>
+<div data-lang="rust"><div data-l="use std::iter::{Enumerate, Skip};"></div><div data-l=""></div><div data-l="pub fn my_transform&lt;I: Iterator&gt;(input: I) -&gt; Enumerate&lt;Skip&lt;I&gt;&gt; {"></div><div data-l="    input.skip(3).enumerate()"></div><div data-l="}"></div></div>
+<br>
+<p>We wish to hide this type from the client, so that the client's view of the
+return type is roughly <code>Iterator&lt;Item = (usize, T)&gt;</code>. We can do so using the
+newtype pattern:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::iter::{Enumerate, Skip};"></div><div data-l=""></div><div data-l="pub struct MyTransformResult&lt;I&gt;(Enumerate&lt;Skip&lt;I&gt;&gt;);"></div><div data-l=""></div><div data-l="impl&lt;I: Iterator&gt; Iterator for MyTransformResult&lt;I&gt; {"></div><div data-l="    type Item = (usize, I::Item);"></div><div data-l=""></div><div data-l="    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt; {"></div><div data-l="        self.0.next()"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub fn my_transform&lt;I: Iterator&gt;(input: I) -&gt; MyTransformResult&lt;I&gt; {"></div><div data-l="    MyTransformResult(input.skip(3).enumerate())"></div><div data-l="}"></div></div>
+<br>
+<p>Aside from simplifying the signature, this use of newtypes allows us to promise
+less to the client. The client does not know <s>how</s> the result iterator is
+constructed or represented, which means the representation can change in the
+future without breaking client code.</p>
+<br>
+<p>In the future the same thing can be accomplished more concisely with the <a class="notranslate" href="#4`impl
+Trait`">`impl
+Trait`</a> feature but this is currently unstable.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1522-conservative-impl-trait.md">`impl Trait`</a>
+<br>
+<div data-lang="rust"><div data-l="#![feature(conservative_impl_trait)]"></div><div data-l=""></div><div data-l="pub fn my_transform&lt;I: Iterator&gt;(input: I) -&gt; impl Iterator&lt;Item = (usize, I::Item)&gt; {"></div><div data-l="    input.skip(3).enumerate()"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-struct-bounds"></a>
+## Data structures do not duplicate derived trait bounds (C-STRUCT-BOUNDS)</p>
+<br>
+<p>Generic data structures should not use trait bounds that can be derived or do
+not otherwise add semantic value. Each trait in the <code>derive</code> attribute will be
+expanded into a separate <code>impl</code> block that only applies to generic arguments
+that implement that trait.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Prefer this:"></div><div data-l="// ">Prefer this:</div><div data-l="#[derive(Clone, Debug, PartialEq)]"></div><div data-l="struct Good&lt;T&gt; { /* ... */ }"></div><div data-l=""></div><div data-l="#// Over this:"></div><div data-l="// ">Over this:</div><div data-l="#[derive(Clone, Debug, PartialEq)]"></div><div data-l="struct Bad&lt;T: Clone + Debug + PartialEq&gt; { /* ... */ }"></div></div>
+<br>
+<p>Duplicating derived traits as bounds on <code>Bad</code> is unnecessary and a
+backwards-compatibiliity hazard. To illustrate this point, consider deriving
+<code>PartialOrd</code> on the structures in the previous example:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Non-breaking change:"></div><div data-l="// ">Non-breaking change:</div><div data-l="#[derive(Clone, Debug, PartialEq, PartialOrd)]"></div><div data-l="struct Good&lt;T&gt; { /* ... */ }"></div><div data-l=""></div><div data-l="#// Breaking change:"></div><div data-l="// ">Breaking change:</div><div data-l="#[derive(Clone, Debug, PartialEq, PartialOrd)]"></div><div data-l="struct Bad&lt;T: Clone + Debug + PartialEq + PartialOrd&gt; { /* ... */ }"></div></div>
+<br>
+<p>Generally speaking, adding a trait bound to a data structure is a breaking
+change because every consumer of that structure will need to start satisfying
+the additional bound. Deriving more traits from the standard library using the
+<code>derive</code> attribute is not a breaking change.</p>
+<br>
+<p>The following traits should never be used in bounds on data structures:</p>
+<br>
+<div data-b="-"><code>Clone</code></div>
+<div data-b="-"><code>PartialEq</code></div>
+<div data-b="-"><code>PartialOrd</code></div>
+<div data-b="-"><code>Debug</code></div>
+<div data-b="-"><code>Display</code></div>
+<div data-b="-"><code>Default</code></div>
+<div data-b="-"><code>Serialize</code></div>
+<div data-b="-"><code>Deserialize</code></div>
+<div data-b="-"><code>DeserializeOwned</code></div>
+<br>
+<p>There is a grey area around other non-derivable trait bounds that are not
+strictly required by the structure definition, like <code>Read</code> or <code>Write</code>. They may
+communicate the intended behavior of the type better in its definition but also
+limits future extensibility. Including semantically useful trait bounds on data
+structures is still less problematic than including derivable traits as bounds.</p>
+<br>
+<h3>Exceptions</h3>
+<br>
+<p>There are three exceptions where trait bounds on structures are required:</p>
+<br>
+<div data-b="1.">The data structure refers to an associated type on the trait.</div>
+<div data-b="1.">The bound is <code>?Sized</code>.</div>
+<div data-b="1.">The data structure has a <code>Drop</code> impl that requires trait bounds.</div>
+<p>Rust currently requires all trait bounds on the <code>Drop</code> impl are also present
+on the data structure.</p>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`std::borrow::Cow`">`std::borrow::Cow`</a> refers to an associated type on the <code>Borrow</code> trait.</div>
+<div data-b="-"><a class="notranslate" href="#4`std::boxed::Box`">`std::boxed::Box`</a> opts out of the implicit <code>Sized</code> bound.</div>
+<div data-b="-"><a class="notranslate" href="#4`std::io::BufWriter`">`std::io::BufWriter`</a> requires a trait bound in its <code>Drop</code> impl.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/borrow/enum.Cow.html">`std::borrow::Cow`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/boxed/struct.Box.html">`std::boxed::Box`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufWriter.html">`std::io::BufWriter`</a>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<h1>The Parser</h1>
+<br>
+<p>The parser is responsible for converting raw Rust source code into a structured
+form which is easier for the compiler to work with, usually called an <a href="#3ast"><i>Abstract
+Syntax Tree</i></a>. An AST mirrors the structure of a Rust program in memory,
+using a <code>Span</code> to link a particular AST node back to its source text.</p>
+<br>
+<p>The bulk of the parser lives in the <a class="notranslate" href="#4libsyntax">libsyntax</a> crate.</p>
+<br>
+<p>Like most parsers, the parsing process is composed of two main steps,</p>
+<br>
+<div data-b="-">lexical analysis – turn a stream of characters into a stream of token trees</div>
+<div data-b="-">parsing – turn the token trees into an AST</div>
+<br>
+<p>The <code>syntax</code> crate contains several main players,</p>
+<br>
+<div data-b="-">a <a class="notranslate" href="#4`CodeMap`">`CodeMap`</a> for mapping AST nodes to their source code</div>
+<div data-b="-">the <a class="notranslate" href="#4ast module">ast module</a> contains types corresponding to each AST node</div>
+<div data-b="-">a <a class="notranslate" href="#4`StringReader`">`StringReader`</a> for lexing source code into tokens</div>
+<div data-b="-">the <a class="notranslate" href="#4parser module">parser module</a> and <a class="notranslate" href="#4`Parser`">`Parser`</a> struct are in charge of actually parsing
+tokens into AST nodes,</div>
+<div data-b="-">and a <a class="notranslate" href="#4visit module">visit module</a> for walking the AST and inspecting or mutating the AST
+nodes.</div>
+<br>
+<p>The main entrypoint to the parser is via the various <code>parse_*</code> functions in the
+<a class="notranslate" href="#4parser module">parser module</a>. They let you do things like turn a <a class="notranslate" href="#3filemap"><code>FileMap</code></a> (e.g.
+the source in a single file) into a token stream, create a parser from the
+token stream, and then execute the parser to get a <code>Crate</code> (the root AST node).</p>
+<br>
+<p>To minimise the amount of copying that is done, both the <code>StringReader</code> and
+<code>Parser</code> have lifetimes which bind them to the parent <code>ParseSess</code>. This contains
+all the information needed while parsing, as well as the <code>CodeMap</code> itself.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/index.html">libsyntax</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc_errors/index.html">rustc_errors</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Abstract_syntax_tree">ast</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/codemap/struct.CodeMap.html">`CodeMap`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/ast/index.html">ast module</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/parse/index.html">parser module</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/parse/parser/struct.Parser.html">`Parser`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/parse/lexer/struct.StringReader.html">`StringReader`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/visit/index.html">visit module</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/syntax/codemap/struct.FileMap.html">filemap</a>

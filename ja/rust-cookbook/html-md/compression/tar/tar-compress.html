@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Compress a directory into tarball</h2>
+<br>
+<p><a href="#3flate2">!<a class="notranslate" href="#4flate2-badge">flate2-badge</a></a> <a href="#3tar">!<a class="notranslate" href="#4tar-badge">tar-badge</a></a> <a href="#3cat-compression">!<a class="notranslate" href="#4cat-compression-badge">cat-compression-badge</a></a></p>
+<br>
+<p>Compress <code>/var/log</code> directory into <code>archive.tar.gz</code>.</p>
+<br>
+<p>Creates a <a class="notranslate" href="#4`File`">`File`</a> wrapped in <a class="notranslate" href="#4`GzEncoder`">`GzEncoder`</a>
+and <a class="notranslate" href="#4`tar::Builder`">`tar::Builder`</a>. </br>Adds contents of <code>/var/log</code> directory recursively into the archive
+under <code>backup/logs</code>path with <a class="notranslate" href="#4`Builder::append_dir_all`">`Builder::append_dir_all`</a>.
+<a class="notranslate" href="#4`GzEncoder`">`GzEncoder`</a> is responsible for transparently compressing the
+data prior to writing it into <code>archive.tar.gz</code>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate tar;"></div><div data-l="extern crate flate2;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use flate2::Compression;"></div><div data-l="use flate2::write::GzEncoder;"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let tar_gz = File::create(&quot;archive.tar.gz&quot;)?;"></div><div data-l="    let enc = GzEncoder::new(tar_gz, Compression::default());"></div><div data-l="    let mut tar = tar::Builder::new(enc);"></div><div data-l="    tar.append_dir_all(&quot;backup/logs&quot;, &quot;/var/log&quot;)?;"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Builder.html#method.append_dir_all">`Builder::append_dir_all`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html">`File`</a>
+<a class="notranslate" href="#1https://docs.rs/flate2/*/flate2/write/struct.GzEncoder.html">`GzEncoder`</a>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Builder.html">`tar::Builder`</a>

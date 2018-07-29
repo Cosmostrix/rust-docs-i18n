@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<h1>Miri</h1>
+<br>
+<p>Miri (<b>MIR</b> <b>I</b>nterpreter) is a virtual machine for executing MIR without
+compiling to machine code. It is usually invoked via <code>tcx.const_eval</code>.</p>
+<br>
+<p>If you start out with a constant</p>
+<br>
+<div data-lang="rust"><div data-l="const FOO: usize = 1 &lt;&lt; 12;"></div></div>
+<br>
+<p>rustc doesn't actually invoke anything until the constant is either used or
+placed into metadata.</p>
+<br>
+<p>Once you have a use-site like</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="type Foo = [u8; FOO - 42];"></div></div>
+<br>
+<p>The compiler needs to figure out the length of the array before being able to
+create items that use the type (locals, constants, function arguments, ...).</p>
+<br>
+<p>To obtain the (in this case empty) parameter environment, one can call
+<code>let param_env = tcx.param_env(length_def_id);</code>. The <code>GlobalId</code> needed is</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let gid = GlobalId {"></div><div data-l="    promoted: None,"></div><div data-l="    instance: Instance::mono(length_def_id),"></div><div data-l="};"></div></div>
+<br>
+<p>Invoking <code>tcx.const_eval(param_env.and(gid))</code> will now trigger the creation of
+the MIR of the array length expression. The MIR will look something like this:</p>
+<br>
+<div data-lang="mir"><div data-l="const Foo::{{initializer}}: usize = {"></div><div data-l="#//    let mut _0: usize;                   // return pointer"></div><div data-l="    let mut _0: usize;                   // ">return pointer</div><div data-l="    let mut _1: (usize, bool);"></div><div data-l=""></div><div data-l="    bb0: {"></div><div data-l="        _1 = CheckedSub(const Unevaluated(FOO, Slice([])), const 42usize);"></div><div data-l="        assert(!(_1.1: bool), &quot;attempt to subtract with overflow&quot;) -&gt; bb1;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    bb1: {"></div><div data-l="        _0 = (_1.0: usize);"></div><div data-l="        return;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Before the evaluation, a virtual memory location (in this case essentially a
+<code>vec€[u8; 4]</code> or <code>vec€[u8; 8]</code>) is created for storing the evaluation result.</p>
+<br>
+<p>At the start of the evaluation, <code>_0</code> and <code>_1</code> are
+<code>Value::ByVal(PrimVal::Undef)</code>. When the initialization of <code>_1</code> is invoked, the
+value of the <code>FOO</code> constant is required, and triggers another call to
+<code>tcx.const_eval</code>, which will not be shown here. If the evaluation of FOO is
+successful, 42 will be subtracted by its value <code>4096</code> and the result stored in
+<code>_1</code> as <code>Value::ByValPair(PrimVal::Bytes(4054), PrimVal::Bytes(0))</code>. The first
+part of the pair is the computed value, the second part is a bool that's true if
+an overflow happened.</p>
+<br>
+<p>The next statement asserts that said boolean is <code>0</code>. In case the assertion
+fails, its error message is used for reporting a compile-time error.</p>
+<br>
+<p>Since it does not fail, <code>Value::ByVal(PrimVal::Bytes(4054))</code> is stored in the
+virtual memory was allocated before the evaluation. <code>_0</code> always refers to that
+location directly.</p>
+<br>
+<p>After the evaluation is done, the virtual memory allocation is interned into the
+<code>TyCtxt</code>. Future evaluations of the same constants will not actually invoke
+miri, but just extract the value from the interned allocation.</p>
+<br>
+<p>The <code>tcx.const_eval</code> function has one additional feature: it will not return a
+<code>ByRef(interned_allocation_id)</code>, but a <code>ByVal(computed_value)</code> if possible. This
+makes using the result much more convenient, as no further queries need to be
+executed in order to get at something as simple as a <code>usize</code>.</p>
+<br>
+<h2>Datastructures</h2>
+<br>
+<p>Miri's core datastructures can be found in
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/librustc/mir/interpret">librustc/mir/interpret</a>.
+This is mainly the error enum and the <code>Value</code> and <code>PrimVal</code> types. A <code>Value</code> can
+be either <code>ByVal</code> (a single <code>PrimVal</code>), <code>ByValPair</code> (two <code>PrimVal</code>s, usually fat
+pointers or two element tuples) or <code>ByRef</code>, which is used for anything else and
+refers to a virtual allocation. These allocations can be accessed via the
+methods on <code>tcx.interpret_interner</code>.</p>
+<br>
+<p>If you are expecting a numeric result, you can use <code>unwrap_u64</code> (panics on
+anything that can't be representad as a <code>u64</code>) or <code>to_raw_bits</code> which results
+in an <code>Option&lt;u128&gt;</code> yielding the <code>ByVal</code> if possible.</p>
+<br>
+<h2>Allocations</h2>
+<br>
+<p>A miri allocation is either a byte sequence of the memory or an <code>Instance</code> in
+the case of function pointers. Byte sequences can additionally contain
+relocations that mark a group of bytes as a pointer to another allocation. The
+actual bytes at the relocation refer to the offset inside the other allocation.</p>
+<br>
+<p>These allocations exist so that references and raw pointers have something to
+point to. There is no global linear heap in which things are allocated, but each
+allocation (be it for a local variable, a static or a (future) heap allocation)
+gets its own little memory with exactly the required size. So if you have a
+pointer to an allocation for a local variable <code>a</code>, there is no possible (no
+matter how unsafe) operation that you can do that would ever change said pointer
+to a pointer to <code>b</code>.</p>
+<br>
+<h2>Interpretation</h2>
+<br>
+<p>Although the main entry point to constant evaluation is the <code>tcx.const_eval</code>
+query, there are additional functions in
+<a class="notranslate" href="#2https://doc.rust-lang.org/nightly/nightly-rustc/rustc_mir/interpret/const_eval/">librustc_mir/interpret/const_eval.rs</a>
+that allow accessing the fields of a <code>Value</code> (<code>ByRef</code> or otherwise). You should
+never have to access an <code>Allocation</code> directly except for translating it to the
+compilation target (at the moment just LLVM).</p>
+<br>
+<p>Miri starts by creating a virtual stack frame for the current constant that is
+being evaluated. There's essentially no difference between a constant and a
+function with no arguments, except that constants do not allow local (named)
+variables at the time of writing this guide.</p>
+<br>
+<p>A stack frame is defined by the <code>Frame</code> type in
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/librustc_mir/interpret/eval_context.rs">librustc_mir/interpret/eval_context.rs</a>
+and contains all the local
+variables memory (<code>None</code> at the start of evaluation). Each frame refers to the
+evaluation of either the root constant or subsequent calls to <code>const fn</code>. The
+evaluation of another constant simply calls <code>tcx.const_eval</code>, which produces an
+entirely new and independent stack frame.</p>
+<br>
+<p>The frames are just a <code>Vec&lt;Frame&gt;</code>, there's no way to actually refer to a
+<code>Frame</code>'s memory even if horrible shenigans are done via unsafe code. The only
+memory that can be referred to are <code>Allocation</code>s.</p>
+<br>
+<p>Miri now calls the <code>step</code> method (in
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/librustc_mir/interpret/step.rs">librustc_mir/interpret/step.rs</a>
+) until it either returns an error or has no further statements to execute. Each
+statement will now initialize or modify the locals or the virtual memory
+referred to by a local. This might require evaluating other constants or
+statics, which just recursively invokes <code>tcx.const_eval</code>.</p>

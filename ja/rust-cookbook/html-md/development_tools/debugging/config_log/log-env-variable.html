@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Use a custom environment variable to set up logging</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p><a class="notranslate" href="#4`Builder`">`Builder`</a> configures logging.</p>
+<br>
+<p><a class="notranslate" href="#4`Builder::parse`">`Builder::parse`</a> parses <code>MY_APP_LOG</code>
+environment variable contents in the form of <a class="notranslate" href="#4`RUST_LOG`">`RUST_LOG`</a> syntax.
+Then, <a class="notranslate" href="#4`Builder::init`">`Builder::init`</a> initializes the logger.
+All these steps are normally done internally by <a class="notranslate" href="#4`env_logger::init`">`env_logger::init`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="use std::env;"></div><div data-l="use env_logger::Builder;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    Builder::new()"></div><div data-l="        .parse(&amp;env::var(&quot;MY_APP_LOG&quot;).unwrap_or_default())"></div><div data-l="        .init();"></div><div data-l=""></div><div data-l="    info!(&quot;informational message&quot;);"></div><div data-l="    warn!(&quot;warning message&quot;);"></div><div data-l="    error!(&quot;this is an error {}&quot;, &quot;message&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/fn.init.html">`env_logger::init`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html">`Builder`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html#method.init">`Builder::init`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html#method.parse">`Builder::parse`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/#enabling-logging">`RUST_LOG`</a>

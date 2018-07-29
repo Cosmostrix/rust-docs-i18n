@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<h1>Call expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>CallExpression</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>(</code> <s>CallParams</s><sup>?</sup> <code>)</code></p>
+<br>
+<p><s>CallParams</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a>&amp;nbsp;( <code>,</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> )<sup>\*</sup> <code>,</code><sup>?</sup></p></blockquote>
+<br>
+<p>A <s>call expression</s> consists of an expression followed by a parenthesized
+expression-list. It invokes a function, providing zero or more input variables.
+If the function eventually returns, then the expression completes. For
+<a href="#2types.html#function-item-types">non-function types</a>, the expression f(...) uses
+the method on one of the <a class="notranslate" href="#4`std::ops::Fn`">`std::ops::Fn`</a>, <a class="notranslate" href="#4`std::ops::FnMut`">`std::ops::FnMut`</a> or
+<a class="notranslate" href="#4`std::ops::FnOnce`">`std::ops::FnOnce`</a> traits, which differ in whether they take the type by
+reference, mutable reference, or take ownership respectively. An automatic
+borrow will be taken if needed. Rust will also automatically dereference <code>f</code> as
+required. Some examples of call expressions:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn add(x: i32, y: i32) -&gt; i32 { 0 }"></div><div data-l="let three: i32 = add(1i32, 2i32);"></div><div data-l="let name: &amp;'static str = (|| &quot;Rust&quot;)();"></div></div>
+<br>
+<h2>Disambiguating Function Calls</h2>
+<br>
+<p>Rust treats all function calls as sugar for a more explicit, fully-qualified
+syntax. Upon compilation, Rust will desugar all function calls into the explicit
+form. Rust may sometimes require you to qualify function calls with trait,
+depending on the ambiguity of a call in light of in-scope items.</p>
+<br>
+<blockquote><p><b>Note</b>: In the past, the Rust community used the terms &quot;Unambiguous
+Function Call Syntax&quot;, &quot;Universal Function Call Syntax&quot;, or &quot;UFCS&quot;, in
+documentation, issues, RFCs, and other community writings. However, the term
+lacks descriptive power and potentially confuses the issue at hand. We mention
+it here for searchability's sake.</p></blockquote>
+<br>
+<p>Several situations often occur which result in ambiguities about the receiver or
+referent of method or associated function calls. These situations may include:</p>
+<br>
+<div data-b="*">Multiple in-scope traits define methods with the same name for the same types</div>
+<div data-b="*">Auto-<code>deref</code> is undesirable; for example, distinguishing between methods on a
+smart pointer itself and the pointer's referent</div>
+<div data-b="*">Methods which take no arguments, like <code>default()</code>, and return properties of a
+type, like <code>size_of()</code></div>
+<br>
+<p>To resolve the ambiguity, the programmer may refer to their desired method or
+function using more specific paths, types, or traits.</p>
+<br>
+<p>For example,</p>
+<br>
+<div data-lang="rust"><div data-l="trait Pretty {"></div><div data-l="    fn print(&amp;self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait Ugly {"></div><div data-l="  fn print(&amp;self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Foo;"></div><div data-l="impl Pretty for Foo {"></div><div data-l="    fn print(&amp;self) {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Bar;"></div><div data-l="impl Pretty for Bar {"></div><div data-l="    fn print(&amp;self) {}"></div><div data-l="}"></div><div data-l="impl Ugly for Bar{"></div><div data-l="    fn print(&amp;self) {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let f = Foo;"></div><div data-l="    let b = Bar;"></div><div data-l=""></div><div data-l="#    // we can do this because we only have one item called `print` for `Foo`s"></div><div data-l="    // ">we can do this because we only have one item called <code>print</code> for <code>Foo</code>s</div><div data-l="    f.print();"></div><div data-l="#    // more explicit, and, in the case of `Foo`, not necessary"></div><div data-l="    // ">more explicit, and, in the case of <code>Foo</code>, not necessary</div><div data-l="    Foo::print(&amp;f);"></div><div data-l="#    // if you're not into the whole brevity thing"></div><div data-l="    // ">if you're not into the whole brevity thing</div><div data-l="    &lt;Foo as Pretty&gt;::print(&amp;f);"></div><div data-l=""></div><div data-l="#    // b.print(); // Error: multiple 'print' found"></div><div data-l="#    // Bar::print(&amp;b); // Still an error: multiple `print` found"></div><div data-l="    // ">b.print(); // Error: multiple 'print' found Bar::print(&amp;b); // Still an error: multiple <code>print</code> found</div><div data-l=""></div><div data-l="#    // necessary because of in-scope items defining `print`"></div><div data-l="    // ">necessary because of in-scope items defining <code>print</code></div><div data-l="    &lt;Bar as Pretty&gt;::print(&amp;b);"></div><div data-l="}"></div></div>
+<br>
+<p>Refer to <a class="notranslate" href="#4RFC 132">RFC 132</a> for further details and motivations.</p>
+<br>
+<a class="notranslate" href="#1../std/ops/trait.Fn.html">`std::ops::Fn`</a>
+<a class="notranslate" href="#1../std/ops/trait.FnMut.html">`std::ops::FnMut`</a>
+<a class="notranslate" href="#1../std/ops/trait.FnOnce.html">`std::ops::FnOnce`</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0132-ufcs.md">RFC 132</a>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

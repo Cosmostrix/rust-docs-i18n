@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h1>Notation</h1>
+<br>
+<h2>Unicode productions</h2>
+<br>
+<p>A few productions in Rust's grammar permit Unicode code points outside the
+ASCII range. We define these productions in terms of character properties
+specified in the Unicode standard, rather than in terms of ASCII-range code
+points. The grammar has a <a class="notranslate" href="#4Special Unicode Productions">Special Unicode Productions</a> section that lists these
+productions.</p>
+<br>
+<h2>String table productions</h2>
+<br>
+<p>Some rules in the grammar &amp;mdash; notably <a class="notranslate" href="#4unary operators">unary operators</a>, <a class="notranslate" href="#4binary
+operators">binary
+operators</a>, and <a class="notranslate" href="#4keywords">keywords</a> &amp;mdash; are given in a simplified form: as a listing
+of printable strings. These cases form a subset of the rules regarding the
+<a class="notranslate" href="#3tokens">token</a> rule, and are assumed to be the result of a lexical-analysis
+phase feeding the parser, driven by a <abbr title="Deterministic Finite
+Automaton">DFA</abbr>, operating over the disjunction of all such string table
+entries.</p>
+<br>
+<p>When such a string in <code>monospace</code> font occurs inside the grammar,
+it is an implicit reference to a single member of such a string table
+production. See <a class="notranslate" href="#4tokens">tokens</a> for more information.</p>
+<br>
+<a class="notranslate" href="#1../grammar.html#special-unicode-productions">Special Unicode Productions</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#arithmetic-and-logical-binary-operators">binary operators</a>
+<a class="notranslate" href="#1keywords.html">keywords</a>
+<a class="notranslate" href="#1tokens.html">tokens</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#borrow-operators">unary operators</a>

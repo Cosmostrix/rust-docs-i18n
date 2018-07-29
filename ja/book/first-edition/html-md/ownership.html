@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<h1>Ownership</h1>
+<br>
+<p>This is the first of three sections presenting Rust’s ownership system. This is one of
+Rust’s most distinct and compelling features, with which Rust developers should
+become quite acquainted. Ownership is how Rust achieves its largest goal,
+memory safety. There are a few distinct concepts, each with its own
+chapter:</p>
+<br>
+<div data-b="*">ownership, which you’re reading now</div>
+<div data-b="*"><a class="notranslate" href="#3borrowing">borrowing</a>, and their associated feature ‘references’</div>
+<div data-b="*"><a class="notranslate" href="#3lifetimes">lifetimes</a>, an advanced concept of borrowing</div>
+<br>
+<p>These three chapters are related, and in order. You’ll need all three to fully
+understand the ownership system.</p>
+<br>
+<a class="notranslate" href="#1references-and-borrowing.html">borrowing</a>
+<a class="notranslate" href="#1lifetimes.html">lifetimes</a>
+<br>
+<h1>Meta</h1>
+<br>
+<p>Before we get to the details, two important notes about the ownership system.</p>
+<br>
+<p>Rust has a focus on safety and speed. It accomplishes these goals through many
+‘zero-cost abstractions’, which means that in Rust, abstractions cost as little
+as possible in order to make them work. The ownership system is a prime example
+of a zero-cost abstraction. All of the analysis we’ll talk about in this guide
+is <s>done at compile time</s>. You do not pay any run-time cost for any of these
+features.</p>
+<br>
+<p>However, this system does have a certain cost: learning curve. Many new users
+to Rust experience something we like to call ‘fighting with the borrow
+checker’, where the Rust compiler refuses to compile a program that the author
+thinks is valid. This often happens because the programmer’s mental model of
+how ownership should work doesn’t match the actual rules that Rust implements.
+You probably will experience similar things at first. There is good news,
+however: more experienced Rust developers report that once they work with the
+rules of the ownership system for a period of time, they fight the borrow
+checker less and less.</p>
+<br>
+<p>With that in mind, let’s learn about ownership.</p>
+<br>
+<h1>Ownership</h1>
+<br>
+<p><a href="#3bindings">Variable bindings</a> have a property in Rust: they ‘have ownership’
+of what they’re bound to. This means that when a binding goes out of scope,
+Rust will free the bound resources. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo() {"></div><div data-l="    let v = vec![1, 2, 3];"></div><div data-l="}"></div></div>
+<br>
+<p>When <code>v</code> comes into scope, a new <a class="notranslate" href="#3vectors">vector</a> is created on <a href="#3stack">the stack</a>,
+and it allocates space on <a href="#3heap">the heap</a> for its elements. When <code>v</code> goes out
+of scope at the end of <code>foo()</code>, Rust will clean up everything related to the
+vector, even the heap-allocated memory. This happens deterministically, at the
+end of the scope.</p>
+<br>
+<p>We covered <a class="notranslate" href="#4vectors">vectors</a> in the previous chapter; we use them
+here as an example of a type that allocates space on the heap at runtime. They
+behave like <a class="notranslate" href="#4arrays">arrays</a>, except their size may change by <code>push()</code>ing more
+elements onto them.</p>
+<br>
+<p>Vectors have a <a href="#3generics">generic type</a> <code>Vec&lt;T&gt;</code>, so in this example <code>v</code> will have type
+<code>Vec&lt;i32&gt;</code>. We'll cover <a class="notranslate" href="#4generics">generics</a> in detail in a later chapter.</p>
+<br>
+<a class="notranslate" href="#1primitive-types.html#arrays">arrays</a>
+<a class="notranslate" href="#1vectors.html">vectors</a>
+<a class="notranslate" href="#1the-stack-and-the-heap.html#the-heap">heap</a>
+<a class="notranslate" href="#1the-stack-and-the-heap.html#the-stack">stack</a>
+<a class="notranslate" href="#1variable-bindings.html">bindings</a>
+<a class="notranslate" href="#1generics.html">generics</a>
+<br>
+<h1>Move semantics</h1>
+<br>
+<p>There’s some more subtlety here, though: Rust ensures that there is <s>exactly
+one</s> binding to any given resource. For example, if we have a vector, we can
+assign it to another binding:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let v2 = v;"></div></div>
+<br>
+<p>But, if we try to use <code>v</code> afterwards, we get an error:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let v2 = v;"></div><div data-l=""></div><div data-l="println!(&quot;v[0] is: {}&quot;, v[0]);"></div></div>
+<br>
+<p>It looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="error: use of moved value: `v`"></div><div data-l="println!(&quot;v[0] is: {}&quot;, v[0]);"></div><div data-l="                        ^"></div></div>
+<br>
+<p>A similar thing happens if we define a function which takes ownership, and
+try to use something after we’ve passed it as an argument:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn take(v: Vec&lt;i32&gt;) {"></div><div data-l="#    // What happens here isn’t important."></div><div data-l="    // ">What happens here isn’t important.</div><div data-l="}"></div><div data-l=""></div><div data-l="let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="take(v);"></div><div data-l=""></div><div data-l="println!(&quot;v[0] is: {}&quot;, v[0]);"></div></div>
+<br>
+<p>Same error: ‘use of moved value’. When we transfer ownership to something else,
+we say that we’ve ‘moved’ the thing we refer to. You don’t need some sort of
+special annotation here, it’s the default thing that Rust does.</p>
+<br>
+<h2>The details</h2>
+<br>
+<p>The reason that we cannot use a binding after we’ve moved it is subtle, but
+important.</p>
+<br>
+<p>When we write code like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 10;"></div></div>
+<br>
+<p>Rust allocates memory for an integer <a class="notranslate" href="#4i32">i32</a> on the <a class="notranslate" href="#3sh">stack</a>, copies the bit
+pattern representing the value of 10 to the allocated memory and binds the
+variable name x to this memory region for future reference.</p>
+<br>
+<a class="notranslate" href="#1primitive-types.html#numeric-types">i32</a>
+<br>
+<p>Now consider the following code fragment:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let mut v2 = v;"></div></div>
+<br>
+<p>The first line allocates memory for the vector object <code>v</code> on the stack like
+it does for <code>x</code> above. But in addition to that it also allocates some memory
+on the <a class="notranslate" href="#3sh">heap</a> for the actual data (<code>[1, 2, 3]</code>). Rust copies the address
+of this heap allocation to an internal pointer, which is part of the vector
+object placed on the stack (let's call it the data pointer).</p>
+<br>
+<p>It is worth pointing out (even at the risk of stating the obvious) that the
+vector object and its data live in separate memory regions instead of being a
+single contiguous memory allocation (due to reasons we will not go into at
+this point of time). These two parts of the vector (the one on the stack and
+one on the heap) must agree with each other at all times with regards to
+things like the length, capacity, etc.</p>
+<br>
+<p>When we move <code>v</code> to <code>v2</code>, Rust actually does a bitwise copy of the vector
+object <code>v</code> into the stack allocation represented by <code>v2</code>. This shallow copy
+does not create a copy of the heap allocation containing the actual data.
+Which means that there would be two pointers to the contents of the vector
+both pointing to the same memory allocation on the heap. It would violate
+Rust’s safety guarantees by introducing a data race if one could access both
+<code>v</code> and <code>v2</code> at the same time.</p>
+<br>
+<p>For example if we truncated the vector to just two elements through <code>v2</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# let v = vec![1, 2, 3];"></div><div data-l="# let mut v2 = v;"></div><div data-l="v2.truncate(2);"></div></div>
+<br>
+<p>and <code>v</code> were still accessible we'd end up with an invalid vector since <code>v</code>
+would not know that the heap data has been truncated. Now, the part of the
+vector <code>v</code> on the stack does not agree with the corresponding part on the
+heap. <code>v</code> still thinks there are three elements in the vector and will
+happily let us access the non existent element <code>v[2]</code> but as you might
+already know this is a recipe for disaster. Especially because it might lead
+to a segmentation fault or worse allow an unauthorized user to read from
+memory to which they don't have access.</p>
+<br>
+<p>This is why Rust forbids using <code>v</code> after we’ve done the move.</p>
+<br>
+<a class="notranslate" href="#1the-stack-and-the-heap.html">sh</a>
+<br>
+<p>It’s also important to note that optimizations may remove the actual copy of
+the bytes on the stack, depending on circumstances. So it may not be as
+inefficient as it initially seems.</p>
+<br>
+<h2><code>Copy</code> types</h2>
+<br>
+<p>We’ve established that when ownership is transferred to another binding, you
+cannot use the original binding. However, there’s a <a class="notranslate" href="#3traits">trait</a> that changes this
+behavior, and it’s called <code>Copy</code>. We haven’t discussed traits yet, but for now,
+you can think of them as an annotation to a particular type that adds extra
+behavior. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = 1;"></div><div data-l=""></div><div data-l="let v2 = v;"></div><div data-l=""></div><div data-l="println!(&quot;v is: {}&quot;, v);"></div></div>
+<br>
+<p>In this case, <code>v</code> is an <code>i32</code>, which implements the <code>Copy</code> trait. This means
+that, just like a move, when we assign <code>v</code> to <code>v2</code>, a copy of the data is made.
+But, unlike a move, we can still use <code>v</code> afterward. This is because an <code>i32</code>
+has no pointers to data somewhere else, copying it is a full copy.</p>
+<br>
+<p>All primitive types implement the <code>Copy</code> trait and their ownership is
+therefore not moved like one would assume, following the ‘ownership rules’.
+To give an example, the two following snippets of code only compile because the
+<code>i32</code> and <code>bool</code> types implement the <code>Copy</code> trait.</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = 5;"></div><div data-l=""></div><div data-l="    let _y = double(a);"></div><div data-l="    println!(&quot;{}&quot;, a);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn double(x: i32) -&gt; i32 {"></div><div data-l="    x * 2"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = true;"></div><div data-l=""></div><div data-l="    let _y = change_truth(a);"></div><div data-l="    println!(&quot;{}&quot;, a);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn change_truth(x: bool) -&gt; bool {"></div><div data-l="    !x"></div><div data-l="}"></div></div>
+<br>
+<p>If we had used types that do not implement the <code>Copy</code> trait,
+we would have gotten a compile error because we tried to use a moved value.</p>
+<br>
+<div data-lang="text"><div data-l="error: use of moved value: `a`"></div><div data-l="println!(&quot;{}&quot;, a);"></div><div data-l="               ^"></div></div>
+<br>
+<p>We will discuss how to make your own types <code>Copy</code> in the <a class="notranslate" href="#3traits">traits</a>
+section.</p>
+<br>
+<a class="notranslate" href="#1traits.html">traits</a>
+<br>
+<h1>More than ownership</h1>
+<br>
+<p>Of course, if we had to hand ownership back with every function we wrote:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(v: Vec&lt;i32&gt;) -&gt; Vec&lt;i32&gt; {"></div><div data-l="#    // Do stuff with `v`."></div><div data-l="    // ">Do stuff with <code>v</code>.</div><div data-l=""></div><div data-l="#    // Hand back ownership."></div><div data-l="    // ">Hand back ownership.</div><div data-l="    v"></div><div data-l="}"></div></div>
+<br>
+<p>This would get very tedious. It gets worse the more things we want to take ownership of:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(v1: Vec&lt;i32&gt;, v2: Vec&lt;i32&gt;) -&gt; (Vec&lt;i32&gt;, Vec&lt;i32&gt;, i32) {"></div><div data-l="#    // Do stuff with `v1` and `v2`."></div><div data-l="    // ">Do stuff with <code>v1</code> and <code>v2</code>.</div><div data-l=""></div><div data-l="#    // Hand back ownership, and the result of our function."></div><div data-l="    // ">Hand back ownership, and the result of our function.</div><div data-l="    (v1, v2, 42)"></div><div data-l="}"></div><div data-l=""></div><div data-l="let v1 = vec![1, 2, 3];"></div><div data-l="let v2 = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="let (v1, v2, answer) = foo(v1, v2);"></div></div>
+<br>
+<p>Ugh! The return type, return line, and calling the function gets way more
+complicated.</p>
+<br>
+<p>Luckily, Rust offers a feature which helps us solve this problem.
+It’s called borrowing and is the topic of the next section!</p>
+<br>

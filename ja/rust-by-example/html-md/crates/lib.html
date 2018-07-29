@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h1>Library</h1>
+<br>
+<p>Let's create a library, and then see how to link it to another crate.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="pub fn public_function() {"></div><div data-l="    println!(&quot;called rary's `public_function()`&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn private_function() {"></div><div data-l="    println!(&quot;called rary's `private_function()`&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub fn indirect_access() {"></div><div data-l="    print!(&quot;called rary's `indirect_access()`, that\n&gt; &quot;);"></div><div data-l=""></div><div data-l="    private_function();"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="$ rustc --crate-type=lib rary.rs"></div><div data-l="$ ls lib*"></div><div data-l="library.rlib"></div></div>
+<br>
+<p>Libraries get prefixed with &quot;lib&quot;, and by default they get named after their
+crate file, but this default name can be overridden using the <a class="notranslate" href="#3crate-name"><code>crate_name</code>
+attribute</a>.</p>
+<br>
+<a class="notranslate" href="#1attribute/crate.html">crate-name</a>

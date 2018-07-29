@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<h1>Mutability</h1>
+<br>
+<p>Mutability, the ability to change something, works a bit differently in Rust
+than in other languages. The first aspect of mutability is its non-default
+status:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let x = 5;"></div><div data-l="#//x = 6; // Error!"></div><div data-l="x = 6; // ">Error!</div></div>
+<br>
+<p>We can introduce mutability with the <code>mut</code> keyword:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l=""></div><div data-l="#//x = 6; // No problem!"></div><div data-l="x = 6; // ">No problem!</div></div>
+<br>
+<p>This is a mutable <a href="#3vb">variable binding</a>. When a binding is mutable, it means
+you’re allowed to change what the binding points to. So in the above example,
+it’s not so much that the value at <code>x</code> is changing, but that the binding
+changed from one <code>i32</code> to another.</p>
+<br>
+<a class="notranslate" href="#1variable-bindings.html">vb</a>
+<br>
+<p>You can also create a <a class="notranslate" href="#3ref">reference</a> to it, using <code>&amp;x</code>, but if you want to use the reference to change it, you will need a mutable reference:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l="let y = &amp;mut x;"></div></div>
+<br>
+<a class="notranslate" href="#1references-and-borrowing.html">ref</a>
+<br>
+<p><code>y</code> is an immutable binding to a mutable reference, which means that you can’t bind 'y' to something else (<code>y = &amp;mut z</code>), but <code>y</code> can be used to bind <code>x</code> to something else (<code>*y = 5</code>). A subtle distinction.</p>
+<br>
+<p>Of course, if you need both:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l="let mut y = &amp;mut x;"></div></div>
+<br>
+<p>Now <code>y</code> can be bound to another value, and the value it’s referencing can be
+changed.</p>
+<br>
+<p>It’s important to note that <code>mut</code> is part of a <a class="notranslate" href="#3pattern">pattern</a>, so you
+can do things like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let (mut x, y) = (5, 6);"></div><div data-l=""></div><div data-l="fn foo(mut x: i32) {"></div><div data-l="# }"></div></div>
+<br>
+<p>Note that here, the <code>x</code> is mutable, but not the <code>y</code>.</p>
+<br>
+<a class="notranslate" href="#1patterns.html">pattern</a>
+<br>
+<h1>Interior vs. Exterior Mutability</h1>
+<br>
+<p>However, when we say something is ‘immutable’ in Rust, that doesn’t mean that
+it’s not able to be changed: we are referring to its ‘exterior mutability’ that
+in this case is immutable. Consider, for example, <a class="notranslate" href="#3arc"><code>Arc&lt;T&gt;</code></a>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::sync::Arc;"></div><div data-l=""></div><div data-l="let x = Arc::new(5);"></div><div data-l="let y = x.clone();"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/sync/struct.Arc.html">arc</a>
+<br>
+<p>When we call <code>clone()</code>, the <code>Arc&lt;T&gt;</code> needs to update the reference count. Yet
+we’ve not used any <code>mut</code>s here, <code>x</code> is an immutable binding, and we didn’t take
+<code>&amp;mut 5</code> or anything. So what gives?</p>
+<br>
+<p>To understand this, we have to go back to the core of Rust’s guiding
+philosophy, memory safety, and the mechanism by which Rust guarantees it, the
+<a class="notranslate" href="#3ownership">ownership</a> system, and more specifically, <a class="notranslate" href="#3borrowing">borrowing</a>:</p>
+<br>
+<blockquote><p>You may have one or the other of these two kinds of borrows, but not both at
+the same time:</p>
+<br>
+<div data-b="*">one or more references (<code>&amp;T</code>) to a resource,</div>
+<div data-b="*">exactly one mutable reference (<code>&amp;mut T</code>).</div></blockquote>
+<br>
+<a class="notranslate" href="#1ownership.html">ownership</a>
+<a class="notranslate" href="#1references-and-borrowing.html#borrowing">borrowing</a>
+<br>
+<p>So, that’s the real definition of ‘immutability’: is this safe to have two
+pointers to? In <code>Arc&lt;T&gt;</code>’s case, yes: the mutation is entirely contained inside
+the structure itself. It’s not user facing. For this reason, it hands out <code>&amp;T</code>
+with <code>clone()</code>. If it handed out <code>&amp;mut T</code>s, though, that would be a problem.</p>
+<br>
+<p>Other types, like the ones in the <a class="notranslate" href="#3stdcell"><code>std::cell</code></a> module, have the
+opposite: interior mutability. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::cell::RefCell;"></div><div data-l=""></div><div data-l="let x = RefCell::new(42);"></div><div data-l=""></div><div data-l="let y = x.borrow_mut();"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/cell/index.html">stdcell</a>
+<br>
+<p>RefCell hands out <code>&amp;mut</code> references to what’s inside of it with the
+<code>borrow_mut()</code> method. Isn’t that dangerous? What if we do:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::cell::RefCell;"></div><div data-l=""></div><div data-l="let x = RefCell::new(42);"></div><div data-l=""></div><div data-l="let y = x.borrow_mut();"></div><div data-l="let z = x.borrow_mut();"></div><div data-l="# (y, z);"></div></div>
+<br>
+<p>This will in fact panic, at runtime. This is what <code>RefCell</code> does: it enforces
+Rust’s borrowing rules at runtime, and <code>panic€</code>s if they’re violated. This
+allows us to get around another aspect of Rust’s mutability rules. Let’s talk
+about it first.</p>
+<br>
+<h2>Field-level mutability</h2>
+<br>
+<p>Mutability is a property of either a borrow (<code>&amp;mut</code>) or a binding (<code>let mut</code>).
+This means that, for example, you cannot have a <a class="notranslate" href="#3struct"><code>struct</code></a> with
+some fields mutable and some immutable:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="#//    mut y: i32, // Nope."></div><div data-l="    mut y: i32, // ">Nope.</div><div data-l="}"></div></div>
+<br>
+<p>The mutability of a struct is in its binding:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut a = Point { x: 5, y: 6 };"></div><div data-l=""></div><div data-l="a.x = 10;"></div><div data-l=""></div><div data-l="let b = Point { x: 5, y: 6 };"></div><div data-l=""></div><div data-l="#//b.x = 10; // Error: cannot assign to immutable field `b.x`."></div><div data-l="b.x = 10; // ">Error: cannot assign to immutable field <code>b.x</code>.</div></div>
+<br>
+<a class="notranslate" href="#1structs.html">struct</a>
+<br>
+<p>However, by using <a class="notranslate" href="#3cell"><code>Cell&lt;T&gt;</code></a>, you can emulate field-level mutability:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::cell::Cell;"></div><div data-l=""></div><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: Cell&lt;i32&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let point = Point { x: 5, y: Cell::new(6) };"></div><div data-l=""></div><div data-l="point.y.set(7);"></div><div data-l=""></div><div data-l="println!(&quot;y: {:?}&quot;, point.y);"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/cell/struct.Cell.html">cell</a>
+<br>
+<p>This will print <code>y: Cell { value: 7 }</code>. We’ve successfully updated <code>y</code>.</p>

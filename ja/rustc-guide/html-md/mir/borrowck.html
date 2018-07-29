@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<h1>MIR borrow check</h1>
+<br>
+<p>The borrow check is Rust's &quot;secret sauce&quot; – it is tasked with
+enforcing a number of properties:</p>
+<br>
+<div data-b="-">That all variables are initialized before they are used.</div>
+<div data-b="-">That you can't move the same value twice.</div>
+<div data-b="-">That you can't move a value while it is borrowed.</div>
+<div data-b="-">That you can't access a place while it is mutably borrowed (except through
+the reference).</div>
+<div data-b="-">That you can't mutate a place while it is shared borrowed.</div>
+<div data-b="-">etc</div>
+<br>
+<p>At the time of this writing, the code is in a state of transition. The
+&quot;main&quot; borrow checker still works by processing <a href="#2hir.html">the HIR</a>,
+but that is being phased out in favor of the MIR-based borrow checker.
+Doing borrow checking on MIR has two key advantages:</p>
+<br>
+<div data-b="-">The MIR is <i>far</i> less complex than the HIR; the radical desugaring
+helps prevent bugs in the borrow checker. (If you're curious, you
+can see
+<a href="#347366">a list of bugs that the MIR-based borrow checker fixes here</a>.)</div>
+<div data-b="-">Even more importantly, using the MIR enables <a href="#3nll">&quot;non-lexical lifetimes&quot;</a>,
+which are regions derived from the control-flow graph.</div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/47366">47366</a>
+<a class="notranslate" href="#1http://rust-lang.github.io/rfcs/2094-nll.html">nll</a>
+<br>
+<h3>Major phases of the borrow checker</h3>
+<br>
+<p>The borrow checker source is found in
+<a href="#3b_c">the <code>rustc_mir::borrow_check</code> module</a>. The main entry point is
+the <code>mir_borrowck</code> query. At the time of this writing, MIR borrowck can operate
+in several modes, but this text will describe only the mode when NLL is enabled
+(what you get with <code>#€[feature(nll)]</code>).</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc_mir/borrow_check">b_c</a>
+<br>
+<p>The overall flow of the borrow checker is as follows:</p>
+<br>
+<div data-b="-">We first create a <b>local copy</b> C of the MIR. In the coming steps,
+we will modify this copy in place to modify the types and things to
+include references to the new regions that we are computing.</div>
+<div data-b="-">We then invoke <code>nll::replace_regions_in_mir</code> to modify this copy C.
+Among other things, this function will replace all of the regions in
+the MIR with fresh <a href="#2./appendix/glossary.html">inference variables</a>.</div>
+<div data-b="  -">(More details can be found in <a href="#2./mir/regionck.html">the regionck section</a>.)</div>
+<div data-b="-">Next, we perform a number of <a href="#2./appendix/background.html#dataflow">dataflow
+  analyses</a>
+that compute what data is moved and when. The results of these analyses
+are needed to do both borrow checking and region inference.</div>
+<div data-b="-">Using the move data, we can then compute the values of all the regions in the
+MIR.</div>
+<div data-b="  -">(More details can be found in <a href="#2./mir/regionck.html">the NLL section</a>.)</div>
+<div data-b="-">Finally, the borrow checker itself runs, taking as input (a) the
+results of move analysis and (b) the regions computed by the region
+checker. This allows us to figure out which loans are still in scope
+at any particular point.</div>
+<br>

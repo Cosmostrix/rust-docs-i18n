@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<h1>Identifiers</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Lexer:&lt;sup&gt;</b>\
+IDENTIFIER_OR_KEYWORD :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4`a`-`z` `A`-`Z`">`a`-`z` `A`-`Z`</a>&amp;nbsp;<a class="notranslate" href="#4`a`-`z` `A`-`Z` `0`-`9` `_`">`a`-`z` `A`-`Z` `0`-`9` `_`</a><sup>\<i>&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; | `_` [`a`-`z` `A`-`Z` `0`-`9` `_`]&lt;sup&gt;+&lt;/sup&gt;
+
+IDENTIFIER :\
+IDENTIFIER_OR_KEYWORD &lt;sub&gt;</i>Except a <a class="notranslate" href="#4strict">strict</a> or <a class="notranslate" href="#4reserved">reserved</a> keyword*</sub></p></blockquote>
+<br>
+<p>An identifier is any nonempty ASCII string of the following form:</p>
+<br>
+<p>Either</p>
+<br>
+<div data-b="*">The first character is a letter.</div>
+<div data-b="*">The remaining characters are alphanumeric or <code>_</code>.</div>
+<br>
+<p>Or</p>
+<br>
+<div data-b="*">The first character is <code>_</code>.</div>
+<div data-b="*">The identifier is more than one character. <code>_</code> alone is not an identifier.</div>
+<div data-b="*">The remaining characters are alphanumeric or <code>_</code>.</div>
+<br>
+<a class="notranslate" href="#1keywords.html#strict-keywords">strict</a>
+<a class="notranslate" href="#1keywords.html#reserved-keywords">reserved</a>

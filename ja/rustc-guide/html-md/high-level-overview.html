@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<h1>High-level overview of the compiler source</h1>
+<br>
+<h2>Crate structure</h2>
+<br>
+<p>The main Rust repository consists of a <code>src</code> directory, under which
+there live many crates. These crates contain the sources for the
+standard library and the compiler.  This document, of course, focuses
+on the latter.</p>
+<br>
+<p>Rustc consists of a number of crates, including <code>syntax</code>,
+<code>rustc</code>, <code>rustc_back</code>, <code>rustc_codegen</code>, <code>rustc_driver</code>, and
+many more. The source for each crate can be found in a directory
+like <code>src/libXXX</code>, where <code>XXX</code> is the crate name.</p>
+<br>
+<p>(N.B. The names and divisions of these crates are not set in
+stone and may change over time. For the time being, we tend towards a
+finer-grained division to help with compilation time, though as incremental
+compilation improves, that may change.)</p>
+<br>
+<p>The dependency structure of these crates is roughly a diamond:</p>
+<br>
+<div data-lang="text"><div data-l="                  rustc_driver"></div><div data-l="                /      |       \"></div><div data-l="              /        |         \"></div><div data-l="            /          |           \"></div><div data-l="          /            v             \"></div><div data-l="rustc_codegen  rustc_borrowck   ...  rustc_metadata"></div><div data-l="          \            |            /"></div><div data-l="            \          |          /"></div><div data-l="              \        |        /"></div><div data-l="                \      v      /"></div><div data-l="                    rustc"></div><div data-l="                       |"></div><div data-l="                       v"></div><div data-l="                    syntax"></div><div data-l="                    /    \"></div><div data-l="                  /       \"></div><div data-l="           syntax_pos  syntax_ext"></div></div>
+<br>
+<p>The <code>rustc_driver</code> crate, at the top of this lattice, is effectively
+the &quot;main&quot; function for the rust compiler. It doesn't have much &quot;real
+code&quot;, but instead ties together all of the code defined in the other
+crates and defines the overall flow of execution. (As we transition
+more and more to the <a class="notranslate" href="#4query model">query model</a>, however, the
+&quot;flow&quot; of compilation is becoming less centrally defined.)</p>
+<br>
+<p>At the other extreme, the <code>rustc</code> crate defines the common and
+pervasive data structures that all the rest of the compiler uses
+(e.g. how to represent types, traits, and the program itself). It
+also contains some amount of the compiler itself, although that is
+relatively limited.</p>
+<br>
+<p>Finally, all the crates in the bulge in the middle define the bulk of
+the compiler – they all depend on <code>rustc</code>, so that they can make use
+of the various types defined there, and they export public routines
+that <code>rustc_driver</code> will invoke as needed (more and more, what these
+crates export are &quot;query definitions&quot;, but those are covered later
+on).</p>
+<br>
+<p>Below <code>rustc</code> lie various crates that make up the parser and error
+reporting mechanism. For historical reasons, these crates do not have
+the <code>rustc_</code> prefix, but they are really just as much an internal part
+of the compiler and not intended to be stable (though they do wind up
+getting used by some crates in the wild; a practice we hope to
+gradually phase out).</p>
+<br>
+<p>Each crate has a <code>README.md</code> file that describes, at a high-level,
+what it contains, and tries to give some kind of explanation (some
+better than others).</p>
+<br>
+<h2>The main stages of compilation</h2>
+<br>
+<p>The Rust compiler is in a bit of transition right now. It used to be a
+purely &quot;pass-based&quot; compiler, where we ran a number of passes over the
+entire program, and each did a particular check of transformation. We
+are gradually replacing this pass-based code with an alternative setup
+based on on-demand <b>queries</b>. In the query-model, we work backwards,
+executing a <i>query</i> that expresses our ultimate goal (e.g. &quot;compile
+this crate&quot;). This query in turn may make other queries (e.g. &quot;get me
+a list of all modules in the crate&quot;). Those queries make other queries
+that ultimately bottom out in the base operations, like parsing the
+input, running the type-checker, and so forth. This on-demand model
+permits us to do exciting things like only do the minimal amount of
+work needed to type-check a single function. It also helps with
+incremental compilation. (For details on defining queries, check out
+the <a class="notranslate" href="#4query model">query model</a>.)</p>
+<br>
+<p>Regardless of the general setup, the basic operations that the
+compiler must perform are the same. The only thing that changes is
+whether these operations are invoked front-to-back, or on demand.  In
+order to compile a Rust crate, these are the general steps that we
+take:</p>
+<br>
+<div data-b="1."><b>Parsing input</b></div>
+<div data-b="    -">this processes the <code>.rs</code> files and produces the AST
+(&quot;abstract syntax tree&quot;)</div>
+<div data-b="    -">the AST is defined in <code>syntax/ast.rs</code>. It is intended to match the lexical
+syntax of the Rust language quite closely.</div>
+<div data-b="2."><b>Name resolution, macro expansion, and configuration</b></div>
+<div data-b="    -">once parsing is complete, we process the AST recursively, resolving
+paths and expanding macros. This same process also processes <code>#[cfg]</code>
+nodes, and hence may strip things out of the AST as well.</div>
+<div data-b="3."><b>Lowering to HIR</b></div>
+<div data-b="    -">Once name resolution completes, we convert the AST into the HIR,
+or &quot;<a class="notranslate" href="#4high-level intermediate representation">high-level intermediate representation</a>&quot;. The HIR is defined in
+<code>src/librustc/hir/</code>; that module also includes the <a class="notranslate" href="#4lowering">lowering</a> code.</div>
+<div data-b="    -">The HIR is a lightly desugared variant of the AST. It is more processed
+than the AST and more suitable for the analyses that follow.
+It is <b>not</b> required to match the syntax of the Rust language.</div>
+<div data-b="    -">As a simple example, in the <b>AST</b>, we preserve the parentheses
+that the user wrote, so <code>((1 + 2) + 3)</code> and <code>1 + 2 + 3</code> parse
+into distinct trees, even though they are equivalent. In the
+HIR, however, parentheses nodes are removed, and those two
+expressions are represented in the same way.</div>
+<div data-b="3."><b>Type-checking and subsequent analyses</b></div>
+<div data-b="    -">An important step in processing the HIR is to perform type
+checking. This process assigns types to every HIR expression,
+for example, and also is responsible for resolving some
+&quot;type-dependent&quot; paths, such as field accesses (<code>x.f</code> – we
+can't know what field <code>f</code> is being accessed until we know the
+type of <code>x</code>) and associated type references (<code>T::Item</code> – we
+can't know what type <code>Item</code> is until we know what <code>T</code> is).</div>
+<div data-b="    -">Type checking creates &quot;side-tables&quot; (<code>TypeckTables</code>) that include
+the types of expressions, the way to resolve methods, and so forth.</div>
+<div data-b="    -">After type-checking, we can do other analyses, such as privacy checking.</div>
+<div data-b="4."><b>Lowering to MIR and post-processing</b></div>
+<div data-b="    -">Once type-checking is done, we can lower the HIR into MIR (&quot;middle IR&quot;),
+which is a <b>very</b> desugared version of Rust, well suited to borrowck
+but also to certain high-level optimizations.</div>
+<div data-b="5."><b>Translation to LLVM and LLVM optimizations</b></div>
+<div data-b="    -">From MIR, we can produce LLVM IR.</div>
+<div data-b="    -">LLVM then runs its various optimizations, which produces a number of
+<code>.o</code> files (one for each &quot;codegen unit&quot;).</div>
+<div data-b="6."><b>Linking</b></div>
+<div data-b="    -">Finally, those <code>.o</code> files are linked together.</div>
+<br>
+<br>
+<a class="notranslate" href="#1query.html">query model</a>
+<a class="notranslate" href="#1hir.html">high-level intermediate representation</a>
+<a class="notranslate" href="#1lowering.html">lowering</a>

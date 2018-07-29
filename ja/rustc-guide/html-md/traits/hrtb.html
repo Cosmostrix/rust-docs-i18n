@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<h1>Higher-ranked trait bounds</h1>
+<br>
+<p>One of the more subtle concepts in trait resolution is <i>higher-ranked trait
+bounds</i>. An example of such a bound is <code>for&lt;'a&gt; MyTrait&lt;&amp;'a isize&gt;</code>.
+Let's walk through how selection on higher-ranked trait references
+works.</p>
+<br>
+<h2>Basic matching and skolemization leaks</h2>
+<br>
+<p>Suppose we have a trait <code>Foo</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo&lt;X&gt; {"></div><div data-l="    fn foo(&amp;self, x: X) { }"></div><div data-l="}"></div></div>
+<br>
+<p>Let's say we have a function <code>want_hrtb</code> that wants a type which
+implements <code>Foo&lt;&amp;'a isize&gt;</code> for any <code>'a</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn want_hrtb&lt;T&gt;() where T : for&lt;'a&gt; Foo&lt;&amp;'a isize&gt; { ... }"></div></div>
+<br>
+<p>Now we have a struct <code>AnyInt</code> that implements <code>Foo&lt;&amp;'a isize&gt;</code> for any
+<code>'a</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct AnyInt;"></div><div data-l="impl&lt;'a&gt; Foo&lt;&amp;'a isize&gt; for AnyInt { }"></div></div>
+<br>
+<p>And the question is, does <code>AnyInt : for&lt;'a&gt; Foo&lt;&amp;'a isize&gt;</code>? We want the
+answer to be yes. The algorithm for figuring it out is closely related
+to the subtyping for higher-ranked types (which is described <a class="notranslate" href="#3hrsubtype">here</a>
+and also in a <a class="notranslate" href="#4paper by SPJ">paper by SPJ</a>. If you wish to understand higher-ranked
+subtyping, we recommend you read the paper). There are a few parts:</p>
+<br>
+<p><b>TODO</b>: We should define <s>skolemize</s>.</p>
+<br>
+<div data-b="1."><s>Skolemize</s> the obligation.</div>
+<div data-b="2.">Match the impl against the skolemized obligation.</div>
+<div data-b="3.">Check for <s>skolemization leaks</s>.</div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc/infer/higher_ranked/README.md">hrsubtype</a>
+<a class="notranslate" href="#1http://research.microsoft.com/en-us/um/people/simonpj/papers/higher-rank/">paper by SPJ</a>
+<br>
+<p>So let's work through our example.</p>
+<br>
+<div data-b="1.">The first thing we would do is to</div>
+<p>skolemize the obligation, yielding <code>AnyInt : Foo&lt;&amp;'0 isize&gt;</code> (here <code>'0</code>
+represents skolemized region #0). Note that we now have no quantifiers;
+in terms of the compiler type, this changes from a <code>ty::PolyTraitRef</code>
+to a <code>TraitRef</code>. We would then create the <code>TraitRef</code> from the impl,
+using fresh variables for it's bound regions (and thus getting
+<code>Foo&lt;&amp;'$a isize&gt;</code>, where <code>'$a</code> is the inference variable for <code>'a</code>).</p>
+<br>
+<div data-b="2.">Next</div>
+<p>we relate the two trait refs, yielding a graph with the constraint
+that <code>'0 == '$a</code>.</p>
+<br>
+<div data-b="3.">Finally, we check for skolemization &quot;leaks&quot; – a</div>
+<p>leak is basically any attempt to relate a skolemized region to another
+skolemized region, or to any region that pre-existed the impl match.
+The leak check is done by searching from the skolemized region to find
+the set of regions that it is related to in any way. This is called
+the &quot;taint&quot; set. To pass the check, that set must consist <i>solely</i> of
+itself and region variables from the impl. If the taint set includes
+any other region, then the match is a failure. In this case, the taint
+set for <code>'0</code> is <code>{'0, '$a}</code>, and hence the check will succeed.</p>
+<br>
+<p>Let's consider a failure case. Imagine we also have a struct</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct StaticInt;"></div><div data-l="impl Foo&lt;&amp;'static isize&gt; for StaticInt;"></div></div>
+<br>
+<p>We want the obligation <code>StaticInt : for&lt;'a&gt; Foo&lt;&amp;'a isize&gt;</code> to be
+considered unsatisfied. The check begins just as before. <code>'a</code> is
+skolemized to <code>'0</code> and the impl trait reference is instantiated to
+<code>Foo&lt;&amp;'static isize&gt;</code>. When we relate those two, we get a constraint
+like <code>'static == '0</code>. This means that the taint set for <code>'0</code> is <code>{'0,
+'static}</code>, which fails the leak check.</p>
+<br>
+<p><b>TODO</b>: This is because <code>'static</code> is not a region variable but is in the
+taint set, right?</p>
+<br>
+<h2>Higher-ranked trait obligations</h2>
+<br>
+<p>Once the basic matching is done, we get to another interesting topic:
+how to deal with impl obligations. I'll work through a simple example
+here. Imagine we have the traits <code>Foo</code> and <code>Bar</code> and an associated impl:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo&lt;X&gt; {"></div><div data-l="    fn foo(&amp;self, x: X) { }"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait Bar&lt;X&gt; {"></div><div data-l="    fn bar(&amp;self, x: X) { }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;X,F&gt; Foo&lt;X&gt; for F"></div><div data-l="    where F : Bar&lt;X&gt;"></div><div data-l="{"></div><div data-l="}"></div></div>
+<br>
+<p>Now let's say we have a obligation <code>Baz: for&lt;'a&gt; Foo&lt;&amp;'a isize&gt;</code> and we match
+this impl. What obligation is generated as a result? We want to get
+<code>Baz: for&lt;'a&gt; Bar&lt;&amp;'a isize&gt;</code>, but how does that happen?</p>
+<br>
+<p>After the matching, we are in a position where we have a skolemized
+substitution like <code>X =&gt; &amp;'0 isize</code>. If we apply this substitution to the
+impl obligations, we get <code>F : Bar&lt;&amp;'0 isize&gt;</code>. Obviously this is not
+directly usable because the skolemized region <code>'0</code> cannot leak out of
+our computation.</p>
+<br>
+<p>What we do is to create an inverse mapping from the taint set of <code>'0</code>
+back to the original bound region (<code>'a</code>, here) that <code>'0</code> resulted
+from. (This is done in <code>higher_ranked::plug_leaks</code>). We know that the
+leak check passed, so this taint set consists solely of the skolemized
+region itself plus various intermediate region variables. We then walk
+the trait-reference and convert every region in that taint set back to
+a late-bound region, so in this case we'd wind up with
+<code>Baz: for&lt;'a&gt; Bar&lt;&amp;'a isize&gt;</code>.</p>

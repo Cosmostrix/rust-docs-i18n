@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h2>Generate random numbers with given distribution</h2>
+<br>
+<p><a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-science">!<a class="notranslate" href="#4cat-science-badge">cat-science-badge</a></a></p>
+<br>
+<p>By default, random numbers have <a class="notranslate" href="#4uniform distribution">uniform distribution</a>.
+To generate numbers with other distributions you instantiate a
+distribution, then sample from that distribution using
+<a class="notranslate" href="#4`IndependentSample::ind_sample`">`IndependentSample::ind_sample`</a> with help of a random-number
+generator <a class="notranslate" href="#4`rand::Rng`">`rand::Rng`</a>.</p>
+<br>
+<p>The <a href="#3rand-distributions">distributions available are documented here</a>. An example using the
+<a class="notranslate" href="#4`Normal`">`Normal`</a> distribution is shown below.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use rand::distributions::{Normal, Distribution};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="  let mut rng = rand::thread_rng();"></div><div data-l="  let normal = Normal::new(2.0, 3.0);"></div><div data-l="  let v = normal.sample(&amp;mut rng);"></div><div data-l="  println!(&quot;{} is from a N(2, 9) distribution&quot;, v)"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/trait.Distribution.html#tymethod.sample">`Distribution::sample`</a>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/normal/struct.Normal.html">`Normal`</a>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/trait.Rng.html">`rand::Rng`</a>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/index.html">rand-distributions</a>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Uniform_distribution_(continuous)">uniform distribution</a>

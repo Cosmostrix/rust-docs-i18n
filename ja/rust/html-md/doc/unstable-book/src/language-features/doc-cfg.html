@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h1><code>doc_cfg</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#43781">#43781</a></p>
+<br>
+<p>------</p>
+<br>
+<p>The <code>doc_cfg</code> feature allows an API be documented as only available in some specific platforms.
+This attribute has two effects:</p>
+<br>
+<div data-b="1.">In the annotated item's documentation, there will be a message saying &quot;This is supported on
+  (platform) only&quot;.</div>
+<br>
+<div data-b="2.">The item's doc-tests will only run on the specific platform.</div>
+<br>
+<p>This feature was introduced as part of PR <a class="notranslate" href="#4#43348">#43348</a> to allow the platform-specific parts of the
+standard library be documented.</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(doc_cfg)]"></div><div data-l=""></div><div data-l="#[cfg(any(windows, feature = &quot;documentation&quot;))]"></div><div data-l="#[doc(cfg(windows))]"></div><div data-l="#///// The application's icon in the notification area (a.k.a. system tray)."></div><div data-l="/// ">The application's icon in the notification area (a.k.a. system tray).</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```no_run"></div><div data-l="/// ">```no_run</div><div data-l="#///// extern crate my_awesome_ui_library;"></div><div data-l="/// ">extern crate my_awesome_ui_library;</div><div data-l="#///// use my_awesome_ui_library::current_app;"></div><div data-l="/// ">use my_awesome_ui_library::current_app;</div><div data-l="#///// use my_awesome_ui_library::windows::notification;"></div><div data-l="/// ">use my_awesome_ui_library::windows::notification;</div><div data-l="///"></div><div data-l="#///// let icon = current_app().get::&lt;notification::Icon&gt;();"></div><div data-l="/// ">let icon = current_app().get::<notification::Icon>();</div><div data-l="#///// icon.show();"></div><div data-l="/// ">icon.show();</div><div data-l="#///// icon.show_message(&quot;Hello&quot;);"></div><div data-l="/// ">icon.show_message(&quot;Hello&quot;);</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="pub struct Icon {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/43781">#43781</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/43348">#43348</a>

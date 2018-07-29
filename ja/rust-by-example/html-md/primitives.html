@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<h1>Primitives</h1>
+<br>
+<p>Rust provides access to a wide variety of <code>primitives</code>. A sample includes:</p>
+<br>
+<br>
+<h3>Scalar Types</h3>
+<br>
+<div data-b="*">signed integers: <code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code> and <code>isize</code> (pointer size)</div>
+<div data-b="*">unsigned integers: <code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code> and <code>usize</code> (pointer
+size)</div>
+<div data-b="*">floating point: <code>f32</code>, <code>f64</code></div>
+<div data-b="*"><code>char</code> Unicode scalar values like <code>'a'</code>, <code>'α'</code> and <code>'∞'</code> (4 bytes each)</div>
+<div data-b="*"><code>bool</code> either <code>true</code> or <code>false</code></div>
+<div data-b="*">and the unit type <code>()</code>, whose only possible value is an empty tuple: <code>()</code></div>
+<br>
+<p>Despite the value of a unit type being a tuple, it is not considered a
+compound type because it does not contain multiple values. </p>
+<br>
+<h3>Compound Types</h3>
+<br>
+<div data-b="*">arrays like <code>[1, 2, 3]</code></div>
+<div data-b="*">tuples like <code>(1, true)</code></div>
+<br>
+<p>Variables can always be <i>type annotated</i>. Numbers may additionally be
+annotated via a <i>suffix</i> or <i>by default</i>. Integers default to <code>i32</code> and
+floats to <code>f64</code>. Note that Rust can also infer types from context.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn main() {"></div><div data-l="#    // Variables can be type annotated."></div><div data-l="    // ">Variables can be type annotated.</div><div data-l="    let logical: bool = true;"></div><div data-l=""></div><div data-l="#//    let a_float: f64 = 1.0;  // Regular annotation"></div><div data-l="    let a_float: f64 = 1.0;  // ">Regular annotation</div><div data-l="#//    let an_integer   = 5i32; // Suffix annotation"></div><div data-l="    let an_integer   = 5i32; // ">Suffix annotation</div><div data-l=""></div><div data-l="#    // Or a default will be used."></div><div data-l="    // ">Or a default will be used.</div><div data-l="#//    let default_float   = 3.0; // `f64`"></div><div data-l="    let default_float   = 3.0; // "><code>f64</code></div><div data-l="#//    let default_integer = 7;   // `i32`"></div><div data-l="    let default_integer = 7;   // "><code>i32</code></div><div data-l="    "></div><div data-l="#    // A type can also be inferred from context "></div><div data-l="    // ">A type can also be inferred from context </div><div data-l="#//    let mut inferred_type = 12; // Type i64 is inferred from another line"></div><div data-l="    let mut inferred_type = 12; // ">Type i64 is inferred from another line</div><div data-l="    inferred_type = 4294967296i64;"></div><div data-l="    "></div><div data-l="#    // A mutable variable's value can be changed."></div><div data-l="    // ">A mutable variable's value can be changed.</div><div data-l="#//    let mut mutable = 12; // Mutable `i32`"></div><div data-l="    let mut mutable = 12; // ">Mutable <code>i32</code></div><div data-l="    mutable = 21;"></div><div data-l="    "></div><div data-l="#    // Error! The type of a variable can't be changed."></div><div data-l="    // ">Error! The type of a variable can't be changed.</div><div data-l="    mutable = true;"></div><div data-l="    "></div><div data-l="#    // Variables can be overwritten with shadowing."></div><div data-l="    // ">Variables can be overwritten with shadowing.</div><div data-l="    let mutable = true;"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3std">the <code>std</code> library</a>, <a class="notranslate" href="#3mut"><code>mut</code></a>, <a class="notranslate" href="#4inference">inference</a>, and <a class="notranslate" href="#4shadowing">shadowing</a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/">std</a>
+<a class="notranslate" href="#1variable_bindings/mut.html">mut</a>
+<a class="notranslate" href="#1types/inference.html">inference</a>
+<a class="notranslate" href="#1variable_bindings/scope.html">shadowing</a>

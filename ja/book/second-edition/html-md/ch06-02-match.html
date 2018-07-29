@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<h2>The <code>match</code> Control Flow Operator</h2>
+<br>
+<p>Rust has an extremely powerful control flow operator called <code>match</code> that allows
+you to compare a value against a series of patterns and then execute code based
+on which pattern matches. Patterns can be made up of literal values, variable
+names, wildcards, and many other things; Chapter 18 covers all the different
+kinds of patterns and what they do. The power of <code>match</code> comes from the
+expressiveness of the patterns and the fact that the compiler confirms that all
+possible cases are handled.</p>
+<br>
+<p>Think of a <code>match</code> expression as being like a coin-sorting machine: coins slide
+down a track with variously sized holes along it, and each coin falls through
+the first hole it encounters that it fits into. In the same way, values go
+through each pattern in a <code>match</code>, and at the first pattern the value “fits,”
+the value falls into the associated code block to be used during execution.</p>
+<br>
+<p>Because we just mentioned coins, let’s use them as an example using <code>match</code>! We
+can write a function that can take an unknown United States coin and, in a
+similar way as the counting machine, determine which coin it is and return its
+value in cents, as shown here in Listing 6-3.</p>
+<br>
+<div data-lang="rust"><div data-l="enum Coin {"></div><div data-l="    Penny,"></div><div data-l="    Nickel,"></div><div data-l="    Dime,"></div><div data-l="    Quarter,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn value_in_cents(coin: Coin) -&gt; u32 {"></div><div data-l="    match coin {"></div><div data-l="        Coin::Penny =&gt; 1,"></div><div data-l="        Coin::Nickel =&gt; 5,"></div><div data-l="        Coin::Dime =&gt; 10,"></div><div data-l="        Coin::Quarter =&gt; 25,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 6-3: An enum and a <code>match</code> expression that has
+the variants of the enum as its patterns</span></p>
+<br>
+<p>Let’s break down the <code>match</code> in the <code>value_in_cents</code> function. First, we list
+the <code>match</code> keyword followed by an expression, which in this case is the value
+<code>coin</code>. This seems very similar to an expression used with <code>if</code>, but there’s a
+big difference: with <code>if</code>, the expression needs to return a Boolean value, but
+here, it can be any type. The type of <code>coin</code> in this example is the <code>Coin</code> enum
+that we defined on line 1.</p>
+<br>
+<p>Next are the <code>match</code> arms. An arm has two parts: a pattern and some code. The
+first arm here has a pattern that is the value <code>Coin::Penny</code> and then the <code>=&gt;</code>
+operator that separates the pattern and the code to run. The code in this case
+is just the value <code>1</code>. Each arm is separated from the next with a comma.</p>
+<br>
+<p>When the <code>match</code> expression executes, it compares the resulting value against
+the pattern of each arm, in order. If a pattern matches the value, the code
+associated with that pattern is executed. If that pattern doesn’t match the
+value, execution continues to the next arm, much as in a coin-sorting machine.
+We can have as many arms as we need: in Listing 6-3, our <code>match</code> has four arms.</p>
+<br>
+<p>The code associated with each arm is an expression, and the resulting value of
+the expression in the matching arm is the value that gets returned for the
+entire <code>match</code> expression.</p>
+<br>
+<p>Curly brackets typically aren’t used if the match arm code is short, as it is
+in Listing 6-3 where each arm just returns a value. If you want to run multiple
+lines of code in a match arm, you can use curly brackets. For example, the
+following code would print “Lucky penny!” every time the method was called with
+a <code>Coin::Penny</code> but would still return the last value of the block, <code>1</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Coin {"></div><div data-l="#    Penny,"></div><div data-l="#    Nickel,"></div><div data-l="#    Dime,"></div><div data-l="#    Quarter,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn value_in_cents(coin: Coin) -&gt; u32 {"></div><div data-l="    match coin {"></div><div data-l="        Coin::Penny =&gt; {"></div><div data-l="            println!(&quot;Lucky penny!&quot;);"></div><div data-l="            1"></div><div data-l="        },"></div><div data-l="        Coin::Nickel =&gt; 5,"></div><div data-l="        Coin::Dime =&gt; 10,"></div><div data-l="        Coin::Quarter =&gt; 25,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>Patterns that Bind to Values</h3>
+<br>
+<p>Another useful feature of match arms is that they can bind to the parts of the
+values that match the pattern. This is how we can extract values out of enum
+variants.</p>
+<br>
+<p>As an example, let’s change one of our enum variants to hold data inside it.
+From 1999 through 2008, the United States minted quarters with different
+designs for each of the 50 states on one side. No other coins got state
+designs, so only quarters have this extra value. We can add this information to
+our <code>enum</code> by changing the <code>Quarter</code> variant to include a <code>UsState</code> value stored
+inside it, which we’ve done here in Listing 6-4.</p>
+<br>
+<div data-lang="rust"><div data-l="#//#[derive(Debug)] // so we can inspect the state in a minute"></div><div data-l="#[derive(Debug)] // ">so we can inspect the state in a minute</div><div data-l="enum UsState {"></div><div data-l="    Alabama,"></div><div data-l="    Alaska,"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div><div data-l=""></div><div data-l="enum Coin {"></div><div data-l="    Penny,"></div><div data-l="    Nickel,"></div><div data-l="    Dime,"></div><div data-l="    Quarter(UsState),"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 6-4: A <code>Coin</code> enum in which the <code>Quarter</code> variant
+also holds a <code>UsState</code> value</span></p>
+<br>
+<p>Let’s imagine that a friend of ours is trying to collect all 50 state quarters.
+While we sort our loose change by coin type, we’ll also call out the name of
+the state associated with each quarter so if it’s one our friend doesn’t have,
+they can add it to their collection.</p>
+<br>
+<p>In the match expression for this code, we add a variable called <code>state</code> to the
+pattern that matches values of the variant <code>Coin::Quarter</code>. When a
+<code>Coin::Quarter</code> matches, the <code>state</code> variable will bind to the value of that
+quarter’s state. Then we can use <code>state</code> in the code for that arm, like so:</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Debug)]"></div><div data-l="# enum UsState {"></div><div data-l="#    Alabama,"></div><div data-l="#    Alaska,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# enum Coin {"></div><div data-l="#    Penny,"></div><div data-l="#    Nickel,"></div><div data-l="#    Dime,"></div><div data-l="#    Quarter(UsState),"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn value_in_cents(coin: Coin) -&gt; u32 {"></div><div data-l="    match coin {"></div><div data-l="        Coin::Penny =&gt; 1,"></div><div data-l="        Coin::Nickel =&gt; 5,"></div><div data-l="        Coin::Dime =&gt; 10,"></div><div data-l="        Coin::Quarter(state) =&gt; {"></div><div data-l="            println!(&quot;State quarter from {:?}!&quot;, state);"></div><div data-l="            25"></div><div data-l="        },"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>If we were to call <code>value_in_cents(Coin::Quarter(UsState::Alaska))</code>, <code>coin</code>
+would be <code>Coin::Quarter(UsState::Alaska)</code>. When we compare that value with each
+of the match arms, none of them match until we reach <code>Coin::Quarter(state)</code>. At
+that point, the binding for <code>state</code> will be the value <code>UsState::Alaska</code>. We can
+then use that binding in the <code>println€</code> expression, thus getting the inner
+state value out of the <code>Coin</code> enum variant for <code>Quarter</code>.</p>
+<br>
+<h3>Matching with <code>Option&lt;T&gt;</code></h3>
+<br>
+<p>In the previous section, we wanted to get the inner <code>T</code> value out of the <code>Some</code>
+case when using <code>Option&lt;T&gt;</code>; we can also handle <code>Option&lt;T&gt;</code> using <code>match</code> as we
+did with the <code>Coin</code> enum! Instead of comparing coins, we’ll compare the
+variants of <code>Option&lt;T&gt;</code>, but the way that the <code>match</code> expression works remains
+the same.</p>
+<br>
+<p>Let’s say we want to write a function that takes an <code>Option&lt;i32&gt;</code> and, if
+there’s a value inside, adds 1 to that value. If there isn’t a value inside,
+the function should return the <code>None</code> value and not attempt to perform any
+operations.</p>
+<br>
+<p>This function is very easy to write, thanks to <code>match</code>, and will look like
+Listing 6-5.</p>
+<br>
+<div data-lang="rust"><div data-l="fn plus_one(x: Option&lt;i32&gt;) -&gt; Option&lt;i32&gt; {"></div><div data-l="    match x {"></div><div data-l="        None =&gt; None,"></div><div data-l="        Some(i) =&gt; Some(i + 1),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let five = Some(5);"></div><div data-l="let six = plus_one(five);"></div><div data-l="let none = plus_one(None);"></div></div>
+<br>
+<p><span class="caption">Listing 6-5: A function that uses a <code>match</code> expression on
+an <code>Option&lt;i32&gt;</code></span></p>
+<br>
+<p>Let’s examine the first execution of <code>plus_one</code> in more detail. When we call
+<code>plus_one(five)</code>, the variable <code>x</code> in the body of <code>plus_one</code> will have the
+value <code>Some(5)</code>. We then compare that against each match arm.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="None =&gt; None,"></div></div>
+<br>
+<p>The <code>Some(5)</code> value doesn’t match the pattern <code>None</code>, so we continue to the
+next arm.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="Some(i) =&gt; Some(i + 1),"></div></div>
+<br>
+<p>Does <code>Some(5)</code> match <code>Some(i)</code>? Why yes it does! We have the same variant. The
+<code>i</code> binds to the value contained in <code>Some</code>, so <code>i</code> takes the value <code>5</code>. The
+code in the match arm is then executed, so we add 1 to the value of <code>i</code> and
+create a new <code>Some</code> value with our total <code>6</code> inside.</p>
+<br>
+<p>Now let’s consider the second call of <code>plus_one</code> in Listing 6-5, where <code>x</code> is
+<code>None</code>. We enter the <code>match</code> and compare to the first arm.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="None =&gt; None,"></div></div>
+<br>
+<p>It matches! There’s no value to add to, so the program stops and returns the
+<code>None</code> value on the right side of <code>=&gt;</code>. Because the first arm matched, no other
+arms are compared.</p>
+<br>
+<p>Combining <code>match</code> and enums is useful in many situations. You’ll see this
+pattern a lot in Rust code: <code>match</code> against an enum, bind a variable to the
+data inside, and then execute code based on it. It’s a bit tricky at first, but
+once you get used to it, you’ll wish you had it in all languages. It’s
+consistently a user favorite.</p>
+<br>
+<h3>Matches Are Exhaustive</h3>
+<br>
+<p>There’s one other aspect of <code>match</code> we need to discuss. Consider this version
+of our <code>plus_one</code> function that has a bug and won’t compile:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn plus_one(x: Option&lt;i32&gt;) -&gt; Option&lt;i32&gt; {"></div><div data-l="    match x {"></div><div data-l="        Some(i) =&gt; Some(i + 1),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We didn’t handle the <code>None</code> case, so this code will cause a bug. Luckily, it’s
+a bug Rust knows how to catch. If we try to compile this code, we’ll get this
+error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0004]: non-exhaustive patterns: `None` not covered"></div><div data-l=" --&gt;"></div><div data-l="  |"></div><div data-l="6 |         match x {"></div><div data-l="  |               ^ pattern `None` not covered"></div></div>
+<br>
+<p>Rust knows that we didn’t cover every possible case and even knows which
+pattern we forgot! Matches in Rust are <i>exhaustive</i>: we must exhaust every last
+possibility in order for the code to be valid. Especially in the case of
+<code>Option&lt;T&gt;</code>, when Rust prevents us from forgetting to explicitly handle the
+<code>None</code> case, it protects us from assuming that we have a value when we might
+have null, thus making the billion-dollar mistake discussed earlier.</p>
+<br>
+<h3>The <code>_</code> Placeholder</h3>
+<br>
+<p>Rust also has a pattern we can use when we don’t want to list all possible
+values. For example, a <code>u8</code> can have valid values of 0 through 255. If we only
+care about the values 1, 3, 5, and 7, we don’t want to have to list out 0, 2,
+4, 6, 8, 9 all the way up to 255. Fortunately, we don’t have to: we can use the
+special pattern <code>_</code> instead:</p>
+<br>
+<div data-lang="rust"><div data-l="let some_u8_value = 0u8;"></div><div data-l="match some_u8_value {"></div><div data-l="    1 =&gt; println!(&quot;one&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    5 =&gt; println!(&quot;five&quot;),"></div><div data-l="    7 =&gt; println!(&quot;seven&quot;),"></div><div data-l="    _ =&gt; (),"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>_</code> pattern will match any value. By putting it after our other arms, the
+<code>_</code> will match all the possible cases that aren’t specified before it. The <code>()</code>
+is just the unit value, so nothing will happen in the <code>_</code> case. As a result, we
+can say that we want to do nothing for all the possible values that we don’t
+list before the <code>_</code> placeholder.</p>
+<br>
+<p>However, the <code>match</code> expression can be a bit wordy in a situation in which we
+care about only <i>one</i> of the cases. For this situation, Rust provides <code>if let</code>.</p>

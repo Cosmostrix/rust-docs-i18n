@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1>Crates</h1>
+<br>
+<p>The <code>crate_type</code> attribute can be used to tell the compiler whether a crate is
+a binary or a library (and even which type of library), and the <code>crate_name</code>
+attribute can be used to set the name of the crate.</p>
+<br>
+<p>However, it is important to note that both the <code>crate_type</code> and <code>crate_name</code>
+attributes have <b>no</b> effect whatsoever when using Cargo, the Rust package
+manager. Since Cargo is used for the majority of Rust projects, this means
+real-world uses of <code>crate_type</code> and <code>crate_name</code> are relatively limited.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// This crate is a library"></div><div data-l="// ">This crate is a library</div><div data-l="#![crate_type = &quot;lib&quot;]"></div><div data-l="#// The library is named &quot;rary&quot;"></div><div data-l="// ">The library is named &quot;rary&quot;</div><div data-l="#![crate_name = &quot;rary&quot;]"></div><div data-l=""></div><div data-l="pub fn public_function() {"></div><div data-l="    println!(&quot;called rary's `public_function()`&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn private_function() {"></div><div data-l="    println!(&quot;called rary's `private_function()`&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub fn indirect_access() {"></div><div data-l="    print!(&quot;called rary's `indirect_access()`, that\n&gt; &quot;);"></div><div data-l=""></div><div data-l="    private_function();"></div><div data-l="}"></div></div>
+<br>
+<p>When the <code>crate_type</code> attribute is used, we no longer need to pass the
+<code>--crate-type</code> flag to <code>rustc</code>.</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc lib.rs"></div><div data-l="$ ls lib*"></div><div data-l="library.rlib"></div></div>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<h1>Macros</h1>
+<br>
+<p>By now you’ve learned about many of the tools Rust provides for abstracting and
+reusing code. These units of code reuse have a rich semantic structure. For
+example, functions have a type signature, type parameters have trait bounds,
+and overloaded functions must belong to a particular trait.</p>
+<br>
+<p>This structure means that Rust’s core abstractions have powerful compile-time
+correctness checking. But this comes at the price of reduced flexibility. If
+you visually identify a pattern of repeated code, you may find it’s difficult
+or cumbersome to express that pattern as a generic function, a trait, or
+anything else within Rust’s semantics.</p>
+<br>
+<p>Macros allow us to abstract at a syntactic level. A macro invocation is
+shorthand for an &quot;expanded&quot; syntactic form. This expansion happens early in
+compilation, before any static checking. As a result, macros can capture many
+patterns of code reuse that Rust’s core abstractions cannot.</p>
+<br>
+<p>The drawback is that macro-based code can be harder to understand, because
+fewer of the built-in rules apply. Like an ordinary function, a well-behaved
+macro can be used without understanding its implementation. However, it can be
+difficult to design a well-behaved macro!  Additionally, compiler errors in
+macro code are harder to interpret, because they describe problems in the
+expanded code, not the source-level form that developers use.</p>
+<br>
+<p>These drawbacks make macros something of a &quot;feature of last resort&quot;. That’s not
+to say that macros are bad; they are part of Rust because sometimes they’re
+needed for truly concise, well-abstracted code. Just keep this tradeoff in
+mind.</p>
+<br>
+<h1>Defining a macro</h1>
+<br>
+<p>You may have seen the <code>vec€</code> macro, used to initialize a <a class="notranslate" href="#3vector">vector</a> with
+any number of elements.</p>
+<br>
+<a class="notranslate" href="#1vectors.html">vector</a>
+<br>
+<div data-lang="rust"><div data-l="let x: Vec&lt;u32&gt; = vec![1, 2, 3];"></div><div data-l="# assert_eq!(x, [1, 2, 3]);"></div></div>
+<br>
+<p>This can’t be an ordinary function, because it takes any number of arguments.
+But we can imagine it as syntactic shorthand for</p>
+<br>
+<div data-lang="rust"><div data-l="let x: Vec&lt;u32&gt; = {"></div><div data-l="    let mut temp_vec = Vec::new();"></div><div data-l="    temp_vec.push(1);"></div><div data-l="    temp_vec.push(2);"></div><div data-l="    temp_vec.push(3);"></div><div data-l="    temp_vec"></div><div data-l="};"></div><div data-l="# assert_eq!(x, [1, 2, 3]);"></div></div>
+<br>
+<p>We can implement this shorthand, using a macro: <a class="notranslate" href="#4^actual">^actual</a></p>
+<br>
+<a class="notranslate" href="#1The actual definition of `vec!` in libcollections differs from the">^actual</a>
+<p>           one presented here, for reasons of efficiency and reusability.
+		   </p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! vec {"></div><div data-l="    ( $( $x:expr ),* ) =&gt; {"></div><div data-l="        {"></div><div data-l="            let mut temp_vec = Vec::new();"></div><div data-l="            $("></div><div data-l="                temp_vec.push($x);"></div><div data-l="            )*"></div><div data-l="            temp_vec"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l="}"></div><div data-l="# fn main() {"></div><div data-l="#     assert_eq!(vec![1,2,3], [1, 2, 3]);"></div><div data-l="# }"></div></div>
+<br>
+<p>Whoa, that’s a lot of new syntax! Let’s break it down.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="macro_rules! vec { ... }"></div></div>
+<br>
+<p>This says we’re defining a macro named <code>vec</code>, much as <code>fn vec</code> would define a
+function named <code>vec</code>. In prose, we informally write a macro’s name with an
+exclamation point, e.g. <code>vec€</code>. The exclamation point is part of the invocation
+syntax and serves to distinguish a macro from an ordinary function.</p>
+<br>
+<h2>Matching</h2>
+<br>
+<p>The macro is defined through a series of rules, which are pattern-matching
+cases. Above, we had</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="( $( $x:expr ),* ) =&gt; { ... };"></div></div>
+<br>
+<p>This is like a <code>match</code> expression arm, but the matching happens on Rust syntax
+trees, at compile time. The semicolon is optional on the last (here, only)
+case. The &quot;pattern&quot; on the left-hand side of <code>=&gt;</code> is known as a ‘matcher’.
+These have <a class="notranslate" href="#4their own little grammar">their own little grammar</a> within the language.</p>
+<br>
+<a class="notranslate" href="#1../../reference/macros.html">their own little grammar</a>
+<br>
+<p>The matcher <code>$x:expr</code> will match any Rust expression, binding that syntax tree
+to the ‘metavariable’ <code>$x</code>. The identifier <code>expr</code> is a ‘fragment specifier’;
+the full possibilities are enumerated later in this chapter.
+Surrounding the matcher with <code>$(...),*</code> will match zero or more expressions,
+separated by commas.</p>
+<br>
+<p>Aside from the special matcher syntax, any Rust tokens that appear in a matcher
+must match exactly. For example,</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="macro_rules! foo {"></div><div data-l="    (x =&gt; $e:expr) =&gt; (println!(&quot;mode X: {}&quot;, $e));"></div><div data-l="    (y =&gt; $e:expr) =&gt; (println!(&quot;mode Y: {}&quot;, $e));"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo!(y =&gt; 3);"></div><div data-l="}"></div></div>
+<br>
+<p>will print</p>
+<br>
+<div data-lang="text"><div data-l="mode Y: 3"></div></div>
+<br>
+<p>With</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="foo!(z =&gt; 3);"></div></div>
+<br>
+<p>we get the compiler error</p>
+<br>
+<div data-lang="text"><div data-l="error: no rules expected the token `z`"></div></div>
+<br>
+<h2>Expansion</h2>
+<br>
+<p>The right-hand side of a macro rule is ordinary Rust syntax, for the most part.
+But we can splice in bits of syntax captured by the matcher. From the original
+example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="$("></div><div data-l="    temp_vec.push($x);"></div><div data-l=")*"></div></div>
+<br>
+<p>Each matched expression <code>$x</code> will produce a single <code>push</code> statement in the
+macro expansion. The repetition in the expansion proceeds in &quot;lockstep&quot; with
+repetition in the matcher (more on this in a moment).</p>
+<br>
+<p>Because <code>$x</code> was already declared as matching an expression, we don’t repeat
+<code>:expr</code> on the right-hand side. Also, we don’t include a separating comma as
+part of the repetition operator. Instead, we have a terminating semicolon
+within the repeated block.</p>
+<br>
+<p>Another detail: the <code>vec€</code> macro has <i>two</i> pairs of braces on the right-hand
+side. They are often combined like so:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="macro_rules! foo {"></div><div data-l="    () =&gt; {{"></div><div data-l="        ..."></div><div data-l="    }}"></div><div data-l="}"></div></div>
+<br>
+<p>The outer braces are part of the syntax of <code>macro_rules€</code>. In fact, you can use
+<code>()</code> or <code>[]</code> instead. They simply delimit the right-hand side as a whole.</p>
+<br>
+<p>The inner braces are part of the expanded syntax. Remember, the <code>vec€</code> macro is
+used in an expression context. To write an expression with multiple statements,
+including <code>let</code>-bindings, we use a block. If your macro expands to a single
+expression, you don’t need this extra layer of braces.</p>
+<br>
+<p>Note that we never <i>declared</i> that the macro produces an expression. In fact,
+this is not determined until we use the macro as an expression. With care, you
+can write a macro whose expansion works in several contexts. For example,
+shorthand for a data type could be valid as either an expression or a pattern.</p>
+<br>
+<h2>Repetition</h2>
+<br>
+<p>The repetition operator follows two principal rules:</p>
+<br>
+<div data-b="1."><code>$(...)*</code> walks through one &quot;layer&quot; of repetitions, for all of the <code>$name</code>s
+ it contains, in lockstep, and</div>
+<div data-b="2.">each <code>$name</code> must be under at least as many <code>$(...)*</code>s as it was matched
+ against. If it is under more, it’ll be duplicated, as appropriate.</div>
+<br>
+<p>This baroque macro illustrates the duplication of variables from outer
+repetition levels.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! o_O {"></div><div data-l="    ("></div><div data-l="        $("></div><div data-l="            $x:expr; [ $( $y:expr ),* ]"></div><div data-l="        );*"></div><div data-l="    ) =&gt; {"></div><div data-l="        &amp;[ $($( $x + $y ),*),* ]"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let a: &amp;[i32]"></div><div data-l="        = o_O!(10; [1, 2, 3];"></div><div data-l="               20; [4, 5, 6]);"></div><div data-l=""></div><div data-l="    assert_eq!(a, [11, 12, 13, 24, 25, 26]);"></div><div data-l="}"></div></div>
+<br>
+<p>That’s most of the matcher syntax. These examples use <code>$(...)*</code>, which is a
+&quot;zero or more&quot; match. Alternatively you can write <code>$(...)+</code> for a &quot;one or
+more&quot; match. Both forms optionally include a separator, which can be any token
+except <code>+</code> or <code>*</code>.</p>
+<br>
+<p>This system is based on
+&quot;<a class="notranslate" href="#2https://www.cs.indiana.edu/ftp/techreports/TR206.pdf">Macro-by-Example</a>&quot;
+(PDF link).</p>
+<br>
+<h1>Hygiene</h1>
+<br>
+<p>Some languages implement macros using simple text substitution, which leads to
+various problems. For example, this C program prints <code>13</code> instead of the
+expected <code>25</code>.</p>
+<br>
+<div data-lang="text"><div data-l="#define FIVE_TIMES(x) 5 * x"></div><div data-l=""></div><div data-l="int main() {"></div><div data-l="    printf(&quot;%d\n&quot;, FIVE_TIMES(2 + 3));"></div><div data-l="    return 0;"></div><div data-l="}"></div></div>
+<br>
+<p>After expansion we have <code>5 * 2 + 3</code>, and multiplication has greater precedence
+than addition. If you’ve used C macros a lot, you probably know the standard
+idioms for avoiding this problem, as well as five or six others. In Rust, we
+don’t have to worry about it.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! five_times {"></div><div data-l="    ($x:expr) =&gt; (5 * $x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(25, five_times!(2 + 3));"></div><div data-l="}"></div></div>
+<br>
+<p>The metavariable <code>$x</code> is parsed as a single expression node, and keeps its
+place in the syntax tree even after substitution.</p>
+<br>
+<p>Another common problem in macro systems is ‘variable capture’. Here’s a C
+macro using a block with multiple statements.</p>
+<br>
+<div data-lang="text"><div data-l="#define LOG(msg) do { \"></div><div data-l="    int state = get_log_state(); \"></div><div data-l="    if (state &gt; 0) { \"></div><div data-l="        printf(&quot;log(%d): %s\n&quot;, state, msg); \"></div><div data-l="    } \"></div><div data-l="} while (0)"></div></div>
+<br>
+<p>Here’s a simple use case that goes terribly wrong:</p>
+<br>
+<div data-lang="text"><div data-l="const char *state = &quot;reticulating splines&quot;;"></div><div data-l="LOG(state);"></div></div>
+<br>
+<p>This expands to</p>
+<br>
+<div data-lang="text"><div data-l="const char *state = &quot;reticulating splines&quot;;"></div><div data-l="do {"></div><div data-l="    int state = get_log_state();"></div><div data-l="    if (state &gt; 0) {"></div><div data-l="        printf(&quot;log(%d): %s\n&quot;, state, state);"></div><div data-l="    }"></div><div data-l="} while (0);"></div></div>
+<br>
+<p>The second variable named <code>state</code> shadows the first one.  This is a problem
+because the print statement should refer to both of them.</p>
+<br>
+<p>The equivalent Rust macro has the desired behavior.</p>
+<br>
+<div data-lang="rust"><div data-l="# fn get_log_state() -&gt; i32 { 3 }"></div><div data-l="macro_rules! log {"></div><div data-l="    ($msg:expr) =&gt; {{"></div><div data-l="        let state: i32 = get_log_state();"></div><div data-l="        if state &gt; 0 {"></div><div data-l="            println!(&quot;log({}): {}&quot;, state, $msg);"></div><div data-l="        }"></div><div data-l="    }};"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let state: &amp;str = &quot;reticulating splines&quot;;"></div><div data-l="    log!(state);"></div><div data-l="}"></div></div>
+<br>
+<p>This works because Rust has a <a class="notranslate" href="#4hygienic macro system">hygienic macro system</a>. Each macro expansion
+happens in a distinct ‘syntax context’, and each variable is tagged with the
+syntax context where it was introduced. It’s as though the variable <code>state</code>
+inside <code>main</code> is painted a different &quot;color&quot; from the variable <code>state</code> inside
+the macro, and therefore they don’t conflict.</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Hygienic_macro">hygienic macro system</a>
+<br>
+<p>This also restricts the ability of macros to introduce new bindings at the
+invocation site. Code such as the following will not work:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="macro_rules! foo {"></div><div data-l="    () =&gt; (let x = 3;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo!();"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>Instead you need to pass the variable name into the invocation, so that it’s
+tagged with the right syntax context.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! foo {"></div><div data-l="    ($v:ident) =&gt; (let $v = 3;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo!(x);"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>This holds for <code>let</code> bindings and loop labels, but not for <a class="notranslate" href="#3items">items</a>.
+So the following code does compile:</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! foo {"></div><div data-l="    () =&gt; (fn x() { });"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo!();"></div><div data-l="    x();"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1../../reference/items.html">items</a>
+<br>
+<h1>Recursive macros</h1>
+<br>
+<p>A macro’s expansion can include more macro invocations, including invocations
+of the very same macro being expanded.  These recursive macros are useful for
+processing tree-structured input, as illustrated by this (simplistic) HTML
+shorthand:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![allow(unused_must_use)]"></div><div data-l="macro_rules! write_html {"></div><div data-l="    ($w:expr, ) =&gt; (());"></div><div data-l=""></div><div data-l="    ($w:expr, $e:tt) =&gt; (write!($w, &quot;{}&quot;, $e));"></div><div data-l=""></div><div data-l="    ($w:expr, $tag:ident [ $($inner:tt)* ] $($rest:tt)*) =&gt; {{"></div><div data-l="        write!($w, &quot;&lt;{}&gt;&quot;, stringify!($tag));"></div><div data-l="        write_html!($w, $($inner)*);"></div><div data-l="        write!($w, &quot;&lt;/{}&gt;&quot;, stringify!($tag));"></div><div data-l="        write_html!($w, $($rest)*);"></div><div data-l="    }};"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#//#   // FIXME(#21826)"></div><div data-l="#   // ">FIXME(#21826)</div><div data-l="    use std::fmt::Write;"></div><div data-l="    let mut out = String::new();"></div><div data-l=""></div><div data-l="    write_html!(&amp;mut out,"></div><div data-l="        html["></div><div data-l="            head[title[&quot;Macros guide&quot;]]"></div><div data-l="            body[h1[&quot;Macros are the best!&quot;]]"></div><div data-l="        ]);"></div><div data-l=""></div><div data-l="    assert_eq!(out,"></div><div data-l="        &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Macros guide&lt;/title&gt;&lt;/head&gt;\"></div><div data-l="         &lt;body&gt;&lt;h1&gt;Macros are the best!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;&quot;);"></div><div data-l="}"></div></div>
+<br>
+<h1>Debugging macro code</h1>
+<br>
+<p>To see the results of expanding macros, run <code>rustc --pretty expanded</code>. The
+output represents a whole crate, so you can also feed it back in to <code>rustc</code>,
+which will sometimes produce better error messages than the original
+compilation. Note that the <code>--pretty expanded</code> output may have a different
+meaning if multiple variables of the same name (but different syntax contexts)
+are in play in the same scope. In this case <code>--pretty expanded,hygiene</code> will
+tell you about the syntax contexts.</p>
+<br>
+<p><code>rustc</code> provides two syntax extensions that help with macro debugging. For now,
+they are unstable and require feature gates.</p>
+<br>
+<div data-b="*"><code>log_syntax€(...)</code> will print its arguments to standard output, at compile
+time, and &quot;expand&quot; to nothing.</div>
+<br>
+<div data-b="*"><code>trace_macros€(true)</code> will enable a compiler message every time a macro is
+expanded. Use <code>trace_macros€(false)</code> later in expansion to turn it off.</div>
+<br>
+<h1>Syntactic requirements</h1>
+<br>
+<p>Even when Rust code contains un-expanded macros, it can be parsed as a full
+<a href="#3ast">syntax tree</a>. This property can be very useful for editors and other
+tools that process code. It also has a few consequences for the design of
+Rust’s macro system.</p>
+<br>
+<a class="notranslate" href="#1glossary.html#abstract-syntax-tree">ast</a>
+<br>
+<p>One consequence is that Rust must determine, when it parses a macro invocation,
+whether the macro stands in for</p>
+<br>
+<div data-b="*">zero or more items,</div>
+<div data-b="*">zero or more methods,</div>
+<div data-b="*">an expression,</div>
+<div data-b="*">a statement, or</div>
+<div data-b="*">a pattern.</div>
+<br>
+<p>A macro invocation within a block could stand for some items, or for an
+expression / statement. Rust uses a simple rule to resolve this ambiguity. A
+macro invocation that stands for items must be either</p>
+<br>
+<div data-b="*">delimited by curly braces, e.g. <code>foo€ { ... }</code>, or</div>
+<div data-b="*">terminated by a semicolon, e.g. <code>foo€(...);</code></div>
+<br>
+<p>Another consequence of pre-expansion parsing is that the macro invocation must
+consist of valid Rust tokens. Furthermore, parentheses, brackets, and braces
+must be balanced within a macro invocation. For example, <code>foo€([)</code> is
+forbidden. This allows Rust to know where the macro invocation ends.</p>
+<br>
+<p>More formally, the macro invocation body must be a sequence of ‘token trees’.
+A token tree is defined recursively as either</p>
+<br>
+<div data-b="*">a sequence of token trees surrounded by matching <code>()</code>, <code>[]</code>, or <code>{}</code>, or</div>
+<div data-b="*">any other single token.</div>
+<br>
+<p>Within a matcher, each metavariable has a ‘fragment specifier’, identifying
+which syntactic form it matches.</p>
+<br>
+<div data-b="*"><code>ident</code>: an identifier. Examples: <code>x</code>; <code>foo</code>.</div>
+<div data-b="*"><code>path</code>: a qualified name. Example: <code>T::SpecialA</code>.</div>
+<div data-b="*"><code>expr</code>: an expression. Examples: <code>2 + 2</code>; <code>if true { 1 } else { 2 }</code>; <code>f(42)</code>.</div>
+<div data-b="*"><code>ty</code>: a type. Examples: <code>i32</code>; <code>Vec&lt;(char, String)&gt;</code>; <code>&amp;T</code>.</div>
+<div data-b="*"><code>pat</code>: a pattern. Examples: <code>Some(t)</code>; <code>(17, 'a')</code>; <code>_</code>.</div>
+<div data-b="*"><code>stmt</code>: a single statement. Example: <code>let x = 3</code>.</div>
+<div data-b="*"><code>block</code>: a brace-delimited sequence of statements and optionally an expression. Example:
+<code>{ log(error, &quot;hi&quot;); return 12; }</code>.</div>
+<div data-b="*"><code>item</code>: an <a class="notranslate" href="#3item">item</a>. Examples: <code>fn foo() { }</code>; <code>struct Bar;</code>.</div>
+<div data-b="*"><code>meta</code>: a &quot;meta item&quot;, as found in attributes. Example: <code>cfg(target_os = &quot;windows&quot;)</code>.</div>
+<div data-b="*"><code>tt</code>: a single token tree.</div>
+<br>
+<p>There are additional rules regarding the next token after a metavariable:</p>
+<br>
+<div data-b="*"><code>expr</code> and <code>stmt</code> variables may only be followed by one of: <code>=&gt; , ;</code></div>
+<div data-b="*"><code>ty</code> and <code>path</code> variables may only be followed by one of: <code>=&gt; , = | ; : &gt; [ { as where</code></div>
+<div data-b="*"><code>pat</code> variables may only be followed by one of: <code>=&gt; , = | if in</code></div>
+<div data-b="*">Other variables may be followed by any token.</div>
+<br>
+<p>These rules provide some flexibility for Rust’s syntax to evolve without
+breaking existing macros.</p>
+<br>
+<p>The macro system does not deal with parse ambiguity at all. For example, the
+grammar <code>$($i:ident)* $e:expr</code> will always fail to parse, because the parser would
+be forced to choose between parsing <code>$i</code> and parsing <code>$e</code>. Changing the
+invocation syntax to put a distinctive token in front can solve the problem. In
+this case, you can write <code>$(I $i:ident)* E $e:expr</code>.</p>
+<br>
+<a class="notranslate" href="#1../../reference/items.html">item</a>
+<br>
+<h1>Scoping and macro import/export</h1>
+<br>
+<p>Macros are expanded at an early stage in compilation, before name resolution.
+One downside is that scoping works differently for macros, compared to other
+constructs in the language.</p>
+<br>
+<p>Definition and expansion of macros both happen in a single depth-first,
+lexical-order traversal of a crate’s source. So a macro defined at module scope
+is visible to any subsequent code in the same module, which includes the body
+of any subsequent child <code>mod</code> items. If you want to use your macro, which is
+defined in a different module, you need to use <code>macro_use</code> attribute <i>before</i>
+using the macro. Let's say our macros are defined in module <code>macros</code> and we
+would like to use them inside module <code>client</code>. This is the required module
+definition order:</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="mod macros;"></div><div data-l="mod client;"></div></div>
+<br>
+<p>The opposite order would result in a compilation failure:</p>
+<br>
+<div data-lang="rust"><div data-l="mod client;"></div><div data-l="#[macro_use]"></div><div data-l="mod macros;"></div></div>
+<br>
+<div data-lang="bash"><div data-l="error: cannot find macro `my_macro!` in this scope"></div></div>
+<br>
+<p>A macro defined within the body of a single <code>fn</code>, or anywhere else not at
+module scope, is visible only within that item.</p>
+<br>
+<p>If a module has the <code>macro_use</code> attribute, its macros are also visible in its
+parent module after the child’s <code>mod</code> item. If the parent also has <code>macro_use</code>
+then the macros will be visible in the grandparent after the parent’s <code>mod</code>
+item, and so forth.</p>
+<br>
+<p>The <code>macro_use</code> attribute can also appear on <code>extern crate</code>. In this context
+it controls which macros are loaded from the external crate, e.g.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[macro_use(foo, bar)]"></div><div data-l="extern crate baz;"></div></div>
+<br>
+<p>If the attribute is given simply as <code>#[macro_use]</code>, all macros are loaded. If
+there is no <code>#[macro_use]</code> attribute then no macros are loaded. Only macros
+defined with the <code>#[macro_export]</code> attribute may be loaded.</p>
+<br>
+<p>To load a crate’s macros without linking it into the output, use <code>#[no_link]</code>
+as well.</p>
+<br>
+<p>An example:</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! m1 { () =&gt; (()) }"></div><div data-l=""></div><div data-l="#// Visible here: `m1`."></div><div data-l="// ">Visible here: <code>m1</code>.</div><div data-l=""></div><div data-l="mod foo {"></div><div data-l="#    // Visible here: `m1`."></div><div data-l="    // ">Visible here: <code>m1</code>.</div><div data-l=""></div><div data-l="    #[macro_export]"></div><div data-l="    macro_rules! m2 { () =&gt; (()) }"></div><div data-l=""></div><div data-l="#    // Visible here: `m1`, `m2`."></div><div data-l="    // ">Visible here: <code>m1</code>, <code>m2</code>.</div><div data-l="}"></div><div data-l=""></div><div data-l="#// Visible here: `m1`."></div><div data-l="// ">Visible here: <code>m1</code>.</div><div data-l=""></div><div data-l="macro_rules! m3 { () =&gt; (()) }"></div><div data-l=""></div><div data-l="#// Visible here: `m1`, `m3`."></div><div data-l="// ">Visible here: <code>m1</code>, <code>m3</code>.</div><div data-l=""></div><div data-l="#[macro_use]"></div><div data-l="mod bar {"></div><div data-l="#    // Visible here: `m1`, `m3`."></div><div data-l="    // ">Visible here: <code>m1</code>, <code>m3</code>.</div><div data-l=""></div><div data-l="    macro_rules! m4 { () =&gt; (()) }"></div><div data-l=""></div><div data-l="#    // Visible here: `m1`, `m3`, `m4`."></div><div data-l="    // ">Visible here: <code>m1</code>, <code>m3</code>, <code>m4</code>.</div><div data-l="}"></div><div data-l=""></div><div data-l="#// Visible here: `m1`, `m3`, `m4`."></div><div data-l="// ">Visible here: <code>m1</code>, <code>m3</code>, <code>m4</code>.</div><div data-l="# fn main() { }"></div></div>
+<br>
+<p>When this library is loaded with <code>#[macro_use] extern crate</code>, only <code>m2</code> will
+be imported.</p>
+<br>
+<p>The Rust Reference has a <a href="#2../../reference/attributes.html#macro-related-attributes">listing of macro-related
+attributes</a>.</p>
+<br>
+<h1>The variable <code>$crate</code></h1>
+<br>
+<p>A further difficulty occurs when a macro is used in multiple crates. Say that
+<code>mylib</code> defines</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn increment(x: u32) -&gt; u32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[macro_export]"></div><div data-l="macro_rules! inc_a {"></div><div data-l="    ($x:expr) =&gt; ( ::increment($x) )"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[macro_export]"></div><div data-l="macro_rules! inc_b {"></div><div data-l="    ($x:expr) =&gt; ( ::mylib::increment($x) )"></div><div data-l="}"></div><div data-l="# fn main() { }"></div></div>
+<br>
+<p><code>inc_a</code> only works within <code>mylib</code>, while <code>inc_b</code> only works outside the
+library. Furthermore, <code>inc_b</code> will break if the user imports <code>mylib</code> under
+another name.</p>
+<br>
+<p>Rust does not (yet) have a hygiene system for crate references, but it does
+provide a simple workaround for this problem. Within a macro imported from a
+crate named <code>foo</code>, the special macro variable <code>$crate</code> will expand to <code>::foo</code>.
+By contrast, when a macro is defined and then used in the same crate, <code>$crate</code>
+will expand to nothing. This means we can write</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_export]"></div><div data-l="macro_rules! inc {"></div><div data-l="    ($x:expr) =&gt; ( $crate::increment($x) )"></div><div data-l="}"></div><div data-l="# fn main() { }"></div></div>
+<br>
+<p>to define a single macro that works both inside and outside our library. The
+function name will expand to either <code>::increment</code> or <code>::mylib::increment</code>.</p>
+<br>
+<p>To keep this system simple and correct, <code>#[macro_use] extern crate ...</code> may
+only appear at the root of your crate, not inside <code>mod</code>.</p>
+<br>
+<h1>The deep end</h1>
+<br>
+<p>The introductory chapter mentioned recursive macros, but it did not give the
+full story. Recursive macros are useful for another reason: Each recursive
+invocation gives you another opportunity to pattern-match the macro’s
+arguments.</p>
+<br>
+<p>As an extreme example, it is possible, though hardly advisable, to implement
+the <a href="#2https://esolangs.org/wiki/Bitwise_Cyclic_Tag">Bitwise Cyclic Tag</a> automaton
+within Rust’s macro system.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! bct {"></div><div data-l="#    // cmd 0:  d ... =&gt; ..."></div><div data-l="    // ">cmd 0:  d ... =&gt; ...</div><div data-l="    (0, $($ps:tt),* ; $_d:tt)"></div><div data-l="        =&gt; (bct!($($ps),*, 0 ; ));"></div><div data-l="    (0, $($ps:tt),* ; $_d:tt, $($ds:tt),*)"></div><div data-l="        =&gt; (bct!($($ps),*, 0 ; $($ds),*));"></div><div data-l=""></div><div data-l="#    // cmd 1p:  1 ... =&gt; 1 ... p"></div><div data-l="    // ">cmd 1p:  1 ... =&gt; 1 ... p</div><div data-l="    (1, $p:tt, $($ps:tt),* ; 1)"></div><div data-l="        =&gt; (bct!($($ps),*, 1, $p ; 1, $p));"></div><div data-l="    (1, $p:tt, $($ps:tt),* ; 1, $($ds:tt),*)"></div><div data-l="        =&gt; (bct!($($ps),*, 1, $p ; 1, $($ds),*, $p));"></div><div data-l=""></div><div data-l="#    // cmd 1p:  0 ... =&gt; 0 ..."></div><div data-l="    // ">cmd 1p:  0 ... =&gt; 0 ...</div><div data-l="    (1, $p:tt, $($ps:tt),* ; $($ds:tt),*)"></div><div data-l="        =&gt; (bct!($($ps),*, 1, $p ; $($ds),*));"></div><div data-l=""></div><div data-l="#    // Halt on empty data string:"></div><div data-l="    // ">Halt on empty data string:</div><div data-l="    ( $($ps:tt),* ; )"></div><div data-l="        =&gt; (());"></div><div data-l="}"></div></div>
+<br>
+<p>Exercise: use macros to reduce duplication in the above definition of the
+<code>bct€</code> macro.</p>
+<br>
+<h1>Common macros</h1>
+<br>
+<p>Here are some common macros you’ll see in Rust code.</p>
+<br>
+<h2>panic!</h2>
+<br>
+<p>This macro causes the current thread to panic. You can give it a message
+to panic with:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="panic!(&quot;oh no!&quot;);"></div></div>
+<br>
+<h2>vec!</h2>
+<br>
+<p>The <code>vec€</code> macro is used throughout the book, so you’ve probably seen it
+already. It creates <code>Vec&lt;T&gt;</code>s with ease:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3, 4, 5];"></div></div>
+<br>
+<p>It also lets you make vectors with repeating values. For example, a hundred
+zeroes:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![0; 100];"></div></div>
+<br>
+<h2>assert! and assert_eq!</h2>
+<br>
+<p>These two macros are used in tests. <code>assert€</code> takes a boolean. <code>assert_eq€</code>
+takes two values and checks them for equality. <code>true</code> passes, <code>false</code> <code>panic€</code>s.
+Like this:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="#// A-ok!"></div><div data-l="// ">A-ok!</div><div data-l=""></div><div data-l="assert!(true);"></div><div data-l="assert_eq!(5, 3 + 2);"></div><div data-l=""></div><div data-l="#// Nope :("></div><div data-l="// ">Nope :(</div><div data-l=""></div><div data-l="assert!(5 &lt; 3);"></div><div data-l="assert_eq!(5, 3);"></div></div>
+<br>
+<h2>try!</h2>
+<br>
+<p><code>try€</code> is used for error handling. It takes something that can return a
+<code>Result&lt;T, E&gt;</code>, and gives <code>T</code> if it’s a <code>Ok&lt;T&gt;</code>, and <code>return</code>s with the
+<code>Err(E)</code> if it’s that. Like this:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::fs::File;"></div><div data-l=""></div><div data-l="fn foo() -&gt; std::io::Result&lt;()&gt; {"></div><div data-l="    let f = try!(File::create(&quot;foo.txt&quot;));"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div></div>
+<br>
+<p>This is cleaner than doing this:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::fs::File;"></div><div data-l=""></div><div data-l="fn foo() -&gt; std::io::Result&lt;()&gt; {"></div><div data-l="    let f = File::create(&quot;foo.txt&quot;);"></div><div data-l=""></div><div data-l="    let f = match f {"></div><div data-l="        Ok(t) =&gt; t,"></div><div data-l="        Err(e) =&gt; return Err(e),"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div></div>
+<br>
+<h2>unreachable!</h2>
+<br>
+<p>This macro is used when you think some code should never execute:</p>
+<br>
+<div data-lang="rust"><div data-l="if false {"></div><div data-l="    unreachable!();"></div><div data-l="}"></div></div>
+<br>
+<p>Sometimes, the compiler may make you have a different branch that you know
+will never, ever run. In these cases, use this macro, so that if you end
+up wrong, you’ll get a <code>panic€</code> about it.</p>
+<br>
+<div data-lang="rust"><div data-l="let x: Option&lt;i32&gt; = None;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    Some(_) =&gt; unreachable!(),"></div><div data-l="    None =&gt; println!(&quot;I know x is None!&quot;),"></div><div data-l="}"></div></div>
+<br>
+<h2>unimplemented!</h2>
+<br>
+<p>The <code>unimplemented€</code> macro can be used when you’re trying to get your functions
+to typecheck, and don’t want to worry about writing out the body of the
+function. One example of this situation is implementing a trait with multiple
+required methods, where you want to tackle one at a time. Define the others
+as <code>unimplemented€</code> until you’re ready to write them.</p>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<h2>Compile a C library while setting custom defines</h2>
+<br>
+<p><a href="#3cc">!<a class="notranslate" href="#4cc-badge">cc-badge</a></a> <a href="#3cat-development-tools">!<a class="notranslate" href="#4cat-development-tools-badge">cat-development-tools-badge</a></a></p>
+<br>
+<p>It is simple to build bundled C code with custom defines using <a class="notranslate" href="#4`cc::Build::define`">`cc::Build::define`</a>.
+The method takes an <a class="notranslate" href="#4`Option`">`Option`</a> value, so it is possible to create defines such as <code>#define APP_NAME &quot;foo&quot;</code>
+as well as <code>#define WELCOME</code> (pass <code>None</code> as the value for a value-less define). This example builds
+a bundled C file with dynamic defines set in <code>build.rs</code> and prints &quot;<b>Welcome to foo - version 1.0.2</b>&quot;
+when run. Cargo sets some <a href="#3cargo-env">environment variables</a> which may be useful for some custom defines.</p>
+<br>
+<br>
+<h3><code>Cargo.toml</code></h3>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="..."></div><div data-l="version = &quot;1.0.2&quot;"></div><div data-l="build = &quot;build.rs&quot;"></div><div data-l=""></div><div data-l="[build-dependencies]"></div><div data-l="cc = &quot;1&quot;"></div></div>
+<br>
+<h3><code>build.rs</code></h3>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate cc;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    cc::Build::new()"></div><div data-l="        .define(&quot;APP_NAME&quot;, &quot;\&quot;foo\&quot;&quot;)"></div><div data-l="        .define(&quot;VERSION&quot;, format!(&quot;\&quot;{}\&quot;&quot;, env!(&quot;CARGO_PKG_VERSION&quot;)).as_str())"></div><div data-l="        .define(&quot;WELCOME&quot;, None)"></div><div data-l="        .file(&quot;src/foo.c&quot;)"></div><div data-l="        .compile(&quot;foo&quot;);"></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/foo.c</code></h3>
+<br>
+<div data-lang="c"><div data-l="#include &lt;stdio.h&gt;"></div><div data-l=""></div><div data-l="void print_app_info() {"></div><div data-l="#ifdef WELCOME"></div><div data-l="    printf(&quot;Welcome to &quot;);"></div><div data-l="#endif"></div><div data-l="    printf(&quot;%s - version %s\n&quot;, APP_NAME, VERSION);"></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/main.rs</code></h3>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern {"></div><div data-l="    fn print_app_info();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main(){"></div><div data-l="    unsafe {"></div><div data-l="        print_app_info();"></div><div data-l="    }   "></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/cargo/reference/environment-variables.html">cargo-env</a>

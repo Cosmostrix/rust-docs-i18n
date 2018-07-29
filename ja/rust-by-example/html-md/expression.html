@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Expressions</h1>
+<br>
+<p>A Rust program is (mostly) made up of a series of statements:</p>
+<br>
+<div data-lang=""><div data-l="fn main() {"></div><div data-l="#    // statement"></div><div data-l="#    // statement"></div><div data-l="#    // statement"></div><div data-l="    // ">statement statement statement</div><div data-l="}"></div></div>
+<br>
+<p>There are a few kinds of statements in Rust. The most common two are declaring
+a variable binding, and using a <code>;</code> with an expression:</p>
+<br>
+<div data-lang=""><div data-l="fn main() {"></div><div data-l="#    // variable binding"></div><div data-l="    // ">variable binding</div><div data-l="    let x = 5;"></div><div data-l=""></div><div data-l="#    // expression;"></div><div data-l="    // ">expression;</div><div data-l="    x;"></div><div data-l="    x + 1;"></div><div data-l="    15;"></div><div data-l="}"></div></div>
+<br>
+<p>Blocks are expressions too, so they can be used as <a class="notranslate" href="#3rvalue">r-values</a> in
+assignments. The last expression in the block will be assigned to the
+<a class="notranslate" href="#3lvalue">l-value</a>. However, if the last expression of the block ends with a
+semicolon, the return value will be <code>()</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let x = 5u32;"></div><div data-l=""></div><div data-l="    let y = {"></div><div data-l="        let x_squared = x * x;"></div><div data-l="        let x_cube = x_squared * x;"></div><div data-l=""></div><div data-l="#        // This expression will be assigned to `y`"></div><div data-l="        // ">This expression will be assigned to <code>y</code></div><div data-l="        x_cube + x_squared + x"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let z = {"></div><div data-l="#        // The semicolon suppresses this expression and `()` is assigned to `z`"></div><div data-l="        // ">The semicolon suppresses this expression and <code>()</code> is assigned to <code>z</code></div><div data-l="        2 * x;"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;x is {:?}&quot;, x);"></div><div data-l="    println!(&quot;y is {:?}&quot;, y);"></div><div data-l="    println!(&quot;z is {:?}&quot;, z);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Value_%28computer_science%29#lrvalue">rvalue</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Value_%28computer_science%29#lrvalue">lvalue</a>

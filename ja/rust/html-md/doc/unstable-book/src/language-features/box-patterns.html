@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1><code>box_patterns</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29641">#29641</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29641">#29641</a>
+<br>
+<p>See also <a class="notranslate" href="#2language-features/box-syntax.html"><code>box_syntax</code></a></p>
+<br>
+<p>------------------------</p>
+<br>
+<p>Box patterns let you match on <code>Box&lt;T&gt;</code>s:</p>
+<br>
+<br>
+<div data-lang="rust"><div data-l="#![feature(box_patterns)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let b = Some(Box::new(5));"></div><div data-l="    match b {"></div><div data-l="        Some(box n) if n &lt; 0 =&gt; {"></div><div data-l="            println!(&quot;Box contains negative number {}&quot;, n);"></div><div data-l="        },"></div><div data-l="        Some(box n) if n &gt;= 0 =&gt; {"></div><div data-l="            println!(&quot;Box contains non-negative number {}&quot;, n);"></div><div data-l="        },"></div><div data-l="        None =&gt; {"></div><div data-l="            println!(&quot;No box&quot;);"></div><div data-l="        },"></div><div data-l="        _ =&gt; unreachable!()"></div><div data-l="    }"></div><div data-l="}"></div></div>

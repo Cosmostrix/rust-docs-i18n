@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<h1>Dependencies</h1>
+<br>
+<p>Most programs have dependencies on some libraries. If you have ever managed
+dependencies by hand, you know how much of a pain this can be. Luckily, the Rust
+ecosystem comes standard with <code>cargo</code>! <code>cargo</code> can manage dependencies for a
+project.</p>
+<br>
+<p>To create a new Rust project,</p>
+<br>
+<div data-lang="sh"><div data-l="# A binary"></div><div data-l="cargo new foo"></div><div data-l=""></div><div data-l="# OR A library"></div><div data-l="cargo new --lib foo"></div></div>
+<br>
+<p>For the rest of this chapter, I will assume we are making a binary, rather than
+a library, but all of the concepts are the same.</p>
+<br>
+<p>After the above commands, you should see something like this:</p>
+<br>
+<div data-lang="txt"><div data-l="foo"></div><div data-l="├── Cargo.toml"></div><div data-l="└── src"></div><div data-l="    └── main.rs"></div></div>
+<br>
+<p>The <code>main.rs</code> is the root source file for your new project -- nothing new there.
+The <code>Cargo.toml</code> is the config file for <code>cargo</code> for this project (<code>foo</code>). If you
+look inside it, you should see something like this:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;foo&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;mark&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div></div>
+<br>
+<p>The <code>name</code> field under <code>package</code> determines the name of the project. This is
+used by <code>crates.io</code> if you publish the crate (more later). It is also the name
+of the output binary when you compile.</p>
+<br>
+<p>The <code>version</code> field is a crate version number using <a class="notranslate" href="#2http://semver.org/">Semantic
+Versioning</a>.</p>
+<br>
+<p>The <code>authors</code> field is a list of authors used when publishing the crate.</p>
+<br>
+<p>The <code>dependencies</code> section lets you add a dependency for your project.</p>
+<br>
+<p>For example, suppose that I want my program to have a great CLI. You can find
+lots of great packages on <a class="notranslate" href="#2https://crates.io">crates.io</a> (the official Rust
+package registry). One popular choice is <a class="notranslate" href="#2https://crates.io/crates/clap">clap</a>.
+As of this writing, the most recent published version of <code>clap</code> is <code>2.27.1</code>. To
+add a dependency to our program, we can simply add the following to our
+<code>Cargo.toml</code> under <code>dependencies</code>: <code>clap = &quot;2.27.1&quot;</code>.  And of course, <code>extern
+crate clap</code> in <code>main.rs</code>, just like normal. And that's it! You can start using
+<code>clap</code> in your program.</p>
+<br>
+<p><code>cargo</code> also supports <a href="#3dependencies">other types of dependencies</a>. Here is just
+a small sampling:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;foo&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;mark&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="clap = &quot;2.27.1&quot; # from crates.io"></div><div data-l="rand = { git = &quot;https://github.com/rust-lang-nursery/rand&quot; } # from online repo"></div><div data-l="bar = { path = &quot;../bar&quot; } # from a path in the local filesystem"></div></div>
+<br>
+<p><code>cargo</code> is more than a dependency manager. All of the available
+configuration options are listed in the <a href="#3manifest">format specification</a> of
+<code>Cargo.toml</code>.</p>
+<br>
+<p>To build our project we can execute <code>cargo build</code> anywhere in the project
+directory (including subdirectories!). We can also do <code>cargo run</code> to build and
+run. Notice that these commands will resolve all dependencies, download crates
+if needed, and build everything, including your crate. (Note that it only
+rebuilds what it has not already built, similar to <code>make</code>).</p>
+<br>
+<p>Voila! That's all there is to it!</p>
+<br>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/cargo/reference/manifest.html">manifest</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html">dependencies</a>

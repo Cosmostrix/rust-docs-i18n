@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h1><code>dead_code</code></h1>
+<br>
+<p>The compiler provides a <code>dead_code</code>
+<a class="notranslate" href="#3lint"><i>lint</i></a> that will warn
+about unused functions. An <i>attribute</i> can be used to disable the lint.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn used_function() {}"></div><div data-l=""></div><div data-l="#// `#[allow(dead_code)]` is an attribute that disables the `dead_code` lint"></div><div data-l="// "><code>#[allow(dead_code)]</code> is an attribute that disables the <code>dead_code</code> lint</div><div data-l="#[allow(dead_code)]"></div><div data-l="fn unused_function() {}"></div><div data-l=""></div><div data-l="fn noisy_unused_function() {}"></div><div data-l="#// FIXME ^ Add an attribute to suppress the warning"></div><div data-l="// ">FIXME ^ Add an attribute to suppress the warning</div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    used_function();"></div><div data-l="}"></div></div>
+<br>
+<p>Note that in real programs, you should eliminate dead code. In these examples
+we'll allow dead code in some places because of the interactive nature of the
+examples.</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Lint_%28software%29">lint</a>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<h1>The walking tour of rustdoc</h1>
+<br>
+<p>Rustdoc actually uses the rustc internals directly. It lives in-tree with the
+compiler and standard library. This chapter is about how it works.</p>
+<br>
+<p>Rustdoc is implemented entirely within the crate <a class="notranslate" href="#3rd"><code>librustdoc</code></a>. It runs
+the compiler up to the point where we have an internal representation of a
+crate (HIR) and the ability to run some queries about the types of items. <a class="notranslate" href="#4HIR">HIR</a>
+and <a class="notranslate" href="#4queries">queries</a> are discussed in the linked chapters.</p>
+<br>
+<a class="notranslate" href="#1./hir.html">HIR</a>
+<a class="notranslate" href="#1./query.html">queries</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustdoc">rd</a>
+<br>
+<p><code>librustdoc</code> performs two major steps after that to render a set of
+documentation:</p>
+<br>
+<div data-b="*">&quot;Clean&quot; the AST into a form that's more suited to creating documentation (and
+slightly more resistant to churn in the compiler).</div>
+<div data-b="*">Use this cleaned AST to render a crate's documentation, one page at a time.</div>
+<br>
+<p>Naturally, there's more than just this, and those descriptions simplify out
+lots of details, but that's the high-level overview.</p>
+<br>
+<p>(Side note: <code>librustdoc</code> is a library crate! The <code>rustdoc</code> binary is created
+using the project in <a class="notranslate" href="#3bin"><code>src/tools/rustdoc</code></a>. Note that literally all that
+does is call the <code>main()</code> that's in this crate's <code>lib.rs</code>, though.)</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/rustdoc">bin</a>
+<br>
+<h2>Cheat sheet</h2>
+<br>
+<div data-b="*">Use <code>./x.py build --stage 1 src/libstd src/tools/rustdoc</code> to make a useable
+rustdoc you can run on other projects.</div>
+<div data-b="  *">Add <code>src/libtest</code> to be able to use <code>rustdoc --test</code>.</div>
+<div data-b="  *">If you've used <code>rustup toolchain link local /path/to/build/$TARGET/stage1</code>
+previously, then after the previous build command, <code>cargo +local doc</code> will
+Just Work.</div>
+<div data-b="*">Use <code>./x.py doc --stage 1 src/libstd</code> to use this rustdoc to generate the
+standard library docs.</div>
+<div data-b="  *">The completed docs will be available in <code>build/$TARGET/doc/std</code>, though the
+bundle is meant to be used as though you would copy out the <code>doc</code> folder to
+a web server, since that's where the CSS/JS and landing page are.</div>
+<div data-b="*">Most of the HTML printing code is in <code>html/format.rs</code> and <code>html/render.rs</code>.
+It's in a bunch of <code>fmt::Display</code> implementations and supplementary
+functions.</div>
+<div data-b="*">The types that got <code>Display</code> impls above are defined in <code>clean/mod.rs</code>, right
+next to the custom <code>Clean</code> trait used to process them out of the rustc HIR.</div>
+<div data-b="*">The bits specific to using rustdoc as a test harness are in <code>test.rs</code>.</div>
+<div data-b="*">The Markdown renderer is loaded up in <code>html/markdown.rs</code>, including functions
+for extracting doctests from a given block of Markdown.</div>
+<div data-b="*">The tests on rustdoc <i>output</i> are located in <code>src/test/rustdoc</code>, where
+they're handled by the test runner of rustbuild and the supplementary script
+<code>src/etc/htmldocck.py</code>.</div>
+<div data-b="*">Tests on search index generation are located in <code>src/test/rustdoc-js</code>, as a
+series of JavaScript files that encode queries on the standard library search
+index and expected results.</div>
+<br>
+<h2>From crate to clean</h2>
+<br>
+<p>In <code>core.rs</code> are two central items: the <code>DocContext</code> struct, and the <code>run_core</code>
+function. The latter is where rustdoc calls out to rustc to compile a crate to
+the point where rustdoc can take over. The former is a state container used
+when crawling through a crate to gather its documentation.</p>
+<br>
+<p>The main process of crate crawling is done in <code>clean/mod.rs</code> through several
+implementations of the <code>Clean</code> trait defined within. This is a conversion
+trait, which defines one method:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub trait Clean&lt;T&gt; {"></div><div data-l="    fn clean(&amp;self, cx: &amp;DocContext) -&gt; T;"></div><div data-l="}"></div></div>
+<br>
+<p><code>clean/mod.rs</code> also defines the types for the &quot;cleaned&quot; AST used later on to
+render documentation pages. Each usually accompanies an implementation of
+<code>Clean</code> that takes some AST or HIR type from rustc and converts it into the
+appropriate &quot;cleaned&quot; type. &quot;Big&quot; items like modules or associated items may
+have some extra processing in its <code>Clean</code> implementation, but for the most part
+these impls are straightforward conversions. The &quot;entry point&quot; to this module
+is the <code>impl Clean&lt;Crate&gt; for visit_ast::RustdocVisitor</code>, which is called by
+<code>run_core</code> above.</p>
+<br>
+<p>You see, I actually lied a little earlier: There's another AST transformation
+that happens before the events in <code>clean/mod.rs</code>.  In <code>visit_ast.rs</code> is the
+type <code>RustdocVisitor</code>, which <i>actually</i> crawls a <code>hir::Crate</code> to get the first
+intermediate representation, defined in <code>doctree.rs</code>. This pass is mainly to
+get a few intermediate wrappers around the HIR types and to process visibility
+and inlining. This is where <code>#[doc(inline)]</code>, <code>#[doc(no_inline)]</code>, and
+<code>#[doc(hidden)]</code> are processed, as well as the logic for whether a <code>pub use</code>
+should get the full page or a &quot;Reexport&quot; line in the module page.</p>
+<br>
+<p>The other major thing that happens in <code>clean/mod.rs</code> is the collection of doc
+comments and <code>#[doc=&quot;&quot;]</code> attributes into a separate field of the Attributes
+struct, present on anything that gets hand-written documentation. This makes it
+easier to collect this documentation later in the process.</p>
+<br>
+<p>The primary output of this process is a <code>clean::Crate</code> with a tree of Items
+which describe the publicly-documentable items in the target crate.</p>
+<br>
+<h3>Hot potato</h3>
+<br>
+<p>Before moving on to the next major step, a few important &quot;passes&quot; occur over
+the documentation.  These do things like combine the separate &quot;attributes&quot; into
+a single string and strip leading whitespace to make the document easier on the
+markdown parser, or drop items that are not public or deliberately hidden with
+<code>#[doc(hidden)]</code>. These are all implemented in the <code>passes/</code> directory, one
+file per pass. By default, all of these passes are run on a crate, but the ones
+regarding dropping private/hidden items can be bypassed by passing
+<code>--document-private-items</code> to rustdoc. Note that unlike the previous set of AST
+transformations, the passes happen on the <s>cleaned</s> crate.</p>
+<br>
+<p>(Strictly speaking, you can fine-tune the passes run and even add your own, but
+<a href="#344136">we're trying to deprecate that</a>. If you need finer-grain control over
+these passes, please let us know!)</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44136">44136</a>
+<br>
+<p>Here is current (as of this writing) list of passes:</p>
+<br>
+<div data-b="-"><code>propagate-doc-cfg</code> - propagates <code>#[doc(cfg(...))]</code> to child items.</div>
+<div data-b="-"><code>collapse-docs</code> concatenates all document attributes into one document
+attribute. This is necessary because each line of a doc comment is given as a
+separate doc attribute, and this will combine them into a single string with
+line breaks between each attribute.</div>
+<div data-b="-"><code>unindent-comments</code> removes excess indentation on comments in order for
+markdown to like it. This is necessary because the convention for writing
+documentation is to provide a space between the <code>///</code> or <code>//€</code> marker and the
+text, and stripping that leading space will make the text easier to parse by
+the Markdown parser. (In the past, the markdown parser used was not
+Commonmark- compliant, which caused annoyances with extra whitespace but this
+seems to be less of an issue today.)</div>
+<div data-b="-"><code>strip-priv-imports</code> strips all private import statements (<code>use</code>, <code>extern
+  crate</code>) from a crate. This is necessary because rustdoc will handle <i>public</i>
+imports by either inlining the item's documentation to the module or creating
+a &quot;Reexports&quot; section with the import in it. The pass ensures that all of
+these imports are actually relevant to documentation.</div>
+<div data-b="-"><code>strip-hidden</code> and <code>strip-private</code> strip all <code>doc(hidden)</code> and private items
+from the output. <code>strip-private</code> implies <code>strip-priv-imports</code>. Basically, the
+goal is to remove items that are not relevant for public documentation.</div>
+<br>
+<h2>From clean to crate</h2>
+<br>
+<p>This is where the &quot;second phase&quot; in rustdoc begins. This phase primarily lives
+in the <code>html/</code> folder, and it all starts with <code>run()</code> in <code>html/render.rs</code>. This
+code is responsible for setting up the <code>Context</code>, <code>SharedContext</code>, and <code>Cache</code>
+which are used during rendering, copying out the static files which live in
+every rendered set of documentation (things like the fonts, CSS, and JavaScript
+that live in <code>html/static/</code>), creating the search index, and printing out the
+source code rendering, before beginning the process of rendering all the
+documentation for the crate.</p>
+<br>
+<p>Several functions implemented directly on <code>Context</code> take the <code>clean::Crate</code> and
+set up some state between rendering items or recursing on a module's child
+items. From here the &quot;page rendering&quot; begins, via an enormous <code>write€()</code> call
+in <code>html/layout.rs</code>. The parts that actually generate HTML from the items and
+documentation occurs within a series of <code>std::fmt::Display</code> implementations and
+functions that pass around a <code>&amp;mut std::fmt::Formatter</code>. The top-level
+implementation that writes out the page body is the <code>impl&lt;'a&gt; fmt::Display for
+Item&lt;'a&gt;</code> in <code>html/render.rs</code>, which switches out to one of several <code>item_*</code>
+functions based on the kind of <code>Item</code> being rendered.</p>
+<br>
+<p>Depending on what kind of rendering code you're looking for, you'll probably
+find it either in <code>html/render.rs</code> for major items like &quot;what sections should I
+print for a struct page&quot; or <code>html/format.rs</code> for smaller component pieces like
+&quot;how should I print a where clause as part of some other item&quot;.</p>
+<br>
+<p>Whenever rustdoc comes across an item that should print hand-written
+documentation alongside, it calls out to <code>html/markdown.rs</code> which interfaces
+with the Markdown parser. This is exposed as a series of types that wrap a
+string of Markdown, and implement <code>fmt::Display</code> to emit HTML text. It takes
+special care to enable certain features like footnotes and tables and add
+syntax highlighting to Rust code blocks (via <code>html/highlight.rs</code>) before
+running the Markdown parser. There's also a function in here
+(<code>find_testable_code</code>) that specifically scans for Rust code blocks so the
+test-runner code can find all the doctests in the crate.</p>
+<br>
+<h3>From soup to nuts</h3>
+<br>
+<p>(alternate title: <a href="#3video">&quot;An unbroken thread that stretches from those first <code>Cell</code>s
+to us&quot;</a>)</p>
+<br>
+<a class="notranslate" href="#1https://www.youtube.com/watch?v=hOLAGYmUQV0">video</a>
+<br>
+<p>It's important to note that the AST cleaning can ask the compiler for
+information (crucially, <code>DocContext</code> contains a <code>TyCtxt</code>), but page rendering
+cannot. The <code>clean::Crate</code> created within <code>run_core</code> is passed outside the
+compiler context before being handed to <code>html::render::run</code>. This means that a
+lot of the &quot;supplementary data&quot; that isn't immediately available inside an
+item's definition, like which trait is the <code>Deref</code> trait used by the language,
+needs to be collected during cleaning, stored in the <code>DocContext</code>, and passed
+along to the <code>SharedContext</code> during HTML rendering.  This manifests as a bunch
+of shared state, context variables, and <code>RefCell</code>s.</p>
+<br>
+<p>Also of note is that some items that come from &quot;asking the compiler&quot; don't go
+directly into the <code>DocContext</code> - for example, when loading items from a foreign
+crate, rustdoc will ask about trait implementations and generate new <code>Item</code>s
+for the impls based on that information. This goes directly into the returned
+<code>Crate</code> rather than roundabout through the <code>DocContext</code>. This way, these
+implementations can be collected alongside the others, right before rendering
+the HTML.</p>
+<br>
+<h2>Other tricks up its sleeve</h2>
+<br>
+<p>All this describes the process for generating HTML documentation from a Rust
+crate, but there are couple other major modes that rustdoc runs in. It can also
+be run on a standalone Markdown file, or it can run doctests on Rust code or
+standalone Markdown files. For the former, it shortcuts straight to
+<code>html/markdown.rs</code>, optionally including a mode which inserts a Table of
+Contents to the output HTML.</p>
+<br>
+<p>For the latter, rustdoc runs a similar partial-compilation to get relevant
+documentation in <code>test.rs</code>, but instead of going through the full clean and
+render process, it runs a much simpler crate walk to grab <i>just</i> the
+hand-written documentation. Combined with the aforementioned
+&quot;<code>find_testable_code</code>&quot; in <code>html/markdown.rs</code>, it builds up a collection of
+tests to run before handing them off to the libtest test runner. One notable
+location in <code>test.rs</code> is the function <code>make_test</code>, which is where hand-written
+doctests get transformed into something that can be executed.</p>
+<br>
+<p>Some extra reading about <code>make_test</code> can be found
+<a class="notranslate" href="#2https://quietmisdreavus.net/code/2018/02/23/how-the-doctests-get-made/">here</a>.</p>
+<br>
+<h2>Dotting i's and crossing t's</h2>
+<br>
+<p>So that's rustdoc's code in a nutshell, but there's more things in the repo
+that deal with it. Since we have the full <code>compiletest</code> suite at hand, there's
+a set of tests in <code>src/test/rustdoc</code> that make sure the final HTML is what we
+expect in various situations. These tests also use a supplementary script,
+<code>src/etc/htmldocck.py</code>, that allows it to look through the final HTML using
+XPath notation to get a precise look at the output. The full description of all
+the commands available to rustdoc tests is in <code>htmldocck.py</code>.</p>
+<br>
+<p>In addition, there are separate tests for the search index and rustdoc's
+ability to query it. The files in <code>src/test/rustdoc-js</code> each contain a
+different search query and the expected results, broken out by search tab.
+These files are processed by a script in <code>src/tools/rustdoc-js</code> and the Node.js
+runtime. These tests don't have as thorough of a writeup, but a broad example
+that features results in all tabs can be found in <code>basic.js</code>. The basic idea is
+that you match a given <code>QUERY</code> with a set of <code>EXPECTED</code> results, complete with
+the full item path of each item.</p>

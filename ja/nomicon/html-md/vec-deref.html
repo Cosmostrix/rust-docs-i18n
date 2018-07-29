@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h1>Deref</h1>
+<br>
+<p>Alright! We've got a decent minimal stack implemented. We can push, we can
+pop, and we can clean up after ourselves. However there's a whole mess of
+functionality we'd reasonably want. In particular, we have a proper array, but
+none of the slice functionality. That's actually pretty easy to solve: we can
+implement <code>Deref&lt;Target=[T]&gt;</code>. This will magically make our Vec coerce to, and
+behave like, a slice in all sorts of conditions.</p>
+<br>
+<p>All we need is <code>slice::from_raw_parts</code>. It will correctly handle empty slices
+for us. Later once we set up zero-sized type support it will also Just Work
+for those too.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::ops::Deref;"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Deref for Vec&lt;T&gt; {"></div><div data-l="    type Target = [T];"></div><div data-l="    fn deref(&amp;self) -&gt; &amp;[T] {"></div><div data-l="        unsafe {"></div><div data-l="            ::std::slice::from_raw_parts(self.ptr.as_ptr(), self.len)"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And let's do DerefMut too:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::ops::DerefMut;"></div><div data-l=""></div><div data-l="impl&lt;T&gt; DerefMut for Vec&lt;T&gt; {"></div><div data-l="    fn deref_mut(&amp;mut self) -&gt; &amp;mut [T] {"></div><div data-l="        unsafe {"></div><div data-l="            ::std::slice::from_raw_parts_mut(self.ptr.as_ptr(), self.len)"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Now we have <code>len</code>, <code>first</code>, <code>last</code>, indexing, slicing, sorting, <code>iter</code>,
+<code>iter_mut</code>, and all other sorts of bells and whistles provided by slice. Sweet!</p>

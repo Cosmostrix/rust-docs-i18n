@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h2>Extract a list of unique #Hashtags from a text</h2>
+<br>
+<p><a href="#3regex">!<a class="notranslate" href="#4regex-badge">regex-badge</a></a> <a href="#3lazy_static">!<a class="notranslate" href="#4lazy_static-badge">lazy_static-badge</a></a> <a href="#3cat-text-processing">!<a class="notranslate" href="#4cat-text-processing-badge">cat-text-processing-badge</a></a></p>
+<br>
+<p>Extracts, sorts, and deduplicates list of hashtags from text.</p>
+<br>
+<p>The hashtag regex given here only catches Latin hashtags that start with a
+letter. The complete <a class="notranslate" href="#4twitter hashtag regex">twitter hashtag regex</a> is much more complicated.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate regex;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate lazy_static;"></div><div data-l=""></div><div data-l="use regex::Regex;"></div><div data-l="use std::collections::HashSet;"></div><div data-l=""></div><div data-l="fn extract_hashtags(text: &amp;str) -&gt; HashSet&lt;&amp;str&gt; {"></div><div data-l="    lazy_static! {"></div><div data-l="        static ref HASHTAG_REGEX : Regex = Regex::new("></div><div data-l="                r&quot;\#[a-zA-Z][0-9a-zA-Z_]*&quot;"></div><div data-l="            ).unwrap();"></div><div data-l="    }"></div><div data-l="    HASHTAG_REGEX.find_iter(text).map(|mat| mat.as_str()).collect()"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let tweet = &quot;Hey #world, I just got my new #dog, say hello to Till. #dog #forever #2 #_ &quot;;"></div><div data-l="    let tags = extract_hashtags(tweet);"></div><div data-l="    assert!(tags.contains(&quot;#dog&quot;) &amp;&amp; tags.contains(&quot;#forever&quot;) &amp;&amp; tags.contains(&quot;#world&quot;));"></div><div data-l="    assert_eq!(tags.len(), 3);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://github.com/twitter/twitter-text/blob/c9fc09782efe59af4ee82855768cfaf36273e170/java/src/com/twitter/Regex.java#L255">twitter hashtag regex</a>

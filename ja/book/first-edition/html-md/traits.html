@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<h1>Traits</h1>
+<br>
+<p>A trait is a language feature that tells the Rust compiler about
+functionality a type must provide.</p>
+<br>
+<p>Recall the <code>impl</code> keyword, used to call a function with <a class="notranslate" href="#3methodsyntax">method
+syntax</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1method-syntax.html">methodsyntax</a>
+<br>
+<p>Traits are similar, except that we first define a trait with a method
+signature, then implement the trait for a type. In this example, we implement the trait <code>HasArea</code> for <code>Circle</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait HasArea {"></div><div data-l="    fn area(&amp;self) -&gt; f64;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl HasArea for Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>As you can see, the <code>trait</code> block looks very similar to the <code>impl</code> block,
+but we don’t define a body, only a type signature. When we <code>impl</code> a trait,
+we use <code>impl Trait for Item</code>, rather than only <code>impl Item</code>.</p>
+<br>
+<p><code>Self</code> may be used in a type annotation to refer to an instance of the type
+implementing this trait passed as a parameter. <code>Self</code>, <code>&amp;Self</code> or <code>&amp;mut Self</code>
+may be used depending on the level of ownership required.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait HasArea {"></div><div data-l="    fn area(&amp;self) -&gt; f64;"></div><div data-l=""></div><div data-l="    fn is_larger(&amp;self, &amp;Self) -&gt; bool;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl HasArea for Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn is_larger(&amp;self, other: &amp;Self) -&gt; bool {"></div><div data-l="        self.area() &gt; other.area()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h2>Trait bounds on generic functions</h2>
+<br>
+<p>Traits are useful because they allow a type to make certain promises about its
+behavior. Generic functions can exploit this to constrain, or <a class="notranslate" href="#3bounds">bound</a>, the types they
+accept. Consider this function, which does not compile:</p>
+<br>
+<a class="notranslate" href="#1glossary.html#bounds">bounds</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn print_area&lt;T&gt;(shape: T) {"></div><div data-l="    println!(&quot;This shape has an area of {}&quot;, shape.area());"></div><div data-l="}"></div></div>
+<br>
+<p>Rust complains:</p>
+<br>
+<div data-lang="text"><div data-l="error: no method named `area` found for type `T` in the current scope"></div></div>
+<br>
+<p>Because <code>T</code> can be any type, we can’t be sure that it implements the <code>area</code>
+method. But we can add a trait bound to our generic <code>T</code>, ensuring
+that it does:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait HasArea {"></div><div data-l="#     fn area(&amp;self) -&gt; f64;"></div><div data-l="# }"></div><div data-l="fn print_area&lt;T: HasArea&gt;(shape: T) {"></div><div data-l="    println!(&quot;This shape has an area of {}&quot;, shape.area());"></div><div data-l="}"></div></div>
+<br>
+<p>The syntax <code>&lt;T: HasArea&gt;</code> means “any type that implements the <code>HasArea</code> trait.”
+Because traits define function type signatures, we can be sure that any type
+which implements <code>HasArea</code> will have an <code>.area()</code> method.</p>
+<br>
+<p>Here’s an extended example of how this works:</p>
+<br>
+<div data-lang="rust"><div data-l="trait HasArea {"></div><div data-l="    fn area(&amp;self) -&gt; f64;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Circle {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    radius: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl HasArea for Circle {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        std::f64::consts::PI * (self.radius * self.radius)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Square {"></div><div data-l="    x: f64,"></div><div data-l="    y: f64,"></div><div data-l="    side: f64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl HasArea for Square {"></div><div data-l="    fn area(&amp;self) -&gt; f64 {"></div><div data-l="        self.side * self.side"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print_area&lt;T: HasArea&gt;(shape: T) {"></div><div data-l="    println!(&quot;This shape has an area of {}&quot;, shape.area());"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let c = Circle {"></div><div data-l="        x: 0.0f64,"></div><div data-l="        y: 0.0f64,"></div><div data-l="        radius: 1.0f64,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let s = Square {"></div><div data-l="        x: 0.0f64,"></div><div data-l="        y: 0.0f64,"></div><div data-l="        side: 1.0f64,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    print_area(c);"></div><div data-l="    print_area(s);"></div><div data-l="}"></div></div>
+<br>
+<p>This program outputs:</p>
+<br>
+<div data-lang="text"><div data-l="This shape has an area of 3.141593"></div><div data-l="This shape has an area of 1"></div></div>
+<br>
+<p>As you can see, <code>print_area</code> is now generic, but also ensures that we have
+passed in the correct types. If we pass in an incorrect type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="print_area(5);"></div></div>
+<br>
+<p>We get a compile-time error:</p>
+<br>
+<div data-lang="text"><div data-l="error: the trait bound `_ : HasArea` is not satisfied [E0277]"></div></div>
+<br>
+<h2>Trait bounds on generic structs</h2>
+<br>
+<p>Your generic structs can also benefit from trait bounds. All you need to
+do is append the bound when you declare type parameters. Here is a new
+type <code>Rectangle&lt;T&gt;</code> and its operation <code>is_square()</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Rectangle&lt;T&gt; {"></div><div data-l="    x: T,"></div><div data-l="    y: T,"></div><div data-l="    width: T,"></div><div data-l="    height: T,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T: PartialEq&gt; Rectangle&lt;T&gt; {"></div><div data-l="    fn is_square(&amp;self) -&gt; bool {"></div><div data-l="        self.width == self.height"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut r = Rectangle {"></div><div data-l="        x: 0,"></div><div data-l="        y: 0,"></div><div data-l="        width: 47,"></div><div data-l="        height: 47,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    assert!(r.is_square());"></div><div data-l=""></div><div data-l="    r.height = 42;"></div><div data-l="    assert!(!r.is_square());"></div><div data-l="}"></div></div>
+<br>
+<p><code>is_square()</code> needs to check that the sides are equal, so the sides must be of
+a type that implements the <a class="notranslate" href="#3PartialEq"><code>core::cmp::PartialEq</code></a> trait:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T: PartialEq&gt; Rectangle&lt;T&gt; { ... }"></div></div>
+<br>
+<p>Now, a rectangle can be defined in terms of any type that can be compared for
+equality.</p>
+<br>
+<a class="notranslate" href="#1../../core/cmp/trait.PartialEq.html">PartialEq</a>
+<br>
+<p>Here we defined a new struct <code>Rectangle</code> that accepts numbers of any
+precision—really, objects of pretty much any type—as long as they can be
+compared for equality. Could we do the same for our <code>HasArea</code> structs, <code>Square</code>
+and <code>Circle</code>? Yes, but they need multiplication, and to work with that we need
+to know more about <a href="#3operators-and-overloading">operator traits</a>.</p>
+<br>
+<a class="notranslate" href="#1operators-and-overloading.html">operators-and-overloading</a>
+<br>
+<h1>Rules for implementing traits</h1>
+<br>
+<p>So far, we’ve only added trait implementations to structs, but you can
+implement a trait for any type such as <code>f32</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="trait ApproxEqual {"></div><div data-l="    fn approx_equal(&amp;self, other: &amp;Self) -&gt; bool;"></div><div data-l="}"></div><div data-l="impl ApproxEqual for f32 {"></div><div data-l="    fn approx_equal(&amp;self, other: &amp;Self) -&gt; bool {"></div><div data-l="#        // Appropriate for `self` and `other` being close to 1.0."></div><div data-l="        // ">Appropriate for <code>self</code> and <code>other</code> being close to 1.0.</div><div data-l="        (self - other).abs() &lt;= ::std::f32::EPSILON"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;{}&quot;, 1.0.approx_equal(&amp;1.00000001));"></div></div>
+<br>
+<p>This may seem like the Wild West, but there are two restrictions around
+implementing traits that prevent this from getting out of hand. The first is
+that if the trait isn’t defined in your scope, it doesn’t apply. Here’s an
+example: the standard library provides a <a class="notranslate" href="#3write"><code>Write</code></a> trait which adds
+extra functionality to <code>File</code>s, for doing file I/O. By default, a <code>File</code>
+won’t have its methods:</p>
+<br>
+<a class="notranslate" href="#1../../std/io/trait.Write.html">write</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut f = std::fs::File::create(&quot;foo.txt&quot;).expect(&quot;Couldn’t create foo.txt&quot;);"></div><div data-l="#//let buf = b&quot;whatever&quot;; // buf: &amp;[u8; 8], a byte string literal."></div><div data-l="let buf = b&quot;whatever&quot;; // ">buf: &amp;<a class="notranslate" href="#4u8; 8">u8; 8</a>, a byte string literal.</div><div data-l="let result = f.write(buf);"></div><div data-l="#//# result.unwrap(); // Ignore the error."></div><div data-l="# result.unwrap(); // ">Ignore the error.</div></div>
+<br>
+<p>Here’s the error:</p>
+<br>
+<div data-lang="text"><div data-l="error: type `std::fs::File` does not implement any method in scope named `write`"></div><div data-l="let result = f.write(buf);"></div><div data-l="               ^~~~~~~~~~"></div></div>
+<br>
+<p>We need to <code>use</code> the <code>Write</code> trait first:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::io::Write;"></div><div data-l=""></div><div data-l="let mut f = std::fs::File::create(&quot;foo.txt&quot;).expect(&quot;Couldn’t create foo.txt&quot;);"></div><div data-l="let buf = b&quot;whatever&quot;;"></div><div data-l="let result = f.write(buf);"></div><div data-l="#//# result.unwrap(); // Ignore the error."></div><div data-l="# result.unwrap(); // ">Ignore the error.</div></div>
+<br>
+<p>This will compile without error.</p>
+<br>
+<p>This means that even if someone does something bad like add methods to <code>i32</code>,
+it won’t affect you, unless you <code>use</code> that trait.</p>
+<br>
+<p>There’s one more restriction on implementing traits: either the trait
+or the type you’re implementing it for must be defined by you. Or more
+precisely, one of them must be defined in the same crate as the <code>impl</code>
+you're writing. For more on Rust's module and package system, see the
+chapter on <a href="#3cm">crates and modules</a>.</p>
+<br>
+<p>So, we could implement the <code>HasArea</code> type for <code>i32</code>, because we defined
+<code>HasArea</code> in our code. But if we tried to implement <code>ToString</code>, a trait
+provided by Rust, for <code>i32</code>, we could not, because neither the trait nor
+the type are defined in our crate.</p>
+<br>
+<p>One last thing about traits: generic functions with a trait bound use
+‘monomorphization’ (mono: one, morph: form), so they are statically dispatched.
+What’s that mean? Check out the chapter on <a href="#3to">trait objects</a> for more details.</p>
+<br>
+<a class="notranslate" href="#1crates-and-modules.html">cm</a>
+<a class="notranslate" href="#1trait-objects.html">to</a>
+<br>
+<h1>Multiple trait bounds</h1>
+<br>
+<p>You’ve seen that you can bound a generic type parameter with a trait:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo&lt;T: Clone&gt;(x: T) {"></div><div data-l="    x.clone();"></div><div data-l="}"></div></div>
+<br>
+<p>If you need more than one bound, you can use <code>+</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="fn foo&lt;T: Clone + Debug&gt;(x: T) {"></div><div data-l="    x.clone();"></div><div data-l="    println!(&quot;{:?}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p><code>T</code> now needs to be both <code>Clone</code> as well as <code>Debug</code>.</p>
+<br>
+<h1>Where clause</h1>
+<br>
+<p>Writing functions with only a few generic types and a small number of trait
+bounds isn’t too bad, but as the number increases, the syntax gets increasingly
+awkward:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="fn foo&lt;T: Clone, K: Clone + Debug&gt;(x: T, y: K) {"></div><div data-l="    x.clone();"></div><div data-l="    y.clone();"></div><div data-l="    println!(&quot;{:?}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>The name of the function is on the far left, and the parameter list is on the
+far right. The bounds are getting in the way.</p>
+<br>
+<p>Rust has a solution, and it’s called a ‘<code>where</code> clause’:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="fn foo&lt;T: Clone, K: Clone + Debug&gt;(x: T, y: K) {"></div><div data-l="    x.clone();"></div><div data-l="    y.clone();"></div><div data-l="    println!(&quot;{:?}&quot;, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn bar&lt;T, K&gt;(x: T, y: K) where T: Clone, K: Clone + Debug {"></div><div data-l="    x.clone();"></div><div data-l="    y.clone();"></div><div data-l="    println!(&quot;{:?}&quot;, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo(&quot;Hello&quot;, &quot;world&quot;);"></div><div data-l="    bar(&quot;Hello&quot;, &quot;world&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><code>foo()</code> uses the syntax we showed earlier, and <code>bar()</code> uses a <code>where</code> clause.
+All you need to do is leave off the bounds when defining your type parameters,
+and then add <code>where</code> after the parameter list. For longer lists, whitespace can
+be added:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="fn bar&lt;T, K&gt;(x: T, y: K)"></div><div data-l="    where T: Clone,"></div><div data-l="          K: Clone + Debug {"></div><div data-l=""></div><div data-l="    x.clone();"></div><div data-l="    y.clone();"></div><div data-l="    println!(&quot;{:?}&quot;, y);"></div><div data-l="}"></div></div>
+<br>
+<p>This flexibility can add clarity in complex situations.</p>
+<br>
+<p><code>where</code> is also more powerful than the simpler syntax. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="trait ConvertTo&lt;Output&gt; {"></div><div data-l="    fn convert(&amp;self) -&gt; Output;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl ConvertTo&lt;i64&gt; for i32 {"></div><div data-l="    fn convert(&amp;self) -&gt; i64 { *self as i64 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Can be called with T == i32."></div><div data-l="// ">Can be called with T == i32.</div><div data-l="fn convert_t_to_i64&lt;T: ConvertTo&lt;i64&gt;&gt;(x: T) -&gt; i64 {"></div><div data-l="    x.convert()"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Can be called with T == i64."></div><div data-l="// ">Can be called with T == i64.</div><div data-l="fn convert_i32_to_t&lt;T&gt;(x: i32) -&gt; T"></div><div data-l="#        // This is using ConvertTo as if it were &quot;ConvertTo&lt;i64&gt;&quot;."></div><div data-l="        // ">This is using ConvertTo as if it were &quot;ConvertTo<i64>&quot;.</div><div data-l="        where i32: ConvertTo&lt;T&gt; {"></div><div data-l="    x.convert()"></div><div data-l="}"></div></div>
+<br>
+<p>This shows off the additional feature of <code>where</code> clauses: they allow bounds
+on the left-hand side not only of type parameters <code>T</code>, but also of types (<code>i32</code> in this case). In this example, <code>i32</code> must implement
+<code>ConvertTo&lt;T&gt;</code>. Rather than defining what <code>i32</code> is (since that's obvious), the
+<code>where</code> clause here constrains <code>T</code>.</p>
+<br>
+<h1>Default methods</h1>
+<br>
+<p>A default method can be added to a trait definition if it is already known how a typical implementor will define a method. For example, <code>is_invalid()</code> is defined as the opposite of <code>is_valid()</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn is_valid(&amp;self) -&gt; bool;"></div><div data-l=""></div><div data-l="    fn is_invalid(&amp;self) -&gt; bool { !self.is_valid() }"></div><div data-l="}"></div></div>
+<br>
+<p>Implementors of the <code>Foo</code> trait need to implement <code>is_valid()</code> but not <code>is_invalid()</code> due to the added default behavior. This default behavior can still be overridden as in:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo {"></div><div data-l="#     fn is_valid(&amp;self) -&gt; bool;"></div><div data-l="#"></div><div data-l="#     fn is_invalid(&amp;self) -&gt; bool { !self.is_valid() }"></div><div data-l="# }"></div><div data-l="struct UseDefault;"></div><div data-l=""></div><div data-l="impl Foo for UseDefault {"></div><div data-l="    fn is_valid(&amp;self) -&gt; bool {"></div><div data-l="        println!(&quot;Called UseDefault.is_valid.&quot;);"></div><div data-l="        true"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct OverrideDefault;"></div><div data-l=""></div><div data-l="impl Foo for OverrideDefault {"></div><div data-l="    fn is_valid(&amp;self) -&gt; bool {"></div><div data-l="        println!(&quot;Called OverrideDefault.is_valid.&quot;);"></div><div data-l="        true"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn is_invalid(&amp;self) -&gt; bool {"></div><div data-l="        println!(&quot;Called OverrideDefault.is_invalid!&quot;);"></div><div data-l="#//        true // Overrides the expected value of `is_invalid()`."></div><div data-l="        true // ">Overrides the expected value of <code>is_invalid()</code>.</div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let default = UseDefault;"></div><div data-l="#//assert!(!default.is_invalid()); // Prints &quot;Called UseDefault.is_valid.&quot;"></div><div data-l="assert!(!default.is_invalid()); // ">Prints &quot;Called UseDefault.is_valid.&quot;</div><div data-l=""></div><div data-l="let over = OverrideDefault;"></div><div data-l="#//assert!(over.is_invalid()); // Prints &quot;Called OverrideDefault.is_invalid!&quot;"></div><div data-l="assert!(over.is_invalid()); // ">Prints &quot;Called OverrideDefault.is_invalid!&quot;</div></div>
+<br>
+<h1>Inheritance</h1>
+<br>
+<p>Sometimes, implementing a trait requires implementing another trait:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn foo(&amp;self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait FooBar : Foo {"></div><div data-l="    fn foobar(&amp;self);"></div><div data-l="}"></div></div>
+<br>
+<p>Implementors of <code>FooBar</code> must also implement <code>Foo</code>, like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo {"></div><div data-l="#     fn foo(&amp;self);"></div><div data-l="# }"></div><div data-l="# trait FooBar : Foo {"></div><div data-l="#     fn foobar(&amp;self);"></div><div data-l="# }"></div><div data-l="struct Baz;"></div><div data-l=""></div><div data-l="impl Foo for Baz {"></div><div data-l="    fn foo(&amp;self) { println!(&quot;foo&quot;); }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl FooBar for Baz {"></div><div data-l="    fn foobar(&amp;self) { println!(&quot;foobar&quot;); }"></div><div data-l="}"></div></div>
+<br>
+<p>If we forget to implement <code>Foo</code>, Rust will tell us:</p>
+<br>
+<div data-lang="text"><div data-l="error: the trait bound `main::Baz : main::Foo` is not satisfied [E0277]"></div></div>
+<br>
+<h1>Deriving</h1>
+<br>
+<p>Implementing traits like <code>Debug</code> and <code>Default</code> repeatedly can become
+quite tedious. For that reason, Rust provides an <a class="notranslate" href="#3attributes">attribute</a> that
+allows you to let Rust automatically implement traits for you:</p>
+<br>
+<div data-lang="rust"><div data-l="#[derive(Debug)]"></div><div data-l="struct Foo;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;{:?}&quot;, Foo);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1attributes.html">attributes</a>
+<br>
+<p>However, deriving is limited to a certain set of traits:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2../../core/clone/trait.Clone.html"><code>Clone</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/marker/trait.Copy.html"><code>Copy</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/fmt/trait.Debug.html"><code>Debug</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/default/trait.Default.html"><code>Default</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/cmp/trait.Eq.html"><code>Eq</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/hash/trait.Hash.html"><code>Hash</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/cmp/trait.Ord.html"><code>Ord</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/cmp/trait.PartialEq.html"><code>PartialEq</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2../../core/cmp/trait.PartialOrd.html"><code>PartialOrd</code></a></div>

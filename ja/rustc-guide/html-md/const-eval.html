@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h1>Constant Evaluation</h1>
+<br>
+<p>Constant evaluation is the process of computing values at compile time. For a
+specific item (constant/static/array length) this happens after the MIR for the
+item is borrow-checked and optimized. In many cases trying to const evaluate an
+item will trigger the computation of its MIR for the first time.</p>
+<br>
+<p>Prominent examples are</p>
+<br>
+<div data-b="*">The initializer of a <code>static</code></div>
+<div data-b="*">Array length</div>
+<div data-b="    *">needs to be known to reserve stack or heap space</div>
+<div data-b="*">Enum variant discriminants</div>
+<div data-b="    *">needs to be known to prevent two variants from having the same
+discriminant</div>
+<div data-b="*">Patterns</div>
+<div data-b="    *">need to be known to check for overlapping patterns</div>
+<br>
+<p>Additionally constant evaluation can be used to reduce the workload or binary
+size at runtime by precomputing complex operations at compiletime and only
+storing the result.</p>
+<br>
+<p>Constant evaluation can be done by calling the <code>const_eval</code> query of <code>TyCtxt</code>.</p>
+<br>
+<p>The <code>const_eval</code> query takes a <a class="notranslate" href="#2./param_env.html"><code>ParamEnv</code></a> of environment in
+which the constant is evaluated (e.g. the function within which the constant is
+used) and a <code>GlobalId</code>. The <code>GlobalId</code> is made up of an
+<code>Instance</code> referring to a constant or static or of an
+<code>Instance</code> of a function and an index into the function's <code>Promoted</code> table.</p>
+<br>
+<p>Constant evaluation returns a <code>Result</code> with either the error, or the simplest
+representation of the constant. &quot;simplest&quot; meaning if it is representable as an
+integer or fat pointer, it will directly yield the value (via <code>Value::ByVal</code> or
+<code>Value::ByValPair</code>), instead of referring to the <a class="notranslate" href="#2./miri.html"><code>miri</code></a> virtual
+memory allocation (via <code>Value::ByRef</code>). This means that the <code>const_eval</code>
+function cannot be used to create miri-pointers to the evaluated constant or
+static. If you need that, you need to directly work with the functions in
+<a class="notranslate" href="#2https://doc.rust-lang.org/nightly/nightly-rustc/rustc_mir/interpret/const_eval/">src/librustc_mir/interpret/const_eval.rs</a>.</p>

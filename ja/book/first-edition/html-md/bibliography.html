@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<h1>Bibliography</h1>
+<br>
+<p>This is a reading list of material relevant to Rust. It includes prior
+research that has - at one time or another - influenced the design of
+Rust, as well as publications about Rust.</p>
+<br>
+<h3>Type system</h3>
+<br>
+<div data-b="*"><a href="#2http://209.68.42.137/ucsd-pages/Courses/cse227.w03/handouts/cyclone-regions.pdf">Region based memory management in Cyclone</a></div>
+<div data-b="*"><a href="#2http://www.cs.umd.edu/projects/PL/cyclone/scp.pdf">Safe manual memory management in Cyclone</a></div>
+<div data-b="*"><a href="#2http://www.ps.uni-sb.de/courses/typen-ws99/class.ps.gz">Typeclasses: making ad-hoc polymorphism less ad hoc</a></div>
+<div data-b="*"><a href="#2https://www.cs.utah.edu/plt/publications/jfp12-draft-fcdf.pdf">Macros that work together</a></div>
+<div data-b="*"><a href="#2http://scg.unibe.ch/archive/papers/Scha03aTraits.pdf">Traits: composable units of behavior</a></div>
+<div data-b="*"><a href="#2http://www.cs.uwm.edu/faculty/boyland/papers/unique-preprint.ps">Alias burying</a> - We tried something similar and abandoned it.</div>
+<div data-b="*"><a href="#2http://www.cs.uu.nl/research/techreps/UU-CS-2002-048.html">External uniqueness is unique enough</a></div>
+<div data-b="*"><a href="#2https://research.microsoft.com/pubs/170528/msr-tr-2012-79.pdf">Uniqueness and Reference Immutability for Safe Parallelism</a></div>
+<div data-b="*"><a href="#2http://www.cs.ucla.edu/~palsberg/tba/papers/tofte-talpin-iandc97.pdf">Region Based Memory Management</a></div>
+<br>
+<h3>Concurrency</h3>
+<br>
+<div data-b="*"><a href="#2https://research.microsoft.com/pubs/69431/osr2007_rethinkingsoftwarestack.pdf">Singularity: rethinking the software stack</a></div>
+<div data-b="*"><a href="#2https://research.microsoft.com/pubs/67482/singsharp.pdf">Language support for fast and reliable message passing in singularity OS</a></div>
+<div data-b="*"><a href="#2http://supertech.csail.mit.edu/papers/steal.pdf">Scheduling multithreaded computations by work stealing</a></div>
+<div data-b="*"><a href="#2http://www.eecis.udel.edu/%7Ecavazos/cisc879-spring2008/papers/arora98thread.pdf">Thread scheduling for multiprogramming multiprocessors</a></div>
+<div data-b="*"><a href="#2http://www.aladdin.cs.cmu.edu/papers/pdfs/y2000/locality_spaa00.pdf">The data locality of work stealing</a></div>
+<div data-b="*"><a href="#2http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.170.1097&rep=rep1&type=pdf">Dynamic circular work stealing deque</a> - The Chase/Lev deque</div>
+<div data-b="*"><a href="#2http://www.cs.rice.edu/%7Eyguo/pubs/PID824943.pdf">Work-first and help-first scheduling policies for async-finish task parallelism</a> - More general than fully-strict work stealing</div>
+<div data-b="*"><a href="#2http://www.coopsoft.com/ar/CalamityArticle.html">A Java fork/join calamity</a> - critique of Java's fork/join library, particularly its application of work stealing to non-strict computation</div>
+<div data-b="*"><a href="#2http://www.stanford.edu/~ouster/cgi-bin/papers/coscheduling.pdf">Scheduling techniques for concurrent systems</a></div>
+<div data-b="*"><a href="#2http://www.blagodurov.net/files/a8-blagodurov.pdf">Contention aware scheduling</a></div>
+<div data-b="*"><a href="#2http://www.cse.ohio-state.edu/hpcs/WWW/HTML/publications/papers/TR-12-1.pdf">Balanced work stealing for time-sharing multicores</a></div>
+<div data-b="*"><a href="#2http://dl.acm.org/citation.cfm?id=1953616&dl=ACM&coll=DL&CFID=524387192&CFTOKEN=44362705">Three layer cake for shared-memory programming</a></div>
+<div data-b="*"><a href="#2http://www.cs.bgu.ac.il/%7Ehendlerd/papers/p280-hendler.pdf">Non-blocking steal-half work queues</a></div>
+<div data-b="*"><a href="#2http://www.mpi-sws.org/~turon/reagents.pdf">Reagents: expressing and composing fine-grained concurrency</a></div>
+<div data-b="*"><a href="#2https://www.cs.rochester.edu/u/scott/papers/1991_TOCS_synch.pdf">Algorithms for scalable synchronization of shared-memory multiprocessors</a></div>
+<div data-b="*"><a href="#2https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-579.pdf">Epoch-based reclamation</a>.</div>
+<br>
+<h3>Others</h3>
+<br>
+<div data-b="*"><a href="#2https://www.usenix.org/legacy/events/hotos03/tech/full_papers/candea/candea.pdf">Crash-only software</a></div>
+<div data-b="*"><a href="#2http://people.cs.umass.edu/~emery/pubs/berger-pldi2001.pdf">Composing High-Performance Memory Allocators</a></div>
+<div data-b="*"><a href="#2http://people.cs.umass.edu/~emery/pubs/berger-oopsla2002.pdf">Reconsidering Custom Memory Allocation</a></div>
+<br>
+<h3>Papers <i>about</i> Rust</h3>
+<br>
+<div data-b="*"><a href="#2http://www.cs.indiana.edu/~eholk/papers/hips2013.pdf">GPU Programming in Rust: Implementing High Level Abstractions in a
+Systems Level
+Language</a>. Early GPU work by Eric Holk.</div>
+<div data-b="*"><a href="#2https://www.usenix.org/conference/hotpar12/parallel-closures-new-twist-old-idea">Parallel closures: a new twist on an old
+  idea</a></div>
+<div data-b="  -">not exactly about Rust, but by nmatsakis</div>
+<div data-b="*"><a href="#2ftp://ftp.cs.washington.edu/tr/2015/03/UW-CSE-15-03-02.pdf">Patina: A Formalization of the Rust Programming
+  Language</a>. Early
+formalization of a subset of the type system, by Eric Reed.</div>
+<div data-b="*"><a href="#2http://arxiv.org/abs/1505.07383">Experience Report: Developing the Servo Web Browser Engine using
+  Rust</a>. By Lars Bergstrom.</div>
+<div data-b="*"><a href="#2https://michaelsproul.github.io/rust_radix_paper/rust-radix-sproul.pdf">Implementing a Generic Radix Trie in
+  Rust</a>. Undergrad
+paper by Michael Sproul.</div>
+<div data-b="*"><a href="#2http://scialex.github.io/reenix.pdf">Reenix: Implementing a Unix-Like Operating System in
+  Rust</a>. Undergrad paper by Alex
+Light.</div>
+<div data-b="*"><a href="#2http://octarineparrot.com/assets/mrfloya-thesis-ba.pdf">Evaluation of performance and productivity metrics of potential
+  programming languages in the HPC environment</a>.
+Bachelor's thesis by Florian Wilkens. Compares C, Go and Rust.</div>
+<div data-b="*"><a href="#2http://spw15.langsec.org/papers/couprie-nom.pdf">Nom, a byte oriented, streaming, zero copy, parser combinators library
+  in Rust</a>. By
+Geoffroy Couprie, research for VLC.</div>
+<div data-b="*"><a href="#2http://compilers.cs.uni-saarland.de/papers/lkh15_cgo.pdf">Graph-Based Higher-Order Intermediate
+  Representation</a>. An
+experimental IR implemented in Impala, a Rust-like language.</div>
+<div data-b="*"><a href="#2http://compilers.cs.uni-saarland.de/papers/ppl14_web.pdf">Code Refinement of Stencil
+  Codes</a>. Another
+paper using Impala.</div>
+<div data-b="*"><a href="#2http://publications.lib.chalmers.se/records/fulltext/219016/219016.pdf">Parallelization in Rust with fork-join and
+  friends</a>. Linus
+Farnstrand's master's thesis.</div>
+<div data-b="*"><a href="#2http://munksgaard.me/papers/laumann-munksgaard-larsen.pdf">Session Types for
+  Rust</a>. Philip
+Munksgaard's master's thesis. Research for Servo.</div>
+<div data-b="*"><a href="#2http://amitlevy.com/papers/tock-plos2015.pdf">Ownership is Theft: Experiences Building an Embedded OS in Rust - Amit Levy, et. al.</a></div>
+<div data-b="*"><a href="#2https://raw.githubusercontent.com/Gankro/thesis/master/thesis.pdf">You can't spell trust without Rust</a>. Alexis Beingessner's master's thesis.</div>
+<div data-b="*"><a href="#2http://users.cecs.anu.edu.au/~steveb/downloads/pdf/rust-ismm-2016.pdf">Rust as a Language for High Performance GC Implementation</a></div>

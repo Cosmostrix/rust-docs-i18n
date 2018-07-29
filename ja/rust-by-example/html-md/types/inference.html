@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Inference</h1>
+<br>
+<p>The type inference engine is pretty smart. It does more than looking at the
+type of the
+<a class="notranslate" href="#3rvalue">r-value</a>
+during an initialization. It also looks at how the variable is used afterwards 
+to infer its type. Here's an advanced example of type inference:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // Because of the annotation, the compiler knows that `elem` has type u8."></div><div data-l="    // ">Because of the annotation, the compiler knows that <code>elem</code> has type u8.</div><div data-l="    let elem = 5u8;"></div><div data-l=""></div><div data-l="#    // Create an empty vector (a growable array)."></div><div data-l="    // ">Create an empty vector (a growable array).</div><div data-l="    let mut vec = Vec::new();"></div><div data-l="#    // At this point the compiler doesn't know the exact type of `vec`, it"></div><div data-l="#    // just knows that it's a vector of something (`Vec&lt;_&gt;`)."></div><div data-l="    // ">At this point the compiler doesn't know the exact type of <code>vec</code>, it just knows that it's a vector of something (<code>Vec&lt;_&gt;</code>).</div><div data-l=""></div><div data-l="#    // Insert `elem` in the vector."></div><div data-l="    // ">Insert <code>elem</code> in the vector.</div><div data-l="    vec.push(elem);"></div><div data-l="#    // Aha! Now the compiler knows that `vec` is a vector of `u8`s (`Vec&lt;u8&gt;`)"></div><div data-l="#    // TODO ^ Try commenting out the `vec.push(elem)` line"></div><div data-l="    // ">Aha! Now the compiler knows that <code>vec</code> is a vector of <code>u8</code>s (<code>Vec&lt;u8&gt;</code>) TODO ^ Try commenting out the <code>vec.push(elem)</code> line</div><div data-l=""></div><div data-l="    println!(&quot;{:?}&quot;, vec);"></div><div data-l="}"></div></div>
+<br>
+<p>No type annotation of variables was needed, the compiler is happy and so is the
+programmer!</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Value_%28computer_science%29#lrvalue">rvalue</a>

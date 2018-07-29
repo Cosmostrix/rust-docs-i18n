@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>trace_macros</code></h1>
+<br>
+<p>The tracking issue for this feature is <a class="notranslate" href="#4#29598">#29598</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29598">#29598</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>With <code>trace_macros</code> you can trace the expansion of macros in your code.</p>
+<br>
+<h2>Examples</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(trace_macros)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    trace_macros!(true);"></div><div data-l="    println!(&quot;Hello, Rust!&quot;);"></div><div data-l="    trace_macros!(false);"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>cargo build</code> output:</p>
+<br>
+<div data-lang="txt"><div data-l="note: trace_macro"></div><div data-l=" --&gt; src/main.rs:5:5"></div><div data-l="  |"></div><div data-l="5 |     println!(&quot;Hello, Rust!&quot;);"></div><div data-l="  |     ^^^^^^^^^^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: expanding `println! { &quot;Hello, Rust!&quot; }`"></div><div data-l="  = note: to `print ! ( concat ! ( &quot;Hello, Rust!&quot; , &quot;\n&quot; ) )`"></div><div data-l="  = note: expanding `print! { concat ! ( &quot;Hello, Rust!&quot; , &quot;\n&quot; ) }`"></div><div data-l="  = note: to `$crate :: io :: _print ( format_args ! ( concat ! ( &quot;Hello, Rust!&quot; , &quot;\n&quot; ) )"></div><div data-l="          )`"></div><div data-l=""></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.60 secs"></div></div>

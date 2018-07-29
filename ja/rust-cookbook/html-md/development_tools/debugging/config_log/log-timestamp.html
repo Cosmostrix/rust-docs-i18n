@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<h2>Include timestamp in log messages</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Creates a custom logger configuration with <a class="notranslate" href="#4`Builder`">`Builder`</a>.
+Each log entry calls <a class="notranslate" href="#4`Local::now`">`Local::now`</a> to get the current <a class="notranslate" href="#4`DateTime`">`DateTime`</a> in local
+timezone and uses <a class="notranslate" href="#4`DateTime::format`">`DateTime::format`</a> with <a class="notranslate" href="#4`strftime::specifiers`">`strftime::specifiers`</a> to format
+a timestamp used in the final log.</p>
+<br>
+<p>The example calls <a class="notranslate" href="#4`Builder::format`">`Builder::format`</a> to set a closure which formats each
+message text with timestamp, <a class="notranslate" href="#4`Record::level`">`Record::level`</a> and body (<a class="notranslate" href="#4`Record::args`">`Record::args`</a>).</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate chrono;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="use std::io::Write;"></div><div data-l="use chrono::Local;"></div><div data-l="use env_logger::Builder;"></div><div data-l="use log::LevelFilter;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    Builder::new()"></div><div data-l="        .format(|buf, record| {"></div><div data-l="            writeln!(buf,"></div><div data-l="                &quot;{} [{}] - {}&quot;,"></div><div data-l="                Local::now().format(&quot;%Y-%m-%dT%H:%M:%S&quot;),"></div><div data-l="                record.level(),"></div><div data-l="                record.args()"></div><div data-l="            )"></div><div data-l="        })"></div><div data-l="        .filter(None, LevelFilter::Info)"></div><div data-l="        .init();"></div><div data-l=""></div><div data-l="    warn!(&quot;warn&quot;);"></div><div data-l="    info!(&quot;info&quot;);"></div><div data-l="    debug!(&quot;debug&quot;);"></div><div data-l="}"></div></div>
+<p>stderr output will contain
+`<code class=2>
+2017-05-22T21:57:06 [WARN] - warn
+2017-05-22T21:57:06 [INFO] - info
+</code>`</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.format">`DateTime::format`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/datetime/struct.DateTime.html">`DateTime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/offset/struct.Local.html#method.now">`Local::now`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html">`Builder`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/struct.Builder.html#method.format">`Builder::format`</a>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/struct.Record.html#method.args">`Record::args`</a>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/struct.Record.html#method.level">`Record::level`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/format/strftime/index.html#specifiers">`strftime::specifiers`</a>

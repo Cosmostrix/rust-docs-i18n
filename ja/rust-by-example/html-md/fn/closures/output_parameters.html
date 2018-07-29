@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<h1>As output parameters</h1>
+<br>
+<p>Closures as input parameters are possible, so returning closures as 
+output parameters should also be possible. However, returning closure types 
+are problematic because Rust currently only supports returning concrete 
+(non-generic) types. Anonymous closure types are, by definition, unknown 
+and so returning a closure is only possible by making it concrete. This 
+can be done via boxing.</p>
+<br>
+<p>The valid traits for returns are slightly different than before:</p>
+<br>
+<div data-b="*"><code>Fn</code>: normal</div>
+<div data-b="*"><code>FnMut</code>: normal</div>
+<div data-b="*"><code>FnOnce</code>: There are some unusual things at play here, so the <a class="notranslate" href="#3fnbox"><code>FnBox</code></a>
+type is currently needed, and is unstable. This is expected to change in
+the future.</div>
+<br>
+<p>Beyond this, the <code>move</code> keyword must be used, which signals that all captures
+occur by value. This is required because any captures by reference would be
+dropped as soon as the function exited, leaving invalid references in the
+closure.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn create_fn() -&gt; Box&lt;Fn()&gt; {"></div><div data-l="    let text = &quot;Fn&quot;.to_owned();"></div><div data-l=""></div><div data-l="    Box::new(move || println!(&quot;This is a: {}&quot;, text))"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn create_fnmut() -&gt; Box&lt;FnMut()&gt; {"></div><div data-l="    let text = &quot;FnMut&quot;.to_owned();"></div><div data-l=""></div><div data-l="    Box::new(move || println!(&quot;This is a: {}&quot;, text))"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let fn_plain = create_fn();"></div><div data-l="    let mut fn_mut = create_fnmut();"></div><div data-l=""></div><div data-l="    fn_plain();"></div><div data-l="    fn_mut();"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3box">Boxing</a>, <a class="notranslate" href="#3fn"><code>Fn</code></a>, <a class="notranslate" href="#3fnmut"><code>FnMut</code></a>, and <a class="notranslate" href="#3generics">Generics</a>.</p>
+<br>
+<a class="notranslate" href="#1std/box.html">box</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">fn</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnMut.html">fnmut</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/boxed/trait.FnBox.html ">fnbox</a>
+<a class="notranslate" href="#1generics.html">generics</a>

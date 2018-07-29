@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h2>Compile and link statically to a bundled C library</h2>
+<br>
+<p><a href="#3cc">!<a class="notranslate" href="#4cc-badge">cc-badge</a></a> <a href="#3cat-development-tools">!<a class="notranslate" href="#4cat-development-tools-badge">cat-development-tools-badge</a></a></p>
+<br>
+<p>To accommodate scenarios where additional C, C++, or assembly is required in a project, the <a class="notranslate" href="#3cc"><b>cc</b></a> crate
+offers a simple api for compiling bundled C/C++/asm code into static libraries (<b>.a</b>) that can be statically linked to by <b>rustc</b>.</p>
+<br>
+<p>The following example has some bundled C code (<b>src/hello.c</b>) that will be used from rust.
+Before compiling rust source code, the &quot;build&quot; file (<b>build.rs</b>) specified in <b>Cargo.toml</b> runs.
+Using the <a class="notranslate" href="#3cc"><b>cc</b></a> crate, a static library file will be produced (in this case, <b>libhello.a</b>, see
+<a href="#3cc-build-compile"><code>compile</code> docs</a>) which can then be used from rust by declaring the external function signatures in an <code>extern</code> block.</p>
+<br>
+<p>Since the bundled C is very simple, only a single source file needs to be passed to <a class="notranslate" href="#3cc-build"><code>cc::Build</code></a>.
+For more complex build requirements, <a class="notranslate" href="#3cc-build"><code>cc::Build</code></a> offers a full suite of builder methods for specifying
+<a class="notranslate" href="#3cc-build-include"><code>include</code></a> paths and extra compiler <a class="notranslate" href="#3cc-build-flag"><code>flag</code></a>s.</p>
+<br>
+<h3><code>Cargo.toml</code></h3>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="..."></div><div data-l="build = &quot;build.rs&quot;"></div><div data-l=""></div><div data-l="[build-dependencies]"></div><div data-l="cc = &quot;1&quot;"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="error-chain = &quot;0.11&quot;"></div></div>
+<br>
+<h3><code>build.rs</code></h3>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate cc;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    cc::Build::new()"></div><div data-l="        .file(&quot;src/hello.c&quot;)"></div><div data-l="#//        .compile(&quot;hello&quot;);   // outputs `libhello.a`"></div><div data-l="        .compile(&quot;hello&quot;);   // ">outputs <code>libhello.a</code></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/hello.c</code></h3>
+<br>
+<div data-lang="c"><div data-l="#include &lt;stdio.h&gt;"></div><div data-l=""></div><div data-l=""></div><div data-l="void hello() {"></div><div data-l="    printf(&quot;Hello from C!\n&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="void greet(const char* name) {"></div><div data-l="    printf(&quot;Hello, %s!\n&quot;, name);"></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/main.rs</code></h3>
+<br>
+<div data-lang="rust,ignore"><div data-l="# #[macro_use] extern crate error_chain;"></div><div data-l="use std::ffi::CString;"></div><div data-l="use std::os::raw::c_char;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         NulError(::std::ffi::NulError);"></div><div data-l="#         Io(::std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# fn prompt(s: &amp;str) -&gt; Result&lt;String&gt; {"></div><div data-l="#     use std::io::Write;"></div><div data-l="#     print!(&quot;{}&quot;, s);"></div><div data-l="#     std::io::stdout().flush()?;"></div><div data-l="#     let mut input = String::new();"></div><div data-l="#     std::io::stdin().read_line(&amp;mut input)?;"></div><div data-l="#     Ok(input.trim().to_string())"></div><div data-l="# }"></div><div data-l=""></div><div data-l="extern {"></div><div data-l="    fn hello();"></div><div data-l="    fn greet(name: *const c_char);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    unsafe { hello() }"></div><div data-l="    let name = prompt(&quot;What's your name? &quot;)?;"></div><div data-l="    let c_name = CString::new(name)?;"></div><div data-l="    unsafe { greet(c_name.as_ptr()) }"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.define">`cc::Build::define`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/option/enum.Option.html">`Option`</a>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.compile">cc-build-compile</a>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.cpp">cc-build-cpp</a>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.flag">cc-build-flag</a>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.include">cc-build-include</a>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html">cc-build</a>

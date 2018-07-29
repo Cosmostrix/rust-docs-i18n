@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h2>Log to the Unix syslog</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3syslog">!<a class="notranslate" href="#4syslog-badge">syslog-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Logs messages to <a class="notranslate" href="#4UNIX syslog">UNIX syslog</a>. Initializes logger backend
+with <a class="notranslate" href="#4`syslog::init`">`syslog::init`</a>. <a class="notranslate" href="#4`syslog::Facility`">`syslog::Facility`</a> records the program submitting
+the log entry's classification, <a class="notranslate" href="#4`log::LevelFilter`">`log::LevelFilter`</a> denotes allowed log verbosity
+and <code>Option&lt;&amp;str&gt;</code> holds optional application name.</p>
+<br>
+<div data-lang="rust"><div data-l="# #![allow(unused_imports)]"></div><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="# #[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="extern crate syslog;"></div><div data-l=""></div><div data-l="# #[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="use syslog::Facility;"></div><div data-l="#"></div><div data-l="# #[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         SetLogger(syslog::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="# #[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    syslog::init(Facility::LOG_USER,"></div><div data-l="                 log::LevelFilter::Debug,"></div><div data-l="                 Some(&quot;My app name&quot;))?;"></div><div data-l="    debug!(&quot;this is a debug {}&quot;, &quot;message&quot;);"></div><div data-l="    error!(&quot;this is an error!&quot;);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# #[cfg(not(target_os = &quot;linux&quot;))]"></div><div data-l="# error_chain! {}"></div><div data-l="# #[cfg(not(target_os = &quot;linux&quot;))]"></div><div data-l="# fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="#     Ok(())"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/enum.LevelFilter.html">`log::LevelFilter`</a>
+<a class="notranslate" href="#1https://docs.rs/syslog/*/syslog/enum.Facility.html">`syslog::Facility`</a>
+<a class="notranslate" href="#1https://docs.rs/syslog/*/syslog/fn.init.html">`syslog::init`</a>
+<br>
+<a class="notranslate" href="#1https://www.gnu.org/software/libc/manual/html_node/Overview-of-Syslog.html">UNIX syslog</a>

@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<h1>Enumeration Variant expressions</h1>
+<br>
+<p>Enumeration variants can be constructed similarly to structs, using a path to
+an enum variant instead of to a struct:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="#     Quit,"></div><div data-l="#     WriteString(String),"></div><div data-l="#     Move { x: i32, y: i32 },"></div><div data-l="# }"></div><div data-l="let q = Message::Quit;"></div><div data-l="let w = Message::WriteString(&quot;Some string&quot;.to_string());"></div><div data-l="let m = Message::Move { x: 50, y: 200 };"></div></div>

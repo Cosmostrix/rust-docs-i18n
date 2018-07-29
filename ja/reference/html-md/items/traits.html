@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<h1>Traits</h1>
+<br>
+<p>A <s>trait</s> describes an abstract interface that types can implement. This
+interface consists of <a class="notranslate" href="#4associated items">associated items</a>, which come in three varieties:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2items/associated-items.html#associated-functions-and-methods">functions</a></div>
+<div data-b="-"><a class="notranslate" href="#2items/associated-items.html#associated-types">types</a></div>
+<div data-b="-"><a class="notranslate" href="#2items/associated-items.html#associated-constants">constants</a></div>
+<br>
+<p>All traits define an implicit type parameter <code>Self</code> that refers to &quot;the type
+that is implementing this interface&quot;. Traits may also contain additional type
+parameters. These type parameters, including <code>Self</code>, may be constrained by
+other traits and so forth <a href="#3generics">as usual</a>.</p>
+<br>
+<p>Traits are implemented for specific types through separate <a class="notranslate" href="#4implementations">implementations</a>.</p>
+<br>
+<p>Items associated with a trait do not need to be defined in the trait, but they
+may be. If the trait provides a definition, then this definition acts as a
+default for any implementation which does not override it. If it does not, then
+any implementation must provide a definition.</p>
+<br>
+<h2>Trait bounds</h2>
+<br>
+<p>Generic items may use traits as <a class="notranslate" href="#4bounds">bounds</a> on their type parameters.</p>
+<br>
+<h2>Generic Traits</h2>
+<br>
+<p>Type parameters can be specified for a trait to make it generic. These appear
+after the trait name, using the same syntax used in <a class="notranslate" href="#4generic functions">generic functions</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Seq&lt;T&gt; {"></div><div data-l="    fn len(&amp;self) -&gt; u32;"></div><div data-l="    fn elt_at(&amp;self, n: u32) -&gt; T;"></div><div data-l="    fn iter&lt;F&gt;(&amp;self, F) where F: Fn(T);"></div><div data-l="}"></div></div>
+<br>
+<h2>Object Safety</h2>
+<br>
+<p>Object safe traits can be the base trait of a <a class="notranslate" href="#4trait object">trait object</a>. A trait is
+<i>object safe</i> if it has the following qualities (defined in <a class="notranslate" href="#4RFC 255">RFC 255</a>):</p>
+<br>
+<div data-b="*">It must not require <code>Self: Sized</code></div>
+<div data-b="*">All associated functions must either have a <code>where Self: Sized</code> bound, or</div>
+<div data-b="    *">Not have any type parameters (although lifetime parameters are allowed),
+and</div>
+<div data-b="    *">Be a <a class="notranslate" href="#4method">method</a> that does not use <code>Self</code> except in the type of the receiver.</div>
+<div data-b="*">It must not have any associated constants.</div>
+<div data-b="*">All supertraits must also be object safe.</div>
+<br>
+<h2>Supertraits</h2>
+<br>
+<p><b>Supertraits</b> are traits that are required to be implemented for a type to
+implement a specific trait. Furthermore, anywhere a <a class="notranslate" href="#4generic">generic</a> or <a class="notranslate" href="#4trait object">trait object</a>
+is bounded by a trait, it has access to the associated items of its supertraits.</p>
+<br>
+<p>Supertraits are declared by trait bounds on the <code>Self</code> type of a trait and
+transitively the supertraits of the traits declared in those trait bounds. It is
+an error for a trait to be its own supertrait.</p>
+<br>
+<p>The trait with a supertrait is called a <b>subtrait</b> of its supertrait.</p>
+<br>
+<p>The following is an example of declaring <code>Shape</code> to be a supertrait of <code>Circle</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Shape { fn area(&amp;self) -&gt; f64; }"></div><div data-l="trait Circle : Shape { fn radius(&amp;self) -&gt; f64; }"></div></div>
+<br>
+<p>And the following is the same example, except using <a class="notranslate" href="#4where clauses">where clauses</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Shape { fn area(&amp;self) -&gt; f64; }"></div><div data-l="trait Circle where Self: Shape { fn radius(&amp;self) -&gt; f64; }"></div></div>
+<br>
+<p>This next example gives <code>radius</code> a default implementation using the <code>area</code>
+function from <code>Shape</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Shape { fn area(&amp;self) -&gt; f64; }"></div><div data-l="trait Circle where Self: Shape {"></div><div data-l="    fn radius(&amp;self) -&gt; f64 {"></div><div data-l="#        // A = pi * r^2"></div><div data-l="#        // so algebraically,"></div><div data-l="#        // r = sqrt(A / pi)"></div><div data-l="        // ">A = pi * r^2 so algebraically, r = sqrt(A / pi)</div><div data-l="        (self.area() /std::f64::consts::PI).sqrt()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This next example calls a supertrait method on a generic parameter.</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Shape { fn area(&amp;self) -&gt; f64; }"></div><div data-l="# trait Circle : Shape { fn radius(&amp;self) -&gt; f64; }"></div><div data-l="fn print_area_and_radius&lt;C: Circle&gt;(c: C) {"></div><div data-l="#    // Here we call the area method from the supertrait `Shape` of `Circle`."></div><div data-l="    // ">Here we call the area method from the supertrait <code>Shape</code> of <code>Circle</code>.</div><div data-l="    println!(&quot;Area: {}&quot;, c.area());"></div><div data-l="    println!(&quot;Radius: {}&quot;, c.radius());"></div><div data-l="}"></div></div>
+<br>
+<p>Similarly, here is an example of calling supertrait methods on trait objects.</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Shape { fn area(&amp;self) -&gt; f64; }"></div><div data-l="# trait Circle : Shape { fn radius(&amp;self) -&gt; f64; }"></div><div data-l="# struct UnitCircle;"></div><div data-l="# impl Shape for UnitCircle { fn area(&amp;self) -&gt; f64 { std::f64::consts::PI } }"></div><div data-l="# impl Circle for UnitCircle { fn radius(&amp;self) -&gt; f64 { 1.0 } }"></div><div data-l="# let circle = UnitCircle;"></div><div data-l="let circle = Box::new(circle) as Box&lt;dyn Circle&gt;;"></div><div data-l="let nonsense = circle.radius() * circle.area();"></div></div>
+<br>
+<a class="notranslate" href="#1trait-bounds.html">bounds</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait object</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#type-cast-expressions">explicit</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md">RFC 255</a>
+<a class="notranslate" href="#1items/associated-items.html">associated items</a>
+<a class="notranslate" href="#1items/associated-items.html#methods">method</a>
+<a class="notranslate" href="#1items/implementations.html">implementations</a>
+<a class="notranslate" href="#1items/generics.html">generics</a>
+<a class="notranslate" href="#1items/generics.html#where-clauses">where clauses</a>
+<a class="notranslate" href="#1items/functions.html#generic-functions">generic functions</a>

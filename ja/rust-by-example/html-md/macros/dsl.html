@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h1>Domain Specific Languages (DSLs)</h1>
+<br>
+<p>A DSL is a mini &quot;language&quot; embedded in a Rust macro. It is completely valid
+Rust because the macro system expands into normal Rust constructs, but it looks
+like a small language. This allows you to define concise or intuitive syntax for
+some special functionality (within bounds).</p>
+<br>
+<p>Suppose that I want to define a little calculator API. I would like to supply
+an expression an have the output printed to console.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="macro_rules! calculate {"></div><div data-l="    (eval $e:expr) =&gt; {{"></div><div data-l="        {"></div><div data-l="#//            let val: usize = $e; // Force types to be integers"></div><div data-l="            let val: usize = $e; // ">Force types to be integers</div><div data-l="            println!(&quot;{} = {}&quot;, stringify!{$e}, val);"></div><div data-l="        }"></div><div data-l="    }};"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    calculate! {"></div><div data-l="#//        eval 1 + 2 // hehehe `eval` is _not_ a Rust keyword!"></div><div data-l="        eval 1 + 2 // ">hehehe <code>eval</code> is <s>not</s> a Rust keyword!</div><div data-l="    }"></div><div data-l=""></div><div data-l="    calculate! {"></div><div data-l="        eval (1 + 2) * (3 / 4)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Output:</p>
+<br>
+<div data-lang="txt"><div data-l="1 + 2 = 3"></div><div data-l="(1 + 2) * (3 / 4) = 0"></div></div>
+<br>
+<p>This was a very simple example, but much more complex interfaces have been
+developed, such as <a class="notranslate" href="#2https://crates.io/crates/lazy_static"><code>lazy_static</code></a> or
+<a class="notranslate" href="#2https://crates.io/crates/clap"><code>clap</code></a>.</p>

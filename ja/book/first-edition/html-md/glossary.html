@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<h1>Glossary</h1>
+<br>
+<p>Not every Rustacean has a background in systems programming, nor in computer
+science, so we've added explanations of terms that might be unfamiliar.</p>
+<br>
+<h3>Abstract Syntax Tree</h3>
+<br>
+<p>When a compiler is compiling your program, it does a number of different things.
+One of the things that it does is turn the text of your program into an
+‘abstract syntax tree’, or ‘AST’. This tree is a representation of the structure
+of your program. For example, <code>2 + 3</code> can be turned into a tree:</p>
+<br>
+<div data-lang="text"><div data-l="  +"></div><div data-l=" / \"></div><div data-l="2   3"></div></div>
+<br>
+<p>And <code>2 + (3 * 4)</code> would look like this:</p>
+<br>
+<div data-lang="text"><div data-l="  +"></div><div data-l=" / \"></div><div data-l="2   *"></div><div data-l="   / \"></div><div data-l="  3   4"></div></div>
+<br>
+<h3>Arity</h3>
+<br>
+<p>Arity refers to the number of arguments a function or operation takes.</p>
+<br>
+<div data-lang="rust"><div data-l="let x = (2, 3);"></div><div data-l="let y = (4, 6);"></div><div data-l="let z = (8, 2, 6);"></div></div>
+<br>
+<p>In the example above <code>x</code> and <code>y</code> have arity 2. <code>z</code> has arity 3.</p>
+<br>
+<h3>Bounds</h3>
+<br>
+<p>Bounds are constraints on a type or <a class="notranslate" href="#3traits">trait</a>. For example, if a bound
+is placed on the argument a function takes, types passed to that function
+must abide by that constraint.</p>
+<br>
+<a class="notranslate" href="#1traits.html">traits</a>
+<br>
+<h3>Combinators</h3>
+<br>
+<p>Combinators are higher-order functions that apply only functions and
+earlier defined combinators to provide a result from its arguments. 
+They can be used to manage control flow in a modular fashion.</p>
+<br>
+<h3>DST (Dynamically Sized Type)</h3>
+<br>
+<p>A type without a statically known size or alignment. (<a href="#3link">more info</a>)</p>
+<br>
+<a class="notranslate" href="#1../../nomicon/exotic-sizes.html#dynamically-sized-types-dsts">link</a>
+<br>
+<h3>Expression</h3>
+<br>
+<p>In computer programming, an expression is a combination of values, constants,
+variables, operators and functions that evaluate to a single value. For example,
+<code>2 + (3 * 4)</code> is an expression that returns the value 14. It is worth noting
+that expressions can have side-effects. For example, a function included in an
+expression might perform actions other than simply returning a value.</p>
+<br>
+<h3>Expression-Oriented Language</h3>
+<br>
+<p>In early programming languages, <a class="notranslate" href="#3expression">expressions</a> and
+<a class="notranslate" href="#3statement">statements</a> were two separate syntactic categories: expressions had
+a value and statements did things. However, later languages blurred this
+distinction, allowing expressions to do things and statements to have a value.
+In an expression-oriented language, (nearly) every statement is an expression
+and therefore returns a value. Consequently, these expression statements can
+themselves form part of larger expressions.</p>
+<br>
+<a class="notranslate" href="#1glossary.html#expression">expression</a>
+<a class="notranslate" href="#1glossary.html#statement">statement</a>
+<br>
+<h3>Statement</h3>
+<br>
+<p>In computer programming, a statement is the smallest standalone element of a
+programming language that commands a computer to perform an action.</p>

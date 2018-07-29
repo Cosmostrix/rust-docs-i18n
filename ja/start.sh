@@ -18,9 +18,11 @@ function gen_html() {
     done
 }
 
-#gen_html book
 #gen_html rust/src/doc/man
 gen_html api-guidelines
+gen_html book/first-edition
+gen_html book/second-edition
+gen_html book/2018-edition
 gen_html cargo/src/doc
 gen_html edition-guide
 gen_html nomicon
@@ -31,3 +33,7 @@ gen_html rust/src/doc/rustc
 gen_html rust/src/doc/rustdoc
 gen_html rust/src/doc/unstable-book
 gen_html rustc-guide
+$PROG map2html en/rust/CODE_OF_CONDUCT.md ja/rust/html-md
+$PROG map2html en/rust/CONTRIBUTING.md ja/rust/html-md
+$PROG map2html en/rust/README.md ja/rust/html-md
+$PROG map2html en/rust/RELEASES.md ja/rust/html-md

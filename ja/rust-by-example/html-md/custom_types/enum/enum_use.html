@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h1>use</h1>
+<br>
+<p>The <code>use</code> declaration can be used so manual scoping isn't needed:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// An attribute to hide warnings for unused code."></div><div data-l="// ">An attribute to hide warnings for unused code.</div><div data-l="#![allow(dead_code)]"></div><div data-l=""></div><div data-l="enum Status {"></div><div data-l="    Rich,"></div><div data-l="    Poor,"></div><div data-l="}"></div><div data-l=""></div><div data-l="enum Work {"></div><div data-l="    Civilian,"></div><div data-l="    Soldier,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Explicitly `use` each name so they are available without"></div><div data-l="#    // manual scoping."></div><div data-l="    // ">Explicitly <code>use</code> each name so they are available without manual scoping.</div><div data-l="    use Status::{Poor, Rich};"></div><div data-l="#    // Automatically `use` each name inside `Work`."></div><div data-l="    // ">Automatically <code>use</code> each name inside <code>Work</code>.</div><div data-l="    use Work::*;"></div><div data-l=""></div><div data-l="#    // Equivalent to `Status::Poor`."></div><div data-l="    // ">Equivalent to <code>Status::Poor</code>.</div><div data-l="    let status = Poor;"></div><div data-l="#    // Equivalent to `Work::Civilian`."></div><div data-l="    // ">Equivalent to <code>Work::Civilian</code>.</div><div data-l="    let work = Civilian;"></div><div data-l=""></div><div data-l="    match status {"></div><div data-l="#        // Note the lack of scoping because of the explicit `use` above."></div><div data-l="        // ">Note the lack of scoping because of the explicit <code>use</code> above.</div><div data-l="        Rich =&gt; println!(&quot;The rich have lots of money!&quot;),"></div><div data-l="        Poor =&gt; println!(&quot;The poor have no money...&quot;),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    match work {"></div><div data-l="#        // Note again the lack of scoping."></div><div data-l="        // ">Note again the lack of scoping.</div><div data-l="        Civilian =&gt; println!(&quot;Civilians work!&quot;),"></div><div data-l="        Soldier  =&gt; println!(&quot;Soldiers fight!&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3match"><code>match</code></a> and <a class="notranslate" href="#3use"><code>use</code></a> </p>
+<br>
+<a class="notranslate" href="#1mod/use.html">use</a>
+<a class="notranslate" href="#1flow_control/match.html">match</a>

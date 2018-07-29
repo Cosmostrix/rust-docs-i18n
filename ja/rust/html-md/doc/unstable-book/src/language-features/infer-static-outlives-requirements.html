@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<h1><code>infer_static_outlives_requirements</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44493">#44493</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44493">#44493</a>
+<br>
+<p>------------------------
+The <code>infer_static_outlives_requirements</code> feature indicates that certain
+<code>'static</code> outlives requirements can be infered by the compiler rather than
+stating them explicitly.</p>
+<br>
+<p>Note: It is an accompanying feature to <code>infer_outlives_requirements</code>,
+which must be enabled to infer outlives requirements.</p>
+<br>
+<p>For example, currently generic struct definitions that contain
+references, require where-clauses of the form T: 'static. By using
+this feature the outlives predicates will be infered, although
+they may still be written explicitly.</p>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#//struct Foo&lt;U&gt; where U: 'static { // &lt;-- currently required"></div><div data-l="struct Foo&lt;U&gt; where U: 'static { // ">&lt;-- currently required</div><div data-l="    bar: Bar&lt;U&gt;"></div><div data-l="}"></div><div data-l="struct Bar&lt;T: 'static&gt; {"></div><div data-l="    x: T,"></div><div data-l="}"></div></div>
+<br>
+<br>
+<h2>Examples:</h2>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#![feature(infer_outlives_requirements)]"></div><div data-l="#![feature(infer_static_outlives_requirements)]"></div><div data-l=""></div><div data-l="#[rustc_outlives]"></div><div data-l="#// Implicitly infer U: 'static"></div><div data-l="// ">Implicitly infer U: 'static</div><div data-l="struct Foo&lt;U&gt; {"></div><div data-l="    bar: Bar&lt;U&gt;"></div><div data-l="}"></div><div data-l="struct Bar&lt;T: 'static&gt; {"></div><div data-l="    x: T,"></div><div data-l="}"></div></div>
+<br>

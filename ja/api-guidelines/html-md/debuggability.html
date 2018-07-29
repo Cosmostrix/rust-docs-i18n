@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h1>Debuggability</h1>
+<br>
+<br>
+<p><a id="c-debug"></a>
+## All public types implement <code>Debug</code> (C-DEBUG)</p>
+<br>
+<p>If there are exceptions, they are rare.</p>
+<br>
+<br>
+<p><a id="c-debug-nonempty"></a>
+## <code>Debug</code> representation is never empty (C-DEBUG-NONEMPTY)</p>
+<br>
+<p>Even for conceptually empty values, the <code>Debug</code> representation should never be
+empty.</p>
+<br>
+<div data-lang="rust"><div data-l="let empty_str = &quot;&quot;;"></div><div data-l="assert_eq!(format!(&quot;{:?}&quot;, empty_str), &quot;\&quot;\&quot;&quot;);"></div><div data-l=""></div><div data-l="let empty_vec = Vec::&lt;bool&gt;::new();"></div><div data-l="assert_eq!(format!(&quot;{:?}&quot;, empty_vec), &quot;[]&quot;);"></div></div>

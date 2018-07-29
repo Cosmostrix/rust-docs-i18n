@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h2>Behavior not considered <code>unsafe</code></h2>
+<br>
+<p>The Rust compiler does not consider the following behaviors <s>unsafe</s>,
+though a programmer may (should) find them undesirable, unexpected,
+or erroneous.</p>
+<br>
+<h5>Deadlocks</h5>
+<h5>Leaks of memory and other resources</h5>
+<h5>Exiting without calling destructors</h5>
+<h5>Exposing randomized base addresses through pointer leaks</h5>
+<h5>Integer overflow</h5>
+<br>
+<p>If a program contains arithmetic overflow, the programmer has made an
+error. In the following discussion, we maintain a distinction between
+arithmetic overflow and wrapping arithmetic. The first is erroneous,
+while the second is intentional.</p>
+<br>
+<p>When the programmer has enabled <code>debug_assert€</code> assertions (for
+example, by enabling a non-optimized build), implementations must
+insert dynamic checks that <code>panic</code> on overflow. Other kinds of builds
+may result in <code>panics</code> or silently wrapped values on overflow, at the
+implementation's discretion.</p>
+<br>
+<p>In the case of implicitly-wrapped overflow, implementations must
+provide well-defined (even if still considered erroneous) results by
+using two's complement overflow conventions.</p>
+<br>
+<p>The integral types provide inherent methods to allow programmers
+explicitly to perform wrapping arithmetic. For example,
+<code>i32::wrapping_add</code> provides two's complement, wrapping addition.</p>
+<br>
+<p>The standard library also provides a <code>Wrapping&lt;T&gt;</code> newtype which
+ensures all standard arithmetic operations for <code>T</code> have wrapping
+semantics.</p>
+<br>
+<p>See <a class="notranslate" href="#4RFC 560">RFC 560</a> for error conditions, rationale, and more details about
+integer overflow.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0560-integer-overflow.md">RFC 560</a>

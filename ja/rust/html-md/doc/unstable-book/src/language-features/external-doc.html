@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<h1><code>external_doc</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44732">#44732</a></p>
+<br>
+<p>The <code>external_doc</code> feature allows the use of the <code>include</code> parameter to the <code>#[doc]</code> attribute, to
+include external files in documentation. Use the attribute in place of, or in addition to, regular
+doc comments and <code>#[doc]</code> attributes, and <code>rustdoc</code> will load the given file when it renders
+documentation for your crate.</p>
+<br>
+<p>With the following files in the same directory:</p>
+<br>
+<p><code>external-doc.md</code>:</p>
+<br>
+<div data-lang="markdown"><div data-l="# My Awesome Type"></div><div data-l=""></div><div data-l="This is the documentation for this spectacular type."></div></div>
+<br>
+<p><code>lib.rs</code>:</p>
+<br>
+<div data-lang="no_run (needs-external-files)"><div data-l="#![feature(external_doc)]"></div><div data-l=""></div><div data-l="#[doc(include = &quot;external-doc.md&quot;)]"></div><div data-l="pub struct MyAwesomeType;"></div></div>
+<br>
+<p><code>rustdoc</code> will load the file <code>external-doc.md</code> and use it as the documentation for the <code>MyAwesomeType</code>
+struct.</p>
+<br>
+<p>When locating files, <code>rustdoc</code> will base paths in the <code>src/</code> directory, as if they were alongside the
+<code>lib.rs</code> for your crate. So if you want a <code>docs/</code> folder to live alongside the <code>src/</code> directory,
+start your paths with <code>../docs/</code> for <code>rustdoc</code> to properly find the file.</p>
+<br>
+<p>This feature was proposed in <a class="notranslate" href="#4RFC #1990">RFC #1990</a> and initially implemented in PR <a class="notranslate" href="#4#44781">#44781</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44732">#44732</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/1990">RFC #1990</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/pull/44781">#44781</a>

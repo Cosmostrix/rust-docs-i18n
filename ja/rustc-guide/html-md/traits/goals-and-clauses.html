@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<h1>Goals and clauses</h1>
+<br>
+<p>In logic programming terms, a <b>goal</b> is something that you must
+prove and a <b>clause</b> is something that you know is true. As
+described in the <a href="#2./traits/lowering-to-logic.html">lowering to logic</a>
+chapter, Rust's trait solver is based on an extension of hereditary
+harrop (HH) clauses, which extend traditional Prolog Horn clauses with
+a few new superpowers.</p>
+<br>
+<h2>Goals and clauses meta structure</h2>
+<br>
+<p>In Rust's solver, <b>goals</b> and <b>clauses</b> have the following forms
+(note that the two definitions reference one another):</p>
+<br>
+<div data-lang="text"><div data-l="#//Goal = DomainGoal           // defined in the section below"></div><div data-l="Goal = DomainGoal           // ">defined in the section below</div><div data-l="        | Goal &amp;&amp; Goal"></div><div data-l="        | Goal || Goal"></div><div data-l="#//        | exists&lt;K&gt; { Goal }   // existential quantification"></div><div data-l="        | exists&lt;K&gt; { Goal }   // ">existential quantification</div><div data-l="#//        | forall&lt;K&gt; { Goal }   // universal quantification"></div><div data-l="        | forall&lt;K&gt; { Goal }   // ">universal quantification</div><div data-l="#//        | if (Clause) { Goal } // implication"></div><div data-l="        | if (Clause) { Goal } // ">implication</div><div data-l="#//        | true                 // something that's trivially true"></div><div data-l="        | true                 // ">something that's trivially true</div><div data-l="#//        | ambiguous            // something that's never provable"></div><div data-l="        | ambiguous            // ">something that's never provable</div><div data-l=""></div><div data-l="Clause = DomainGoal"></div><div data-l="#//        | Clause :- Goal     // if can prove Goal, then Clause is true"></div><div data-l="        | Clause :- Goal     // ">if can prove Goal, then Clause is true</div><div data-l="        | Clause &amp;&amp; Clause"></div><div data-l="        | forall&lt;K&gt; { Clause }"></div><div data-l=""></div><div data-l="#//K = &lt;type&gt;     // a &quot;kind&quot;"></div><div data-l="K = &lt;type&gt;     // ">a &quot;kind&quot;</div><div data-l="    | &lt;lifetime&gt;"></div></div>
+<br>
+<p>The proof procedure for these sorts of goals is actually quite
+straightforward.  Essentially, it's a form of depth-first search. The
+paper
+<a href="#3pphhf">&quot;A Proof Procedure for the Logic of Hereditary Harrop Formulas&quot;</a>
+gives the details.</p>
+<br>
+<a class="notranslate" href="#1./traits/bibliography.html#pphhf">pphhf</a>
+<br>
+<p><a name="domain-goals"></a></p>
+<br>
+<h2>Domain goals</h2>
+<br>
+<p><a name="trait-ref"></a></p>
+<br>
+<p>To define the set of <i>domain goals</i> in our system, we need to first
+introduce a few simple formulations. A <b>trait reference</b> consists of
+the name of a trait along with a suitable set of inputs P0..Pn:</p>
+<br>
+<div data-lang="text"><div data-l="TraitRef = P0: TraitName&lt;P1..Pn&gt;"></div></div>
+<br>
+<p>So, for example, <code>u32: Display</code> is a trait reference, as is <code>Vec&lt;T&gt;:
+IntoIterator</code>. Note that Rust surface syntax also permits some extra
+things, like associated type bindings (<code>Vec&lt;T&gt;: IntoIterator&lt;Item =
+T&gt;</code>), that are not part of a trait reference.</p>
+<br>
+<p><a name="projection"></a></p>
+<br>
+<p>A <b>projection</b> consists of an associated item reference along with
+its inputs P0..Pm:</p>
+<br>
+<div data-lang="text"><div data-l="Projection = &lt;P0 as TraitName&lt;P1..Pn&gt;&gt;::AssocItem&lt;Pn+1..Pm&gt;"></div></div>
+<br>
+<p>Given these, we can define a <code>DomainGoal</code> as follows:</p>
+<br>
+<div data-lang="text"><div data-l="DomainGoal = Implemented(TraitRef)"></div><div data-l="            | ProjectionEq(Projection = Type)"></div><div data-l="            | Normalize(Projection -&gt; Type)"></div><div data-l="            | FromEnv(TraitRef)"></div><div data-l="            | FromEnv(Projection = Type)"></div><div data-l="            | WellFormed(Type)"></div><div data-l="            | WellFormed(TraitRef)"></div><div data-l="            | WellFormed(Projection = Type)"></div><div data-l="            | Outlives(Type: Region)"></div><div data-l="            | Outlives(Region: Region)"></div></div>
+<br>
+<p>Let's break down each one of these, one-by-one.</p>
+<br>
+<h4>Implemented(TraitRef)</h4>
+<p>e.g. <code>Implemented(i32: Copy)</code></p>
+<br>
+<p>True if the given trait is implemented for the given input types and lifetimes.</p>
+<br>
+<h4>ProjectionEq(Projection = Type)</h4>
+<p>e.g. <code>ProjectionEq&lt;T as Iterator&gt;::Item = u8</code></p>
+<br>
+<p>The given associated type <code>Projection</code> is equal to <code>Type</code>; this can be proved
+with either normalization or using skolemized types. See <a href="#2./traits/associated-types.html">the section
+on associated types</a>.</p>
+<br>
+<h4>Normalize(Projection -&gt; Type)</h4>
+<p>e.g. <code>ProjectionEq&lt;T as Iterator&gt;::Item -&gt; u8</code></p>
+<br>
+<p>The given associated type <code>Projection</code> can be <a class="notranslate" href="#3n">normalized</a> to <code>Type</code>.</p>
+<br>
+<p>As discussed in <a href="#2./traits/associated-types.html">the section on associated
+types</a>, <code>Normalize</code> implies <code>ProjectionEq</code>,
+but not vice versa. In general, proving <code>Normalize(&lt;T as Trait&gt;::Item -&gt; U)</code>
+also requires proving <code>Implemented(T: Trait)</code>.</p>
+<br>
+<a class="notranslate" href="#1./traits/associated-types.html#normalize">n</a>
+<a class="notranslate" href="#1./traits/associated-types.html">at</a>
+<br>
+<h4>FromEnv(TraitRef), FromEnv(Projection = Type)</h4>
+<p>e.g. <code>FromEnv(Self: Add&lt;i32&gt;)</code></p>
+<br>
+<p>e.g. <code>FromEnv(&lt;Self as StreamingIterator&gt;::Item&lt;'a&gt; = &amp;'a [u8])</code></p>
+<br>
+<p>True if the inner <code>TraitRef</code> or projection equality is <i>assumed</i> to be true;
+that is, if it can be derived from the in-scope where clauses.</p>
+<br>
+<p>For example, given the following function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn loud_clone&lt;T: Clone&gt;(stuff: &amp;T) -&gt; T {"></div><div data-l="    println!(&quot;cloning!&quot;);"></div><div data-l="    stuff.clone()"></div><div data-l="}"></div></div>
+<br>
+<p>Inside the body of our function, we would have <code>FromEnv(T: Clone)</code>. In-scope
+where clauses nest, so a function body inside an impl body inherits the
+impl body's where clauses, too.</p>
+<br>
+<p>This and the next rule are used to implement <a class="notranslate" href="#4implied bounds">implied bounds</a>. As we'll see
+in the section on lowering, <code>FromEnv(X)</code> implies <code>Implemented(X)</code>, but not
+vice versa. This distinction is crucial to implied bounds.</p>
+<br>
+<h4>WellFormed(Item)</h4>
+<p>These goals imply that the given item is <i>well-formed</i>.</p>
+<br>
+<p>We can talk about different types of items being well-formed:</p>
+<br>
+<p><b>Types</b>, like <code>WellFormed(Vec&lt;i32&gt;)</code>, which is true in Rust, or
+  <code>WellFormed(Vec&lt;str&gt;)</code>, which is not (because <code>str</code> is not <code>Sized</code>.)</p>
+<br>
+<p><b>TraitRefs</b>, like <code>WellFormed(Vec&lt;i32&gt;: Clone)</code>.</p>
+<br>
+<p><b>Projections</b>, like <code>WellFormed(T: Iterator&lt;Item = u32&gt;)</code>.</p>
+<br>
+<p>Well-formedness is important to <a class="notranslate" href="#4implied bounds">implied bounds</a>. In particular, the reason
+it is okay to assume <code>FromEnv(T: Clone)</code> in the example above is that we
+<s>also</s> verify <code>WellFormed(T: Clone)</code> for each call site of <code>loud_clone</code>.</p>
+<br>
+<h4>Outlives(Type: Region), Outlives(Region: Region)</h4>
+<p>e.g. <code>Outlives(&amp;'a str: 'b)</code>, <code>Outlives('a: 'static)</code></p>
+<br>
+<p>True if the given type or region on the left outlives the right-hand region.</p>
+<br>
+<p><a name="coinductive"></a></p>
+<br>
+<h2>Coinductive goals</h2>
+<br>
+<p>Most goals in our system are &quot;inductive&quot;. In an inductive goal,
+circular reasoning is disallowed. Consider this example clause:</p>
+<br>
+<div data-lang="text"><div data-l="    Implemented(Foo: Bar) :-"></div><div data-l="        Implemented(Foo: Bar)."></div></div>
+<br>
+<p>Considered inductively, this clause is useless: if we are trying to
+prove <code>Implemented(Foo: Bar)</code>, we would then recursively have to prove
+<code>Implemented(Foo: Bar)</code>, and that cycle would continue ad infinitum
+(the trait solver will terminate here, it would just consider that
+<code>Implemented(Foo: Bar)</code> is not known to be true).</p>
+<br>
+<p>However, some goals are <i>co-inductive</i>. Simply put, this means that
+cycles are OK. So, if <code>Bar</code> were a co-inductive trait, then the rule
+above would be perfectly valid, and it would indicate that
+<code>Implemented(Foo: Bar)</code> is true.</p>
+<br>
+<p><i>Auto traits</i> are one example in Rust where co-inductive goals are used.
+Consider the <code>Send</code> trait, and imagine that we have this struct:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Foo {"></div><div data-l="    next: Option&lt;Box&lt;Foo&gt;&gt;"></div><div data-l="}"></div></div>
+<br>
+<p>The default rules for auto traits say that <code>Foo</code> is <code>Send</code> if the
+types of its fields are <code>Send</code>. Therefore, we would have a rule like</p>
+<br>
+<div data-lang="text"><div data-l="Implemented(Foo: Send) :-"></div><div data-l="    Implemented(Option&lt;Box&lt;Foo&gt;&gt;: Send)."></div></div>
+<br>
+<p>As you can probably imagine, proving that <code>Option&lt;Box&lt;Foo&gt;&gt;: Send</code> is
+going to wind up circularly requiring us to prove that <code>Foo: Send</code>
+again. So this would be an example where we wind up in a cycle – but
+that's ok, we <i>do</i> consider <code>Foo: Send</code> to hold, even though it
+references itself.</p>
+<br>
+<p>In general, co-inductive traits are used in Rust trait solving when we
+want to enumerate a fixed set of possibilities. In the case of auto
+traits, we are enumerating the set of reachable types from a given
+starting point (i.e., <code>Foo</code> can reach values of type
+<code>Option&lt;Box&lt;Foo&gt;&gt;</code>, which implies it can reach values of type
+<code>Box&lt;Foo&gt;</code>, and then of type <code>Foo</code>, and then the cycle is complete).</p>
+<br>
+<p>In addition to auto traits, <code>WellFormed</code> predicates are co-inductive.
+These are used to achieve a similar &quot;enumerate all the cases&quot; pattern,
+as described in the section on <a class="notranslate" href="#4implied bounds">implied bounds</a>.</p>
+<br>
+<a class="notranslate" href="#1./traits/lowering-rules.html#implied-bounds">implied bounds</a>
+<br>
+<h2>Incomplete chapter</h2>
+<br>
+<p>Some topics yet to be written:</p>
+<br>
+<div data-b="-">Elaborate on the proof procedure</div>
+<div data-b="-">SLG solving – introduce negative reasoning</div>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>Download a file to a temporary directory</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3tempdir">!<a class="notranslate" href="#4tempdir-badge">tempdir-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Creates a temporary directory with <a class="notranslate" href="#4`TempDir::new`">`TempDir::new`</a> and synchronously downloads
+a file over HTTP using <a class="notranslate" href="#4`reqwest::get`">`reqwest::get`</a>.</p>
+<br>
+<p>Creates a target <a class="notranslate" href="#4`File`">`File`</a> with name obtained from <a class="notranslate" href="#4`Response::url`">`Response::url`</a> within
+<a class="notranslate" href="#4`TempDir::path`">`TempDir::path`</a> and copies downloaded data into it with <a class="notranslate" href="#4`io::copy`">`io::copy`</a>.
+The temporary directory is automatically removed on <code>run</code> function return.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l="extern crate tempdir;"></div><div data-l=""></div><div data-l="use std::io::copy;"></div><div data-l="use std::fs::File;"></div><div data-l="use tempdir::TempDir;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         HttpRequest(reqwest::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let tmp_dir = TempDir::new(&quot;example&quot;)?;"></div><div data-l="    let target = &quot;https://www.rust-lang.org/logos/rust-logo-512x512.png&quot;;"></div><div data-l="    let mut response = reqwest::get(target)?;"></div><div data-l=""></div><div data-l="    let mut dest = {"></div><div data-l="        let fname = response"></div><div data-l="            .url()"></div><div data-l="            .path_segments()"></div><div data-l="            .and_then(|segments| segments.last())"></div><div data-l="            .and_then(|name| if name.is_empty() { None } else { Some(name) })"></div><div data-l="            .unwrap_or(&quot;tmp.bin&quot;);"></div><div data-l=""></div><div data-l="        println!(&quot;file to download: '{}'&quot;, fname);"></div><div data-l="        let fname = tmp_dir.path().join(fname);"></div><div data-l="        println!(&quot;will be located under: '{:?}'&quot;, fname);"></div><div data-l="        File::create(fname)?"></div><div data-l="    };"></div><div data-l="    copy(&amp;mut response, &amp;mut dest)?;"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html">`File`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/fn.copy.html">`io::copy`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/fn.get.html">`reqwest::get`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Response.html#method.url">`Response::url`</a>
+<a class="notranslate" href="#1https://docs.rs/tempdir/*/tempdir/struct.TempDir.html#method.new">`TempDir::new`</a>
+<a class="notranslate" href="#1https://docs.rs/tempdir/*/tempdir/struct.TempDir.html#method.path">`TempDir::path`</a>

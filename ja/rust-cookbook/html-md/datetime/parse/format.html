@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Display formatted date and time</h2>
+<br>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Gets and displays the current time in UTC using <a class="notranslate" href="#4`Utc::now`">`Utc::now`</a>. Formats the
+current time in the well-known formats <a class="notranslate" href="#4RFC 2822">RFC 2822</a> using <a class="notranslate" href="#4`DateTime::to_rfc2822`">`DateTime::to_rfc2822`</a>
+and <a class="notranslate" href="#4RFC 3339">RFC 3339</a> using <a class="notranslate" href="#4`DateTime::to_rfc3339`">`DateTime::to_rfc3339`</a>, and in a custom format using
+<a class="notranslate" href="#4`DateTime::format`">`DateTime::format`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l="use chrono::{DateTime, Utc};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let now: DateTime&lt;Utc&gt; = Utc::now();"></div><div data-l=""></div><div data-l="    println!(&quot;UTC now is: {}&quot;, now);"></div><div data-l="    println!(&quot;UTC now in RFC 2822 is: {}&quot;, now.to_rfc2822());"></div><div data-l="    println!(&quot;UTC now in RFC 3339 is: {}&quot;, now.to_rfc3339());"></div><div data-l="    println!(&quot;UTC now in a custom format is: {}&quot;, now.format(&quot;%a %b %e %T %Y&quot;));"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.format">`DateTime::format`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.to_rfc2822">`DateTime::to_rfc2822`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.to_rfc3339">`DateTime::to_rfc3339`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/offset/struct.Utc.html#method.now">`Utc::now`</a>
+<br>
+<a class="notranslate" href="#1https://www.ietf.org/rfc/rfc2822.txt">RFC 2822</a>
+<a class="notranslate" href="#1https://www.ietf.org/rfc/rfc3339.txt">RFC 3339</a>

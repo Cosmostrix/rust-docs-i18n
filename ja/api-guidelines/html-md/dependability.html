@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<h1>Dependability</h1>
+<br>
+<br>
+<p><a id="c-validate"></a>
+## Functions validate their arguments (C-VALIDATE)</p>
+<br>
+<p>Rust APIs do <s>not</s> generally follow the <a class="notranslate" href="#4robustness principle">robustness principle</a>: &quot;be conservative
+in what you send; be liberal in what you accept&quot;.</p>
+<br>
+<a class="notranslate" href="#1http://en.wikipedia.org/wiki/Robustness_principle">robustness principle</a>
+<br>
+<p>Instead, Rust code should <s>enforce</s> the validity of input whenever practical.</p>
+<br>
+<p>Enforcement can be achieved through the following mechanisms (listed in order of
+preference).</p>
+<br>
+<h3>Static enforcement</h3>
+<br>
+<p>Choose an argument type that rules out bad inputs.</p>
+<br>
+<p>For example, prefer</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(a: Ascii) { /* ... */ }"></div></div>
+<br>
+<p>over</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(a: u8) { /* ... */ }"></div></div>
+<br>
+<p>where <code>Ascii</code> is a <s>wrapper</s> around <code>u8</code> that guarantees the highest bit is
+zero; see newtype patterns (<a class="notranslate" href="#4C-NEWTYPE">C-NEWTYPE</a>) for more details on creating typesafe
+wrappers.</p>
+<br>
+<p>Static enforcement usually comes at little run-time cost: it pushes the costs to
+the boundaries (e.g. when a <code>u8</code> is first converted into an <code>Ascii</code>). It also
+catches bugs early, during compilation, rather than through run-time failures.</p>
+<br>
+<p>On the other hand, some properties are difficult or impossible to express using
+types.</p>
+<br>
+<a class="notranslate" href="#1type-safety.html#c-newtype">C-NEWTYPE</a>
+<br>
+<h3>Dynamic enforcement</h3>
+<br>
+<p>Validate the input as it is processed (or ahead of time, if necessary). Dynamic
+checking is often easier to implement than static checking, but has several
+downsides:</p>
+<br>
+<div data-b="1.">Runtime overhead (unless checking can be done as part of processing the
+ input).</div>
+<div data-b="2.">Delayed detection of bugs.</div>
+<div data-b="3.">Introduces failure cases, either via <code>panic€</code> or <code>Result</code>/<code>Option</code> types,
+ which must then be dealt with by client code.</div>
+<br>
+<h4>Dynamic enforcement with <code>debug_assert€</code></h4>
+<br>
+<p>Same as dynamic enforcement, but with the possibility of easily turning off
+expensive checks for production builds.</p>
+<br>
+<h4>Dynamic enforcement with opt-out</h4>
+<br>
+<p>Same as dynamic enforcement, but adds sibling functions that opt out of the
+checking.</p>
+<br>
+<p>The convention is to mark these opt-out functions with a suffix like
+<code>_unchecked</code> or by placing them in a <code>raw</code> submodule.</p>
+<br>
+<p>The unchecked functions can be used judiciously in cases where (1) performance
+dictates avoiding checks and (2) the client is otherwise confident that the
+inputs are valid.</p>
+<br>
+<br>
+<p><a id="c-dtor-fail"></a>
+## Destructors never fail (C-DTOR-FAIL)</p>
+<br>
+<p>Destructors are executed on task failure, and in that context a failing
+destructor causes the program to abort.</p>
+<br>
+<p>Instead of failing in a destructor, provide a separate method for checking for
+clean teardown, e.g. a <code>close</code> method, that returns a <code>Result</code> to signal
+problems.</p>
+<br>
+<br>
+<p><a id="c-dtor-block"></a>
+## Destructors that may block have alternatives (C-DTOR-BLOCK)</p>
+<br>
+<p>Similarly, destructors should not invoke blocking operations, which can make
+debugging much more difficult. Again, consider providing a separate method for
+preparing for an infallible, nonblocking teardown.</p>

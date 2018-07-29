@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<h1>Deny-by-default lints</h1>
+<br>
+<p>These lints are all set to the 'deny' level by default.</p>
+<br>
+<h2>exceeding-bitshifts</h2>
+<br>
+<p>This lint detects that a shift exceeds the type's number of bits. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="1_i32 &lt;&lt; 32;"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: bitshift exceeds the type's number of bits"></div><div data-l=" --&gt; src/main.rs:2:5"></div><div data-l="  |"></div><div data-l="2 |     1_i32 &lt;&lt; 32;"></div><div data-l="  |     ^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>invalid-type-param-default</h2>
+<br>
+<p>This lint detects type parameter default erroneously allowed in invalid location. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;T=i32&gt;(t: T) {}"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions."></div><div data-l=" --&gt; src/main.rs:4:8"></div><div data-l="  |"></div><div data-l="4 | fn foo&lt;T=i32&gt;(t: T) {}"></div><div data-l="  |        ^"></div><div data-l="  |"></div><div data-l="  = note: #[deny(invalid_type_param_default)] on by default"></div><div data-l="  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!"></div><div data-l="  = note: for more information, see issue #36887 &lt;https://github.com/rust-lang/rust/issues/36887&gt;"></div></div>
+<br>
+<h2>legacy-constructor-visibility</h2>
+<br>
+<p><a href="#2https://github.com/rust-lang/rfcs/blob/master/text/1506-adt-kinds.md">RFC 1506</a> modified some
+visibility rules, and changed the visibility of struct constructors. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="mod m {"></div><div data-l="    pub struct S(u8);"></div><div data-l="    "></div><div data-l="    fn f() {"></div><div data-l="#        // this is trying to use S from the 'use' line, but becuase the `u8` is"></div><div data-l="#        // not pub, it is private"></div><div data-l="        // ">this is trying to use S from the 'use' line, but becuase the <code>u8</code> is not pub, it is private</div><div data-l="        ::S;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="use m::S;"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: private struct constructors are not usable through re-exports in outer modules"></div><div data-l=" --&gt; src/main.rs:5:9"></div><div data-l="  |"></div><div data-l="5 |         ::S;"></div><div data-l="  |         ^^^"></div><div data-l="  |"></div><div data-l="  = note: #[deny(legacy_constructor_visibility)] on by default"></div><div data-l="  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!"></div><div data-l="  = note: for more information, see issue #39207 &lt;https://github.com/rust-lang/rust/issues/39207&gt;"></div></div>
+<br>
+<br>
+<h2>legacy-directory-ownership</h2>
+<br>
+<p>The legacy_directory_ownership warning is issued when</p>
+<br>
+<div data-b="*">There is a non-inline module with a #<a class="notranslate" href="#4path">path</a> attribute (e.g. #<a class="notranslate" href="#4path = "foo.rs"">path = "foo.rs"</a> mod bar;),</div>
+<div data-b="*">The module's file (&quot;foo.rs&quot; in the above example) is not named &quot;mod.rs&quot;, and</div>
+<div data-b="*">The module's file contains a non-inline child module without a #<a class="notranslate" href="#4path">path</a> attribute.</div>
+<br>
+<p>The warning can be fixed by renaming the parent module to &quot;mod.rs&quot; and moving
+it into its own directory if appropriate.</p>
+<br>
+<br>
+<h2>missing-fragment-specifier</h2>
+<br>
+<p>The missing_fragment_specifier warning is issued when an unused pattern in a
+<code>macro_rules€</code> macro definition has a meta-variable (e.g. <code>$e</code>) that is not
+followed by a fragment specifier (e.g. <code>:expr</code>).</p>
+<br>
+<p>This warning can always be fixed by removing the unused pattern in the
+<code>macro_rules€</code> macro definition.</p>
+<br>
+<h2>mutable-transmutes</h2>
+<br>
+<p>This lint catches transmuting from <code>&amp;T</code> to <code>&amp;mut T</code> becuase it is undefined
+behavior. Some example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="unsafe {"></div><div data-l="    let y = std::mem::transmute::&lt;&amp;i32, &amp;mut i32&gt;(&amp;5);"></div><div data-l="}"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: mutating transmuted &amp;mut T from &amp;T may cause undefined behavior, consider instead using an UnsafeCell"></div><div data-l=" --&gt; src/main.rs:3:17"></div><div data-l="  |"></div><div data-l="3 |         let y = std::mem::transmute::&lt;&amp;i32, &amp;mut i32&gt;(&amp;5);"></div><div data-l="  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<br>
+<h2>no-mangle-const-items</h2>
+<br>
+<p>This lint detects any <code>const</code> items with the <code>#[no_mangle]</code> attribute.
+Constants do not have their symbols exported, and therefore, this probably
+means you meant to use a <code>static</code>, not a <code>const</code>. Some example code that
+triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[no_mangle]"></div><div data-l="const FOO: i32 = 5;"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: const items should never be #[no_mangle]"></div><div data-l=" --&gt; src/main.rs:3:1"></div><div data-l="  |"></div><div data-l="3 | const FOO: i32 = 5;"></div><div data-l="  | -----^^^^^^^^^^^^^^"></div><div data-l="  | |"></div><div data-l="  | help: try a static value: `pub static`"></div><div data-l="  |"></div></div>
+<br>
+<h2>parenthesized-params-in-types-and-modules</h2>
+<br>
+<p>This lint detects incorrect parentheses. Some example code that triggers this
+lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let x = 5 as usize();"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: parenthesized parameters may only be used with a trait"></div><div data-l=" --&gt; src/main.rs:2:21"></div><div data-l="  |"></div><div data-l="2 |   let x = 5 as usize();"></div><div data-l="  |                     ^^"></div><div data-l="  |"></div><div data-l="  = note: #[deny(parenthesized_params_in_types_and_modules)] on by default"></div><div data-l="  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!"></div><div data-l="  = note: for more information, see issue #42238 &lt;https://github.com/rust-lang/rust/issues/42238&gt;"></div></div>
+<br>
+<p>To fix it, remove the <code>()</code>s.</p>
+<br>
+<h2>pub-use-of-private-extern-crate</h2>
+<br>
+<p>This lint detects a specific situation of re-exporting a private <code>extern crate</code>;</p>
+<br>
+<h2>safe-extern-statics</h2>
+<br>
+<p>In older versions of Rust, there was a soundness issue where <code>extern static</code>s were allowed
+to be accessed in safe code. This lint now catches and denies this kind of code.</p>
+<br>
+<h2>unknown-crate-types</h2>
+<br>
+<p>This lint detects an unknown crate type found in a <code>#[crate_type]</code> directive. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![crate_type=&quot;lol&quot;]"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: invalid `crate_type` value"></div><div data-l=" --&gt; src/lib.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | #![crate_type=&quot;lol&quot;]"></div><div data-l="  | ^^^^^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div></div>
+<br>
+<h2>incoherent-fundamental-impls</h2>
+<br>
+<p>This lint detects potentially-conflicting impls that were erroneously allowed. Some
+example code that triggers this lint:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub trait Trait1&lt;X&gt; {"></div><div data-l="    type Output;"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub trait Trait2&lt;X&gt; {}"></div><div data-l=""></div><div data-l="pub struct A;"></div><div data-l=""></div><div data-l="impl&lt;X, T&gt; Trait1&lt;X&gt; for T where T: Trait2&lt;X&gt; {"></div><div data-l="    type Output = ();"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;X&gt; Trait1&lt;Box&lt;X&gt;&gt; for A {"></div><div data-l="    type Output = i32;"></div><div data-l="}"></div></div>
+<br>
+<p>This will produce:</p>
+<br>
+<div data-lang="text"><div data-l="error: conflicting implementations of trait `Trait1&lt;std::boxed::Box&lt;_&gt;&gt;` for type `A`: (E0119)"></div><div data-l="  --&gt; src/main.rs:13:1"></div><div data-l="   |"></div><div data-l="9  | impl&lt;X, T&gt; Trait1&lt;X&gt; for T where T: Trait2&lt;X&gt; {"></div><div data-l="   | --------------------------------------------- first implementation here"></div><div data-l="..."></div><div data-l="13 | impl&lt;X&gt; Trait1&lt;Box&lt;X&gt;&gt; for A {"></div><div data-l="   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `A`"></div><div data-l="   |"></div><div data-l="   = note: #[deny(incoherent_fundamental_impls)] on by default"></div><div data-l="   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!"></div><div data-l="   = note: for more information, see issue #46205 &lt;https://github.com/rust-lang/rust/issues/46205&gt;"></div><div data-l="   = note: downstream crates may implement trait `Trait2&lt;std::boxed::Box&lt;_&gt;&gt;` for type `A`"></div></div>

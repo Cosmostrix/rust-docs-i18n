@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h1>Lifetime elision in <code>impl</code></h1>
+<br>
+<p>When writing an <code>impl</code>, you can mention lifetimes without them being bound in
+the argument list. This is similar to
+<a class="notranslate" href="#22018/transitioning/ownership-and-lifetimes/in-band-lifetimes.html">in-band-lifetimes</a>
+but for <code>impl</code>s.</p>
+<br>
+<p>In Rust 2015:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;'a&gt; Iterator for MyIter&lt;'a&gt; { ... }"></div><div data-l="impl&lt;'a, 'b&gt; SomeTrait&lt;'a&gt; for SomeType&lt;'a, 'b&gt; { ... }"></div></div>
+<br>
+<p>In Rust 2018:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl Iterator for MyIter&lt;'iter&gt; { ... }"></div><div data-l="impl SomeTrait&lt;'tcx&gt; for SomeType&lt;'tcx, 'gcx&gt; { ... }"></div></div>
+<br>
+<h2>More details</h2>
+<br>
+<p>To show off how this combines with in-band lifetimes in methods/functions, in Rust 2015:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="impl&lt;'a&gt; MyStruct&lt;'a&gt; {"></div><div data-l="    fn foo(&amp;self) -&gt; &amp;'a str"></div><div data-l=""></div><div data-l="#    // we have to use 'b here because it conflicts with the 'a above."></div><div data-l="#    // If this weren't part of an `impl`, we'd be using `'a`."></div><div data-l="    // ">we have to use 'b here because it conflicts with the 'a above. If this weren't part of an <code>impl</code>, we'd be using <code>'a</code>.</div><div data-l="    fn bar&lt;'b&gt;(&amp;self, arg: &amp;'b str) -&gt; &amp;'b str"></div><div data-l="}"></div></div>
+<br>
+<p>in Rust 2018:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="#// no need for the repetition of 'a"></div><div data-l="// ">no need for the repetition of 'a</div><div data-l="impl MyStruct&lt;'a&gt; {"></div><div data-l=""></div><div data-l="#    // this works just like before"></div><div data-l="    // ">this works just like before</div><div data-l="    fn foo(&amp;self) -&gt; &amp;'a str"></div><div data-l=""></div><div data-l="#    // we can declare 'b inline here"></div><div data-l="    // ">we can declare 'b inline here</div><div data-l="    fn bar(&amp;self, arg: &amp;'b str) -&gt; &amp;'b str"></div><div data-l="}"></div></div>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h2>Decompress a tarball while removing a prefix from the paths</h2>
+<br>
+<p><a href="#3flate2">!<a class="notranslate" href="#4flate2-badge">flate2-badge</a></a> <a href="#3tar">!<a class="notranslate" href="#4tar-badge">tar-badge</a></a> <a href="#3cat-compression">!<a class="notranslate" href="#4cat-compression-badge">cat-compression-badge</a></a></p>
+<br>
+<p>Iterate over the <a class="notranslate" href="#4`Archive::entries`">`Archive::entries`</a>.  Use <a class="notranslate" href="#4`Path::strip_prefix`">`Path::strip_prefix`</a> to remove
+the specified path prefix (<code>bundle/logs</code>).  Finally, extract the <a class="notranslate" href="#4`tar::Entry`">`tar::Entry`</a>
+via <a class="notranslate" href="#4`Entry::unpack`">`Entry::unpack`</a>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate flate2;"></div><div data-l="extern crate tar;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         StripPrefixError(::std::path::StripPrefixError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use std::path::PathBuf;"></div><div data-l="use flate2::read::GzDecoder;"></div><div data-l="use tar::Archive;"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let file = File::open(&quot;archive.tar.gz&quot;)?;"></div><div data-l="    let mut archive = Archive::new(GzDecoder::new(file));"></div><div data-l="    let prefix = &quot;bundle/logs&quot;;"></div><div data-l=""></div><div data-l="    println!(&quot;Extracted the following files:&quot;);"></div><div data-l="    archive"></div><div data-l="        .entries()?"></div><div data-l="        .filter_map(|e| e.ok())"></div><div data-l="        .map(|mut entry| -&gt; Result&lt;PathBuf&gt; {"></div><div data-l="            let path = entry.path()?.strip_prefix(prefix)?.to_owned();"></div><div data-l="            entry.unpack(&amp;path)?;"></div><div data-l="            Ok(path)"></div><div data-l="        })"></div><div data-l="        .filter_map(|e| e.ok())"></div><div data-l="        .for_each(|x| println!(&quot;&gt; {}&quot;, x.display()));"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Archive.html#method.entries">`Archive::entries`</a>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Entry.html#method.unpack">`Entry::unpack`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/path/struct.Path.html#method.strip_prefix">`Path::strip_prefix`</a>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Entry.html">`tar::Entry`</a>

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h1>Child processes</h1>
+<br>
+<p>The <code>process::Output</code> struct represents the output of a finished child process,
+and the <code>process::Command</code> struct is a process builder.</p>
+<br>
+<div data-lang="rust,editable,ignore"><div data-l="use std::process::Command;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let output = Command::new(&quot;rustc&quot;)"></div><div data-l="        .arg(&quot;--version&quot;)"></div><div data-l="        .output().unwrap_or_else(|e| {"></div><div data-l="            panic!(&quot;failed to execute process: {}&quot;, e)"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    if output.status.success() {"></div><div data-l="        let s = String::from_utf8_lossy(&amp;output.stdout);"></div><div data-l=""></div><div data-l="        print!(&quot;rustc succeeded and stdout was:\n{}&quot;, s);"></div><div data-l="    } else {"></div><div data-l="        let s = String::from_utf8_lossy(&amp;output.stderr);"></div><div data-l=""></div><div data-l="        print!(&quot;rustc failed and stderr was:\n{}&quot;, s);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>(You are encouraged to try the previous example with an incorrect flag passed
+to <code>rustc</code>)</p>

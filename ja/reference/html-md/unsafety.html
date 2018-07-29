@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Unsafety</h1>
+<br>
+<p>Unsafe operations are those that potentially violate the memory-safety
+guarantees of Rust's static semantics.</p>
+<br>
+<p>The following language level features cannot be used in the safe subset of
+Rust:</p>
+<br>
+<div data-b="-">Dereferencing a <a href="#2types.html#pointer-types">raw pointer</a>.</div>
+<div data-b="-">Reading or writing a <a href="#2items/static-items.html#mutable-statics">mutable static variable</a>.</div>
+<div data-b="-">Reading a field of a <a class="notranslate" href="#2items/unions.html"><code>union</code></a>, or writing to a field of a
+union that isn't <a class="notranslate" href="#2special-types-and-traits.html#copy"><code>Copy</code></a>.</div>
+<div data-b="-">Calling an unsafe function (including an intrinsic or foreign function).</div>
+<div data-b="-">Implementing an unsafe trait.</div>

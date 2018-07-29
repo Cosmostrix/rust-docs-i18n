@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h1>Methods</h1>
+<br>
+<p>Methods are annotated similarly to functions:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="struct Owner(i32);"></div><div data-l=""></div><div data-l="impl Owner {"></div><div data-l="#    // Annotate lifetimes as in a standalone function."></div><div data-l="    // ">Annotate lifetimes as in a standalone function.</div><div data-l="    fn add_one&lt;'a&gt;(&amp;'a mut self) { self.0 += 1; }"></div><div data-l="    fn print&lt;'a&gt;(&amp;'a self) {"></div><div data-l="        println!(&quot;`print`: {}&quot;, self.0);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut owner  = Owner(18);"></div><div data-l=""></div><div data-l="    owner.add_one();"></div><div data-l="    owner.print();"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#4methods">methods</a></p>
+<br>
+<a class="notranslate" href="#1fn/methods.html">methods</a>

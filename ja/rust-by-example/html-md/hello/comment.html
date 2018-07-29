@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Comments</h1>
+<br>
+<p>Any program requires comments and indeed Rust supports
+a few different varieties:</p>
+<br>
+<div data-b="*"><i>Regular comments</i> which are ignored by the compiler:</div>
+<div data-b=" -"><code>// Line comments which go to the end of the line.</code></div>
+<div data-b=" -"><code>/* Block comments which go to the closing delimiter. */</code></div>
+<div data-b="*"><i>Doc comments</i> which are parsed into HTML library</div>
+<p><a class="notranslate" href="#3docs">documentation</a>:
+ - <code>/// Generate library docs for the following item.</code>
+ - <code>//€ Generate library docs for the enclosing item.</code></p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // This is an example of a line comment"></div><div data-l="#    // Notice how there are two slashes at the beginning of the line"></div><div data-l="#    // And that nothing written inside these will be read by the compiler"></div><div data-l="    // ">This is an example of a line comment Notice how there are two slashes at the beginning of the line And that nothing written inside these will be read by the compiler</div><div data-l=""></div><div data-l="#    // println!(&quot;Hello, world!&quot;);"></div><div data-l="    // ">println!(&quot;Hello, world!&quot;);</div><div data-l=""></div><div data-l="#    // Run it. See? Now try deleting the two slashes, and run it again."></div><div data-l="    // ">Run it. See? Now try deleting the two slashes, and run it again.</div><div data-l=""></div><div data-l="    /* "></div><div data-l="     * This is another type of comment, the block comment. In general,"></div><div data-l="     * the line comment is the recommended comment style however the"></div><div data-l="     * block comment is extremely useful for temporarily disabling"></div><div data-l="     * a large chunk of code. /* Block comments can be /* nested, */ */"></div><div data-l="     * so it takes only a few keystrokes to comment out all the lines"></div><div data-l="     * in this main() function. /*/*/* Try it yourself! */*/*/"></div><div data-l="     */"></div><div data-l=""></div><div data-l="    /*"></div><div data-l="    Note, the previous column of `*` was entirely for style. There's"></div><div data-l="    no actual need for it."></div><div data-l="    */"></div><div data-l=""></div><div data-l="#    // Observe how block comments allow easy expression manipulation"></div><div data-l="#    // which line comments do not. Deleting the comment delimiters"></div><div data-l="#    // will change the result:"></div><div data-l="    // ">Observe how block comments allow easy expression manipulation which line comments do not. Deleting the comment delimiters will change the result:</div><div data-l="    let x = 5 + /* 90 + */ 5;"></div><div data-l="    println!(&quot;Is `x` 10 or 100? x = {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3docs">Library documentation</a></p>
+<br>
+<a class="notranslate" href="#1meta/doc.html">docs</a>

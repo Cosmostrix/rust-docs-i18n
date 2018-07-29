@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<h1>Checked Uninitialized Memory</h1>
+<br>
+<p>Like C, all stack variables in Rust are uninitialized until a value is
+explicitly assigned to them. Unlike C, Rust statically prevents you from ever
+reading them until you do:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let x: i32;"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="src/main.rs:3:20: 3:21 error: use of possibly uninitialized variable: `x`"></div><div data-l="src/main.rs:3     println!(&quot;{}&quot;, x);"></div><div data-l="                                 ^"></div></div>
+<br>
+<p>This is based off of a basic branch analysis: every branch must assign a value
+to <code>x</code> before it is first used. Interestingly, Rust doesn't require the variable
+to be mutable to perform a delayed initialization if every branch assigns
+exactly once. However the analysis does not take advantage of constant analysis
+or anything like that. So this compiles:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x: i32;"></div><div data-l=""></div><div data-l="    if true {"></div><div data-l="        x = 1;"></div><div data-l="    } else {"></div><div data-l="        x = 2;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>but this doesn't:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let x: i32;"></div><div data-l="    if true {"></div><div data-l="        x = 1;"></div><div data-l="    }"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="src/main.rs:6:17: 6:18 error: use of possibly uninitialized variable: `x`"></div><div data-l="src/main.rs:6   println!(&quot;{}&quot;, x);"></div></div>
+<br>
+<p>while this does:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x: i32;"></div><div data-l="    if true {"></div><div data-l="        x = 1;"></div><div data-l="        println!(&quot;{}&quot;, x);"></div><div data-l="    }"></div><div data-l="#    // Don't care that there are branches where it's not initialized"></div><div data-l="#    // since we don't use the value in those branches"></div><div data-l="    // ">Don't care that there are branches where it's not initialized since we don't use the value in those branches</div><div data-l="}"></div></div>
+<br>
+<p>Of course, while the analysis doesn't consider actual values, it does
+have a relatively sophisticated understanding of dependencies and control
+flow. For instance, this works:</p>
+<br>
+<div data-lang="rust"><div data-l="let x: i32;"></div><div data-l=""></div><div data-l="loop {"></div><div data-l="#    // Rust doesn't understand that this branch will be taken unconditionally,"></div><div data-l="#    // because it relies on actual values."></div><div data-l="    // ">Rust doesn't understand that this branch will be taken unconditionally, because it relies on actual values.</div><div data-l="    if true {"></div><div data-l="#        // But it does understand that it will only be taken once because"></div><div data-l="#        // we unconditionally break out of it. Therefore `x` doesn't"></div><div data-l="#        // need to be marked as mutable."></div><div data-l="        // ">But it does understand that it will only be taken once because we unconditionally break out of it. Therefore <code>x</code> doesn't need to be marked as mutable.</div><div data-l="        x = 0;"></div><div data-l="        break;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="#// It also knows that it's impossible to get here without reaching the break."></div><div data-l="#// And therefore that `x` must be initialized here!"></div><div data-l="// ">It also knows that it's impossible to get here without reaching the break. And therefore that <code>x</code> must be initialized here!</div><div data-l="println!(&quot;{}&quot;, x);"></div></div>
+<br>
+<p>If a value is moved out of a variable, that variable becomes logically
+uninitialized if the type of the value isn't Copy. That is:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = 0;"></div><div data-l="    let y = Box::new(0);"></div><div data-l="#//    let z1 = x; // x is still valid because i32 is Copy"></div><div data-l="    let z1 = x; // ">x is still valid because i32 is Copy</div><div data-l="#//    let z2 = y; // y is now logically uninitialized because Box isn't Copy"></div><div data-l="    let z2 = y; // ">y is now logically uninitialized because Box isn't Copy</div><div data-l="}"></div></div>
+<br>
+<p>However reassigning <code>y</code> in this example <i>would</i> require <code>y</code> to be marked as
+mutable, as a Safe Rust program could observe that the value of <code>y</code> changed:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut y = Box::new(0);"></div><div data-l="#//    let z = y; // y is now logically uninitialized because Box isn't Copy"></div><div data-l="    let z = y; // ">y is now logically uninitialized because Box isn't Copy</div><div data-l="#//    y = Box::new(1); // reinitialize y"></div><div data-l="    y = Box::new(1); // ">reinitialize y</div><div data-l="}"></div></div>
+<br>
+<p>Otherwise it's like <code>y</code> is a brand new variable.</p>

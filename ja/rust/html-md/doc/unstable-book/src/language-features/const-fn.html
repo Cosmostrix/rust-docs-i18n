@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h1><code>const_fn</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#24111">#24111</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/24111">#24111</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>const_fn</code> feature allows marking free functions and inherent methods as
+<code>const</code>, enabling them to be called in constants contexts, with constant
+arguments.</p>
+<br>
+<h2>Examples</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(const_fn)]"></div><div data-l=""></div><div data-l="const fn double(x: i32) -&gt; i32 {"></div><div data-l="    x * 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="const FIVE: i32 = 5;"></div><div data-l="const TEN: i32 = double(FIVE);"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(5, FIVE);"></div><div data-l="    assert_eq!(10, TEN);"></div><div data-l="}"></div></div>

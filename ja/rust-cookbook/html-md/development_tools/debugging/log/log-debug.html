@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h2>Log a debug message to the console</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>The <code>log</code> crate provides logging utilities. The <code>env_logger</code> crate configures
+logging via an environment variable.  The <a class="notranslate" href="#4`debug!`">`debug!`</a> macro works like other
+<a class="notranslate" href="#4`std::fmt`">`std::fmt`</a> formatted strings.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="fn execute_query(query: &amp;str) {"></div><div data-l="    debug!(&quot;Executing query: {}&quot;, query);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    env_logger::init();"></div><div data-l=""></div><div data-l="    execute_query(&quot;DROP TABLE students&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>No output prints when running this code. By default, the
+log level is <code>error</code>, and any lower levels are dropped.</p>
+<br>
+<p>Set the <code>RUST_LOG</code> environment variable to print the message:</p>
+<br>
+<div data-lang=""><div data-l="$ RUST_LOG=debug cargo run"></div></div>
+<br>
+<p>Cargo prints debugging information then the
+following line at the very end of the output:</p>
+<br>
+<div data-lang=""><div data-l="DEBUG:main: Executing query: DROP TABLE students"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/macro.debug.html">`debug!`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/">`std::fmt`</a>

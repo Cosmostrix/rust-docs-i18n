@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<h1>Ownership and Lifetimes</h1>
+<br>
+<p>Ownership is the breakout feature of Rust. It allows Rust to be completely
+memory-safe and efficient, while avoiding garbage collection. Before getting
+into the ownership system in detail, we will consider the motivation of this
+design.</p>
+<br>
+<p>We will assume that you accept that garbage collection (GC) is not always an
+optimal solution, and that it is desirable to manually manage memory in some
+contexts. If you do not accept this, might I interest you in a different
+language?</p>
+<br>
+<p>Regardless of your feelings on GC, it is pretty clearly a <i>massive</i> boon to
+making code safe. You never have to worry about things going away <i>too soon</i>
+(although whether you still wanted to be pointing at that thing is a different
+issue...). This is a pervasive problem that C and C++ programs need to deal
+with. Consider this simple mistake that all of us who have used a non-GC'd
+language have made at one point:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn as_str(data: &amp;u32) -&gt; &amp;str {"></div><div data-l="#    // compute the string"></div><div data-l="    // ">compute the string</div><div data-l="    let s = format!(&quot;{}&quot;, data);"></div><div data-l=""></div><div data-l="#    // OH NO! We returned a reference to something that"></div><div data-l="#    // exists only in this function!"></div><div data-l="#    // Dangling pointer! Use after free! Alas!"></div><div data-l="#    // (this does not compile in Rust)"></div><div data-l="    // ">OH NO! We returned a reference to something that exists only in this function! Dangling pointer! Use after free! Alas! (this does not compile in Rust)</div><div data-l="    &amp;s"></div><div data-l="}"></div></div>
+<br>
+<p>This is exactly what Rust's ownership system was built to solve.
+Rust knows the scope in which the <code>&amp;s</code> lives, and as such can prevent it from
+escaping. However this is a simple case that even a C compiler could plausibly
+catch. Things get more complicated as code gets bigger and pointers get fed through
+various functions. Eventually, a C compiler will fall down and won't be able to
+perform sufficient escape analysis to prove your code unsound. It will consequently
+be forced to accept your program on the assumption that it is correct.</p>
+<br>
+<p>This will never happen to Rust. It's up to the programmer to prove to the
+compiler that everything is sound.</p>
+<br>
+<p>Of course, Rust's story around ownership is much more complicated than just
+verifying that references don't escape the scope of their referent. That's
+because ensuring pointers are always valid is much more complicated than this.
+For instance in this code,</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut data = vec![1, 2, 3];"></div><div data-l="#// get an internal reference"></div><div data-l="// ">get an internal reference</div><div data-l="let x = &amp;data[0];"></div><div data-l=""></div><div data-l="#// OH NO! `push` causes the backing storage of `data` to be reallocated."></div><div data-l="#// Dangling pointer! Use after free! Alas!"></div><div data-l="#// (this does not compile in Rust)"></div><div data-l="// ">OH NO! <code>push</code> causes the backing storage of <code>data</code> to be reallocated. Dangling pointer! Use after free! Alas! (this does not compile in Rust)</div><div data-l="data.push(4);"></div><div data-l=""></div><div data-l="println!(&quot;{}&quot;, x);"></div></div>
+<br>
+<p>naive scope analysis would be insufficient to prevent this bug, because <code>data</code>
+does in fact live as long as we needed. However it was <i>changed</i> while we had
+a reference into it. This is why Rust requires any references to freeze the
+referent and its owners.</p>
+<br>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<h1>HashSet</h1>
+<br>
+<p>Consider a <code>HashSet</code> as a <code>HashMap</code> where we just care about the keys (
+<code>HashSet&lt;T&gt;</code> is, in actuality, just a wrapper around <code>HashMap&lt;T, ()&gt;</code>).</p>
+<br>
+<p>&quot;What's the point of that?&quot; you ask. &quot;I could just store the keys in a <code>Vec</code>.&quot;</p>
+<br>
+<p>A <code>HashSet</code>'s unique feature is that 
+it is guaranteed to not have duplicate elements. 
+That's the contract that any set collection fulfills. 
+<code>HashSet</code> is just one implementation. (see also: <a class="notranslate" href="#3treeset"><code>BTreeSet</code></a>)</p>
+<br>
+<p>If you insert a value that is already present in the <code>HashSet</code>, 
+(i.e. the new value is equal to the existing and they both have the same hash), 
+then the new value will replace the old.</p>
+<br>
+<p>This is great for when you never want more than one of something, 
+or when you want to know if you've already got something.</p>
+<br>
+<p>But sets can do more than that. </p>
+<br>
+<p>Sets have 4 primary operations (all of the following calls return an iterator):</p>
+<br>
+<div data-b="*"><code>union</code>: get all the unique elements in both sets.</div>
+<br>
+<div data-b="*"><code>difference</code>: get all the elements that are in the first set but not the second.</div>
+<br>
+<div data-b="*"><code>intersection</code>: get all the elements that are only in <i>both</i> sets.</div>
+<br>
+<div data-b="*"><code>symmetric_difference</code>: </div>
+<p>get all the elements that are in one set or the other, but <i>not</i> both.</p>
+<br>
+<p>Try all of these in the following example:</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="use std::collections::HashSet;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut a: HashSet&lt;i32&gt; = vec!(1i32, 2, 3).into_iter().collect();"></div><div data-l="    let mut b: HashSet&lt;i32&gt; = vec!(2i32, 3, 4).into_iter().collect();"></div><div data-l=""></div><div data-l="    assert!(a.insert(4));"></div><div data-l="    assert!(a.contains(&amp;4));"></div><div data-l=""></div><div data-l="#    // `HashSet::insert()` returns false if"></div><div data-l="#    // there was a value already present."></div><div data-l="    // "><code>HashSet::insert()</code> returns false if there was a value already present.</div><div data-l="    assert!(b.insert(4), &quot;Value 4 is already in set B!&quot;);"></div><div data-l="#    // FIXME ^ Comment out this line"></div><div data-l="    // ">FIXME ^ Comment out this line</div><div data-l=""></div><div data-l="    b.insert(5);"></div><div data-l=""></div><div data-l="#    // If a collection's element type implements `Debug`,"></div><div data-l="#    // then the collection implements `Debug`."></div><div data-l="#    // It usually prints its elements in the format `[elem1, elem2, ...]`"></div><div data-l="    // ">If a collection's element type implements <code>Debug</code>, then the collection implements <code>Debug</code>. It usually prints its elements in the format <code>[elem1, elem2, ...]</code></div><div data-l="    println!(&quot;A: {:?}&quot;, a);"></div><div data-l="    println!(&quot;B: {:?}&quot;, b);"></div><div data-l=""></div><div data-l="#    // Print [1, 2, 3, 4, 5] in arbitrary order"></div><div data-l="    // ">Print <a class="notranslate" href="#41, 2, 3, 4, 5">1, 2, 3, 4, 5</a> in arbitrary order</div><div data-l="    println!(&quot;Union: {:?}&quot;, a.union(&amp;b).collect::&lt;Vec&lt;&amp;i32&gt;&gt;());"></div><div data-l=""></div><div data-l="#    // This should print [1]"></div><div data-l="    // ">This should print <a class="notranslate" href="#41">1</a></div><div data-l="    println!(&quot;Difference: {:?}&quot;, a.difference(&amp;b).collect::&lt;Vec&lt;&amp;i32&gt;&gt;());"></div><div data-l=""></div><div data-l="#    // Print [2, 3, 4] in arbitrary order."></div><div data-l="    // ">Print <a class="notranslate" href="#42, 3, 4">2, 3, 4</a> in arbitrary order.</div><div data-l="    println!(&quot;Intersection: {:?}&quot;, a.intersection(&amp;b).collect::&lt;Vec&lt;&amp;i32&gt;&gt;());"></div><div data-l=""></div><div data-l="#    // Print [1, 5]"></div><div data-l="    // ">Print <a class="notranslate" href="#41, 5">1, 5</a></div><div data-l="    println!(&quot;Symmetric Difference: {:?}&quot;,"></div><div data-l="             a.symmetric_difference(&amp;b).collect::&lt;Vec&lt;&amp;i32&gt;&gt;());"></div><div data-l="}"></div></div>
+<br>
+<p>(Examples are adapted from the <a class="notranslate" href="#3hash-set">documentation.</a>)</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/struct.BTreeSet.html">treeset</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/struct.HashSet.html#method.difference">hash-set</a>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h2>Build cache</h2>
+<br>
+<p>Cargo shares build artifacts among all the packages of a single workspace.
+Today, Cargo does not share build results across different workspaces, but 
+a similar result can be achieved by using a third party tool, <a class="notranslate" href="#4sccache">sccache</a>.</p>
+<br>
+<p>To setup <code>sccache</code>, install it with <code>cargo install sccache</code> and set 
+<code>RUSTC_WRAPPER</code> environmental variable to <code>sccache</code> before invoking Cargo.
+If you use bash, it makes sense to add <code>export RUSTC_WRAPPER=sccache</code> to 
+<code>.bashrc</code>. Refer to sccache documentation for more details.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/mozilla/sccache">sccache</a>
+<br>
+<br>

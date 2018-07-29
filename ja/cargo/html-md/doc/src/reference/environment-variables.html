@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<h2>Environment Variables</h2>
+<br>
+<p>Cargo sets and reads a number of environment variables which your code can detect
+or override. Here is a list of the variables Cargo sets, organized by when it interacts
+with them:</p>
+<br>
+<h3>Environment variables Cargo reads</h3>
+<br>
+<p>You can override these environment variables to change Cargo's behavior on your
+system:</p>
+<br>
+<div data-b="*"><code>CARGO_HOME</code> — Cargo maintains a local cache of the registry index and of git
+checkouts of crates.  By default these are stored under <code>$HOME/.cargo</code>, but
+this variable overrides the location of this directory. Once a crate is cached
+it is not removed by the clean command.</div>
+<div data-b="*"><code>CARGO_TARGET_DIR</code> — Location of where to place all generated artifacts,
+relative to the current working directory.</div>
+<div data-b="*"><code>RUSTC</code> — Instead of running <code>rustc</code>, Cargo will execute this specified
+compiler instead.</div>
+<div data-b="*"><code>RUSTC_WRAPPER</code> — Instead of simply running <code>rustc</code>, Cargo will execute this
+specified wrapper instead, passing as its commandline arguments the rustc
+invocation, with the first argument being rustc.</div>
+<div data-b="*"><code>RUSTDOC</code> — Instead of running <code>rustdoc</code>, Cargo will execute this specified
+<code>rustdoc</code> instance instead.</div>
+<div data-b="*"><code>RUSTDOCFLAGS</code> — A space-separated list of custom flags to pass to all <code>rustdoc</code>
+invocations that Cargo performs. In contrast with <code>cargo rustdoc</code>, this is
+useful for passing a flag to <i>all</i> <code>rustdoc</code> instances.</div>
+<div data-b="*"><code>RUSTFLAGS</code> — A space-separated list of custom flags to pass to all compiler
+invocations that Cargo performs. In contrast with <code>cargo rustc</code>, this is
+useful for passing a flag to <i>all</i> compiler instances.</div>
+<div data-b="*"><code>CARGO_INCREMENTAL</code> — If this is set to 1 then Cargo will force incremental
+compilation to be enabled for the current compilation, and when set to 0 it
+will force disabling it. If this env var isn't present then cargo's defaults
+will otherwise be used.</div>
+<div data-b="*"><code>CARGO_CACHE_RUSTC_INFO</code> — If this is set to 0 then Cargo will not try to cache
+compiler version information.</div>
+<br>
+<p>Note that Cargo will also read environment variables for <code>.cargo/config</code>
+configuration values, as described in <a href="#3config-env">that documentation</a></p>
+<br>
+<a class="notranslate" href="#1reference/config.html#environment-variables">config-env</a>
+<br>
+<h3>Environment variables Cargo sets for crates</h3>
+<br>
+<p>Cargo exposes these environment variables to your crate when it is compiled.
+Note that this applies for test binaries as well.
+To get the value of any of these variables in a Rust program, do this:</p>
+<br>
+<div data-lang="rust"><div data-l="let version = env!(&quot;CARGO_PKG_VERSION&quot;);"></div></div>
+<br>
+<p><code>version</code> will now contain the value of <code>CARGO_PKG_VERSION</code>.</p>
+<br>
+<div data-b="*"><code>CARGO</code> - Path to the <code>cargo</code> binary performing the build.</div>
+<div data-b="*"><code>CARGO_MANIFEST_DIR</code> - The directory containing the manifest of your package.</div>
+<div data-b="*"><code>CARGO_PKG_VERSION</code> - The full version of your package.</div>
+<div data-b="*"><code>CARGO_PKG_VERSION_MAJOR</code> - The major version of your package.</div>
+<div data-b="*"><code>CARGO_PKG_VERSION_MINOR</code> - The minor version of your package.</div>
+<div data-b="*"><code>CARGO_PKG_VERSION_PATCH</code> - The patch version of your package.</div>
+<div data-b="*"><code>CARGO_PKG_VERSION_PRE</code> - The pre-release version of your package.</div>
+<div data-b="*"><code>CARGO_PKG_AUTHORS</code> - Colon separated list of authors from the manifest of your package.</div>
+<div data-b="*"><code>CARGO_PKG_NAME</code> - The name of your package.</div>
+<div data-b="*"><code>CARGO_PKG_DESCRIPTION</code> - The description of your package.</div>
+<div data-b="*"><code>CARGO_PKG_HOMEPAGE</code> - The home page of your package.</div>
+<div data-b="*"><code>OUT_DIR</code> - If the package has a build script, this is set to the folder where the build
+            script should place its output.  See below for more information.</div>
+<br>
+<h3>Environment variables Cargo sets for build scripts</h3>
+<br>
+<p>Cargo sets several environment variables when build scripts are run. Because these variables
+are not yet set when the build script is compiled, the above example using <code>env€</code> won't work
+and instead you'll need to retrieve the values when the build script is run:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::env;"></div><div data-l="let out_dir = env::var(&quot;OUT_DIR&quot;).unwrap();"></div></div>
+<br>
+<p><code>out_dir</code> will now contain the value of <code>OUT_DIR</code>.</p>
+<br>
+<div data-b="*"><code>CARGO</code> - Path to the <code>cargo</code> binary performing the build.</div>
+<div data-b="*"><code>CARGO_MANIFEST_DIR</code> - The directory containing the manifest for the package
+                       being built (the package containing the build
+                       script). Also note that this is the value of the
+                       current working directory of the build script when it
+                       starts.</div>
+<div data-b="*"><code>CARGO_MANIFEST_LINKS</code> - the manifest <code>links</code> value.</div>
+<div data-b="*"><code>CARGO_FEATURE_&lt;name&gt;</code> - For each activated feature of the package being
+                         built, this environment variable will be present
+                         where <code>&lt;name&gt;</code> is the name of the feature uppercased
+                         and having <code>-</code> translated to <code>_</code>.</div>
+<div data-b="*"><code>CARGO_CFG_&lt;cfg&gt;</code> - For each <a href="#3configuration">configuration option</a> of the
+                    package being built, this environment variable will
+                    contain the value of the configuration, where <code>&lt;cfg&gt;</code> is
+                    the name of the configuration uppercased and having <code>-</code>
+                    translated to <code>_</code>.
+                    Boolean configurations are present if they are set, and
+                    not present otherwise.
+                    Configurations with multiple values are joined to a
+                    single variable with the values delimited by <code>,</code>.</div>
+<div data-b="*"><code>OUT_DIR</code> - the folder in which all output should be placed. This folder is
+            inside the build directory for the package being built, and it is
+            unique for the package in question.</div>
+<div data-b="*"><code>TARGET</code> - the target triple that is being compiled for. Native code should be
+           compiled for this triple. Some more information about target
+           triples can be found in <a href="#3clang">clang’s own documentation</a>.</div>
+<div data-b="*"><code>HOST</code> - the host triple of the rust compiler.</div>
+<div data-b="*"><code>NUM_JOBS</code> - the parallelism specified as the top-level parallelism. This can
+             be useful to pass a <code>-j</code> parameter to a system like <code>make</code>. Note
+             that care should be taken when interpreting this environment
+             variable. For historical purposes this is still provided but
+             recent versions of Cargo, for example, do not need to run <code>make
+               -j</code> as it'll automatically happen. Cargo implements its own
+             <a class="notranslate" href="#4jobserver">jobserver</a> and will allow build scripts to inherit this
+             information, so programs compatible with GNU make jobservers will
+             already have appropriately configured parallelism.</div>
+<div data-b="*"><code>OPT_LEVEL</code>, <code>DEBUG</code> - values of the corresponding variables for the
+                       profile currently being built.</div>
+<div data-b="*"><code>PROFILE</code> - <code>release</code> for release builds, <code>debug</code> for other builds.</div>
+<div data-b="*"><code>DEP_&lt;name&gt;_&lt;key&gt;</code> - For more information about this set of environment
+                     variables, see build script documentation about <a class="notranslate" href="#3links"><code>links</code></a>.</div>
+<div data-b="*"><code>RUSTC</code>, <code>RUSTDOC</code> - the compiler and documentation generator that Cargo has
+                     resolved to use, passed to the build script so it might
+                     use it as well.</div>
+<div data-b="*"><code>RUSTC_LINKER</code> - The path to the linker binary that Cargo has resolved to use
+                 for the current target, if specified. The linker can be
+                 changed by editing <code>.cargo/config</code>; see the documentation
+                 about <a href="#3cargo-config">cargo configuration</a> for more
+                 information.</div>
+<br>
+<a class="notranslate" href="#1reference/build-scripts.html#the-links-manifest-key">links</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/attributes.html#conditional-compilation">configuration</a>
+<a class="notranslate" href="#1http://clang.llvm.org/docs/CrossCompilation.html#target-triple">clang</a>
+<a class="notranslate" href="#1https://www.gnu.org/software/make/manual/html_node/Job-Slots.html">jobserver</a>
+<a class="notranslate" href="#1reference/config.html">cargo-config</a>
+<br>
+<h3>Environment variables Cargo sets for 3rd party subcommands</h3>
+<br>
+<p>Cargo exposes this environment variable to 3rd party subcommands
+(ie. programs named <code>cargo-foobar</code> placed in <code>$PATH</code>):</p>
+<br>
+<div data-b="*"><code>CARGO</code> - Path to the <code>cargo</code> binary performing the build.</div>

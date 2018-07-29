@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<h1>Variables</h1>
+<br>
+<p>A <s>variable</s> is a component of a stack frame, either a named function parameter,
+an anonymous <a class="notranslate" href="#2expressions.html#temporary-lifetimes">temporary</a>, or a named local
+variable.</p>
+<br>
+<p>A <s>local variable</s> (or <i>stack-local</i> allocation) holds a value directly,
+allocated within the stack's memory. The value is a part of the stack frame.</p>
+<br>
+<p>Local variables are immutable unless declared otherwise. For example:
+<code>let mut x = ...</code>.</p>
+<br>
+<p>Function parameters are immutable unless declared with <code>mut</code>. The <code>mut</code> keyword
+applies only to the following parameter. For example: <code>|mut x, y|</code> and 
+<code>fn f(mut x: Box&lt;i32&gt;, y: Box&lt;i32&gt;)</code> declare one mutable variable <code>x</code> and one
+immutable variable <code>y</code>.</p>
+<br>
+<p>Methods that take either <code>self</code> or <code>Box&lt;Self&gt;</code> can optionally place them in a
+mutable variable by prefixing them with <code>mut</code> (similar to regular arguments).
+For example:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Changer: Sized {"></div><div data-l="    fn change(mut self) {}"></div><div data-l="    fn modify(mut self: Box&lt;Self&gt;) {}"></div><div data-l="}"></div></div>
+<br>
+<p>Local variables are not initialized when allocated. Instead, the entire frame
+worth of local variables are allocated, on frame-entry, in an uninitialized
+state. Subsequent statements within a function may or may not initialize the
+local variables. Local variables can be used only after they have been
+initialized through all reachable control flow paths.</p>
+<br>
+<p>In this next example, <code>init_after_if</code> is initialized after the <a class="notranslate" href="#4`if` expression">`if` expression</a>
+while <code>uninit_after_if</code> is not because it is not initialized in the <code>else</code> case.</p>
+<br>
+<div data-lang="rust"><div data-l="# fn random_bool() -&gt; bool { true }"></div><div data-l="fn initialization_example() {"></div><div data-l="    let init_after_if: ();"></div><div data-l="    let uninit_after_if: ();"></div><div data-l=""></div><div data-l="    if random_bool() {"></div><div data-l="        init_after_if = ();"></div><div data-l="        uninit_after_if = ();"></div><div data-l="    } else {"></div><div data-l="        init_after_if = ();"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#//    init_after_if; // ok"></div><div data-l="    init_after_if; // ">ok</div><div data-l="#    // uninit_after_if; // err: use of possibly uninitialized `uninit_after_if`"></div><div data-l="    // ">uninit_after_if; // err: use of possibly uninitialized <code>uninit_after_if</code></div><div data-l="}"></div></div>

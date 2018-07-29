@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h1>Mutability</h1>
+<br>
+<p>Variable bindings are immutable by default, but this can be overridden using
+the <code>mut</code> modifier.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn main() {"></div><div data-l="    let _immutable_binding = 1;"></div><div data-l="    let mut mutable_binding = 1;"></div><div data-l=""></div><div data-l="    println!(&quot;Before mutation: {}&quot;, mutable_binding);"></div><div data-l=""></div><div data-l="#    // Ok"></div><div data-l="    // ">Ok</div><div data-l="    mutable_binding += 1;"></div><div data-l=""></div><div data-l="    println!(&quot;After mutation: {}&quot;, mutable_binding);"></div><div data-l=""></div><div data-l="#    // Error!"></div><div data-l="    // ">Error!</div><div data-l="    _immutable_binding += 1;"></div><div data-l="#    // FIXME ^ Comment out this line"></div><div data-l="    // ">FIXME ^ Comment out this line</div><div data-l="}"></div></div>
+<br>
+<p>The compiler will throw a detailed diagnostic about mutability errors.</p>

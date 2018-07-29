@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h1>Guards</h1>
+<br>
+<p>A <code>match</code> <i>guard</i> can be added to filter the arm.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let pair = (2, -2);"></div><div data-l="#    // TODO ^ Try different values for `pair`"></div><div data-l="    // ">TODO ^ Try different values for <code>pair</code></div><div data-l=""></div><div data-l="    println!(&quot;Tell me about {:?}&quot;, pair);"></div><div data-l="    match pair {"></div><div data-l="        (x, y) if x == y =&gt; println!(&quot;These are twins&quot;),"></div><div data-l="#        // The ^ `if condition` part is a guard"></div><div data-l="        // ">The ^ <code>if condition</code> part is a guard</div><div data-l="        (x, y) if x + y == 0 =&gt; println!(&quot;Antimatter, kaboom!&quot;),"></div><div data-l="        (x, _) if x % 2 == 1 =&gt; println!(&quot;The first one is odd&quot;),"></div><div data-l="        _ =&gt; println!(&quot;No correlation...&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#2primitives/tuples.html">Tuples</a></p>

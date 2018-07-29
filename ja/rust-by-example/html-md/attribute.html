@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Attributes</h1>
+<br>
+<p>An attribute is metadata applied to some module, crate or item. This metadata
+can be used to/for:</p>
+<br>
+<p><!-- TODO: Link these to their respective examples --></p>
+<br>
+<div data-b="*"><a href="#3cfg">conditional compilation of code</a></div>
+<div data-b="*"><a href="#3crate">set crate name, version and type (binary or library)</a></div>
+<div data-b="*">disable <a class="notranslate" href="#3lint">lints</a> (warnings)</div>
+<div data-b="*">enable compiler features (macros, glob imports, etc.)</div>
+<div data-b="*">link to a foreign library</div>
+<div data-b="*">mark functions as unit tests</div>
+<div data-b="*">mark functions that will be part of a benchmark</div>
+<br>
+<p>When attributes apply to a whole crate, their syntax is <code>#€[crate_attribute]</code>,
+and when they apply to a module or item, the syntax is <code>#[item_attribute]</code>
+(notice the missing bang <code>€</code>).</p>
+<br>
+<p>Attributes can take arguments with different syntaxes:</p>
+<br>
+<div data-b="*"><code>#[attribute = &quot;value&quot;]</code></div>
+<div data-b="*"><code>#[attribute(key = &quot;value&quot;)]</code></div>
+<div data-b="*"><code>#[attribute(value)]</code></div>
+<br>
+<p>Attributes can have multiple values and can be separated over multiple lines, too:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[attribute(value, value2)]"></div><div data-l=""></div><div data-l=""></div><div data-l="#[attribute(value, value2, value3,"></div><div data-l="            value4, value5)]"></div></div>
+<br>
+<a class="notranslate" href="#1attribute/cfg.html">cfg</a>
+<a class="notranslate" href="#1attribute/crate.html">crate</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Lint_%28software%29">lint</a>

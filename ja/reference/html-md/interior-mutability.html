@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h1>Interior Mutability</h1>
+<br>
+<p>Sometimes a type needs be mutated while having multiple aliases. In Rust this
+is achieved using a pattern called <s>interior mutability</s>. A type has interior
+mutability if its internal state can be changed through a <a class="notranslate" href="#4shared reference">shared reference</a> to
+it. This goes against the usual <a class="notranslate" href="#3ub">requirement</a> that the value pointed to by a
+shared reference is not mutated.</p>
+<br>
+<p><a class="notranslate" href="#4`std::cell::UnsafeCell<T>`">`std::cell::UnsafeCell<T>`</a> type is the only allowed way in Rust to disable
+this requirement. When <code>UnsafeCell&lt;T&gt;</code> is immutably aliased, it is still safe to
+mutate, or obtain a mutable reference to, the <code>T</code> it contains. As with all
+other types, it is undefined behavior to have multiple <code>&amp;mut UnsafeCell&lt;T&gt;</code>
+aliases.</p>
+<br>
+<p>Other types with interior mutability can be created by using <code>UnsafeCell&lt;T&gt;</code> as
+a field. The standard library provides a variety of types that provide safe
+interior mutability APIs. For example, <a class="notranslate" href="#4`std::cell::RefCell<T>`">`std::cell::RefCell<T>`</a> uses run-time
+borrow checks to ensure the usual rules around multiple references. The
+<a class="notranslate" href="#4`std::sync::atomic`">`std::sync::atomic`</a> module contains types that wrap a value that is only
+accessed with atomic operations, allowing the value to be shared and mutated
+across threads.</p>
+<br>
+<a class="notranslate" href="#1types.html#shared-references-">shared reference</a>
+<a class="notranslate" href="#1behavior-considered-undefined.html">ub</a>
+<a class="notranslate" href="#1../std/mem/fn.transmute.html">`std::mem::transmute`</a>
+<a class="notranslate" href="#1../std/cell/struct.UnsafeCell.html">`std::cell::UnsafeCell&lt;T&gt;`</a>
+<a class="notranslate" href="#1../std/cell/struct.RefCell.html">`std::cell::RefCell&lt;T&gt;`</a>
+<a class="notranslate" href="#1../std/sync/atomic/index.html">`std::sync::atomic`</a>
+<br>
+<br>

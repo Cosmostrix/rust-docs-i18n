@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h1>Type Aliases</h1>
+<br>
+<p>The <code>type</code> keyword lets you declare an alias of another type:</p>
+<br>
+<div data-lang="rust"><div data-l="type Name = String;"></div></div>
+<br>
+<p>You can then use this type as if it were a real type:</p>
+<br>
+<div data-lang="rust"><div data-l="type Name = String;"></div><div data-l=""></div><div data-l="let x: Name = &quot;Hello&quot;.to_string();"></div></div>
+<br>
+<p>Note, however, that this is an <s>alias</s>, not a new type entirely. In other
+words, because Rust is strongly typed, you’d expect a comparison between two
+different types to fail:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let x: i32 = 5;"></div><div data-l="let y: i64 = 5;"></div><div data-l=""></div><div data-l="if x == y {"></div><div data-l="#   // ..."></div><div data-l="   // ">...</div><div data-l="}"></div></div>
+<br>
+<p>this gives</p>
+<br>
+<div data-lang="text"><div data-l="error: mismatched types:"></div><div data-l=" expected `i32`,"></div><div data-l="    found `i64`"></div><div data-l="(expected i32,"></div><div data-l="    found i64) [E0308]"></div><div data-l="     if x == y {"></div><div data-l="             ^"></div></div>
+<br>
+<p>But, if we had an alias:</p>
+<br>
+<div data-lang="rust"><div data-l="type Num = i32;"></div><div data-l=""></div><div data-l="let x: i32 = 5;"></div><div data-l="let y: Num = 5;"></div><div data-l=""></div><div data-l="if x == y {"></div><div data-l="#   // ..."></div><div data-l="   // ">...</div><div data-l="}"></div></div>
+<br>
+<p>This compiles without error. Values of a <code>Num</code> type are the same as a value of
+type <code>i32</code>, in every way. You can use <a class="notranslate" href="#4tuple struct">tuple struct</a> to really get a new type.</p>
+<br>
+<a class="notranslate" href="#1structs.html#tuple-structs">tuple struct</a>
+<br>
+<p>You can also use type aliases with generics:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::result;"></div><div data-l=""></div><div data-l="enum ConcreteError {"></div><div data-l="    Foo,"></div><div data-l="    Bar,"></div><div data-l="}"></div><div data-l=""></div><div data-l="type Result&lt;T&gt; = result::Result&lt;T, ConcreteError&gt;;"></div></div>
+<br>
+<p>This creates a specialized version of the <code>Result</code> type, which always has a
+<code>ConcreteError</code> for the <code>E</code> part of <code>Result&lt;T, E&gt;</code>. This is commonly used
+in the standard library to create custom errors for each subsection. For
+example, <a class="notranslate" href="#3ioresult">io::Result</a>.</p>
+<br>
+<a class="notranslate" href="#1../../std/io/type.Result.html">ioresult</a>

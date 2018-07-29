@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<h1>Destructors</h1>
+<br>
+<p>What the language <i>does</i> provide is full-blown automatic destructors through the
+<code>Drop</code> trait, which provides the following method:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn drop(&amp;mut self);"></div></div>
+<br>
+<p>This method gives the type time to somehow finish what it was doing.</p>
+<br>
+<p><b>After `drop` is run, Rust will recursively try to drop all of the fields
+of `self`.</b></p>
+<br>
+<p>This is a convenience feature so that you don't have to write &quot;destructor
+boilerplate&quot; to drop children. If a struct has no special logic for being
+dropped other than dropping its children, then it means <code>Drop</code> doesn't need to
+be implemented at all!</p>
+<br>
+<p><b>There is no stable way to prevent this behavior in Rust 1.0.</b></p>
+<br>
+<p>Note that taking <code>&amp;mut self</code> means that even if you could suppress recursive
+Drop, Rust will prevent you from e.g. moving fields out of self. For most types,
+this is totally fine.</p>
+<br>
+<p>For instance, a custom implementation of <code>Box</code> might write <code>Drop</code> like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(ptr_internals, allocator_api, unique)]"></div><div data-l=""></div><div data-l="use std::alloc::{Alloc, Global, GlobalAlloc, Layout};"></div><div data-l="use std::mem;"></div><div data-l="use std::ptr::{drop_in_place, NonNull, Unique};"></div><div data-l=""></div><div data-l="struct Box&lt;T&gt;{ ptr: Unique&lt;T&gt; }"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for Box&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="            drop_in_place(self.ptr.as_ptr());"></div><div data-l="            let c: NonNull&lt;T&gt; = self.ptr.into();"></div><div data-l="            Global.dealloc(c.cast(), Layout::new::&lt;T&gt;())"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>and this works fine because when Rust goes to drop the <code>ptr</code> field it just sees
+a <a class="notranslate" href="#4Unique">Unique</a> that has no actual <code>Drop</code> implementation. Similarly nothing can
+use-after-free the <code>ptr</code> because when drop exits, it becomes inaccessible.</p>
+<br>
+<p>However this wouldn't work:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(allocator_api, ptr_internals, unique)]"></div><div data-l=""></div><div data-l="use std::alloc::{Alloc, Global, GlobalAlloc, Layout};"></div><div data-l="use std::ptr::{drop_in_place, Unique, NonNull};"></div><div data-l="use std::mem;"></div><div data-l=""></div><div data-l="struct Box&lt;T&gt;{ ptr: Unique&lt;T&gt; }"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for Box&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="            drop_in_place(self.ptr.as_ptr());"></div><div data-l="            let c: NonNull&lt;T&gt; = self.ptr.into();"></div><div data-l="            Global.dealloc(c.cast(), Layout::new::&lt;T&gt;());"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct SuperBox&lt;T&gt; { my_box: Box&lt;T&gt; }"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for SuperBox&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="#            // Hyper-optimized: deallocate the box's contents for it"></div><div data-l="#            // without `drop`ing the contents"></div><div data-l="            // ">Hyper-optimized: deallocate the box's contents for it without <code>drop</code>ing the contents</div><div data-l="            let c: NonNull&lt;T&gt; = self.my_box.ptr.into();"></div><div data-l="            Global.dealloc(c.cast::&lt;u8&gt;(), Layout::new::&lt;T&gt;());"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>After we deallocate the <code>box</code>'s ptr in SuperBox's destructor, Rust will
+happily proceed to tell the box to Drop itself and everything will blow up with
+use-after-frees and double-frees.</p>
+<br>
+<p>Note that the recursive drop behavior applies to all structs and enums
+regardless of whether they implement Drop. Therefore something like</p>
+<br>
+<div data-lang="rust"><div data-l="struct Boxy&lt;T&gt; {"></div><div data-l="    data1: Box&lt;T&gt;,"></div><div data-l="    data2: Box&lt;T&gt;,"></div><div data-l="    info: u32,"></div><div data-l="}"></div></div>
+<br>
+<p>will have its data1 and data2's fields destructors whenever it &quot;would&quot; be
+dropped, even though it itself doesn't implement Drop. We say that such a type
+<i>needs Drop</i>, even though it is not itself Drop.</p>
+<br>
+<p>Similarly,</p>
+<br>
+<div data-lang="rust"><div data-l="enum Link {"></div><div data-l="    Next(Box&lt;Link&gt;),"></div><div data-l="    None,"></div><div data-l="}"></div></div>
+<br>
+<p>will have its inner Box field dropped if and only if an instance stores the
+Next variant.</p>
+<br>
+<p>In general this works really nicely because you don't need to worry about
+adding/removing drops when you refactor your data layout. Still there's
+certainly many valid usecases for needing to do trickier things with
+destructors.</p>
+<br>
+<p>The classic safe solution to overriding recursive drop and allowing moving out
+of Self during <code>drop</code> is to use an Option:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(allocator_api, ptr_internals, unique)]"></div><div data-l=""></div><div data-l="use std::alloc::{Alloc, GlobalAlloc, Global, Layout};"></div><div data-l="use std::ptr::{drop_in_place, Unique, NonNull};"></div><div data-l="use std::mem;"></div><div data-l=""></div><div data-l="struct Box&lt;T&gt;{ ptr: Unique&lt;T&gt; }"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for Box&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="            drop_in_place(self.ptr.as_ptr());"></div><div data-l="            let c: NonNull&lt;T&gt; = self.ptr.into();"></div><div data-l="            Global.dealloc(c.cast(), Layout::new::&lt;T&gt;());"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct SuperBox&lt;T&gt; { my_box: Option&lt;Box&lt;T&gt;&gt; }"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for SuperBox&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="#            // Hyper-optimized: deallocate the box's contents for it"></div><div data-l="#            // without `drop`ing the contents. Need to set the `box`"></div><div data-l="#            // field as `None` to prevent Rust from trying to Drop it."></div><div data-l="            // ">Hyper-optimized: deallocate the box's contents for it without <code>drop</code>ing the contents. Need to set the <code>box</code> field as <code>None</code> to prevent Rust from trying to Drop it.</div><div data-l="            let my_box = self.my_box.take().unwrap();"></div><div data-l="            let c: NonNull&lt;T&gt; = my_box.ptr.into();"></div><div data-l="            Global.dealloc(c.cast(), Layout::new::&lt;T&gt;());"></div><div data-l="            mem::forget(my_box);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>However this has fairly odd semantics: you're saying that a field that <i>should</i>
+always be Some <i>may</i> be None, just because that happens in the destructor. Of
+course this conversely makes a lot of sense: you can call arbitrary methods on
+self during the destructor, and this should prevent you from ever doing so after
+deinitializing the field. Not that it will prevent you from producing any other
+arbitrarily invalid state in there.</p>
+<br>
+<p>On balance this is an ok choice. Certainly what you should reach for by default.
+However, in the future we expect there to be a first-class way to announce that
+a field shouldn't be automatically dropped.</p>
+<br>
+<a class="notranslate" href="#1phantom-data.html">Unique</a>

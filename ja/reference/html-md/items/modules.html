@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<h1>Modules</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax:&lt;sup&gt;</b>\
+<s>Module</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <code>mod</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> <code>;</code>\
+&amp;nbsp;&amp;nbsp; | <code>mod</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> <code>{</code>\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_InnerAttribute_">_InnerAttribute_</a><sup>\<i>&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; [_Item_]&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <code>}</code></p></blockquote>
+<br>
+<p>A module is a container for zero or more <a class="notranslate" href="#4items">items</a>.</p>
+<br>
+<p>A <s>module item</s> is a module, surrounded in braces, named, and prefixed with the
+keyword <code>mod</code>. A module item introduces a new, named module into the tree of
+modules making up a crate. Modules can nest arbitrarily.</p>
+<br>
+<p>An example of a module:</p>
+<br>
+<div data-lang="rust"><div data-l="mod math {"></div><div data-l="    type Complex = (f64, f64);"></div><div data-l="    fn sin(f: f64) -&gt; f64 {"></div><div data-l="        /* ... */"></div><div data-l="# panic!();"></div><div data-l="    }"></div><div data-l="    fn cos(f: f64) -&gt; f64 {"></div><div data-l="        /* ... */"></div><div data-l="# panic!();"></div><div data-l="    }"></div><div data-l="    fn tan(f: f64) -&gt; f64 {"></div><div data-l="        /* ... */"></div><div data-l="# panic!();"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Modules and types share the same namespace. Declaring a named type with the
+same name as a module in scope is forbidden: that is, a type definition, trait,
+struct, enumeration, union, type parameter or crate can't shadow the name of a
+module in scope, or vice versa. Items brought into scope with <code>use</code> also have
+this restriction.</p>
+<br>
+<p>A module without a body is loaded from an external file, by default with the
+same name as the module, plus the <code>.rs</code> extension. When a nested submodule is
+loaded from an external file, it is loaded from a subdirectory path that
+mirrors the module hierarchy.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Load the `vec` module from `vec.rs`"></div><div data-l="// ">Load the <code>vec</code> module from <code>vec.rs</code></div><div data-l="mod vec;"></div><div data-l=""></div><div data-l="mod thread {"></div><div data-l="#    // Load the `local_data` module from `thread/local_data.rs`"></div><div data-l="#    // or `thread/local_data/mod.rs`."></div><div data-l="    // ">Load the <code>local_data</code> module from <code>thread/local_data.rs</code> or <code>thread/local_data/mod.rs</code>.</div><div data-l="    mod local_data;"></div><div data-l="}"></div></div>
+<br>
+<p>The directories and files used for loading external file modules can be
+influenced with the <code>path</code> attribute.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[path = &quot;thread_files&quot;]"></div><div data-l="mod thread {"></div><div data-l="#    // Load the `local_data` module from `thread_files/tls.rs`"></div><div data-l="    // ">Load the <code>local_data</code> module from <code>thread_files/tls.rs</code></div><div data-l="    #[path = &quot;tls.rs&quot;]"></div><div data-l="    mod local_data;"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<br>
+<a class="notranslate" href="#1attributes.html">_InnerAttribute_</a>
+<a class="notranslate" href="#1attributes.html">_OuterAttribute_</a>
+<br>
+<a class="notranslate" href="#1items.html">_Item_</a>
+<a class="notranslate" href="#1items.html">items</a>

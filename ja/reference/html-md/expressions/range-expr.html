@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h1>Range expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>RangeExpression</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <s>RangeExpr</s>\
+&amp;nbsp;&amp;nbsp; | <s>RangeFromExpr</s>\
+&amp;nbsp;&amp;nbsp; | <s>RangeToExpr</s>\
+&amp;nbsp;&amp;nbsp; | <s>RangeFullExpr</s>\
+&amp;nbsp;&amp;nbsp; | <s>RangeInclusiveExpr</s>\
+&amp;nbsp;&amp;nbsp; | <s>RangeToInclusiveExpr</s></p>
+<br>
+<p><s>RangeExpr</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>..</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p>
+<br>
+<p><s>RangeFromExpr</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>..</code></p>
+<br>
+<p><s>RangeToExpr</s> :\
+&amp;nbsp;&amp;nbsp; <code>..</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p>
+<br>
+<p><s>RangeFullExpr</s> :\
+&amp;nbsp;&amp;nbsp; <code>..</code></p>
+<br>
+<p><s>RangeExpr</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>..=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p>
+<br>
+<p><s>RangeToExpr</s> :\
+&amp;nbsp;&amp;nbsp; <code>..=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p></blockquote>
+<br>
+<p>The <code>..</code> and <code>..=</code> operators will construct an object of one of the
+<code>std::ops::Range</code> (or <code>core::ops::Range</code>) variants, according to the following
+table:</p>
+<br>
+<div data-tbl><div> Production             </div><div> Syntax        </div><div> Type                         </div><div> Range                 </div></div>
+<div data-tbl><div>------------------------</div><div>---------------</div><div>------------------------------</div><div>-----------------------</div></div>
+<div data-tbl><div> <s>RangeExpr</s>            </div><div> start<code>..</code>end  </div><div> <a class="notranslate" href="#4std::ops::Range">std::ops::Range</a>            </div><div> start &amp;le; x &amp;lt; end </div></div>
+<div data-tbl><div> <s>RangeFromExpr</s>        </div><div> start<code>..</code>     </div><div> <a class="notranslate" href="#4std::ops::RangeFrom">std::ops::RangeFrom</a>        </div><div> start &amp;le; x          </div></div>
+<div data-tbl><div> <s>RangeToExpr</s>          </div><div> <code>..</code>end       </div><div> <a class="notranslate" href="#4std::ops::RangeTo">std::ops::RangeTo</a>          </div><div>            x &amp;lt; end </div></div>
+<div data-tbl><div> <s>RangeFullExpr</s>        </div><div> <code>..</code>          </div><div> <a class="notranslate" href="#4std::ops::RangeFull">std::ops::RangeFull</a>        </div><div>            -          </div></div>
+<div data-tbl><div> <s>RangeInclusiveExpr</s>   </div><div> start<code>..=</code>end </div><div> <a class="notranslate" href="#4std::ops::RangeInclusive">std::ops::RangeInclusive</a>   </div><div> start &amp;le; x &amp;le; end </div></div>
+<div data-tbl><div> <s>RangeToInclusiveExpr</s> </div><div> <code>..=</code>end      </div><div> <a class="notranslate" href="#4std::ops::RangeToInclusive">std::ops::RangeToInclusive</a> </div><div>            x &amp;le; end </div></div>
+<br>
+<p>Examples:</p>
+<br>
+<div data-lang="rust"><div data-l="#//1..2;   // std::ops::Range"></div><div data-l="1..2;   // ">std::ops::Range</div><div data-l="#//3..;    // std::ops::RangeFrom"></div><div data-l="3..;    // ">std::ops::RangeFrom</div><div data-l="#//..4;    // std::ops::RangeTo"></div><div data-l="..4;    // ">std::ops::RangeTo</div><div data-l="#//..;     // std::ops::RangeFull"></div><div data-l="..;     // ">std::ops::RangeFull</div><div data-l="#//5..=6;  // std::ops::RangeInclusive"></div><div data-l="5..=6;  // ">std::ops::RangeInclusive</div><div data-l="#//..=7;   // std::ops::RangeToInclusive"></div><div data-l="..=7;   // ">std::ops::RangeToInclusive</div></div>
+<br>
+<p>The following expressions are equivalent.</p>
+<br>
+<div data-lang="rust"><div data-l="let x = std::ops::Range {start: 0, end: 10};"></div><div data-l="let y = 0..10;"></div><div data-l=""></div><div data-l="assert_eq!(x, y);"></div></div>
+<br>
+<p>Ranges can be used in <code>for</code> loops:</p>
+<br>
+<div data-lang="rust"><div data-l="for i in 1..11 {"></div><div data-l="    println!(&quot;{}&quot;, i);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<br>
+<a class="notranslate" href="#1           https://doc.rust-lang.org/std/ops/struct.Range.html">std::ops::Range</a>
+<a class="notranslate" href="#1       https://doc.rust-lang.org/std/ops/struct.RangeFrom.html">std::ops::RangeFrom</a>
+<a class="notranslate" href="#1         https://doc.rust-lang.org/std/ops/struct.RangeTo.html">std::ops::RangeTo</a>
+<a class="notranslate" href="#1       https://doc.rust-lang.org/std/ops/struct.RangeFull.html">std::ops::RangeFull</a>
+<a class="notranslate" href="#1  https://doc.rust-lang.org/std/ops/struct.RangeInclusive.html">std::ops::RangeInclusive</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/struct.RangeToInclusive.html">std::ops::RangeToInclusive</a>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Create random passwords from a set of alphanumeric characters</h2>
+<br>
+<p><a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>Randomly generates a string of given length ASCII characters in the range <code>A-Z,
+a-z, 0-9</code>, with <a class="notranslate" href="#4`Alphanumeric`">`Alphanumeric`</a> sample.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use rand::{thread_rng, Rng};"></div><div data-l="use rand::distributions::Alphanumeric;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let rand_string: String = thread_rng()"></div><div data-l="        .sample_iter(&amp;Alphanumeric)"></div><div data-l="        .take(30)"></div><div data-l="        .collect();"></div><div data-l=""></div><div data-l="    println!(&quot;{}&quot;, rand_string);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/struct.Alphanumeric.html">`Alphanumeric`</a>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h1><code>doc_masked</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44027">#44027</a></p>
+<br>
+<p>-----</p>
+<br>
+<p>The <code>doc_masked</code> feature allows a crate to exclude types from a given crate from appearing in lists
+of trait implementations. The specifics of the feature are as follows:</p>
+<br>
+<div data-b="1.">When rustdoc encounters an <code>extern crate</code> statement annotated with a <code>#[doc(masked)]</code> attribute,
+ it marks the crate as being masked.</div>
+<br>
+<div data-b="2.">When listing traits a given type implements, rustdoc ensures that traits from masked crates are
+ not emitted into the documentation.</div>
+<br>
+<div data-b="3.">When listing types that implement a given trait, rustdoc ensures that types from masked crates
+ are not emitted into the documentation.</div>
+<br>
+<p>This feature was introduced in PR <a class="notranslate" href="#4#44026">#44026</a> to ensure that compiler-internal and
+implementation-specific types and traits were not included in the standard library's documentation.
+Such types would introduce broken links into the documentation.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/pull/44026">#44026</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/pull/44027">#44027</a>

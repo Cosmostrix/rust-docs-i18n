@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h1><code>open</code></h1>
+<br>
+<p>The <code>open</code> static method can be used to open a file in read-only mode.</p>
+<br>
+<p>A <code>File</code> owns a resource, the file descriptor and takes care of closing the
+file when it is <code>drop</code>ed.</p>
+<br>
+<div data-lang="rust,editable,ignore"><div data-l="use std::error::Error;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::prelude::*;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Create a path to the desired file"></div><div data-l="    // ">Create a path to the desired file</div><div data-l="    let path = Path::new(&quot;hello.txt&quot;);"></div><div data-l="    let display = path.display();"></div><div data-l=""></div><div data-l="#    // Open the path in read-only mode, returns `io::Result&lt;File&gt;`"></div><div data-l="    // ">Open the path in read-only mode, returns <code>io::Result&lt;File&gt;</code></div><div data-l="    let mut file = match File::open(&amp;path) {"></div><div data-l="#        // The `description` method of `io::Error` returns a string that"></div><div data-l="#        // describes the error"></div><div data-l="        // ">The <code>description</code> method of <code>io::Error</code> returns a string that describes the error</div><div data-l="        Err(why) =&gt; panic!(&quot;couldn't open {}: {}&quot;, display,"></div><div data-l="                                                   why.description()),"></div><div data-l="        Ok(file) =&gt; file,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="#    // Read the file contents into a string, returns `io::Result&lt;usize&gt;`"></div><div data-l="    // ">Read the file contents into a string, returns <code>io::Result&lt;usize&gt;</code></div><div data-l="    let mut s = String::new();"></div><div data-l="    match file.read_to_string(&amp;mut s) {"></div><div data-l="        Err(why) =&gt; panic!(&quot;couldn't read {}: {}&quot;, display,"></div><div data-l="                                                   why.description()),"></div><div data-l="        Ok(_) =&gt; print!(&quot;{} contains:\n{}&quot;, display, s),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // `file` goes out of scope, and the &quot;hello.txt&quot; file gets closed"></div><div data-l="    // "><code>file</code> goes out of scope, and the &quot;hello.txt&quot; file gets closed</div><div data-l="}"></div><div data-l=""></div></div>
+<br>
+<p>Here's the expected successful output:</p>
+<br>
+<div data-lang="bash"><div data-l="$ echo &quot;Hello World!&quot; &gt; hello.txt"></div><div data-l="$ rustc open.rs &amp;&amp; ./open"></div><div data-l="hello.txt contains:"></div><div data-l="Hello World!"></div></div>
+<br>
+<p>(You are encouraged to test the previous example under different failure
+conditions: <code>hello.txt</code> doesn't exist, or <code>hello.txt</code> is not readable,
+etc.)</p>

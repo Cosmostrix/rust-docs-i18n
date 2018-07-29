@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<h1><code>global_asm</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#35119">#35119</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/35119">#35119</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>global_asm€</code> macro allows the programmer to write arbitrary
+assembly outside the scope of a function body, passing it through
+<code>rustc</code> and <code>llvm</code> to the assembler. The macro is a no-frills
+interface to LLVM's concept of <a class="notranslate" href="#4module-level inline assembly">module-level inline assembly</a>. That is,
+all caveats applicable to LLVM's module-level inline assembly apply
+to <code>global_asm€</code>.</p>
+<br>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#module-level-inline-assembly">module-level inline assembly</a>
+<br>
+<p><code>global_asm€</code> fills a role not currently satisfied by either <code>asm€</code>
+or <code>#[naked]</code> functions. The programmer has <s>all</s> features of the
+assembler at their disposal. The linker will expect to resolve any
+symbols defined in the inline assembly, modulo any symbols marked as
+external. It also means syntax for directives and assembly follow the
+conventions of the assembler in your toolchain.</p>
+<br>
+<p>A simple usage looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="# #![feature(global_asm)]"></div><div data-l="# you also need relevant target_arch cfgs"></div><div data-l="global_asm!(include_str!(&quot;something_neato.s&quot;));"></div></div>
+<br>
+<p>And a more complicated usage looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="# #![feature(global_asm)]"></div><div data-l="# #![cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l=""></div><div data-l="pub mod sally {"></div><div data-l="    global_asm!(r#&quot;"></div><div data-l="        .global foo"></div><div data-l="      foo:"></div><div data-l="        jmp baz"></div><div data-l="    &quot;#);"></div><div data-l=""></div><div data-l="    #[no_mangle]"></div><div data-l="    pub unsafe extern &quot;C&quot; fn baz() {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// the symbols `foo` and `bar` are global, no matter where"></div><div data-l="#// `global_asm!` was used."></div><div data-l="// ">the symbols <code>foo</code> and <code>bar</code> are global, no matter where <code>global_asm€</code> was used.</div><div data-l="extern &quot;C&quot; {"></div><div data-l="    fn foo();"></div><div data-l="    fn bar();"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub mod harry {"></div><div data-l="    global_asm!(r#&quot;"></div><div data-l="        .global bar"></div><div data-l="      bar:"></div><div data-l="        jmp quux"></div><div data-l="    &quot;#);"></div><div data-l=""></div><div data-l="    #[no_mangle]"></div><div data-l="    pub unsafe extern &quot;C&quot; fn quux() {}"></div><div data-l="}"></div></div>
+<br>
+<p>You may use <code>global_asm€</code> multiple times, anywhere in your crate, in
+whatever way suits you. The effect is as if you concatenated all
+usages and placed the larger, single usage in the crate root.</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>If you don't need quite as much power and flexibility as
+<code>global_asm€</code> provides, and you don't mind restricting your inline
+assembly to <code>fn</code> bodies only, you might try the
+<a class="notranslate" href="#2language-features/asm.html">asm</a> feature instead.</p>

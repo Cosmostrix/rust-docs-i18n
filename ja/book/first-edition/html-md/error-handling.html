@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<h1>Error Handling</h1>
+<br>
+<p>Like most programming languages, Rust encourages the programmer to handle
+errors in a particular way. Generally speaking, error handling is divided into
+two broad categories: exceptions and return values. Rust opts for return
+values.</p>
+<br>
+<p>In this section, we intend to provide a comprehensive treatment of how to deal
+with errors in Rust. More than that, we will attempt to introduce error handling
+one piece at a time so that you'll come away with a solid working knowledge of
+how everything fits together.</p>
+<br>
+<p>When done naïvely, error handling in Rust can be verbose and annoying. This
+section will explore those stumbling blocks and demonstrate how to use the
+standard library to make error handling concise and ergonomic.</p>
+<br>
+<h1>Table of Contents</h1>
+<br>
+<p>This section is very long, mostly because we start at the very beginning with
+sum types and combinators, and try to motivate the way Rust does error handling
+incrementally. As such, programmers with experience in other expressive type
+systems may want to jump around.</p>
+<br>
+<div data-b="*"><a href="#2#the-basics">The Basics</a></div>
+<div data-b="    *"><a href="#2#unwrapping-explained">Unwrapping explained</a></div>
+<div data-b="    *"><a href="#2#the-option-type">The <code>Option</code> type</a></div>
+<div data-b="        *"><a href="#2#composing-optiont-values">Composing <code>Option&lt;T&gt;</code> values</a></div>
+<div data-b="    *"><a href="#2#the-result-type">The <code>Result</code> type</a></div>
+<div data-b="        *"><a href="#2#parsing-integers">Parsing integers</a></div>
+<div data-b="        *"><a href="#2#the-result-type-alias-idiom">The <code>Result</code> type alias idiom</a></div>
+<div data-b="    *"><a href="#2#a-brief-interlude-unwrapping-isnt-evil">A brief interlude: unwrapping isn't evil</a></div>
+<div data-b="*"><a href="#2#working-with-multiple-error-types">Working with multiple error types</a></div>
+<div data-b="    *"><a href="#2#composing-option-and-result">Composing <code>Option</code> and <code>Result</code></a></div>
+<div data-b="    *"><a href="#2#the-limits-of-combinators">The limits of combinators</a></div>
+<div data-b="    *"><a href="#2#early-returns">Early returns</a></div>
+<div data-b="    *"><a href="#2#the-try-macro">The <code>try€</code> macro</a></div>
+<div data-b="    *"><a href="#2#defining-your-own-error-type">Defining your own error type</a></div>
+<div data-b="*"><a href="#2#standard-library-traits-used-for-error-handling">Standard library traits used for error handling</a></div>
+<div data-b="    *"><a href="#2#the-error-trait">The <code>Error</code> trait</a></div>
+<div data-b="    *"><a href="#2#the-from-trait">The <code>From</code> trait</a></div>
+<div data-b="    *"><a href="#2#the-real-try-macro">The real <code>try€</code> macro</a></div>
+<div data-b="    *"><a href="#2#composing-custom-error-types">Composing custom error types</a></div>
+<div data-b="    *"><a href="#2#advice-for-library-writers">Advice for library writers</a></div>
+<div data-b="*"><a href="#2#case-study-a-program-to-read-population-data">Case study: A program to read population data</a></div>
+<div data-b="    *"><a href="#2#initial-setup">Initial setup</a></div>
+<div data-b="    *"><a href="#2#argument-parsing">Argument parsing</a></div>
+<div data-b="    *"><a href="#2#writing-the-logic">Writing the logic</a></div>
+<div data-b="    *"><a href="#2#error-handling-with-boxerror">Error handling with <code>Box&lt;Error&gt;</code></a></div>
+<div data-b="    *"><a href="#2#reading-from-stdin">Reading from stdin</a></div>
+<div data-b="    *"><a href="#2#error-handling-with-a-custom-type">Error handling with a custom type</a></div>
+<div data-b="    *"><a href="#2#adding-functionality">Adding functionality</a></div>
+<div data-b="*"><a href="#2#the-short-story">The short story</a></div>
+<br>
+<h1>The Basics</h1>
+<br>
+<p>You can think of error handling as using <i>case analysis</i> to determine whether
+a computation was successful or not. As you will see, the key to ergonomic error
+handling is reducing the amount of explicit case analysis the programmer has to
+do while keeping code composable.</p>
+<br>
+<p>Keeping code composable is important, because without that requirement, we
+could <a class="notranslate" href="#2../../std/macro.panic.html"><code>panic</code></a> whenever we
+come across something unexpected. (<code>panic</code> causes the current task to unwind,
+and in most cases, the entire program aborts.) Here's an example:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="#// Guess a number between 1 and 10."></div><div data-l="#// If it matches the number we had in mind, return `true`. Else, return `false`."></div><div data-l="// ">Guess a number between 1 and 10. If it matches the number we had in mind, return <code>true</code>. Else, return <code>false</code>.</div><div data-l="fn guess(n: i32) -&gt; bool {"></div><div data-l="    if n &lt; 1 || n &gt; 10 {"></div><div data-l="        panic!(&quot;Invalid number: {}&quot;, n);"></div><div data-l="    }"></div><div data-l="    n == 5"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    guess(11);"></div><div data-l="}"></div></div>
+<br>
+<p>If you try running this code, the program will crash with a message like this:</p>
+<br>
+<div data-lang="text"><div data-l="thread 'main' panicked at 'Invalid number: 11', src/bin/panic-simple.rs:5"></div></div>
+<br>
+<p>Here's another example that is slightly less contrived. A program that accepts
+an integer as an argument, doubles it and prints it.</p>
+<br>
+<p><span id="code-unwrap-double"></span></p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="use std::env;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut argv = env::args();"></div><div data-l="#//    let arg: String = argv.nth(1).unwrap(); // error 1"></div><div data-l="    let arg: String = argv.nth(1).unwrap(); // ">error 1</div><div data-l="#//    let n: i32 = arg.parse().unwrap(); // error 2"></div><div data-l="    let n: i32 = arg.parse().unwrap(); // ">error 2</div><div data-l="    println!(&quot;{}&quot;, 2 * n);"></div><div data-l="}"></div></div>
+<br>
+<p>If you give this program zero arguments (error 1) or if the first argument
+isn't an integer (error 2), the program will panic just like in the first
+example.</p>
+<br>
+<p>You can think of this style of error handling as similar to a bull running
+through a china shop. The bull will get to where it wants to go, but it will
+trample everything in the process.</p>
+<br>
+<h2>Unwrapping explained</h2>
+<br>
+<p>In the previous example, we claimed
+that the program would simply panic if it reached one of the two error
+conditions, yet, the program does not include an explicit call to <code>panic</code> like
+the first example. This is because the
+panic is embedded in the calls to <code>unwrap</code>.</p>
+<br>
+<p>To “unwrap” something in Rust is to say, “Give me the result of the
+computation, and if there was an error, panic and stop the program.”
+It would be better if we showed the code for unwrapping because it is so
+simple, but to do that, we will first need to explore the <code>Option</code> and <code>Result</code>
+types. Both of these types have a method called <code>unwrap</code> defined on them.</p>
+<br>
+<h3>The <code>Option</code> type</h3>
+<br>
+<p>The <code>Option</code> type is <a href="#35">defined in the standard library</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Option&lt;T&gt; {"></div><div data-l="    None,"></div><div data-l="    Some(T),"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>Option</code> type is a way to use Rust's type system to express the
+<i>possibility of absence</i>. Encoding the possibility of absence into the type
+system is an important concept because it will cause the compiler to force the
+programmer to handle that absence. Let's take a look at an example that tries
+to find a character in a string:</p>
+<br>
+<p><span id="code-option-ex-string-find"></span></p>
+<br>
+<div data-lang="rust"><div data-l="#// Searches `haystack` for the Unicode character `needle`. If one is found, the"></div><div data-l="#// byte offset of the character is returned. Otherwise, `None` is returned."></div><div data-l="// ">Searches <code>haystack</code> for the Unicode character <code>needle</code>. If one is found, the byte offset of the character is returned. Otherwise, <code>None</code> is returned.</div><div data-l="fn find(haystack: &amp;str, needle: char) -&gt; Option&lt;usize&gt; {"></div><div data-l="    for (offset, c) in haystack.char_indices() {"></div><div data-l="        if c == needle {"></div><div data-l="            return Some(offset);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    None"></div><div data-l="}"></div></div>
+<br>
+<p>Notice that when this function finds a matching character, it doesn't only
+return the <code>offset</code>. Instead, it returns <code>Some(offset)</code>. <code>Some</code> is a variant or
+a <i>value constructor</i> for the <code>Option</code> type. You can think of it as a function
+with the type <code>fn&lt;T&gt;(value: T) -&gt; Option&lt;T&gt;</code>. Correspondingly, <code>None</code> is also a
+value constructor, except it has no arguments. You can think of <code>None</code> as a
+function with the type <code>fn&lt;T&gt;() -&gt; Option&lt;T&gt;</code>.</p>
+<br>
+<p>This might seem like much ado about nothing, but this is only half of the
+story. The other half is <i>using</i> the <code>find</code> function we've written. Let's try
+to use it to find the extension in a file name.</p>
+<br>
+<div data-lang="rust"><div data-l="# fn find(haystack: &amp;str, needle: char) -&gt; Option&lt;usize&gt; { haystack.find(needle) }"></div><div data-l="fn main() {"></div><div data-l="    let file_name = &quot;foobar.rs&quot;;"></div><div data-l="    match find(file_name, '.') {"></div><div data-l="        None =&gt; println!(&quot;No file extension found.&quot;),"></div><div data-l="        Some(i) =&gt; println!(&quot;File extension: {}&quot;, &amp;file_name[i+1..]),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This code uses <a href="#31">pattern matching</a> to do <i>case
+analysis</i> on the <code>Option&lt;usize&gt;</code> returned by the <code>find</code> function. In fact, case
+analysis is the only way to get at the value stored inside an <code>Option&lt;T&gt;</code>. This
+means that you, as the programmer, must handle the case when an <code>Option&lt;T&gt;</code> is
+<code>None</code> instead of <code>Some(t)</code>.</p>
+<br>
+<p>But wait, what about <code>unwrap</code>, which we used <a class="notranslate" href="#2#code-unwrap-double">previously</a>?
+There was no case analysis there! Instead, the case analysis was put inside the
+<code>unwrap</code> method for you. You could define it yourself if you want:</p>
+<br>
+<p><span id="code-option-def-unwrap"></span></p>
+<br>
+<div data-lang="rust"><div data-l="enum Option&lt;T&gt; {"></div><div data-l="    None,"></div><div data-l="    Some(T),"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Option&lt;T&gt; {"></div><div data-l="    fn unwrap(self) -&gt; T {"></div><div data-l="        match self {"></div><div data-l="            Option::Some(val) =&gt; val,"></div><div data-l="            Option::None =&gt;"></div><div data-l="              panic!(&quot;called `Option::unwrap()` on a `None` value&quot;),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>unwrap</code> method <i>abstracts away the case analysis</i>. This is precisely the thing
+that makes <code>unwrap</code> ergonomic to use. Unfortunately, that <code>panic€</code> means that
+<code>unwrap</code> is not composable: it is the bull in the china shop.</p>
+<br>
+<h3>Composing <code>Option&lt;T&gt;</code> values</h3>
+<br>
+<p>In an <a href="#2#code-option-ex-string-find">example from before</a>,
+we saw how to use <code>find</code> to discover the extension in a file name. Of course,
+not all file names have a <code>.</code> in them, so it's possible that the file name has
+no extension. This <i>possibility of absence</i> is encoded into the types using
+<code>Option&lt;T&gt;</code>. In other words, the compiler will force us to address the
+possibility that an extension does not exist. In our case, we only print out a
+message saying as such.</p>
+<br>
+<p>Getting the extension of a file name is a pretty common operation, so it makes
+sense to put it into a function:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn find(haystack: &amp;str, needle: char) -&gt; Option&lt;usize&gt; { haystack.find(needle) }"></div><div data-l="#// Returns the extension of the given file name, where the extension is defined"></div><div data-l="#// as all characters following the first `.`."></div><div data-l="#// If `file_name` has no `.`, then `None` is returned."></div><div data-l="// ">Returns the extension of the given file name, where the extension is defined as all characters following the first <code>.</code>. If <code>file_name</code> has no <code>.</code>, then <code>None</code> is returned.</div><div data-l="fn extension_explicit(file_name: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="    match find(file_name, '.') {"></div><div data-l="        None =&gt; None,"></div><div data-l="        Some(i) =&gt; Some(&amp;file_name[i+1..]),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>(Pro-tip: don't use this code. Use the
+<a class="notranslate" href="#2../../std/path/struct.Path.html#method.extension"><code>extension</code></a>
+method in the standard library instead.)</p>
+<br>
+<p>The code stays simple, but the important thing to notice is that the type of
+<code>find</code> forces us to consider the possibility of absence. This is a good thing
+because it means the compiler won't let us accidentally forget about the case
+where a file name doesn't have an extension. On the other hand, doing explicit
+case analysis like we've done in <code>extension_explicit</code> every time can get a bit
+tiresome.</p>
+<br>
+<p>In fact, the case analysis in <code>extension_explicit</code> follows a very common
+pattern: <i>map</i> a function on to the value inside of an <code>Option&lt;T&gt;</code>, unless the
+option is <code>None</code>, in which case, return <code>None</code>.</p>
+<br>
+<p>Rust has parametric polymorphism, so it is very easy to define a combinator
+that abstracts this pattern:</p>
+<br>
+<p><span id="code-option-map"></span></p>
+<br>
+<div data-lang="rust"><div data-l="fn map&lt;F, T, A&gt;(option: Option&lt;T&gt;, f: F) -&gt; Option&lt;A&gt; where F: FnOnce(T) -&gt; A {"></div><div data-l="    match option {"></div><div data-l="        None =&gt; None,"></div><div data-l="        Some(value) =&gt; Some(f(value)),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Indeed, <code>map</code> is <a href="#32">defined as a method</a> on <code>Option&lt;T&gt;</code> in the standard library.
+As a method, it has a slightly different signature: methods take <code>self</code>, <code>&amp;self</code>,
+or <code>&amp;mut self</code> as their first argument.</p>
+<br>
+<p>Armed with our new combinator, we can rewrite our <code>extension_explicit</code> method
+to get rid of the case analysis:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn find(haystack: &amp;str, needle: char) -&gt; Option&lt;usize&gt; { haystack.find(needle) }"></div><div data-l="#// Returns the extension of the given file name, where the extension is defined"></div><div data-l="#// as all characters following the first `.`."></div><div data-l="#// If `file_name` has no `.`, then `None` is returned."></div><div data-l="// ">Returns the extension of the given file name, where the extension is defined as all characters following the first <code>.</code>. If <code>file_name</code> has no <code>.</code>, then <code>None</code> is returned.</div><div data-l="fn extension(file_name: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="    find(file_name, '.').map(|i| &amp;file_name[i+1..])"></div><div data-l="}"></div></div>
+<br>
+<p>One other pattern we commonly find is assigning a default value to the case
+when an <code>Option</code> value is <code>None</code>. For example, maybe your program assumes that
+the extension of a file is <code>rs</code> even if none is present. As you might imagine,
+the case analysis for this is not specific to file extensions - it can work
+with any <code>Option&lt;T&gt;</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn unwrap_or&lt;T&gt;(option: Option&lt;T&gt;, default: T) -&gt; T {"></div><div data-l="    match option {"></div><div data-l="        None =&gt; default,"></div><div data-l="        Some(value) =&gt; value,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Like with <code>map</code> above, the standard library implementation is a method instead
+of a free function.</p>
+<br>
+<p>The trick here is that the default value must have the same type as the value
+that might be inside the <code>Option&lt;T&gt;</code>. Using it is dead simple in our case:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn find(haystack: &amp;str, needle: char) -&gt; Option&lt;usize&gt; {"></div><div data-l="#     for (offset, c) in haystack.char_indices() {"></div><div data-l="#         if c == needle {"></div><div data-l="#             return Some(offset);"></div><div data-l="#         }"></div><div data-l="#     }"></div><div data-l="#     None"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# fn extension(file_name: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="#     find(file_name, '.').map(|i| &amp;file_name[i+1..])"></div><div data-l="# }"></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(extension(&quot;foobar.csv&quot;).unwrap_or(&quot;rs&quot;), &quot;csv&quot;);"></div><div data-l="    assert_eq!(extension(&quot;foobar&quot;).unwrap_or(&quot;rs&quot;), &quot;rs&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>(Note that <code>unwrap_or</code> is <a href="#33">defined as a method</a> on <code>Option&lt;T&gt;</code> in the
+standard library, so we use that here instead of the free-standing function we
+defined above. Don't forget to check out the more general <a class="notranslate" href="#34"><code>unwrap_or_else</code></a>
+method.)</p>
+<br>
+<p>There is one more combinator that we think is worth paying special attention to:
+<code>and_then</code>. It makes it easy to compose distinct computations that admit the
+<i>possibility of absence</i>. For example, much of the code in this section is
+about finding an extension given a file name. In order to do this, you first
+need the file name which is typically extracted from a file <i>path</i>. While most
+file paths have a file name, not <i>all</i> of them do. For example, <code>.</code>, <code>..</code> or
+<code>/</code>.</p>
+<br>
+<p>So, we are tasked with the challenge of finding an extension given a file
+<i>path</i>. Let's start with explicit case analysis:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn extension(file_name: &amp;str) -&gt; Option&lt;&amp;str&gt; { None }"></div><div data-l="fn file_path_ext_explicit(file_path: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="    match file_name(file_path) {"></div><div data-l="        None =&gt; None,"></div><div data-l="        Some(name) =&gt; match extension(name) {"></div><div data-l="            None =&gt; None,"></div><div data-l="            Some(ext) =&gt; Some(ext),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn file_name(file_path: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="#  // Implementation elided."></div><div data-l="  // ">Implementation elided.</div><div data-l="  unimplemented!()"></div><div data-l="}"></div></div>
+<br>
+<p>You might think that we could use the <code>map</code> combinator to reduce the case
+analysis, but its type doesn't quite fit...</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn file_path_ext(file_path: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="#//    file_name(file_path).map(|x| extension(x)) // This causes a compilation error."></div><div data-l="    file_name(file_path).map(|x| extension(x)) // ">This causes a compilation error.</div><div data-l="}"></div></div>
+<br>
+<p>The <code>map</code> function here wraps the value returned by the <code>extension</code> function
+inside an <code>Option&lt;_&gt;</code> and since the <code>extension</code> function itself returns an
+<code>Option&lt;&amp;str&gt;</code> the expression <code>file_name(file_path).map(|x| extension(x))</code>
+actually returns an <code>Option&lt;Option&lt;&amp;str&gt;&gt;</code>.</p>
+<br>
+<p>But since <code>file_path_ext</code> just returns <code>Option&lt;&amp;str&gt;</code> (and not
+<code>Option&lt;Option&lt;&amp;str&gt;&gt;</code>) we get a compilation error.</p>
+<br>
+<p>The result of the function taken by map as input is <i>always</i> <a href="#2#code-option-map">rewrapped with
+<code>Some</code></a>. Instead, we need something like <code>map</code>, but which
+allows the caller to return a <code>Option&lt;_&gt;</code> directly without wrapping it in
+another <code>Option&lt;_&gt;</code>.</p>
+<br>
+<p>Its generic implementation is even simpler than <code>map</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn and_then&lt;F, T, A&gt;(option: Option&lt;T&gt;, f: F) -&gt; Option&lt;A&gt;"></div><div data-l="        where F: FnOnce(T) -&gt; Option&lt;A&gt; {"></div><div data-l="    match option {"></div><div data-l="        None =&gt; None,"></div><div data-l="        Some(value) =&gt; f(value),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Now we can rewrite our <code>file_path_ext</code> function without explicit case analysis:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn extension(file_name: &amp;str) -&gt; Option&lt;&amp;str&gt; { None }"></div><div data-l="# fn file_name(file_path: &amp;str) -&gt; Option&lt;&amp;str&gt; { None }"></div><div data-l="fn file_path_ext(file_path: &amp;str) -&gt; Option&lt;&amp;str&gt; {"></div><div data-l="    file_name(file_path).and_then(extension)"></div><div data-l="}"></div></div>
+<br>
+<p>Side note: Since <code>and_then</code> essentially works like <code>map</code> but returns an
+<code>Option&lt;_&gt;</code> instead of an <code>Option&lt;Option&lt;_&gt;&gt;</code> it is known as <code>flatmap</code> in some
+other languages.</p>
+<br>
+<p>The <code>Option</code> type has many other combinators <a href="#35">defined in the standard
+library</a>. It is a good idea to skim this list and familiarize
+yourself with what's available—they can often reduce case analysis
+for you. Familiarizing yourself with these combinators will pay
+dividends because many of them are also defined (with similar
+semantics) for <code>Result</code>, which we will talk about next.</p>
+<br>
+<p>Combinators make using types like <code>Option</code> ergonomic because they reduce
+explicit case analysis. They are also composable because they permit the caller
+to handle the possibility of absence in their own way. Methods like <code>unwrap</code>
+remove choices because they will panic if <code>Option&lt;T&gt;</code> is <code>None</code>.</p>
+<br>
+<h2>The <code>Result</code> type</h2>
+<br>
+<p>The <code>Result</code> type is also
+<a href="#36">defined in the standard library</a>:</p>
+<br>
+<p><span id="code-result-def"></span></p>
+<br>
+<div data-lang="rust"><div data-l="enum Result&lt;T, E&gt; {"></div><div data-l="    Ok(T),"></div><div data-l="    Err(E),"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>Result</code> type is a richer version of <code>Option</code>. Instead of expressing the
+possibility of <i>absence</i> like <code>Option</code> does, <code>Result</code> expresses the possibility
+of <i>error</i>. Usually, the <i>error</i> is used to explain why the execution of some
+computation failed. This is a strictly more general form of <code>Option</code>. Consider
+the following type alias, which is semantically equivalent to the real
+<code>Option&lt;T&gt;</code> in every way:</p>
+<br>
+<div data-lang="rust"><div data-l="type Option&lt;T&gt; = Result&lt;T, ()&gt;;"></div></div>
+<br>
+<p>This fixes the second type parameter of <code>Result</code> to always be <code>()</code> (pronounced
+“unit” or “empty tuple”). Exactly one value inhabits the <code>()</code> type: <code>()</code>. (Yup,
+the type and value level terms have the same notation!)</p>
+<br>
+<p>The <code>Result</code> type is a way of representing one of two possible outcomes in a
+computation. By convention, one outcome is meant to be expected or “<code>Ok</code>” while
+the other outcome is meant to be unexpected or “<code>Err</code>”.</p>
+<br>
+<p>Just like <code>Option</code>, the <code>Result</code> type also has an
+<a href="#37"><code>unwrap</code> method
+defined</a>
+in the standard library. Let's define it:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Result&lt;T, E&gt; { Ok(T), Err(E) }"></div><div data-l="impl&lt;T, E: ::std::fmt::Debug&gt; Result&lt;T, E&gt; {"></div><div data-l="    fn unwrap(self) -&gt; T {"></div><div data-l="        match self {"></div><div data-l="            Result::Ok(val) =&gt; val,"></div><div data-l="            Result::Err(err) =&gt;"></div><div data-l="              panic!(&quot;called `Result::unwrap()` on an `Err` value: {:?}&quot;, err),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This is effectively the same as our <a href="#2#code-option-def-unwrap">definition for
+<code>Option::unwrap</code></a>, except it includes the
+error value in the <code>panic€</code> message. This makes debugging easier, but
+it also requires us to add a <a class="notranslate" href="#38"><code>Debug</code></a> constraint on the <code>E</code> type
+parameter (which represents our error type). Since the vast majority
+of types should satisfy the <code>Debug</code> constraint, this tends to work out
+in practice. (<code>Debug</code> on a type simply means that there's a reasonable
+way to print a human-readable description of values with that type.)</p>
+<br>
+<p>OK, let's move on to an example.</p>
+<br>
+<h3>Parsing integers</h3>
+<br>
+<p>The Rust standard library makes converting strings to integers dead simple.
+It's so easy in fact, that it is very tempting to write something like the
+following:</p>
+<br>
+<div data-lang="rust"><div data-l="fn double_number(number_str: &amp;str) -&gt; i32 {"></div><div data-l="    2 * number_str.parse::&lt;i32&gt;().unwrap()"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let n: i32 = double_number(&quot;10&quot;);"></div><div data-l="    assert_eq!(n, 20);"></div><div data-l="}"></div></div>
+<br>
+<p>At this point, you should be skeptical of calling <code>unwrap</code>. For example, if
+the string doesn't parse as a number, you'll get a panic:</p>
+<br>
+<div data-lang="text"><div data-l="thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: ParseIntError { kind: InvalidDigit }', /home/rustbuild/src/rust-buildbot/slave/beta-dist-rustc-linux/build/src/libcore/result.rs:729"></div></div>
+<br>
+<p>This is rather unsightly, and if this happened inside a library you're
+using, you might be understandably annoyed. Instead, we should try to
+handle the error in our function and let the caller decide what to
+do. This means changing the return type of <code>double_number</code>. But to
+what? Well, that requires looking at the signature of the <a class="notranslate" href="#39"><code>parse</code>
+method</a> in the standard library:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl str {"></div><div data-l="    fn parse&lt;F: FromStr&gt;(&amp;self) -&gt; Result&lt;F, F::Err&gt;;"></div><div data-l="}"></div></div>
+<br>
+<p>Hmm. So we at least know that we need to use a <code>Result</code>. Certainly, it's
+possible that this could have returned an <code>Option</code>. After all, a string either
+parses as a number or it doesn't, right? That's certainly a reasonable way to
+go, but the implementation internally distinguishes <i>why</i> the string didn't
+parse as an integer. (Whether it's an empty string, an invalid digit, too big
+or too small.) Therefore, using a <code>Result</code> makes sense because we want to
+provide more information than simply “absence.” We want to say <i>why</i> the
+parsing failed. You should try to emulate this line of reasoning when faced
+with a choice between <code>Option</code> and <code>Result</code>. If you can provide detailed error
+information, then you probably should. (We'll see more on this later.)</p>
+<br>
+<p>OK, but how do we write our return type? The <code>parse</code> method as defined
+above is generic over all the different number types defined in the
+standard library. We could (and probably should) also make our
+function generic, but let's favor explicitness for the moment. We only
+care about <code>i32</code>, so we need to <a href="#2../../std/primitive.i32.html">find its implementation of
+<code>FromStr</code></a> (do a <code>CTRL-F</code> in your browser
+for “FromStr”) and look at its <a href="#310">associated type</a> <code>Err</code>. We did
+this so we can find the concrete error type. In this case, it's
+<a class="notranslate" href="#2../../std/num/struct.ParseIntError.html"><code>std::num::ParseIntError</code></a>.
+Finally, we can rewrite our function:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn double_number(number_str: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {"></div><div data-l="    match number_str.parse::&lt;i32&gt;() {"></div><div data-l="        Ok(n) =&gt; Ok(2 * n),"></div><div data-l="        Err(err) =&gt; Err(err),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match double_number(&quot;10&quot;) {"></div><div data-l="        Ok(n) =&gt; assert_eq!(n, 20),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {:?}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This is a little better, but now we've written much more code! The case
+analysis has once again bitten us.</p>
+<br>
+<p>Combinators to the rescue! Just like <code>Option</code>, <code>Result</code> has lots of combinators
+defined as methods. There is a large intersection of common combinators between
+<code>Result</code> and <code>Option</code>. In particular, <code>map</code> is part of that intersection:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn double_number(number_str: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {"></div><div data-l="    number_str.parse::&lt;i32&gt;().map(|n| 2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match double_number(&quot;10&quot;) {"></div><div data-l="        Ok(n) =&gt; assert_eq!(n, 20),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {:?}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The usual suspects are all there for <code>Result</code>, including
+<a class="notranslate" href="#2../../std/result/enum.Result.html#method.unwrap_or"><code>unwrap_or</code></a> and
+<a class="notranslate" href="#2../../std/result/enum.Result.html#method.and_then"><code>and_then</code></a>.
+Additionally, since <code>Result</code> has a second type parameter, there are
+combinators that affect only the error type, such as
+<a class="notranslate" href="#2../../std/result/enum.Result.html#method.map_err"><code>map_err</code></a> (instead of
+<code>map</code>) and <a class="notranslate" href="#2../../std/result/enum.Result.html#method.or_else"><code>or_else</code></a>
+(instead of <code>and_then</code>).</p>
+<br>
+<h3>The <code>Result</code> type alias idiom</h3>
+<br>
+<p>In the standard library, you may frequently see types like
+<code>Result&lt;i32&gt;</code>. But wait, <a href="#2#code-result-def">we defined <code>Result</code></a> to
+have two type parameters. How can we get away with only specifying
+one? The key is to define a <code>Result</code> type alias that <i>fixes</i> one of
+the type parameters to a particular type. Usually the fixed type is
+the error type. For example, our previous example parsing integers
+could be rewritten like this:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::num::ParseIntError;"></div><div data-l="use std::result;"></div><div data-l=""></div><div data-l="type Result&lt;T&gt; = result::Result&lt;T, ParseIntError&gt;;"></div><div data-l=""></div><div data-l="fn double_number(number_str: &amp;str) -&gt; Result&lt;i32&gt; {"></div><div data-l="    unimplemented!();"></div><div data-l="}"></div></div>
+<br>
+<p>Why would we do this? Well, if we have a lot of functions that could return
+<code>ParseIntError</code>, then it's much more convenient to define an alias that always
+uses <code>ParseIntError</code> so that we don't have to write it out all the time.</p>
+<br>
+<p>The most prominent place this idiom is used in the standard library is
+with <a class="notranslate" href="#2../../std/io/type.Result.html"><code>io::Result</code></a>. Typically, one writes
+<code>io::Result&lt;T&gt;</code>, which makes it clear that you're using the <code>io</code>
+module's type alias instead of the plain definition from
+<code>std::result</code>. (This idiom is also used for
+<a class="notranslate" href="#2../../std/fmt/type.Result.html"><code>fmt::Result</code></a>.)</p>
+<br>
+<h2>A brief interlude: unwrapping isn't evil</h2>
+<br>
+<p>If you've been following along, you might have noticed that I've taken a pretty
+hard line against calling methods like <code>unwrap</code> that could <code>panic</code> and abort
+your program. <i>Generally speaking</i>, this is good advice.</p>
+<br>
+<p>However, <code>unwrap</code> can still be used judiciously. What exactly justifies use of
+<code>unwrap</code> is somewhat of a grey area and reasonable people can disagree. I'll
+summarize some of my <i>opinions</i> on the matter.</p>
+<br>
+<div data-b="*"><b>In examples and quick 'n' dirty code.</b> Sometimes you're writing examples
+or a quick program, and error handling simply isn't important. Beating the
+convenience of <code>unwrap</code> can be hard in such scenarios, so it is very
+appealing.</div>
+<div data-b="*"><b>When panicking indicates a bug in the program.</b> When the invariants of
+your code should prevent a certain case from happening (like, say, popping
+from an empty stack), then panicking can be permissible. This is because it
+exposes a bug in your program. This can be explicit, like from an <code>assert€</code>
+failing, or it could be because your index into an array was out of bounds.</div>
+<br>
+<p>This is probably not an exhaustive list. Moreover, when using an
+<code>Option</code>, it is often better to use its
+<a class="notranslate" href="#2../../std/option/enum.Option.html#method.expect"><code>expect</code></a>
+method. <code>expect</code> does exactly the same thing as <code>unwrap</code>, except it
+prints a message you give to <code>expect</code>. This makes the resulting panic
+a bit nicer to deal with, since it will show your message instead of
+“called unwrap on a <code>None</code> value.”</p>
+<br>
+<p>My advice boils down to this: use good judgment. There's a reason why the words
+“never do X” or “Y is considered harmful” don't appear in my writing. There are
+trade-offs to all things, and it is up to you as the programmer to determine
+what is acceptable for your use cases. My goal is only to help you evaluate
+trade-offs as accurately as possible.</p>
+<br>
+<p>Now that we've covered the basics of error handling in Rust, and
+explained unwrapping, let's start exploring more of the standard
+library.</p>
+<br>
+<h1>Working with multiple error types</h1>
+<br>
+<p>Thus far, we've looked at error handling where everything was either an
+<code>Option&lt;T&gt;</code> or a <code>Result&lt;T, SomeError&gt;</code>. But what happens when you have both an
+<code>Option</code> and a <code>Result</code>? Or what if you have a <code>Result&lt;T, Error1&gt;</code> and a
+<code>Result&lt;T, Error2&gt;</code>? Handling <i>composition of distinct error types</i> is the next
+challenge in front of us, and it will be the major theme throughout the rest of
+this section.</p>
+<br>
+<h2>Composing <code>Option</code> and <code>Result</code></h2>
+<br>
+<p>So far, I've talked about combinators defined for <code>Option</code> and combinators
+defined for <code>Result</code>. We can use these combinators to compose results of
+different computations without doing explicit case analysis.</p>
+<br>
+<p>Of course, in real code, things aren't always as clean. Sometimes you have a
+mix of <code>Option</code> and <code>Result</code> types. Must we resort to explicit case analysis,
+or can we continue using combinators?</p>
+<br>
+<p>For now, let's revisit one of the first examples in this section:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="use std::env;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut argv = env::args();"></div><div data-l="#//    let arg: String = argv.nth(1).unwrap(); // error 1"></div><div data-l="    let arg: String = argv.nth(1).unwrap(); // ">error 1</div><div data-l="#//    let n: i32 = arg.parse().unwrap(); // error 2"></div><div data-l="    let n: i32 = arg.parse().unwrap(); // ">error 2</div><div data-l="    println!(&quot;{}&quot;, 2 * n);"></div><div data-l="}"></div></div>
+<br>
+<p>Given our new found knowledge of <code>Option</code>, <code>Result</code> and their various
+combinators, we should try to rewrite this so that errors are handled properly
+and the program doesn't panic if there's an error.</p>
+<br>
+<p>The tricky aspect here is that <code>argv.nth(1)</code> produces an <code>Option</code> while
+<code>arg.parse()</code> produces a <code>Result</code>. These aren't directly composable. When faced
+with both an <code>Option</code> and a <code>Result</code>, the solution is <i>usually</i> to convert the
+<code>Option</code> to a <code>Result</code>. In our case, the absence of a command line parameter
+(from <code>env::args()</code>) means the user didn't invoke the program correctly. We
+could use a <code>String</code> to describe the error. Let's try:</p>
+<br>
+<p><span id="code-error-double-string"></span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::env;"></div><div data-l=""></div><div data-l="fn double_arg(mut argv: env::Args) -&gt; Result&lt;i32, String&gt; {"></div><div data-l="    argv.nth(1)"></div><div data-l="        .ok_or(&quot;Please give at least one argument&quot;.to_owned())"></div><div data-l="        .and_then(|arg| arg.parse::&lt;i32&gt;().map_err(|err| err.to_string()))"></div><div data-l="        .map(|n| 2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match double_arg(env::args()) {"></div><div data-l="        Ok(n) =&gt; println!(&quot;{}&quot;, n),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>There are a couple new things in this example. The first is the use of the
+<a class="notranslate" href="#2../../std/option/enum.Option.html#method.ok_or"><code>Option::ok_or</code></a>
+combinator. This is one way to convert an <code>Option</code> into a <code>Result</code>. The
+conversion requires you to specify what error to use if <code>Option</code> is <code>None</code>.
+Like the other combinators we've seen, its definition is very simple:</p>
+<br>
+<div data-lang="rust"><div data-l="fn ok_or&lt;T, E&gt;(option: Option&lt;T&gt;, err: E) -&gt; Result&lt;T, E&gt; {"></div><div data-l="    match option {"></div><div data-l="        Some(val) =&gt; Ok(val),"></div><div data-l="        None =&gt; Err(err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The other new combinator used here is
+<a class="notranslate" href="#2../../std/result/enum.Result.html#method.map_err"><code>Result::map_err</code></a>.
+This is like <code>Result::map</code>, except it maps a function on to the <i>error</i>
+portion of a <code>Result</code> value. If the <code>Result</code> is an <code>Ok(...)</code> value, then it is
+returned unmodified.</p>
+<br>
+<p>We use <code>map_err</code> here because it is necessary for the error types to remain
+the same (because of our use of <code>and_then</code>). Since we chose to convert the
+<code>Option&lt;String&gt;</code> (from <code>argv.nth(1)</code>) to a <code>Result&lt;String, String&gt;</code>, we must
+also convert the <code>ParseIntError</code> from <code>arg.parse()</code> to a <code>String</code>.</p>
+<br>
+<h2>The limits of combinators</h2>
+<br>
+<p>Doing IO and parsing input is a very common task, and it's one that I
+personally have done a lot of in Rust. Therefore, we will use (and continue to
+use) IO and various parsing routines to exemplify error handling.</p>
+<br>
+<p>Let's start simple. We are tasked with opening a file, reading all of its
+contents and converting its contents to a number. Then we multiply it by <code>2</code>
+and print the output.</p>
+<br>
+<p>Although I've tried to convince you not to use <code>unwrap</code>, it can be useful
+to first write your code using <code>unwrap</code>. It allows you to focus on your problem
+instead of the error handling, and it exposes the points where proper error
+handling need to occur. Let's start there so we can get a handle on the code,
+and then refactor it to use better error handling.</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; i32 {"></div><div data-l="#//    let mut file = File::open(file_path).unwrap(); // error 1"></div><div data-l="    let mut file = File::open(file_path).unwrap(); // ">error 1</div><div data-l="    let mut contents = String::new();"></div><div data-l="#//    file.read_to_string(&amp;mut contents).unwrap(); // error 2"></div><div data-l="    file.read_to_string(&amp;mut contents).unwrap(); // ">error 2</div><div data-l="#//    let n: i32 = contents.trim().parse().unwrap(); // error 3"></div><div data-l="    let n: i32 = contents.trim().parse().unwrap(); // ">error 3</div><div data-l="    2 * n"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let doubled = file_double(&quot;foobar&quot;);"></div><div data-l="    println!(&quot;{}&quot;, doubled);"></div><div data-l="}"></div></div>
+<br>
+<p>(N.B. The <code>AsRef&lt;Path&gt;</code> is used because those are the
+<a href="#2../../std/fs/struct.File.html#method.open">same bounds used on
+<code>std::fs::File::open</code></a>.
+This makes it ergonomic to use any kind of string as a file path.)</p>
+<br>
+<p>There are three different errors that can occur here:</p>
+<br>
+<div data-b="1.">A problem opening the file.</div>
+<div data-b="2.">A problem reading data from the file.</div>
+<div data-b="3.">A problem parsing the data as a number.</div>
+<br>
+<p>The first two problems are described via the
+<a class="notranslate" href="#2../../std/io/struct.Error.html"><code>std::io::Error</code></a> type. We know this
+because of the return types of
+<a class="notranslate" href="#2../../std/fs/struct.File.html#method.open"><code>std::fs::File::open</code></a> and
+<a class="notranslate" href="#2../../std/io/trait.Read.html#method.read_to_string"><code>std::io::Read::read_to_string</code></a>.
+(Note that they both use the <a href="#2#the-result-type-alias-idiom"><code>Result</code> type alias
+idiom</a> described previously. If you
+click on the <code>Result</code> type, you'll <a href="#2../../std/io/type.Result.html">see the type
+alias</a>, and consequently, the underlying
+<code>io::Error</code> type.)  The third problem is described by the
+<a class="notranslate" href="#2../../std/num/struct.ParseIntError.html"><code>std::num::ParseIntError</code></a>
+type. The <code>io::Error</code> type in particular is <i>pervasive</i> throughout the
+standard library. You will see it again and again.</p>
+<br>
+<p>Let's start the process of refactoring the <code>file_double</code> function. To make this
+function composable with other components of the program, it should <i>not</i> panic
+if any of the above error conditions are met. Effectively, this means that the
+function should <i>return an error</i> if any of its operations fail. Our problem is
+that the return type of <code>file_double</code> is <code>i32</code>, which does not give us any
+useful way of reporting an error. Thus, we must start by changing the return
+type from <code>i32</code> to something else.</p>
+<br>
+<p>The first thing we need to decide: should we use <code>Option</code> or <code>Result</code>? We
+certainly could use <code>Option</code> very easily. If any of the three errors occur, we
+could simply return <code>None</code>. This will work <i>and it is better than panicking</i>,
+but we can do much better. Instead, we should pass some detail about the error
+that occurred. Since we want to express the <i>possibility of error</i>, we should
+use <code>Result&lt;i32, E&gt;</code>. But what should <code>E</code> be? Since two <i>different</i> types of
+errors can occur, we need to convert them to a common type. One such type is
+<code>String</code>. Let's see how that impacts our code:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, String&gt; {"></div><div data-l="    File::open(file_path)"></div><div data-l="         .map_err(|err| err.to_string())"></div><div data-l="         .and_then(|mut file| {"></div><div data-l="              let mut contents = String::new();"></div><div data-l="              file.read_to_string(&amp;mut contents)"></div><div data-l="                  .map_err(|err| err.to_string())"></div><div data-l="                  .map(|_| contents)"></div><div data-l="         })"></div><div data-l="         .and_then(|contents| {"></div><div data-l="              contents.trim().parse::&lt;i32&gt;()"></div><div data-l="                      .map_err(|err| err.to_string())"></div><div data-l="         })"></div><div data-l="         .map(|n| 2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match file_double(&quot;foobar&quot;) {"></div><div data-l="        Ok(n) =&gt; println!(&quot;{}&quot;, n),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This code looks a bit hairy. It can take quite a bit of practice before code
+like this becomes easy to write. The way we write it is by <i>following the
+types</i>. As soon as we changed the return type of <code>file_double</code> to
+<code>Result&lt;i32, String&gt;</code>, we had to start looking for the right combinators. In
+this case, we only used three different combinators: <code>and_then</code>, <code>map</code> and
+<code>map_err</code>.</p>
+<br>
+<p><code>and_then</code> is used to chain multiple computations where each computation could
+return an error. After opening the file, there are two more computations that
+could fail: reading from the file and parsing the contents as a number.
+Correspondingly, there are two calls to <code>and_then</code>.</p>
+<br>
+<p><code>map</code> is used to apply a function to the <code>Ok(...)</code> value of a <code>Result</code>. For
+example, the very last call to <code>map</code> multiplies the <code>Ok(...)</code> value (which is
+an <code>i32</code>) by <code>2</code>. If an error had occurred before that point, this operation
+would have been skipped because of how <code>map</code> is defined.</p>
+<br>
+<p><code>map_err</code> is the trick that makes all of this work. <code>map_err</code> is like
+<code>map</code>, except it applies a function to the <code>Err(...)</code> value of a <code>Result</code>. In
+this case, we want to convert all of our errors to one type: <code>String</code>. Since
+both <code>io::Error</code> and <code>num::ParseIntError</code> implement <code>ToString</code>, we can call the
+<code>to_string()</code> method to convert them.</p>
+<br>
+<p>With all of that said, the code is still hairy. Mastering use of combinators is
+important, but they have their limits. Let's try a different approach: early
+returns.</p>
+<br>
+<h2>Early returns</h2>
+<br>
+<p>I'd like to take the code from the previous section and rewrite it using <i>early
+returns</i>. Early returns let you exit the function early. We can't return early
+in <code>file_double</code> from inside another closure, so we'll need to revert back to
+explicit case analysis.</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, String&gt; {"></div><div data-l="    let mut file = match File::open(file_path) {"></div><div data-l="        Ok(file) =&gt; file,"></div><div data-l="        Err(err) =&gt; return Err(err.to_string()),"></div><div data-l="    };"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    if let Err(err) = file.read_to_string(&amp;mut contents) {"></div><div data-l="        return Err(err.to_string());"></div><div data-l="    }"></div><div data-l="    let n: i32 = match contents.trim().parse() {"></div><div data-l="        Ok(n) =&gt; n,"></div><div data-l="        Err(err) =&gt; return Err(err.to_string()),"></div><div data-l="    };"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match file_double(&quot;foobar&quot;) {"></div><div data-l="        Ok(n) =&gt; println!(&quot;{}&quot;, n),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Reasonable people can disagree over whether this code is better than the code
+that uses combinators, but if you aren't familiar with the combinator approach,
+this code looks simpler to read to me. It uses explicit case analysis with
+<code>match</code> and <code>if let</code>. If an error occurs, it simply stops executing the
+function and returns the error (by converting it to string).</p>
+<br>
+<p>Isn't this a step backwards though? Previously, we said that the key to
+ergonomic error handling is reducing explicit case analysis, yet we've reverted
+back to explicit case analysis here. It turns out, there are <i>multiple</i> ways to
+reduce explicit case analysis. Combinators aren't the only way.</p>
+<br>
+<h2>The <code>try€</code> macro</h2>
+<br>
+<p>A cornerstone of error handling in Rust is the <code>try€</code> macro. The <code>try€</code> macro
+abstracts case analysis like combinators, but unlike combinators, it also
+abstracts <i>control flow</i>. Namely, it can abstract the <i>early return</i> pattern
+seen above.</p>
+<br>
+<p>Here is a simplified definition of a <code>try€</code> macro:</p>
+<br>
+<p><span id="code-try-def-simple"></span></p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! try {"></div><div data-l="    ($e:expr) =&gt; (match $e {"></div><div data-l="        Ok(val) =&gt; val,"></div><div data-l="        Err(err) =&gt; return Err(err),"></div><div data-l="    });"></div><div data-l="}"></div></div>
+<br>
+<p>(The <a href="#2../../std/macro.try.html">real definition</a> is a bit more
+sophisticated. We will address that later.)</p>
+<br>
+<p>Using the <code>try€</code> macro makes it very easy to simplify our last example. Since
+it does the case analysis and the early return for us, we get tighter code that
+is easier to read:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, String&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path).map_err(|e| e.to_string()));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents).map_err(|e| e.to_string()));"></div><div data-l="    let n = try!(contents.trim().parse::&lt;i32&gt;().map_err(|e| e.to_string()));"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match file_double(&quot;foobar&quot;) {"></div><div data-l="        Ok(n) =&gt; println!(&quot;{}&quot;, n),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>map_err</code> calls are still necessary given
+<a href="#2#code-try-def-simple">our definition of <code>try€</code></a>.
+This is because the error types still need to be converted to <code>String</code>.
+The good news is that we will soon learn how to remove those <code>map_err</code> calls!
+The bad news is that we will need to learn a bit more about a couple important
+traits in the standard library before we can remove the <code>map_err</code> calls.</p>
+<br>
+<h2>Defining your own error type</h2>
+<br>
+<p>Before we dive into some of the standard library error traits, I'd like to wrap
+up this section by removing the use of <code>String</code> as our error type in the
+previous examples.</p>
+<br>
+<p>Using <code>String</code> as we did in our previous examples is convenient because it's
+easy to convert errors to strings, or even make up your own errors as strings
+on the spot. However, using <code>String</code> for your errors has some downsides.</p>
+<br>
+<p>The first downside is that the error messages tend to clutter your
+code. It's possible to define the error messages elsewhere, but unless
+you're unusually disciplined, it is very tempting to embed the error
+message into your code. Indeed, we did exactly this in a <a class="notranslate" href="#2#code-error-double-string">previous
+example</a>.</p>
+<br>
+<p>The second and more important downside is that <code>String</code>s are <i>lossy</i>. That is,
+if all errors are converted to strings, then the errors we pass to the caller
+become completely opaque. The only reasonable thing the caller can do with a
+<code>String</code> error is show it to the user. Certainly, inspecting the string to
+determine the type of error is not robust. (Admittedly, this downside is far
+more important inside of a library as opposed to, say, an application.)</p>
+<br>
+<p>For example, the <code>io::Error</code> type embeds an
+<a class="notranslate" href="#2../../std/io/enum.ErrorKind.html"><code>io::ErrorKind</code></a>,
+which is <i>structured data</i> that represents what went wrong during an IO
+operation. This is important because you might want to react differently
+depending on the error. (e.g., A <code>BrokenPipe</code> error might mean quitting your
+program gracefully while a <code>NotFound</code> error might mean exiting with an error
+code and showing an error to the user.) With <code>io::ErrorKind</code>, the caller can
+examine the type of an error with case analysis, which is strictly superior
+to trying to tease out the details of an error inside of a <code>String</code>.</p>
+<br>
+<p>Instead of using a <code>String</code> as an error type in our previous example of reading
+an integer from a file, we can define our own error type that represents errors
+with <i>structured data</i>. We endeavor to not drop information from underlying
+errors in case the caller wants to inspect the details.</p>
+<br>
+<p>The ideal way to represent <i>one of many possibilities</i> is to define our own
+sum type using <code>enum</code>. In our case, an error is either an <code>io::Error</code> or a
+<code>num::ParseIntError</code>, so a natural definition arises:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::io;"></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="#// We derive `Debug` because all types should probably derive `Debug`."></div><div data-l="#// This gives us a reasonable human-readable description of `CliError` values."></div><div data-l="// ">We derive <code>Debug</code> because all types should probably derive <code>Debug</code>. This gives us a reasonable human-readable description of <code>CliError</code> values.</div><div data-l="#[derive(Debug)]"></div><div data-l="enum CliError {"></div><div data-l="    Io(io::Error),"></div><div data-l="    Parse(num::ParseIntError),"></div><div data-l="}"></div></div>
+<br>
+<p>Tweaking our code is very easy. Instead of converting errors to strings, we
+simply convert them to our <code>CliError</code> type using the corresponding value
+constructor:</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Debug)]"></div><div data-l="# enum CliError { Io(::std::io::Error), Parse(::std::num::ParseIntError) }"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, CliError&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path).map_err(CliError::Io));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents).map_err(CliError::Io));"></div><div data-l="    let n: i32 = try!(contents.trim().parse().map_err(CliError::Parse));"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match file_double(&quot;foobar&quot;) {"></div><div data-l="        Ok(n) =&gt; println!(&quot;{}&quot;, n),"></div><div data-l="        Err(err) =&gt; println!(&quot;Error: {:?}&quot;, err),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The only change here is switching <code>map_err(|e| e.to_string())</code> (which converts
+errors to strings) to <code>map_err(CliError::Io)</code> or <code>map_err(CliError::Parse)</code>.
+The <i>caller</i> gets to decide the level of detail to report to the user. In
+effect, using a <code>String</code> as an error type removes choices from the caller while
+using a custom <code>enum</code> error type like <code>CliError</code> gives the caller all of the
+conveniences as before in addition to <i>structured data</i> describing the error.</p>
+<br>
+<p>A rule of thumb is to define your own error type, but a <code>String</code> error type
+will do in a pinch, particularly if you're writing an application. If you're
+writing a library, defining your own error type should be strongly preferred so
+that you don't remove choices from the caller unnecessarily.</p>
+<br>
+<h1>Standard library traits used for error handling</h1>
+<br>
+<p>The standard library defines two integral traits for error handling:
+<a class="notranslate" href="#2../../std/error/trait.Error.html"><code>std::error::Error</code></a> and
+<a class="notranslate" href="#2../../std/convert/trait.From.html"><code>std::convert::From</code></a>. While <code>Error</code>
+is designed specifically for generically describing errors, the <code>From</code>
+trait serves a more general role for converting values between two
+distinct types.</p>
+<br>
+<h2>The <code>Error</code> trait</h2>
+<br>
+<p>The <code>Error</code> trait is <a href="#2../../std/error/trait.Error.html">defined in the standard
+library</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::{Debug, Display};"></div><div data-l=""></div><div data-l="trait Error: Debug + Display {"></div><div data-l="#//  /// The lower level cause of this error, if any."></div><div data-l="  /// ">The lower level cause of this error, if any.</div><div data-l="  fn cause(&amp;self) -&gt; Option&lt;&amp;Error&gt; { None }"></div><div data-l="}"></div></div>
+<br>
+<p>This trait is super generic because it is meant to be implemented for <i>all</i>
+types that represent errors. This will prove useful for writing composable code
+as we'll see later. Otherwise, the trait allows you to do at least the
+following things:</p>
+<br>
+<div data-b="*">Obtain a <code>Debug</code> representation of the error.</div>
+<div data-b="*">Obtain a user-facing <code>Display</code> representation of the error.</div>
+<div data-b="*">Inspect the causal chain of an error, if one exists (via the <code>cause</code> method).</div>
+<br>
+<p>The first two are a result of <code>Error</code> requiring impls for both <code>Debug</code> and
+<code>Display</code>. The latter two are from the two methods defined on <code>Error</code>. The
+power of <code>Error</code> comes from the fact that all error types impl <code>Error</code>, which
+means errors can be existentially quantified as a
+<a href="#2trait-objects.html">trait object</a>.
+This manifests as either <code>Box&lt;Error&gt;</code> or <code>&amp;Error</code>. Indeed, the <code>cause</code> method
+returns an <code>&amp;Error</code>, which is itself a trait object. We'll revisit the
+<code>Error</code> trait's utility as a trait object later.</p>
+<br>
+<p>For now, it suffices to show an example implementing the <code>Error</code> trait. Let's
+use the error type we defined in the
+<a href="#2#defining-your-own-error-type">previous section</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::io;"></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="#// We derive `Debug` because all types should probably derive `Debug`."></div><div data-l="#// This gives us a reasonable human-readable description of `CliError` values."></div><div data-l="// ">We derive <code>Debug</code> because all types should probably derive <code>Debug</code>. This gives us a reasonable human-readable description of <code>CliError</code> values.</div><div data-l="#[derive(Debug)]"></div><div data-l="enum CliError {"></div><div data-l="    Io(io::Error),"></div><div data-l="    Parse(num::ParseIntError),"></div><div data-l="}"></div></div>
+<br>
+<p>This particular error type represents the possibility of two types of errors
+occurring: an error dealing with I/O or an error converting a string to a
+number. The error could represent as many error types as you want by adding new
+variants to the <code>enum</code> definition.</p>
+<br>
+<p>Implementing <code>Error</code> is pretty straight-forward. It's mostly going to be a lot
+explicit case analysis.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::error;"></div><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="impl fmt::Display for CliError {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        match *self {"></div><div data-l="#            // Both underlying errors already impl `Display`, so we defer to"></div><div data-l="#            // their implementations."></div><div data-l="            // ">Both underlying errors already impl <code>Display</code>, so we defer to their implementations.</div><div data-l="            CliError::Io(ref err) =&gt; write!(f, &quot;IO error: {}&quot;, err),"></div><div data-l="            CliError::Parse(ref err) =&gt; write!(f, &quot;Parse error: {}&quot;, err),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl error::Error for CliError {"></div><div data-l="    fn cause(&amp;self) -&gt; Option&lt;&amp;error::Error&gt; {"></div><div data-l="        match *self {"></div><div data-l="#            // N.B. Both of these implicitly cast `err` from their concrete"></div><div data-l="#            // types (either `&amp;io::Error` or `&amp;num::ParseIntError`)"></div><div data-l="#            // to a trait object `&amp;Error`. This works because both error types"></div><div data-l="#            // implement `Error`."></div><div data-l="            // ">N.B. Both of these implicitly cast <code>err</code> from their concrete types (either <code>&amp;io::Error</code> or <code>&amp;num::ParseIntError</code>) to a trait object <code>&amp;Error</code>. This works because both error types implement <code>Error</code>.</div><div data-l="            CliError::Io(ref err) =&gt; Some(err),"></div><div data-l="            CliError::Parse(ref err) =&gt; Some(err),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We note that this is a very typical implementation of <code>Error</code>: match on your
+different error types and satisfy the contracts defined for <code>cause</code>.</p>
+<br>
+<h2>The <code>From</code> trait</h2>
+<br>
+<p>The <code>std::convert::From</code> trait is
+<a href="#2../../std/convert/trait.From.html">defined in the standard
+library</a>:</p>
+<br>
+<p><span id="code-from-def"></span></p>
+<br>
+<div data-lang="rust"><div data-l="trait From&lt;T&gt; {"></div><div data-l="    fn from(T) -&gt; Self;"></div><div data-l="}"></div></div>
+<br>
+<p>Deliciously simple, yes? <code>From</code> is very useful because it gives us a generic
+way to talk about conversion <i>from</i> a particular type <code>T</code> to some other type
+(in this case, “some other type” is the subject of the impl, or <code>Self</code>).
+The crux of <code>From</code> is the
+<a href="#2../../std/convert/trait.From.html">set of implementations provided by the standard
+library</a>.</p>
+<br>
+<p>Here are a few simple examples demonstrating how <code>From</code> works:</p>
+<br>
+<div data-lang="rust"><div data-l="let string: String = From::from(&quot;foo&quot;);"></div><div data-l="let bytes: Vec&lt;u8&gt; = From::from(&quot;foo&quot;);"></div><div data-l="let cow: ::std::borrow::Cow&lt;str&gt; = From::from(&quot;foo&quot;);"></div></div>
+<br>
+<p>OK, so <code>From</code> is useful for converting between strings. But what about errors?
+It turns out, there is one critical impl:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;'a, E: Error + 'a&gt; From&lt;E&gt; for Box&lt;Error + 'a&gt;"></div></div>
+<br>
+<p>This impl says that for <i>any</i> type that impls <code>Error</code>, we can convert it to a
+trait object <code>Box&lt;Error&gt;</code>. This may not seem terribly surprising, but it is
+useful in a generic context.</p>
+<br>
+<p>Remember the two errors we were dealing with previously? Specifically,
+<code>io::Error</code> and <code>num::ParseIntError</code>. Since both impl <code>Error</code>, they work with
+<code>From</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::error::Error;"></div><div data-l="use std::fs;"></div><div data-l="use std::io;"></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="#// We have to jump through some hoops to actually get error values:"></div><div data-l="// ">We have to jump through some hoops to actually get error values:</div><div data-l="let io_err: io::Error = io::Error::last_os_error();"></div><div data-l="let parse_err: num::ParseIntError = &quot;not a number&quot;.parse::&lt;i32&gt;().unwrap_err();"></div><div data-l=""></div><div data-l="#// OK, here are the conversions:"></div><div data-l="// ">OK, here are the conversions:</div><div data-l="let err1: Box&lt;Error&gt; = From::from(io_err);"></div><div data-l="let err2: Box&lt;Error&gt; = From::from(parse_err);"></div></div>
+<br>
+<p>There is a really important pattern to recognize here. Both <code>err1</code> and <code>err2</code>
+have the <i>same type</i>. This is because they are existentially quantified types,
+or trait objects. In particular, their underlying type is <i>erased</i> from the
+compiler's knowledge, so it truly sees <code>err1</code> and <code>err2</code> as exactly the same.
+Additionally, we constructed <code>err1</code> and <code>err2</code> using precisely the same
+function call: <code>From::from</code>. This is because <code>From::from</code> is overloaded on both
+its argument and its return type.</p>
+<br>
+<p>This pattern is important because it solves a problem we had earlier: it gives
+us a way to reliably convert errors to the same type using the same function.</p>
+<br>
+<p>Time to revisit an old friend; the <code>try€</code> macro.</p>
+<br>
+<h2>The real <code>try€</code> macro</h2>
+<br>
+<p>Previously, we presented this definition of <code>try€</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! try {"></div><div data-l="    ($e:expr) =&gt; (match $e {"></div><div data-l="        Ok(val) =&gt; val,"></div><div data-l="        Err(err) =&gt; return Err(err),"></div><div data-l="    });"></div><div data-l="}"></div></div>
+<br>
+<p>This is not its real definition. Its real definition is
+<a href="#2../../std/macro.try.html">in the standard library</a>:</p>
+<br>
+<p><span id="code-try-def"></span></p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! try {"></div><div data-l="    ($e:expr) =&gt; (match $e {"></div><div data-l="        Ok(val) =&gt; val,"></div><div data-l="        Err(err) =&gt; return Err(::std::convert::From::from(err)),"></div><div data-l="    });"></div><div data-l="}"></div></div>
+<br>
+<p>There's one tiny but powerful change: the error value is passed through
+<code>From::from</code>. This makes the <code>try€</code> macro much more powerful because it gives
+you automatic type conversion for free.</p>
+<br>
+<p>Armed with our more powerful <code>try€</code> macro, let's take a look at code we wrote
+previously to read a file and convert its contents to an integer:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, String&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path).map_err(|e| e.to_string()));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents).map_err(|e| e.to_string()));"></div><div data-l="    let n = try!(contents.trim().parse::&lt;i32&gt;().map_err(|e| e.to_string()));"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div></div>
+<br>
+<p>Earlier, we promised that we could get rid of the <code>map_err</code> calls. Indeed, all
+we have to do is pick a type that <code>From</code> works with. As we saw in the previous
+section, <code>From</code> has an impl that lets it convert any error type into a
+<code>Box&lt;Error&gt;</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::error::Error;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, Box&lt;Error&gt;&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents));"></div><div data-l="    let n = try!(contents.trim().parse::&lt;i32&gt;());"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div></div>
+<br>
+<p>We are getting very close to ideal error handling. Our code has very little
+overhead as a result from error handling because the <code>try€</code> macro encapsulates
+three things simultaneously:</p>
+<br>
+<div data-b="1.">Case analysis.</div>
+<div data-b="2.">Control flow.</div>
+<div data-b="3.">Error type conversion.</div>
+<br>
+<p>When all three things are combined, we get code that is unencumbered by
+combinators, calls to <code>unwrap</code> or case analysis.</p>
+<br>
+<p>There's one little nit left: the <code>Box&lt;Error&gt;</code> type is <i>opaque</i>. If we
+return a <code>Box&lt;Error&gt;</code> to the caller, the caller can't (easily) inspect
+underlying error type. The situation is certainly better than <code>String</code>
+because the caller can call methods like
+<a class="notranslate" href="#2../../std/error/trait.Error.html#method.cause"><code>cause</code></a>, but the
+limitation remains: <code>Box&lt;Error&gt;</code> is opaque. (N.B. This isn't entirely
+true because Rust does have runtime reflection, which is useful in
+some scenarios that are <a href="#2https://crates.io/crates/error">beyond the scope of this
+section</a>.)</p>
+<br>
+<p>It's time to revisit our custom <code>CliError</code> type and tie everything together.</p>
+<br>
+<h2>Composing custom error types</h2>
+<br>
+<p>In the last section, we looked at the real <code>try€</code> macro and how it does
+automatic type conversion for us by calling <code>From::from</code> on the error value.
+In particular, we converted errors to <code>Box&lt;Error&gt;</code>, which works, but the type
+is opaque to callers.</p>
+<br>
+<p>To fix this, we use the same remedy that we're already familiar with: a custom
+error type. Once again, here is the code that reads the contents of a file and
+converts it to an integer:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fs::File;"></div><div data-l="use std::io::{self, Read};"></div><div data-l="use std::num;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="#// We derive `Debug` because all types should probably derive `Debug`."></div><div data-l="#// This gives us a reasonable human-readable description of `CliError` values."></div><div data-l="// ">We derive <code>Debug</code> because all types should probably derive <code>Debug</code>. This gives us a reasonable human-readable description of <code>CliError</code> values.</div><div data-l="#[derive(Debug)]"></div><div data-l="enum CliError {"></div><div data-l="    Io(io::Error),"></div><div data-l="    Parse(num::ParseIntError),"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn file_double_verbose&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, CliError&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path).map_err(CliError::Io));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents).map_err(CliError::Io));"></div><div data-l="    let n: i32 = try!(contents.trim().parse().map_err(CliError::Parse));"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div></div>
+<br>
+<p>Notice that we still have the calls to <code>map_err</code>. Why? Well, recall the
+definitions of <a class="notranslate" href="#2#code-try-def"><code>try€</code></a> and <a class="notranslate" href="#2#code-from-def"><code>From</code></a>. The
+problem is that there is no <code>From</code> impl that allows us to convert from error
+types like <code>io::Error</code> and <code>num::ParseIntError</code> to our own custom <code>CliError</code>.
+Of course, it is easy to fix this! Since we defined <code>CliError</code>, we can impl
+<code>From</code> with it:</p>
+<br>
+<div data-lang="rust"><div data-l="# #[derive(Debug)]"></div><div data-l="# enum CliError { Io(io::Error), Parse(num::ParseIntError) }"></div><div data-l="use std::io;"></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="impl From&lt;io::Error&gt; for CliError {"></div><div data-l="    fn from(err: io::Error) -&gt; CliError {"></div><div data-l="        CliError::Io(err)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl From&lt;num::ParseIntError&gt; for CliError {"></div><div data-l="    fn from(err: num::ParseIntError) -&gt; CliError {"></div><div data-l="        CliError::Parse(err)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>All these impls are doing is teaching <code>From</code> how to create a <code>CliError</code> from
+other error types. In our case, construction is as simple as invoking the
+corresponding value constructor. Indeed, it is <i>typically</i> this easy.</p>
+<br>
+<p>We can finally rewrite <code>file_double</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# use std::io;"></div><div data-l="# use std::num;"></div><div data-l="# enum CliError { Io(::std::io::Error), Parse(::std::num::ParseIntError) }"></div><div data-l="# impl From&lt;io::Error&gt; for CliError {"></div><div data-l="#     fn from(err: io::Error) -&gt; CliError { CliError::Io(err) }"></div><div data-l="# }"></div><div data-l="# impl From&lt;num::ParseIntError&gt; for CliError {"></div><div data-l="#     fn from(err: num::ParseIntError) -&gt; CliError { CliError::Parse(err) }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn file_double&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P) -&gt; Result&lt;i32, CliError&gt; {"></div><div data-l="    let mut file = try!(File::open(file_path));"></div><div data-l="    let mut contents = String::new();"></div><div data-l="    try!(file.read_to_string(&amp;mut contents));"></div><div data-l="    let n: i32 = try!(contents.trim().parse());"></div><div data-l="    Ok(2 * n)"></div><div data-l="}"></div></div>
+<br>
+<p>The only thing we did here was remove the calls to <code>map_err</code>. They are no
+longer needed because the <code>try€</code> macro invokes <code>From::from</code> on the error value.
+This works because we've provided <code>From</code> impls for all the error types that
+could appear.</p>
+<br>
+<p>If we modified our <code>file_double</code> function to perform some other operation, say,
+convert a string to a float, then we'd need to add a new variant to our error
+type:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::io;"></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="enum CliError {"></div><div data-l="    Io(io::Error),"></div><div data-l="    ParseInt(num::ParseIntError),"></div><div data-l="    ParseFloat(num::ParseFloatError),"></div><div data-l="}"></div></div>
+<br>
+<p>And add a new <code>From</code> impl:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum CliError {"></div><div data-l="#     Io(::std::io::Error),"></div><div data-l="#     ParseInt(num::ParseIntError),"></div><div data-l="#     ParseFloat(num::ParseFloatError),"></div><div data-l="# }"></div><div data-l=""></div><div data-l="use std::num;"></div><div data-l=""></div><div data-l="impl From&lt;num::ParseFloatError&gt; for CliError {"></div><div data-l="    fn from(err: num::ParseFloatError) -&gt; CliError {"></div><div data-l="        CliError::ParseFloat(err)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And that's it!</p>
+<br>
+<h2>Advice for library writers</h2>
+<br>
+<p>If your library needs to report custom errors, then you should
+probably define your own error type. It's up to you whether or not to
+expose its representation (like
+<a class="notranslate" href="#2../../std/io/enum.ErrorKind.html"><code>ErrorKind</code></a>) or keep it hidden (like
+<a class="notranslate" href="#2../../std/num/struct.ParseIntError.html"><code>ParseIntError</code></a>). Regardless
+of how you do it, it's usually good practice to at least provide some
+information about the error beyond its <code>String</code>
+representation. But certainly, this will vary depending on use cases.</p>
+<br>
+<p>At a minimum, you should probably implement the
+<a class="notranslate" href="#2../../std/error/trait.Error.html"><code>Error</code></a>
+trait. This will give users of your library some minimum flexibility for
+<a href="#2#the-real-try-macro">composing errors</a>. Implementing the <code>Error</code> trait also
+means that users are guaranteed the ability to obtain a string representation
+of an error (because it requires impls for both <code>fmt::Debug</code> and
+<code>fmt::Display</code>).</p>
+<br>
+<p>Beyond that, it can also be useful to provide implementations of <code>From</code> on your
+error types. This allows you (the library author) and your users to
+<a href="#2#composing-custom-error-types">compose more detailed errors</a>. For example,
+<a class="notranslate" href="#2http://burntsushi.net/rustdoc/csv/enum.Error.html"><code>csv::Error</code></a>
+provides <code>From</code> impls for both <code>io::Error</code> and <code>byteorder::Error</code>.</p>
+<br>
+<p>Finally, depending on your tastes, you may also want to define a
+<a href="#2#the-result-type-alias-idiom"><code>Result</code> type alias</a>, particularly if your
+library defines a single error type. This is used in the standard library
+for <a class="notranslate" href="#2../../std/io/type.Result.html"><code>io::Result</code></a>
+and <a class="notranslate" href="#2../../std/fmt/type.Result.html"><code>fmt::Result</code></a>.</p>
+<br>
+<h1>Case study: A program to read population data</h1>
+<br>
+<p>This section was long, and depending on your background, it might be
+rather dense. While there is plenty of example code to go along with
+the prose, most of it was specifically designed to be pedagogical. So,
+we're going to do something new: a case study.</p>
+<br>
+<p>For this, we're going to build up a command line program that lets you
+query world population data. The objective is simple: you give it a location
+and it will tell you the population. Despite the simplicity, there is a lot
+that can go wrong!</p>
+<br>
+<p>The data we'll be using comes from the <a href="#311">Data Science
+Toolkit</a>. I've prepared some data from it for this exercise. You
+can either grab the <a href="#312">world population data</a> (41MB gzip compressed,
+145MB uncompressed) or only the <a href="#313">US population data</a> (2.2MB gzip
+compressed, 7.2MB uncompressed).</p>
+<br>
+<p>Up until now, we've kept the code limited to Rust's standard library. For a real
+task like this though, we'll want to at least use something to parse CSV data,
+parse the program arguments and decode that stuff into Rust types automatically. For that, we'll use the
+<a class="notranslate" href="#2https://crates.io/crates/csv"><code>csv</code></a>,
+and <a class="notranslate" href="#2https://crates.io/crates/rustc-serialize"><code>rustc-serialize</code></a> crates.</p>
+<br>
+<h2>Initial setup</h2>
+<br>
+<p>We're not going to spend a lot of time on setting up a project with
+Cargo because it is already covered well in <a href="#2getting-started.html#hello-cargo">the Cargo
+section</a> and <a href="#314">Cargo's documentation</a>.</p>
+<br>
+<p>To get started from scratch, run <code>cargo new --bin city-pop</code> and make sure your
+<code>Cargo.toml</code> looks something like this:</p>
+<br>
+<div data-lang="text"><div data-l="[package]"></div><div data-l="name = &quot;city-pop&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Andrew Gallant &lt;jamslam@gmail.com&gt;&quot;]"></div><div data-l=""></div><div data-l="[[bin]]"></div><div data-l="name = &quot;city-pop&quot;"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="csv = &quot;0.*&quot;"></div><div data-l="rustc-serialize = &quot;0.*&quot;"></div><div data-l="getopts = &quot;0.*&quot;"></div></div>
+<br>
+<p>You should already be able to run:</p>
+<br>
+<div data-lang="text"><div data-l="cargo build --release"></div><div data-l="./target/release/city-pop"></div><div data-l="# Outputs: Hello, world!"></div></div>
+<br>
+<h2>Argument parsing</h2>
+<br>
+<p>Let's get argument parsing out of the way. We won't go into too much
+detail on Getopts, but there is <a href="#315">some good documentation</a>
+describing it. The short story is that Getopts generates an argument
+parser and a help message from a vector of options (The fact that it
+is a vector is hidden behind a struct and a set of methods). Once the
+parsing is done, the parser returns a struct that records matches
+for defined options, and remaining &quot;free&quot; arguments.
+From there, we can get information about the flags, for
+instance, whether they were passed in, and what arguments they
+had. Here's our program with the appropriate <code>extern crate</code>
+statements, and the basic argument setup for Getopts:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate getopts;"></div><div data-l="extern crate rustc_serialize;"></div><div data-l=""></div><div data-l="use getopts::Options;"></div><div data-l="use std::env;"></div><div data-l=""></div><div data-l="fn print_usage(program: &amp;str, opts: Options) {"></div><div data-l="    println!(&quot;{}&quot;, opts.usage(&amp;format!(&quot;Usage: {} [options] &lt;data-path&gt; &lt;city&gt;&quot;, program)));"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let args: Vec&lt;String&gt; = env::args().collect();"></div><div data-l="    let program = &amp;args[0];"></div><div data-l=""></div><div data-l="    let mut opts = Options::new();"></div><div data-l="    opts.optflag(&quot;h&quot;, &quot;help&quot;, &quot;Show this usage message.&quot;);"></div><div data-l=""></div><div data-l="    let matches = match opts.parse(&amp;args[1..]) {"></div><div data-l="        Ok(m)  =&gt; { m }"></div><div data-l="        Err(e) =&gt; { panic!(e.to_string()) }"></div><div data-l="    };"></div><div data-l="    if matches.opt_present(&quot;h&quot;) {"></div><div data-l="        print_usage(&amp;program, opts);"></div><div data-l="        return;"></div><div data-l="    }"></div><div data-l="    let data_path = &amp;matches.free[0];"></div><div data-l="    let city: &amp;str = &amp;matches.free[1];"></div><div data-l=""></div><div data-l="#    // Do stuff with information."></div><div data-l="    // ">Do stuff with information.</div><div data-l="}"></div></div>
+<br>
+<p>First, we get a vector of the arguments passed into our program. We
+then store the first one, knowing that it is our program's name. Once
+that's done, we set up our argument flags, in this case a simplistic
+help message flag. Once we have the argument flags set up, we use
+<code>Options.parse</code> to parse the argument vector (starting from index one,
+because index 0 is the program name). If this was successful, we
+assign matches to the parsed object, if not, we panic. Once past that,
+we test if the user passed in the help flag, and if so print the usage
+message. The option help messages are constructed by Getopts, so all
+we have to do to print the usage message is tell it what we want it to
+print for the program name and template. If the user has not passed in
+the help flag, we assign the proper variables to their corresponding
+arguments.</p>
+<br>
+<h2>Writing the logic</h2>
+<br>
+<p>We all write code differently, but error handling is usually the last thing we
+want to think about. This isn't great for the overall design of a program, but
+it can be useful for rapid prototyping. Because Rust forces us to be explicit
+about error handling (by making us call <code>unwrap</code>), it is easy to see which
+parts of our program can cause errors.</p>
+<br>
+<p>In this case study, the logic is really simple. All we need to do is parse the
+CSV data given to us and print out a field in matching rows. Let's do it. (Make
+sure to add <code>extern crate csv;</code> to the top of your file.)</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fs::File;"></div><div data-l=""></div><div data-l="#// This struct represents the data in each row of the CSV file."></div><div data-l="#// Type based decoding absolves us of a lot of the nitty-gritty error"></div><div data-l="#// handling, like parsing strings as integers or floats."></div><div data-l="// ">This struct represents the data in each row of the CSV file. Type based decoding absolves us of a lot of the nitty-gritty error handling, like parsing strings as integers or floats.</div><div data-l="#[derive(Debug, RustcDecodable)]"></div><div data-l="struct Row {"></div><div data-l="    country: String,"></div><div data-l="    city: String,"></div><div data-l="    accent_city: String,"></div><div data-l="    region: String,"></div><div data-l=""></div><div data-l="#    // Not every row has data for the population, latitude or longitude!"></div><div data-l="#    // So we express them as `Option` types, which admits the possibility of"></div><div data-l="#    // absence. The CSV parser will fill in the correct value for us."></div><div data-l="    // ">Not every row has data for the population, latitude or longitude! So we express them as <code>Option</code> types, which admits the possibility of absence. The CSV parser will fill in the correct value for us.</div><div data-l="    population: Option&lt;u64&gt;,"></div><div data-l="    latitude: Option&lt;f64&gt;,"></div><div data-l="    longitude: Option&lt;f64&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print_usage(program: &amp;str, opts: Options) {"></div><div data-l="    println!(&quot;{}&quot;, opts.usage(&amp;format!(&quot;Usage: {} [options] &lt;data-path&gt; &lt;city&gt;&quot;, program)));"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let args: Vec&lt;String&gt; = env::args().collect();"></div><div data-l="    let program = &amp;args[0];"></div><div data-l=""></div><div data-l="    let mut opts = Options::new();"></div><div data-l="    opts.optflag(&quot;h&quot;, &quot;help&quot;, &quot;Show this usage message.&quot;);"></div><div data-l=""></div><div data-l="    let matches = match opts.parse(&amp;args[1..]) {"></div><div data-l="        Ok(m)  =&gt; { m }"></div><div data-l="        Err(e) =&gt; { panic!(e.to_string()) }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    if matches.opt_present(&quot;h&quot;) {"></div><div data-l="        print_usage(&amp;program, opts);"></div><div data-l="        return;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let data_path = &amp;matches.free[0];"></div><div data-l="    let city: &amp;str = &amp;matches.free[1];"></div><div data-l=""></div><div data-l="    let file = File::open(data_path).unwrap();"></div><div data-l="    let mut rdr = csv::Reader::from_reader(file);"></div><div data-l=""></div><div data-l="    for row in rdr.decode::&lt;Row&gt;() {"></div><div data-l="        let row = row.unwrap();"></div><div data-l=""></div><div data-l="        if row.city == city {"></div><div data-l="            println!(&quot;{}, {}: {:?}&quot;,"></div><div data-l="                row.city, row.country,"></div><div data-l="                row.population.expect(&quot;population count&quot;));"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Let's outline the errors. We can start with the obvious: the three places that
+<code>unwrap</code> is called:</p>
+<br>
+<div data-b="1."><a class="notranslate" href="#2../../std/fs/struct.File.html#method.open"><code>File::open</code></a>
+ can return an
+ <a class="notranslate" href="#2../../std/io/struct.Error.html"><code>io::Error</code></a>.</div>
+<div data-b="2."><a class="notranslate" href="#2http://burntsushi.net/rustdoc/csv/struct.Reader.html#method.decode"><code>csv::Reader::decode</code></a>
+ decodes one record at a time, and
+ <a href="#2http://burntsushi.net/rustdoc/csv/struct.DecodedRecords.html">decoding a
+   record</a>
+ (look at the <code>Item</code> associated type on the <code>Iterator</code> impl)
+ can produce a
+ <a class="notranslate" href="#2http://burntsushi.net/rustdoc/csv/enum.Error.html"><code>csv::Error</code></a>.</div>
+<div data-b="3.">If <code>row.population</code> is <code>None</code>, then calling <code>expect</code> will panic.</div>
+<br>
+<p>Are there any others? What if we can't find a matching city? Tools like <code>grep</code>
+will return an error code, so we probably should too. So we have logic errors
+specific to our problem, IO errors and CSV parsing errors. We're going to
+explore two different ways to approach handling these errors.</p>
+<br>
+<p>I'd like to start with <code>Box&lt;Error&gt;</code>. Later, we'll see how defining our own
+error type can be useful.</p>
+<br>
+<h2>Error handling with <code>Box&lt;Error&gt;</code></h2>
+<br>
+<p><code>Box&lt;Error&gt;</code> is nice because it <i>just works</i>. You don't need to define your own
+error types and you don't need any <code>From</code> implementations. The downside is that
+since <code>Box&lt;Error&gt;</code> is a trait object, it <i>erases the type</i>, which means the
+compiler can no longer reason about its underlying type.</p>
+<br>
+<p><a class="notranslate" href="#2#the-limits-of-combinators">Previously</a> we started refactoring our code by
+changing the type of our function from <code>T</code> to <code>Result&lt;T, OurErrorType&gt;</code>. In
+this case, <code>OurErrorType</code> is only <code>Box&lt;Error&gt;</code>. But what's <code>T</code>? And can we add
+a return type to <code>main</code>?</p>
+<br>
+<p>The answer to the second question is no, we can't. That means we'll need to
+write a new function. But what is <code>T</code>? The simplest thing we can do is to
+return a list of matching <code>Row</code> values as a <code>Vec&lt;Row&gt;</code>. (Better code would
+return an iterator, but that is left as an exercise to the reader.)</p>
+<br>
+<p>Let's refactor our code into its own function, but keep the calls to <code>unwrap</code>.
+Note that we opt to handle the possibility of a missing population count by
+simply ignoring that row.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="struct Row {"></div><div data-l="#    // This struct remains unchanged."></div><div data-l="    // ">This struct remains unchanged.</div><div data-l="}"></div><div data-l=""></div><div data-l="struct PopulationCount {"></div><div data-l="    city: String,"></div><div data-l="    country: String,"></div><div data-l="#    // This is no longer an `Option` because values of this type are only"></div><div data-l="#    // constructed if they have a population count."></div><div data-l="    // ">This is no longer an <code>Option</code> because values of this type are only constructed if they have a population count.</div><div data-l="    count: u64,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print_usage(program: &amp;str, opts: Options) {"></div><div data-l="    println!(&quot;{}&quot;, opts.usage(&amp;format!(&quot;Usage: {} [options] &lt;data-path&gt; &lt;city&gt;&quot;, program)));"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn search&lt;P: AsRef&lt;Path&gt;&gt;(file_path: P, city: &amp;str) -&gt; Vec&lt;PopulationCount&gt; {"></div><div data-l="    let mut found = vec![];"></div><div data-l="    let file = File::open(file_path).unwrap();"></div><div data-l="    let mut rdr = csv::Reader::from_reader(file);"></div><div data-l="    for row in rdr.decode::&lt;Row&gt;() {"></div><div data-l="        let row = row.unwrap();"></div><div data-l="        match row.population {"></div><div data-l="#//            None =&gt; { } // Skip it."></div><div data-l="            None =&gt; { } // ">Skip it.</div><div data-l="            Some(count) =&gt; if row.city == city {"></div><div data-l="                found.push(PopulationCount {"></div><div data-l="                    city: row.city,"></div><div data-l="                    country: row.country,"></div><div data-l="                    count: count,"></div><div data-l="                });"></div><div data-l="            },"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    found"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let args: Vec&lt;String&gt; = env::args().collect();"></div><div data-l="    let program = &amp;args[0];"></div><div data-l=""></div><div data-l="    let mut opts = Options::new();"></div><div data-l="    opts.optflag(&quot;h&quot;, &quot;help&quot;, &quot;Show this usage message.&quot;);"></div><div data-l=""></div><div data-l="    let matches = match opts.parse(&amp;args[1..]) {"></div><div data-l="        Ok(m)  =&gt; { m }"></div><div data-l="        Err(e) =&gt; { panic!(e.to_string()) }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    if matches.opt_present(&quot;h&quot;) {"></div><div data-l="        print_usage(&amp;program, opts);"></div><div data-l="        return;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let data_path = &amp;matches.free[0];"></div><div data-l="    let city: &amp;str = &amp;matches.free[1];"></div><div data-l=""></div><div data-l="    for pop in search(data_path, city) {"></div><div data-l="        println!(&quot;{}, {}: {:?}&quot;, pop.city, pop.country, pop.count);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div></div>
+<br>
+<p>While we got rid of one use of <code>expect</code> (which is a nicer variant of <code>unwrap</code>),
+we still should handle the absence of any search results.</p>
+<br>
+<p>To convert this to proper error handling, we need to do the following:</p>
+<br>
+<div data-b="1.">Change the return type of <code>search</code> to be <code>Result&lt;Vec&lt;PopulationCount&gt;,
+   Box&lt;Error&gt;&gt;</code>.</div>
+<div data-b="2.">Use the <a href="#2#code-try-def"><code>try€</code> macro</a> so that errors are returned to the
+ caller instead of panicking the program.</div>
+<div data-b="3.">Handle the error in <code>main</code>.</div>
+<br>
+<p>Let's try it:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::error::Error;"></div><div data-l=""></div><div data-l="#// The rest of the code before this is unchanged."></div><div data-l="// ">The rest of the code before this is unchanged.</div><div data-l=""></div><div data-l="fn search&lt;P: AsRef&lt;Path&gt;&gt;"></div><div data-l="         (file_path: P, city: &amp;str)"></div><div data-l="         -&gt; Result&lt;Vec&lt;PopulationCount&gt;, Box&lt;Error&gt;&gt; {"></div><div data-l="    let mut found = vec![];"></div><div data-l="    let file = try!(File::open(file_path));"></div><div data-l="    let mut rdr = csv::Reader::from_reader(file);"></div><div data-l="    for row in rdr.decode::&lt;Row&gt;() {"></div><div data-l="        let row = try!(row);"></div><div data-l="        match row.population {"></div><div data-l="#//            None =&gt; { } // Skip it."></div><div data-l="            None =&gt; { } // ">Skip it.</div><div data-l="            Some(count) =&gt; if row.city == city {"></div><div data-l="                found.push(PopulationCount {"></div><div data-l="                    city: row.city,"></div><div data-l="                    country: row.country,"></div><div data-l="                    count: count,"></div><div data-l="                });"></div><div data-l="            },"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    if found.is_empty() {"></div><div data-l="        Err(From::from(&quot;No matching cities with a population were found.&quot;))"></div><div data-l="    } else {"></div><div data-l="        Ok(found)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Instead of <code>x.unwrap()</code>, we now have <code>try€(x)</code>. Since our function returns a
+<code>Result&lt;T, E&gt;</code>, the <code>try€</code> macro will return early from the function if an
+error occurs.</p>
+<br>
+<p>At the end of <code>search</code> we also convert a plain string to an error type 
+by using the <a href="#2../../std/convert/trait.From.html">corresponding <code>From</code> impls</a>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// We are making use of this impl in the code above, since we call `From::from`"></div><div data-l="#// on a `&amp;'static str`."></div><div data-l="// ">We are making use of this impl in the code above, since we call <code>From::from</code> on a <code>&amp;'static str</code>.</div><div data-l="impl&lt;'a&gt; From&lt;&amp;'a str&gt; for Box&lt;Error&gt;"></div><div data-l=""></div><div data-l="#// But this is also useful when you need to allocate a new string for an"></div><div data-l="#// error message, usually with `format!`."></div><div data-l="// ">But this is also useful when you need to allocate a new string for an error message, usually with <code>format€</code>.</div><div data-l="impl From&lt;String&gt; for Box&lt;Error&gt;"></div></div>
+<br>
+<p>Since <code>search</code> now returns a <code>Result&lt;T, E&gt;</code>, <code>main</code> should use case analysis
+when calling <code>search</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="..."></div><div data-l="    match search(data_path, city) {"></div><div data-l="        Ok(pops) =&gt; {"></div><div data-l="            for pop in pops {"></div><div data-l="                println!(&quot;{}, {}: {:?}&quot;, pop.city, pop.country, pop.count);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="        Err(err) =&gt; println!(&quot;{}&quot;, err)"></div><div data-l="    }"></div><div data-l="..."></div></div>
+<br>
+<p>Now that we've seen how to do proper error handling with <code>Box&lt;Error&gt;</code>, let's
+try a different approach with our own custom error type. But first, let's take
+a quick break from error handling and add support for reading from <code>stdin</code>.</p>
+<br>
+<h2>Reading from stdin</h2>
+<br>
+<p>In our program, we accept a single file for input and do one pass over the
+data. This means we probably should be able to accept input on stdin. But maybe
+we like the current format too—so let's have both!</p>
+<br>
+<p>Adding support for stdin is actually quite easy. There are only three things we
+have to do:</p>
+<br>
+<div data-b="1.">Tweak the program arguments so that a single parameter—the
+ city—can be accepted while the population data is read from stdin.</div>
+<div data-b="2.">Modify the program so that an option <code>-f</code> can take the file, if it
+  is not passed into stdin.</div>
+<div data-b="3.">Modify the <code>search</code> function to take an <i>optional</i> file path. When <code>None</code>,
+ it should know to read from stdin.</div>
+<br>
+<p>First, here's the new usage:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn print_usage(program: &amp;str, opts: Options) {"></div><div data-l="    println!(&quot;{}&quot;, opts.usage(&amp;format!(&quot;Usage: {} [options] &lt;city&gt;&quot;, program)));"></div><div data-l="}"></div></div>
+<p>Of course we need to adapt the argument handling code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="..."></div><div data-l="    let mut opts = Options::new();"></div><div data-l="    opts.optopt(&quot;f&quot;, &quot;file&quot;, &quot;Choose an input file, instead of using STDIN.&quot;, &quot;NAME&quot;);"></div><div data-l="    opts.optflag(&quot;h&quot;, &quot;help&quot;, &quot;Show this usage message.&quot;);"></div><div data-l="    ..."></div><div data-l="    let data_path = matches.opt_str(&quot;f&quot;);"></div><div data-l=""></div><div data-l="    let city = if !matches.free.is_empty() {"></div><div data-l="        &amp;matches.free[0]"></div><div data-l="    } else {"></div><div data-l="        print_usage(&amp;program, opts);"></div><div data-l="        return;"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    match search(&amp;data_path, city) {"></div><div data-l="        Ok(pops) =&gt; {"></div><div data-l="            for pop in pops {"></div><div data-l="                println!(&quot;{}, {}: {:?}&quot;, pop.city, pop.country, pop.count);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="        Err(err) =&gt; println!(&quot;{}&quot;, err)"></div><div data-l="    }"></div><div data-l="..."></div></div>
+<br>
+<p>We've made the user experience a bit nicer by showing the usage message,
+instead of a panic from an out-of-bounds index, when <code>city</code>, the
+remaining free argument, is not present.</p>
+<br>
+<p>Modifying <code>search</code> is slightly trickier. The <code>csv</code> crate can build a
+parser out of
+<a href="#2http://burntsushi.net/rustdoc/csv/struct.Reader.html#method.from_reader">any type that implements <code>io::Read</code></a>.
+But how can we use the same code over both types? There's actually a
+couple ways we could go about this. One way is to write <code>search</code> such
+that it is generic on some type parameter <code>R</code> that satisfies
+<code>io::Read</code>. Another way is to use trait objects:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::io;"></div><div data-l=""></div><div data-l="#// The rest of the code before this is unchanged."></div><div data-l="// ">The rest of the code before this is unchanged.</div><div data-l=""></div><div data-l="fn search&lt;P: AsRef&lt;Path&gt;&gt;"></div><div data-l="         (file_path: &amp;Option&lt;P&gt;, city: &amp;str)"></div><div data-l="         -&gt; Result&lt;Vec&lt;PopulationCount&gt;, Box&lt;Error&gt;&gt; {"></div><div data-l="    let mut found = vec![];"></div><div data-l="    let input: Box&lt;io::Read&gt; = match *file_path {"></div><div data-l="        None =&gt; Box::new(io::stdin()),"></div><div data-l="        Some(ref file_path) =&gt; Box::new(try!(File::open(file_path))),"></div><div data-l="    };"></div><div data-l="    let mut rdr = csv::Reader::from_reader(input);"></div><div data-l="#    // The rest remains unchanged!"></div><div data-l="    // ">The rest remains unchanged!</div><div data-l="}"></div></div>
+<br>
+<h2>Error handling with a custom type</h2>
+<br>
+<p>Previously, we learned how to
+<a href="#2#composing-custom-error-types">compose errors using a custom error type</a>.
+We did this by defining our error type as an <code>enum</code> and implementing <code>Error</code>
+and <code>From</code>.</p>
+<br>
+<p>Since we have three distinct errors (IO, CSV parsing and not found), let's
+define an <code>enum</code> with three variants:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[derive(Debug)]"></div><div data-l="enum CliError {"></div><div data-l="    Io(io::Error),"></div><div data-l="    Csv(csv::Error),"></div><div data-l="    NotFound,"></div><div data-l="}"></div></div>
+<br>
+<p>And now for impls on <code>Display</code> and <code>Error</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="impl fmt::Display for CliError {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        match *self {"></div><div data-l="            CliError::Io(ref err) =&gt; err.fmt(f),"></div><div data-l="            CliError::Csv(ref err) =&gt; err.fmt(f),"></div><div data-l="            CliError::NotFound =&gt; write!(f, &quot;No matching cities with a \"></div><div data-l="                                             population were found.&quot;),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Error for CliError {"></div><div data-l="    fn cause(&amp;self) -&gt; Option&lt;&amp;Error&gt; {"></div><div data-l="        match *self {"></div><div data-l="            CliError::Io(ref err) =&gt; Some(err),"></div><div data-l="            CliError::Csv(ref err) =&gt; Some(err),"></div><div data-l="#            // Our custom error doesn't have an underlying cause,"></div><div data-l="#            // but we could modify it so that it does."></div><div data-l="            // ">Our custom error doesn't have an underlying cause, but we could modify it so that it does.</div><div data-l="            CliError::NotFound =&gt; None,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Before we can use our <code>CliError</code> type in our <code>search</code> function, we need to
+provide a couple <code>From</code> impls. How do we know which impls to provide? Well,
+we'll need to convert from both <code>io::Error</code> and <code>csv::Error</code> to <code>CliError</code>.
+Those are the only external errors, so we'll only need two <code>From</code> impls for
+now:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl From&lt;io::Error&gt; for CliError {"></div><div data-l="    fn from(err: io::Error) -&gt; CliError {"></div><div data-l="        CliError::Io(err)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl From&lt;csv::Error&gt; for CliError {"></div><div data-l="    fn from(err: csv::Error) -&gt; CliError {"></div><div data-l="        CliError::Csv(err)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>From</code> impls are important because of how
+<a href="#2#code-try-def"><code>try€</code> is defined</a>. In particular, if an error occurs,
+<code>From::from</code> is called on the error, which in this case, will convert it to our
+own error type <code>CliError</code>.</p>
+<br>
+<p>With the <code>From</code> impls done, we only need to make two small tweaks to our
+<code>search</code> function: the return type and the “not found” error. Here it is in
+full:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn search&lt;P: AsRef&lt;Path&gt;&gt;"></div><div data-l="         (file_path: &amp;Option&lt;P&gt;, city: &amp;str)"></div><div data-l="         -&gt; Result&lt;Vec&lt;PopulationCount&gt;, CliError&gt; {"></div><div data-l="    let mut found = vec![];"></div><div data-l="    let input: Box&lt;io::Read&gt; = match *file_path {"></div><div data-l="        None =&gt; Box::new(io::stdin()),"></div><div data-l="        Some(ref file_path) =&gt; Box::new(try!(File::open(file_path))),"></div><div data-l="    };"></div><div data-l="    let mut rdr = csv::Reader::from_reader(input);"></div><div data-l="    for row in rdr.decode::&lt;Row&gt;() {"></div><div data-l="        let row = try!(row);"></div><div data-l="        match row.population {"></div><div data-l="#//            None =&gt; { } // Skip it."></div><div data-l="            None =&gt; { } // ">Skip it.</div><div data-l="            Some(count) =&gt; if row.city == city {"></div><div data-l="                found.push(PopulationCount {"></div><div data-l="                    city: row.city,"></div><div data-l="                    country: row.country,"></div><div data-l="                    count: count,"></div><div data-l="                });"></div><div data-l="            },"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    if found.is_empty() {"></div><div data-l="        Err(CliError::NotFound)"></div><div data-l="    } else {"></div><div data-l="        Ok(found)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>No other changes are necessary.</p>
+<br>
+<h2>Adding functionality</h2>
+<br>
+<p>Writing generic code is great, because generalizing stuff is cool, and
+it can then be useful later. But sometimes, the juice isn't worth the
+squeeze. Look at what we just did in the previous step:</p>
+<br>
+<div data-b="1.">Defined a new error type.</div>
+<div data-b="2.">Added impls for <code>Error</code>, <code>Display</code> and two for <code>From</code>.</div>
+<br>
+<p>The big downside here is that our program didn't improve a whole lot.
+There is quite a bit of overhead to representing errors with <code>enum</code>s,
+especially in short programs like this.</p>
+<br>
+<p><i>One</i> useful aspect of using a custom error type like we've done here is that
+the <code>main</code> function can now choose to handle errors differently. Previously,
+with <code>Box&lt;Error&gt;</code>, it didn't have much of a choice: just print the message.
+We're still doing that here, but what if we wanted to, say, add a <code>--quiet</code>
+flag? The <code>--quiet</code> flag should silence any verbose output.</p>
+<br>
+<p>Right now, if the program doesn't find a match, it will output a message saying
+so. This can be a little clumsy, especially if you intend for the program to
+be used in shell scripts.</p>
+<br>
+<p>So let's start by adding the flags. Like before, we need to tweak the usage
+string and add a flag to the Option variable. Once we've done that, Getopts does the rest:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="..."></div><div data-l="    let mut opts = Options::new();"></div><div data-l="    opts.optopt(&quot;f&quot;, &quot;file&quot;, &quot;Choose an input file, instead of using STDIN.&quot;, &quot;NAME&quot;);"></div><div data-l="    opts.optflag(&quot;h&quot;, &quot;help&quot;, &quot;Show this usage message.&quot;);"></div><div data-l="    opts.optflag(&quot;q&quot;, &quot;quiet&quot;, &quot;Silences errors and warnings.&quot;);"></div><div data-l="..."></div></div>
+<br>
+<p>Now we only need to implement our “quiet” functionality. This requires us to
+tweak the case analysis in <code>main</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::process;"></div><div data-l="..."></div><div data-l="    match search(&amp;data_path, city) {"></div><div data-l="        Err(CliError::NotFound) if matches.opt_present(&quot;q&quot;) =&gt; process::exit(1),"></div><div data-l="        Err(err) =&gt; panic!(&quot;{}&quot;, err),"></div><div data-l="        Ok(pops) =&gt; for pop in pops {"></div><div data-l="            println!(&quot;{}, {}: {:?}&quot;, pop.city, pop.country, pop.count);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="..."></div></div>
+<br>
+<p>Certainly, we don't want to be quiet if there was an IO error or if the data
+failed to parse. Therefore, we use case analysis to check if the error type is
+<code>NotFound</code> <i>and</i> if <code>--quiet</code> has been enabled. If the search failed, we still
+quit with an exit code (following <code>grep</code>'s convention).</p>
+<br>
+<p>If we had stuck with <code>Box&lt;Error&gt;</code>, then it would be pretty tricky to implement
+the <code>--quiet</code> functionality.</p>
+<br>
+<p>This pretty much sums up our case study. From here, you should be ready to go
+out into the world and write your own programs and libraries with proper error
+handling.</p>
+<br>
+<h1>The Short Story</h1>
+<br>
+<p>Since this section is long, it is useful to have a quick summary for error
+handling in Rust. These are some good “rules of thumb.&quot; They are emphatically
+<i>not</i> commandments. There are probably good reasons to break every one of these
+heuristics!</p>
+<br>
+<div data-b="*">If you're writing short example code that would be overburdened by error
+handling, it's probably fine to use <code>unwrap</code> (whether that's
+<a class="notranslate" href="#2../../std/result/enum.Result.html#method.unwrap"><code>Result::unwrap</code></a>,
+<a class="notranslate" href="#2../../std/option/enum.Option.html#method.unwrap"><code>Option::unwrap</code></a>
+or preferably
+<a class="notranslate" href="#2../../std/option/enum.Option.html#method.expect"><code>Option::expect</code></a>).
+Consumers of your code should know to use proper error handling. (If they
+don't, send them here!)</div>
+<div data-b="*">If you're writing a quick 'n' dirty program, don't feel ashamed if you use
+<code>unwrap</code>. Be warned: if it winds up in someone else's hands, don't be
+surprised if they are agitated by poor error messages!</div>
+<div data-b="*">If you're writing a quick 'n' dirty program and feel ashamed about panicking
+anyway, then use either a <code>String</code> or a <code>Box&lt;Error&gt;</code> for your
+error type.</div>
+<div data-b="*">Otherwise, in a program, define your own error types with appropriate
+<a class="notranslate" href="#2../../std/convert/trait.From.html"><code>From</code></a>
+and
+<a class="notranslate" href="#2../../std/error/trait.Error.html"><code>Error</code></a>
+impls to make the <a class="notranslate" href="#2../../std/macro.try.html"><code>try€</code></a>
+macro more ergonomic.</div>
+<div data-b="*">If you're writing a library and your code can produce errors, define your own
+error type and implement the
+<a class="notranslate" href="#2../../std/error/trait.Error.html"><code>std::error::Error</code></a>
+trait. Where appropriate, implement
+<a class="notranslate" href="#2../../std/convert/trait.From.html"><code>From</code></a> to make both
+your library code and the caller's code easier to write. (Because of Rust's
+coherence rules, callers will not be able to impl <code>From</code> on your error type,
+so your library should do it.)</div>
+<div data-b="*">Learn the combinators defined on
+<a class="notranslate" href="#2../../std/option/enum.Option.html"><code>Option</code></a>
+and
+<a class="notranslate" href="#2../../std/result/enum.Result.html"><code>Result</code></a>.
+Using them exclusively can be a bit tiring at times, but I've personally
+found a healthy mix of <code>try€</code> and combinators to be quite appealing.
+<code>and_then</code>, <code>map</code> and <code>unwrap_or</code> are my favorites.</div>
+<br>
+<a class="notranslate" href="#1patterns.html">1</a>
+<a class="notranslate" href="#1../../std/option/enum.Option.html#method.map">2</a>
+<a class="notranslate" href="#1../../std/option/enum.Option.html#method.unwrap_or">3</a>
+<a class="notranslate" href="#1../../std/option/enum.Option.html#method.unwrap_or_else">4</a>
+<a class="notranslate" href="#1../../std/option/enum.Option.html">5</a>
+<a class="notranslate" href="#1../../std/result/index.html">6</a>
+<a class="notranslate" href="#1../../std/result/enum.Result.html#method.unwrap">7</a>
+<a class="notranslate" href="#1../../std/fmt/trait.Debug.html">8</a>
+<a class="notranslate" href="#1../../std/primitive.str.html#method.parse">9</a>
+<a class="notranslate" href="#1associated-types.html">10</a>
+<a class="notranslate" href="#1https://github.com/petewarden/dstkdata">11</a>
+<a class="notranslate" href="#1http://burntsushi.net/stuff/worldcitiespop.csv.gz">12</a>
+<a class="notranslate" href="#1http://burntsushi.net/stuff/uscitiespop.csv.gz">13</a>
+<a class="notranslate" href="#1http://doc.crates.io/guide.html">14</a>
+<a class="notranslate" href="#1http://doc.rust-lang.org/getopts/getopts/index.html">15</a>

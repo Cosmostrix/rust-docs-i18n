@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<h1>for loops</h1>
+<br>
+<h2>for and range</h2>
+<br>
+<p>The <code>for in</code> construct can be used to iterate through an <code>Iterator</code>.
+One of the easiest ways to create an iterator is to use the range
+notation <code>a..b</code>. This yields values from <code>a</code> (inclusive) to <code>b</code>
+(exclusive) in steps of one.</p>
+<br>
+<p>Let's write FizzBuzz using <code>for</code> instead of <code>while</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // `n` will take the values: 1, 2, ..., 100 in each iteration"></div><div data-l="    // "><code>n</code> will take the values: 1, 2, ..., 100 in each iteration</div><div data-l="    for n in 1..101 {"></div><div data-l="        if n % 15 == 0 {"></div><div data-l="            println!(&quot;fizzbuzz&quot;);"></div><div data-l="        } else if n % 3 == 0 {"></div><div data-l="            println!(&quot;fizz&quot;);"></div><div data-l="        } else if n % 5 == 0 {"></div><div data-l="            println!(&quot;buzz&quot;);"></div><div data-l="        } else {"></div><div data-l="            println!(&quot;{}&quot;, n);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Alternatively, <code>a..=b</code> can be used for a range that is inclusive on both ends.
+The above can be written as:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // `n` will take the values: 1, 2, ..., 100 in each iteration"></div><div data-l="    // "><code>n</code> will take the values: 1, 2, ..., 100 in each iteration</div><div data-l="    for n in 1..=100 {"></div><div data-l="        if n % 15 == 0 {"></div><div data-l="            println!(&quot;fizzbuzz&quot;);"></div><div data-l="        } else if n % 3 == 0 {"></div><div data-l="            println!(&quot;fizz&quot;);"></div><div data-l="        } else if n % 5 == 0 {"></div><div data-l="            println!(&quot;buzz&quot;);"></div><div data-l="        } else {"></div><div data-l="            println!(&quot;{}&quot;, n);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h2>for and iterators</h2>
+<br>
+<p>The <code>for in</code> construct is able to interact with an <code>Iterator</code> in several ways.
+As discussed in with the <a class="notranslate" href="#3iter">Iterator</a> trait, if not specified, the <code>for</code>
+loop will apply the <code>into_iter</code> function on the collection provided to convert
+the collection into an iterator. This is not the only means to convert a
+collection into an iterator however, the other functions available include
+<code>iter</code> and <code>iter_mut</code>.</p>
+<br>
+<p>These 3 functions will return different views of the data within your
+collection.</p>
+<br>
+<div data-b="*"><code>iter</code> - This borrows each element of the collection through each iteration.
+Thus leaving the collection untouched and available for reuse after the loop.</div>
+<br>
+<div data-lang="rust, editable"><div data-l="fn main() {"></div><div data-l="    let names = vec![&quot;Bob&quot;, &quot;Frank&quot;, &quot;Ferris&quot;];"></div><div data-l=""></div><div data-l="    for name in names.iter() {"></div><div data-l="        match name {"></div><div data-l="            &amp;&quot;Ferris&quot; =&gt; println!(&quot;There is a rustacean among us!&quot;),"></div><div data-l="            _ =&gt; println!(&quot;Hello {}&quot;, name),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<div data-b="*"><code>into_iter</code> - This consumes the collection so that on each iteration the exact
+data is provided. Once the collection has been consumed it is no longer
+available for reuse as it has been 'moved' within the loop.</div>
+<br>
+<div data-lang="rust, editable"><div data-l="fn main() {"></div><div data-l="    let names = vec![&quot;Bob&quot;, &quot;Frank&quot;, &quot;Ferris&quot;];"></div><div data-l=""></div><div data-l="    for name in names.into_iter() {"></div><div data-l="        match name {"></div><div data-l="            &quot;Ferris&quot; =&gt; println!(&quot;There is a rustacean among us!&quot;),"></div><div data-l="            _ =&gt; println!(&quot;Hello {}&quot;, name),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<div data-b="*"><code>iter_mut</code> - This mutably borrows each element of the collection, allowing for
+the collection to be modified in place.</div>
+<br>
+<div data-lang="rust, editable"><div data-l="fn main() {"></div><div data-l="    let mut names = vec![&quot;Bob&quot;, &quot;Frank&quot;, &quot;Ferris&quot;];"></div><div data-l=""></div><div data-l="    for name in names.iter_mut() {"></div><div data-l="        match name {"></div><div data-l="            &amp;mut &quot;Ferris&quot; =&gt; println!(&quot;There is a rustacean among us!&quot;),"></div><div data-l="            _ =&gt; println!(&quot;Hello {}&quot;, name),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In the above snippets note the type of <code>match</code> branch, that is the key
+difference in the types or iteration. The difference in type then of course
+implies differing actions that are able to be performed.</p>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3iter">Iterator</a></p>
+<br>
+<a class="notranslate" href="#1trait/iter.html">iter</a>

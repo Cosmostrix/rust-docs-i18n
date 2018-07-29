@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<h1>Constant items</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>
+<s>ConstantItem</s> :
+&amp;nbsp;&amp;nbsp; <code>const</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> <code>:</code> <a class="notranslate" href="#4_Type_">_Type_</a> <code>=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>;</code></p></blockquote>
+<br>
+<p>A <i>constant item</i> is a named <s>[constant value]</s> which is not associated with a
+specific memory location in the program. Constants are essentially inlined
+wherever they are used, meaning that they are copied directly into the relevant
+context when used. References to the same constant are not necessarily
+guaranteed to refer to the same memory address.</p>
+<br>
+<p>Constants must be explicitly typed. The type must have a <code>'static</code> lifetime: any
+references it contains must have <code>'static</code> lifetimes.</p>
+<br>
+<p>Constants may refer to the address of other constants, in which case the
+address will have elided lifetimes where applicable, otherwise – in most cases
+– defaulting to the <code>static</code> lifetime. (See <a class="notranslate" href="#4static lifetime
+elision">static lifetime
+elision</a>.) The compiler is, however, still at liberty to translate the constant
+many times, so the address referred to may not be stable.</p>
+<br>
+<div data-lang="rust"><div data-l="const BIT1: u32 = 1 &lt;&lt; 0;"></div><div data-l="const BIT2: u32 = 1 &lt;&lt; 1;"></div><div data-l=""></div><div data-l="const BITS: [u32; 2] = [BIT1, BIT2];"></div><div data-l="const STRING: &amp;'static str = &quot;bitstring&quot;;"></div><div data-l=""></div><div data-l="struct BitsNStrings&lt;'a&gt; {"></div><div data-l="    mybits: [u32; 2],"></div><div data-l="    mystring: &amp;'a str,"></div><div data-l="}"></div><div data-l=""></div><div data-l="const BITS_N_STRINGS: BitsNStrings&lt;'static&gt; = BitsNStrings {"></div><div data-l="    mybits: BITS,"></div><div data-l="    mystring: STRING,"></div><div data-l="};"></div></div>
+<br>
+<h2>Constants with Destructors</h2>
+<br>
+<p>Constants can contain destructors. Destructors are run when the value goes out
+of scope.</p>
+<br>
+<div data-lang="rust"><div data-l="struct TypeWithDestructor(i32);"></div><div data-l=""></div><div data-l="impl Drop for TypeWithDestructor {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Dropped. Held {}.&quot;, self.0);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="const ZERO_WITH_DESTRUCTOR: TypeWithDestructor = TypeWithDestructor(0);"></div><div data-l=""></div><div data-l="fn create_and_drop_zero_with_destructor() {"></div><div data-l="    let x = ZERO_WITH_DESTRUCTOR;"></div><div data-l="#    // x gets dropped at end of function, calling drop."></div><div data-l="#    // prints &quot;Dropped. Held 0.&quot;."></div><div data-l="    // ">x gets dropped at end of function, calling drop. prints &quot;Dropped. Held 0.&quot;.</div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html#constant-expressions">constant value</a>
+<a class="notranslate" href="#1lifetime-elision.html#static-lifetime-elision">static lifetime elision</a>
+<a class="notranslate" href="#1special-types-and-traits.html#drop">`Drop`</a>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1types.html">_Type_</a>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

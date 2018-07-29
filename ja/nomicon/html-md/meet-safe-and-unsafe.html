@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<h1>Meet Safe and Unsafe</h1>
+<br>
+<p>!<a href="#2img/safeandunsafe.svg">safe and unsafe</a></p>
+<br>
+<p>It would be great to not have to worry about low-level implementation details.
+Who could possibly care how much space the empty tuple occupies? Sadly, it
+sometimes matters and we need to worry about it. The most common reason
+developers start to care about implementation details is performance, but more
+importantly, these details can become a matter of correctness when interfacing
+directly with hardware, operating systems, or other languages.</p>
+<br>
+<p>When implementation details start to matter in a safe programming language,
+programmers usually have three options:</p>
+<br>
+<div data-b="*">fiddle with the code to encourage the compiler/runtime to perform an optimization</div>
+<div data-b="*">adopt a more unidiomatic or cumbersome design to get the desired implementation</div>
+<div data-b="*">rewrite the implementation in a language that lets you deal with those details</div>
+<br>
+<p>For that last option, the language programmers tend to use is <i>C</i>. This is often
+necessary to interface with systems that only declare a C interface.</p>
+<br>
+<p>Unfortunately, C is incredibly unsafe to use (sometimes for good reason),
+and this unsafety is magnified when trying to interoperate with another
+language. Care must be taken to ensure C and the other language agree on
+what's happening, and that they don't step on each other's toes.</p>
+<br>
+<p>So what does this have to do with Rust?</p>
+<br>
+<p>Well, unlike C, Rust is a safe programming language.</p>
+<br>
+<p>But, like C, Rust is an unsafe programming language.</p>
+<br>
+<p>More accurately, Rust <i>contains</i> both a safe and unsafe programming language.</p>
+<br>
+<p>Rust can be thought of as a combination of two programming languages: <i>Safe
+Rust</i> and <i>Unsafe Rust</i>. Conveniently, these names mean exactly what they say:
+Safe Rust is Safe. Unsafe Rust is, well, not. In fact, Unsafe Rust lets us
+do some <i>really</i> unsafe things. Things the Rust authors will implore you not to
+do, but we'll do anyway.</p>
+<br>
+<p>Safe Rust is the <i>true</i> Rust programming language. If all you do is write Safe
+Rust, you will never have to worry about type-safety or memory-safety. You will
+never endure a dangling pointer, a use-after-free, or any other kind of
+Undefined Behavior.</p>
+<br>
+<p>The standard library also gives you enough utilities out of the box that you'll
+be able to write high-performance applications and libraries in pure idiomatic
+Safe Rust.</p>
+<br>
+<p>But maybe you want to talk to another language. Maybe you're writing a
+low-level abstraction not exposed by the standard library. Maybe you're
+<i>writing</i> the standard library (which is written entirely in Rust). Maybe you
+need to do something the type-system doesn't understand and just <i>frob some dang
+bits</i>. Maybe you need Unsafe Rust.</p>
+<br>
+<p>Unsafe Rust is exactly like Safe Rust with all the same rules and semantics.
+It just lets you do some <i>extra</i> things that are Definitely Not Safe
+(which we will define in the next section).</p>
+<br>
+<p>The value of this separation is that we gain the benefits of using an unsafe
+language like C — low level control over implementation details — without most
+of the problems that come with trying to integrate it with a completely
+different safe language.</p>
+<br>
+<p>There are still some problems — most notably, we must become aware of properties
+that the type system assumes and audit them in any code that interacts with
+Unsafe Rust. That's the purpose of this book: to teach you about these assumptions
+and how to manage them.</p>

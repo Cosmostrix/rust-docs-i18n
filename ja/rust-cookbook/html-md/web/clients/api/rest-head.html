@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Check if an API resource exists</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>Query the GitHub Users Endpoint using a HEAD
+request (<a class="notranslate" href="#4`Client::head`">`Client::head`</a>) and then inspect the response code to determine
+success. This is a quick way to query a rest resource without needing to receive
+a body. <a class="notranslate" href="#4`reqwest::Client`">`reqwest::Client`</a> cofigured with <a class="notranslate" href="#4`ClientBuilder::timeout`">`ClientBuilder::timeout`</a> ensures
+a request will not last longer than a timeout.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="use std::time::Duration;"></div><div data-l="use reqwest::ClientBuilder;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Reqwest(reqwest::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let user = &quot;ferris-the-crab&quot;;"></div><div data-l="    let request_url = format!(&quot;https://api.github.com/users/{}&quot;, user);"></div><div data-l="    println!(&quot;{}&quot;, request_url);"></div><div data-l=""></div><div data-l="    let timeout = Duration::new(5, 0);"></div><div data-l="    let client = ClientBuilder::new().timeout(timeout).build()?;"></div><div data-l="    let response = client.head(&amp;request_url).send()?;"></div><div data-l=""></div><div data-l="    if response.status().is_success() {"></div><div data-l="        println!(&quot;{} is a user!&quot;, user);"></div><div data-l="    } else {"></div><div data-l="        println!(&quot;{} is not a user!&quot;, user);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html#method.head">`Client::head`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.ClientBuilder.html#method.timeout">`ClientBuilder::timeout`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html">`reqwest::Client`</a>

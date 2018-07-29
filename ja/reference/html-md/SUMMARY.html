@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<h1>The Rust Reference</h1>
+<br>
+<p><a class="notranslate" href="#2introduction.md">Introduction</a></p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2notation.md">Notation</a></div>
+<br>
+<div data-b="-"><a href="#2lexical-structure.md">Lexical structure</a></div>
+<div data-b="    -"><a href="#2input-format.md">Input format</a></div>
+<div data-b="    -"><a class="notranslate" href="#2keywords.md">Keywords</a></div>
+<div data-b="    -"><a class="notranslate" href="#2identifiers.md">Identifiers</a></div>
+<div data-b="    -"><a class="notranslate" href="#2comments.md">Comments</a></div>
+<div data-b="    -"><a class="notranslate" href="#2whitespace.md">Whitespace</a></div>
+<div data-b="    -"><a class="notranslate" href="#2tokens.md">Tokens</a></div>
+<div data-b="    -"><a class="notranslate" href="#2paths.md">Paths</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2macros.md">Macros</a></div>
+<div data-b="    -"><a href="#2macros-by-example.md">Macros By Example</a></div>
+<div data-b="    -"><a href="#2procedural-macros.md">Procedural Macros</a></div>
+<br>
+<div data-b="-"><a href="#2crates-and-source-files.md">Crates and source files</a></div>
+<br>
+<div data-b="-"><a href="#2items-and-attributes.md">Items and attributes</a></div>
+<div data-b="    -"><a class="notranslate" href="#2items.md">Items</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/modules.md">Modules</a></div>
+<div data-b="        -"><a href="#2items/extern-crates.md">Extern crates</a></div>
+<div data-b="        -"><a href="#2items/use-declarations.md">Use declarations</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/functions.md">Functions</a></div>
+<div data-b="        -"><a href="#2items/type-aliases.md">Type aliases</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/structs.md">Structs</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/enumerations.md">Enumerations</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/unions.md">Unions</a></div>
+<div data-b="        -"><a href="#2items/constant-items.md">Constant items</a></div>
+<div data-b="        -"><a href="#2items/static-items.md">Static items</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/traits.md">Traits</a></div>
+<div data-b="        -"><a class="notranslate" href="#2items/implementations.md">Implementations</a></div>
+<div data-b="        -"><a href="#2items/external-blocks.md">External blocks</a></div>
+<div data-b="    -"><a href="#2items/generics.md">Type and lifetime parameters</a></div>
+<div data-b="    -"><a href="#2items/associated-items.md">Associated Items</a></div>
+<div data-b="    -"><a href="#2visibility-and-privacy.md">Visibility and Privacy</a></div>
+<div data-b="    -"><a class="notranslate" href="#2attributes.md">Attributes</a></div>
+<br>
+<div data-b="-"><a href="#2statements-and-expressions.md">Statements and expressions</a></div>
+<div data-b="    -"><a class="notranslate" href="#2statements.md">Statements</a></div>
+<div data-b="    -"><a class="notranslate" href="#2expressions.md">Expressions</a></div>
+<div data-b="        -"><a href="#2expressions/literal-expr.md">Literal expressions</a></div>
+<div data-b="        -"><a href="#2expressions/path-expr.md">Path expressions</a></div>
+<div data-b="        -"><a href="#2expressions/block-expr.md">Block expressions</a></div>
+<div data-b="        -"><a href="#2expressions/operator-expr.md">Operator expressions</a></div>
+<div data-b="        -"><a href="#2expressions/grouped-expr.md">Grouped expressions</a></div>
+<div data-b="        -"><a href="#2expressions/array-expr.md">Array and index expressions</a></div>
+<div data-b="        -"><a href="#2expressions/tuple-expr.md">Tuple and index expressions</a></div>
+<div data-b="        -"><a href="#2expressions/struct-expr.md">Struct expressions</a></div>
+<div data-b="        -"><a href="#2expressions/enum-variant-expr.md">Enum variant expressions</a></div>
+<div data-b="        -"><a href="#2expressions/call-expr.md">Call expressions</a></div>
+<div data-b="        -"><a href="#2expressions/method-call-expr.md">Method call expressions</a></div>
+<div data-b="        -"><a href="#2expressions/field-expr.md">Field access expressions</a></div>
+<div data-b="        -"><a href="#2expressions/closure-expr.md">Closure expressions</a></div>
+<div data-b="        -"><a href="#2expressions/loop-expr.md">Loop expressions</a></div>
+<div data-b="        -"><a href="#2expressions/range-expr.md">Range expressions</a></div>
+<div data-b="        -"><a href="#2expressions/if-expr.md">If and if let expressions</a></div>
+<div data-b="        -"><a href="#2expressions/match-expr.md">Match expressions</a></div>
+<div data-b="        -"><a href="#2expressions/return-expr.md">Return expressions</a></div>
+<br>
+<div data-b="-"><a href="#2type-system.md">Type system</a></div>
+<div data-b="    -"><a class="notranslate" href="#2types.md">Types</a></div>
+<div data-b="    -"><a href="#2dynamically-sized-types.md">Dynamically Sized Types</a></div>
+<div data-b="    -"><a href="#2type-layout.md">Type layout</a></div>
+<div data-b="    -"><a href="#2interior-mutability.md">Interior mutability</a></div>
+<div data-b="    -"><a href="#2subtyping.md">Subtyping and Variance</a></div>
+<div data-b="    -"><a href="#2trait-bounds.md">Trait and lifetime bounds</a></div>
+<div data-b="    -"><a href="#2type-coercions.md">Type coercions</a></div>
+<div data-b="    -"><a class="notranslate" href="#2destructors.md">Destructors</a></div>
+<div data-b="    -"><a href="#2lifetime-elision.md">Lifetime elision</a></div>
+<br>
+<div data-b="-"><a href="#2special-types-and-traits.md">Special types and traits</a></div>
+<br>
+<div data-b="-"><a href="#2memory-model.md">Memory model</a></div>
+<div data-b="    -"><a href="#2memory-allocation-and-lifetime.md">Memory allocation and lifetime</a></div>
+<div data-b="    -"><a href="#2memory-ownership.md">Memory ownership</a></div>
+<div data-b="    -"><a class="notranslate" href="#2variables.md">Variables</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2linkage.md">Linkage</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2unsafety.md">Unsafety</a></div>
+<div data-b="    -"><a href="#2unsafe-functions.md">Unsafe functions</a></div>
+<div data-b="    -"><a href="#2unsafe-blocks.md">Unsafe blocks</a></div>
+<div data-b="    -"><a href="#2behavior-considered-undefined.md">Behavior considered undefined</a></div>
+<div data-b="    -"><a href="#2behavior-not-considered-unsafe.md">Behavior not considered unsafe</a></div>
+<br>
+<p><a href="#2influences.md">Appendix: Influences</a></p>
+<br>
+<p><a href="#2undocumented.md">Appendix: As-yet-undocumented Features</a></p>
+<br>
+<p><a href="#2glossary.md">Appendix: Glossary</a></p>

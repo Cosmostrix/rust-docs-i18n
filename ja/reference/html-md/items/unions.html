@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<h1>Unions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Union</s> :\
+&amp;nbsp;&amp;nbsp; <code>union</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a>&amp;nbsp;<a class="notranslate" href="#4_Generics_">_Generics_</a><sup>?</sup> <a class="notranslate" href="#4_WhereClause_">_WhereClause_</a><sup>?</sup>
+  <code>{</code><a class="notranslate" href="#4_StructFields_">_StructFields_</a> <code>}</code></p></blockquote>
+<br>
+<p>A union declaration uses the same syntax as a struct declaration, except with
+<code>union</code> in place of <code>struct</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="#[repr(C)]"></div><div data-l="union MyUnion {"></div><div data-l="    f1: u32,"></div><div data-l="    f2: f32,"></div><div data-l="}"></div></div>
+<br>
+<p>The key property of unions is that all fields of a union share common storage.
+As a result writes to one field of a union can overwrite its other fields, and
+size of a union is determined by the size of its largest field.</p>
+<br>
+<p>A value of a union type can be created using the same syntax that is used for
+struct types, except that it must specify exactly one field:</p>
+<br>
+<div data-lang="rust"><div data-l="# union MyUnion { f1: u32, f2: f32 }"></div><div data-l="#"></div><div data-l="let u = MyUnion { f1: 1 };"></div></div>
+<br>
+<p>The expression above creates a value of type <code>MyUnion</code> with active field <code>f1</code>.
+Active field of a union can be accessed using the same syntax as struct fields:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let f = u.f1;"></div></div>
+<br>
+<p>Inactive fields can be accessed as well (using the same syntax) if they are
+sufficiently layout compatible with the current value kept by the union.
+Reading incompatible fields results in undefined behavior. However, the active
+field is not generally known statically, so all reads of union fields have to
+be placed in <code>unsafe</code> blocks.</p>
+<br>
+<div data-lang="rust"><div data-l="# union MyUnion { f1: u32, f2: f32 }"></div><div data-l="# let u = MyUnion { f1: 1 };"></div><div data-l="#"></div><div data-l="unsafe {"></div><div data-l="    let f = u.f1;"></div><div data-l="}"></div></div>
+<br>
+<p>Writes to <code>Copy</code> union fields do not require reads for running destructors, so
+these writes don't have to be placed in <code>unsafe</code> blocks</p>
+<br>
+<div data-lang="rust"><div data-l="# union MyUnion { f1: u32, f2: f32 }"></div><div data-l="# let mut u = MyUnion { f1: 1 };"></div><div data-l="#"></div><div data-l="u.f1 = 2;"></div></div>
+<br>
+<p>Commonly, code using unions will provide safe wrappers around unsafe union
+field accesses.</p>
+<br>
+<p>Another way to access union fields is to use pattern matching. Pattern matching
+on union fields uses the same syntax as struct patterns, except that the
+pattern must specify exactly one field. Since pattern matching accesses
+potentially inactive fields it has to be placed in <code>unsafe</code> blocks as well.</p>
+<br>
+<div data-lang="rust"><div data-l="# union MyUnion { f1: u32, f2: f32 }"></div><div data-l="#"></div><div data-l="fn f(u: MyUnion) {"></div><div data-l="    unsafe {"></div><div data-l="        match u {"></div><div data-l="            MyUnion { f1: 10 } =&gt; { println!(&quot;ten&quot;); }"></div><div data-l="            MyUnion { f2 } =&gt; { println!(&quot;{}&quot;, f2); }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Pattern matching may match a union as a field of a larger structure. In
+particular, when using a Rust union to implement a C tagged union via FFI, this
+allows matching on the tag and the corresponding field simultaneously:</p>
+<br>
+<div data-lang="rust"><div data-l="#[repr(u32)]"></div><div data-l="enum Tag { I, F }"></div><div data-l=""></div><div data-l="#[repr(C)]"></div><div data-l="union U {"></div><div data-l="    i: i32,"></div><div data-l="    f: f32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[repr(C)]"></div><div data-l="struct Value {"></div><div data-l="    tag: Tag,"></div><div data-l="    u: U,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn is_zero(v: Value) -&gt; bool {"></div><div data-l="    unsafe {"></div><div data-l="        match v {"></div><div data-l="            Value { tag: I, u: U { i: 0 } } =&gt; true,"></div><div data-l="            Value { tag: F, u: U { f: 0.0 } } =&gt; true,"></div><div data-l="            _ =&gt; false,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Since union fields share common storage, gaining write access to one field of a
+union can give write access to all its remaining fields. Borrow checking rules
+have to be adjusted to account for this fact. As a result, if one field of a
+union is borrowed, all its remaining fields are borrowed as well for the same
+lifetime.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// ERROR: cannot borrow `u` (via `u.f2`) as mutable more than once at a time"></div><div data-l="// ">ERROR: cannot borrow <code>u</code> (via <code>u.f2</code>) as mutable more than once at a time</div><div data-l="fn test() {"></div><div data-l="    let mut u = MyUnion { f1: 1 };"></div><div data-l="    unsafe {"></div><div data-l="        let b1 = &amp;mut u.f1;"></div><div data-l="                      ---- first mutable borrow occurs here (via `u.f1`)"></div><div data-l="        let b2 = &amp;mut u.f2;"></div><div data-l="                      ^^^^ second mutable borrow occurs here (via `u.f2`)"></div><div data-l="        *b1 = 5;"></div><div data-l="    }"></div><div data-l="    - first borrow ends here"></div><div data-l="    assert_eq!(unsafe { u.f1 }, 5);"></div><div data-l="}"></div></div>
+<br>
+<p>As you could see, in many aspects (except for layouts, safety and ownership)
+unions behave exactly like structs, largely as a consequence of inheriting
+their syntactic shape from structs. This is also true for many unmentioned
+aspects of Rust language (such as privacy, name resolution, type inference,
+generics, trait implementations, inherent implementations, coherence, pattern
+checking, etc etc etc).</p>
+<br>
+<p>More detailed specification for unions, including unstable bits, can be found
+in <a href="#2https://github.com/rust-lang/rfcs/pull/1897">RFC 1897 &quot;Unions v1.2&quot;</a>.</p>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1items/generics.html">_Generics_</a>
+<a class="notranslate" href="#1items/generics.html#where-clauses">_WhereClause_</a>
+<a class="notranslate" href="#1items/structs.html">_StructFields_</a>

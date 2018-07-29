@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<h1>Macros By Example</h1>
+<br>
+<p><code>macro_rules</code> allows users to define syntax extension in a declarative way.  We
+call such extensions &quot;macros by example&quot; or simply &quot;macros&quot;.</p>
+<br>
+<p>Currently, macros can expand to expressions, statements, items, or patterns.</p>
+<br>
+<p>(A <code>sep_token</code> is any token other than <code>*</code> and <code>+</code>. A <code>non_special_token</code> is
+any token other than a delimiter or <code>$</code>.)</p>
+<br>
+<p>The macro expander looks up macro invocations by name, and tries each macro
+rule in turn. It transcribes the first successful match. Matching and
+transcription are closely related to each other, and we will describe them
+together.</p>
+<br>
+<p>The macro expander matches and transcribes every token that does not begin with
+a <code>$</code> literally, including delimiters. For parsing reasons, delimiters must be
+balanced, but they are otherwise not special.</p>
+<br>
+<p>In the matcher, <code>$</code> <s>name</s> <code>:</code> <s>designator</s> matches the nonterminal in the Rust
+syntax named by <s>designator</s>. Valid designators are:</p>
+<br>
+<div data-b="*"><code>item</code>: an <a class="notranslate" href="#4item">item</a></div>
+<div data-b="*"><code>block</code>: a <a class="notranslate" href="#4block">block</a></div>
+<div data-b="*"><code>stmt</code>: a <a class="notranslate" href="#4statement">statement</a></div>
+<div data-b="*"><code>pat</code>: a <a class="notranslate" href="#4pattern">pattern</a></div>
+<div data-b="*"><code>expr</code>: an <a class="notranslate" href="#4expression">expression</a></div>
+<div data-b="*"><code>ty</code>: a <a class="notranslate" href="#4type">type</a></div>
+<div data-b="*"><code>ident</code>: an <a class="notranslate" href="#4identifier">identifier</a> or <a class="notranslate" href="#4keyword">keyword</a></div>
+<div data-b="*"><code>path</code>: a <a class="notranslate" href="#4path">path</a></div>
+<div data-b="*"><code>tt</code>: a token tree (a single <a class="notranslate" href="#4token">token</a> by matching <code>()</code>, <code>[]</code>, or <code>{}</code>)</div>
+<div data-b="*"><code>meta</code>: the contents of an <a class="notranslate" href="#4attribute">attribute</a></div>
+<div data-b="*"><code>lifetime</code>: a lifetime. Examples: <code>'static</code>, <code>'a</code>.</div>
+<br>
+<a class="notranslate" href="#1items.html">item</a>
+<a class="notranslate" href="#1expressions/block-expr.html">block</a>
+<a class="notranslate" href="#1statements.html">statement</a>
+<a class="notranslate" href="#1expressions/match-expr.html">pattern</a>
+<a class="notranslate" href="#1expressions.html">expression</a>
+<a class="notranslate" href="#1types.html">type</a>
+<a class="notranslate" href="#1identifiers.html">identifier</a>
+<a class="notranslate" href="#1keywords.html">keyword</a>
+<a class="notranslate" href="#1paths.html">path</a>
+<a class="notranslate" href="#1tokens.html">token</a>
+<a class="notranslate" href="#1attributes.html">attribute</a>
+<br>
+<p>In the transcriber, the
+designator is already known, and so only the name of a matched nonterminal comes
+after the dollar sign.</p>
+<br>
+<p>In both the matcher and transcriber, the Kleene star-like operator indicates
+repetition. The Kleene star operator consists of <code>$</code> and parentheses, optionally
+followed by a separator token, followed by <code>*</code> or <code>+</code>. <code>*</code> means zero or more
+repetitions, <code>+</code> means at least one repetition. The parentheses are not matched or
+transcribed. On the matcher side, a name is bound to <s>all</s> of the names it
+matches, in a structure that mimics the structure of the repetition encountered
+on a successful match. The job of the transcriber is to sort that structure
+out.</p>
+<br>
+<p>The rules for transcription of these repetitions are called &quot;Macro By Example&quot;.
+Essentially, one &quot;layer&quot; of repetition is discharged at a time, and all of them
+must be discharged by the time a name is transcribed. Therefore, <code>( $( $i:ident
+),* ) =&gt; ( $i )</code> is an invalid macro, but <code>( $( $i:ident ),* ) =&gt; ( $( $i:ident
+),*  )</code> is acceptable (if trivial).</p>
+<br>
+<p>When Macro By Example encounters a repetition, it examines all of the <code>$</code>
+<s>name</s> s that occur in its body. At the &quot;current layer&quot;, they all must repeat
+the same number of times, so <code> ( $( $i:ident ),* ; $( $j:ident ),* ) =&gt; ( $(
+($i,$j) ),* )</code> is valid if given the argument <code>(a,b,c ; d,e,f)</code>, but not
+<code>(a,b,c ; d,e)</code>. The repetition walks through the choices at that layer in
+lockstep, so the former input transcribes to <code>(a,d), (b,e), (c,f)</code>.</p>
+<br>
+<p>Nested repetitions are allowed.</p>
+<br>
+<h3>Parsing limitations</h3>
+<br>
+<p>The parser used by the macro system is reasonably powerful, but the parsing of
+Rust syntax is restricted in two ways:</p>
+<br>
+<div data-b="1.">Macro definitions are required to include suitable separators after parsing
+ expressions and other bits of the Rust grammar. This implies that
+ a macro definition like <code>$i:expr [ , ]</code> is not legal, because <code>[</code> could be part
+ of an expression. A macro definition like <code>$i:expr,</code> or <code>$i:expr;</code> would be legal,
+ however, because <code>,</code> and <code>;</code> are legal separators. See <a class="notranslate" href="#4RFC 550">RFC 550</a> for more information.</div>
+<div data-b="2.">The parser must have eliminated all ambiguity by the time it reaches a <code>$</code>
+ <s>name</s> <code>:</code> <s>designator</s>. This requirement most often affects name-designator
+ pairs when they occur at the beginning of, or immediately after, a <code>$(...)*</code>;
+ requiring a distinctive token in front can solve the problem.</div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0550-macro-future-proofing.md">RFC 550</a>

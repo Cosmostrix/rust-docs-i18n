@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<h2>Unstable Features</h2>
+<br>
+<p>Experimental Cargo features are only available on the nightly channel.  You
+typically use one of the <code>-Z</code> flags to enable them.  Run <code>cargo -Z help</code> to
+see a list of flags available.</p>
+<br>
+<p><code>-Z unstable-options</code> is a generic flag for enabling other unstable
+command-line flags.  Options requiring this will be called out below.</p>
+<br>
+<p>Some unstable features will require you to specify the <code>cargo-features</code> key in
+<code>Cargo.toml</code>.</p>
+<br>
+<h3>Alternate Registries</h3>
+<div data-b="*">RFC: <a class="notranslate" href="#2https://github.com/rust-lang/rfcs/blob/master/text/2141-alternative-registries.md">#2141</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/44931">rust-lang/rust#44931</a></div>
+<br>
+<p>Alternate registries allow you to use registries other than crates.io.</p>
+<br>
+<p>The name of a registry is defined in <code>.cargo/config</code> under the <code>registries</code>
+table:</p>
+<br>
+<div data-lang="toml"><div data-l="[registries]"></div><div data-l="my-registry = { index = &quot;https://my-intranet:8080/index&quot; }"></div></div>
+<br>
+<p>Authentication information for alternate registries can be added to
+<code>.cargo/credentials</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[my-registry]"></div><div data-l="token = &quot;api-token&quot;"></div></div>
+<br>
+<p>Inside <code>Cargo.toml</code> you can specify which registry a dependency comes from
+using the <code>registry</code> key. First you need to include the appropriate
+<code>cargo-features</code> at the top of the file:</p>
+<br>
+<div data-lang="toml"><div data-l="cargo-features = [&quot;alternative-registries&quot;]"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="..."></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="other-create = { version = &quot;1.0&quot;, registry = &quot;my-registry&quot;}"></div></div>
+<br>
+<p>A <code>--registry</code> flag has been added to commands that interact with registries
+such as <code>publish</code>, <code>login</code>, etc.  Example:</p>
+<br>
+<div data-lang=""><div data-l="cargo +nightly publish -Z unstable-options --registry my-registry"></div></div>
+<br>
+<p>The <code>publish</code> field in <code>Cargo.toml</code> has been extended to accept a list of
+registries that will restrict publishing only to those registries.</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="..."></div><div data-l="publish = [&quot;my-registry&quot;]"></div></div>
+<br>
+<br>
+<h3>rename-dependency</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/1311">#1311</a></div>
+<div data-b="*">PR: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/pull/4953">#4953</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5653">#5653</a></div>
+<br>
+<p>The rename-dependency feature allows you to import a dependency
+with a different name from the source.  This can be useful in a few scenarios:</p>
+<br>
+<div data-b="*">Depending on crates with the same name from different registries.</div>
+<div data-b="*">Depending on multiple versions of a crate.</div>
+<div data-b="*">Avoid needing <code>extern crate foo as bar</code> in Rust source.</div>
+<br>
+<p>Just include the <code>package</code> key to specify the actual name of the dependency.
+You must include <code>cargo-features</code> at the top of your <code>Cargo.toml</code>.</p>
+<br>
+<div data-lang="toml"><div data-l="cargo-features = [&quot;rename-dependency&quot;]"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="name = &quot;mypackage&quot;"></div><div data-l="version = &quot;0.0.1&quot;"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="foo = &quot;0.1&quot;"></div><div data-l="bar = { version = &quot;0.1&quot;, registry = &quot;custom&quot;, package = &quot;foo&quot; }"></div><div data-l="baz = { git = &quot;https://github.com/example/project&quot;, package = &quot;foo&quot; }"></div></div>
+<br>
+<p>In this example, three crates are now available in your Rust code:</p>
+<br>
+<div data-lang="rust"><div data-l="#//extern crate foo;  // crates.io"></div><div data-l="extern crate foo;  // ">crates.io</div><div data-l="#//extern crate bar;  // registry `custom`"></div><div data-l="extern crate bar;  // ">registry <code>custom</code></div><div data-l="#//extern crate baz;  // git repository"></div><div data-l="extern crate baz;  // ">git repository</div></div>
+<br>
+<br>
+<h3>publish-lockfile</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/2263">#2263</a></div>
+<div data-b="*">PR: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/pull/5093">#5093</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5654">#5654</a></div>
+<br>
+<p>When creating a <code>.crate</code> file for distribution, Cargo has historically
+not included the <code>Cargo.lock</code> file.  This can cause problems with
+using <code>cargo install</code> with a binary.  You can specify that your package
+should include the <code>Cargo.lock</code> file when using <code>cargo package</code> or <code>cargo publish</code>
+by specifying the <code>publish-lockfile</code> key in <code>Cargo.toml</code>.  This also requires the
+appropriate <code>cargo-features</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="cargo-features = [&quot;publish-lockfile&quot;]"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="..."></div><div data-l="publish-lockfile = true"></div></div>
+<br>
+<br>
+<h3>Offline Mode</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/4686">#4686</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5655">#5655</a></div>
+<br>
+<p>The <code>-Z offline</code> flag prevents Cargo from attempting to access the network for
+any reason.  Typically Cargo will stop with an error if it wants to access the
+network and it is not available.</p>
+<br>
+<p>Beware that this may result in different dependency resolution than online
+mode.  Cargo will restrict itself to crates that are available locally, even
+if there might be a newer version as indicated in the local copy of the index.</p>
+<br>
+<h3>no-index-update</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/3479">#3479</a></div>
+<br>
+<p>The <code>-Z no-index-update</code> flag ensures that Cargo does not attempt to update
+the registry index.  This is intended for tools such as Crater that issue many
+Cargo commands, and you want to avoid the network latency for updating the
+index each time.</p>
+<br>
+<h3>avoid-dev-deps</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/4988">#4988</a></div>
+<div data-b="*">Stabilization Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5133">#5133</a></div>
+<br>
+<p>When running commands such as <code>cargo install</code> or <code>cargo build</code>, Cargo
+currently requires dev-dependencies to be downloaded, even if they are not
+used.  The <code>-Z avoid-dev-deps</code> flag allows Cargo to avoid downloading
+dev-dependencies if they are not needed.  The <code>Cargo.lock</code> file will not be
+generated if dev-dependencies are skipped.</p>
+<br>
+<h3>minimal-versions</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/4100">#4100</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5657">#5657</a></div>
+<br>
+<p>When a <code>Cargo.lock</code> file is generated, the <code>-Z minimal-versions</code> flag will
+resolve the dependencies to the minimum semver version that will satisfy the
+requirements (instead of the greatest version).</p>
+<br>
+<p>The intended use-case of this flag is to check, during continuous integration,
+that the versions specified in Cargo.toml are a correct reflection of the
+minimum versions that you are actually using. That is, if Cargo.toml says
+<code>foo = &quot;1.0.0&quot;</code> that you don't accidentally depend on features added only in
+<code>foo 1.5.0</code>.</p>
+<br>
+<h3>out-dir</h3>
+<div data-b="*">Original Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/4875">#4875</a></div>
+<br>
+<p>This feature allows you to specify the directory where artifacts will be
+copied to after they are built.  Typically artifacts are only written to the
+<code>target/release</code> or <code>target/debug</code> directories.  However, determining the
+exact filename can be tricky since you need to parse JSON output. The
+<code>--out-dir</code> flag makes it easier to predictably access the artifacts. Note
+that the artifacts are copied, so the originals are still in the <code>target</code>
+directory.  Example:</p>
+<br>
+<div data-lang=""><div data-l="cargo +nightly build --out-dir=out -Z unstable-options"></div></div>
+<br>
+<br>
+<h3>Edition</h3>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/44581">rust-lang/rust#44581</a></div>
+<div data-b="*">RFC: <a class="notranslate" href="#2https://github.com/rust-lang/rfcs/blob/master/text/2052-epochs.md">#2052</a></div>
+<br>
+<p>You can opt in to a specific Rust Edition for your package with the <code>edition</code>
+key in <code>Cargo.toml</code>.  If you don't specify the edition, it will default to
+2015.  You need to include the appropriate <code>cargo-features</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="cargo-features = [&quot;edition&quot;]"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="..."></div><div data-l="edition = &quot;2018&quot;"></div></div>
+<br>
+<br>
+<h3>Profile Overrides</h3>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/48683">rust-lang/rust#48683</a></div>
+<div data-b="*">RFC: <a class="notranslate" href="#2https://github.com/rust-lang/rfcs/blob/master/text/2282-profile-dependencies.md">#2282</a></div>
+<br>
+<p>Profiles can be overridden for specific packages and custom build scripts.
+The general format looks like this:</p>
+<br>
+<div data-lang="toml"><div data-l="cargo-features = [&quot;profile-overrides&quot;]"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="..."></div><div data-l=""></div><div data-l="[profile.dev]"></div><div data-l="opt-level = 0"></div><div data-l="debug = true"></div><div data-l=""></div><div data-l="# the `image` crate will be compiled with -Copt-level=3"></div><div data-l="[profile.dev.overrides.image]"></div><div data-l="opt-level = 3"></div><div data-l=""></div><div data-l="# All dependencies (but not this crate itself or any workspace member)"></div><div data-l="# will be compiled with -Copt-level=2 . This includes build dependencies."></div><div data-l="[profile.dev.overrides.&quot;*&quot;]"></div><div data-l="opt-level = 2"></div><div data-l=""></div><div data-l="# Build scripts and their dependencies will be compiled with -Copt-level=3"></div><div data-l="# By default, build scripts use the same rules as the rest of the profile"></div><div data-l="[profile.dev.build-override]"></div><div data-l="opt-level = 3"></div></div>
+<br>
+<p>Overrides can only be specified for dev and release profiles.</p>
+<br>
+<br>
+<h3>Config Profiles</h3>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/48683">rust-lang/rust#48683</a></div>
+<div data-b="*">RFC: <a class="notranslate" href="#2https://github.com/rust-lang/rfcs/blob/master/text/2282-profile-dependencies.md">#2282</a></div>
+<br>
+<p>Profiles can be specified in <code>.cargo/config</code> files.  The <code>-Z config-profile</code>
+command-line flag is required to use this feature.  The format is the same as
+in a <code>Cargo.toml</code> manifest.  If found in multiple config files, settings will
+be merged using the regular <a href="#2reference/config.html#hierarchical-structure">config hierarchy</a>.
+Config settings take precedence over manifest settings.</p>
+<br>
+<div data-lang="toml"><div data-l="[profile.dev]"></div><div data-l="opt-level = 3"></div></div>
+<br>
+<div data-lang=""><div data-l="cargo +nightly build -Z config-profile"></div></div>
+<br>
+<br>
+<h3>Namespaced features</h3>
+<div data-b="*">Original issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/1286">#1286</a></div>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5565">rust-lang/cargo#5565</a></div>
+<br>
+<p>Currently, it is not possible to have a feature and a dependency with the same
+name in the manifest. If you set <code>namespaced-features</code> to <code>true</code>, the namespaces
+for features and dependencies are separated. The effect of this is that, in the
+feature requirements, dependencies have to be prefixed with <code>crate:</code>. Like this:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="namespaced-features = true"></div><div data-l=""></div><div data-l="[features]"></div><div data-l="bar = [&quot;crate:baz&quot;, &quot;foo&quot;]"></div><div data-l="foo = []"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="baz = { version = &quot;0.1&quot;, optional = true }"></div></div>
+<br>
+<p>To prevent unnecessary boilerplate from having to explicitly declare features
+for each optional dependency, implicit features get created for any optional
+dependencies where a feature of the same name is not defined. However, if
+a feature of the same name as a dependency is defined, that feature must
+include the dependency as a requirement, as <code>foo = [&quot;crate:foo&quot;]</code>.</p>
+<br>
+<br>
+<h3>Build-plan</h3>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/5579">rust-lang/cargo#5579</a></div>
+<br>
+<p>The <code>--build-plan</code> argument for the <code>build</code> command will output JSON with
+information about which commands would be run without actually executing
+anything. This can be useful when integrating with another build tool.
+Example:</p>
+<br>
+<div data-lang=""><div data-l="cargo +nightly build --build-plan -Z unstable-options"></div></div>
+<br>
+<h3>Compile progress</h3>
+<div data-b="*">Tracking Issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/2536">rust-lang/cargo#2536</a></div>
+<br>
+<p>The <code>-Z compile-progress</code> flag enables a progress bar while compiling.</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo +nightly build -Z compile-progress"></div><div data-l="   Compiling libc v0.2.41"></div><div data-l="   Compiling void v1.0.2"></div><div data-l="   Compiling lazy_static v1.0.1"></div><div data-l="   Compiling regex v1.0.0"></div><div data-l="   Compiling ucd-util v0.1.1"></div><div data-l="   Compiling utf8-ranges v1.0.0"></div><div data-l="    Building [=======&gt;                                                  ] 2/14: libc, regex, uc..."></div></div>
+<br>
+<h3>default-run</h3>
+<div data-b="*">Original issue: <a class="notranslate" href="#2https://github.com/rust-lang/cargo/issues/2200">#2200</a></div>
+<br>
+<p>The <code>default-run</code> option in the <code>[project]</code> section of the manifest can be used
+to specify a default binary picked by <code>cargo run</code>. For example, when there is
+both <code>src/bin/a.rs</code> and <code>src/bin/b.rs</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[project]"></div><div data-l="default-run = &quot;a&quot;"></div></div>

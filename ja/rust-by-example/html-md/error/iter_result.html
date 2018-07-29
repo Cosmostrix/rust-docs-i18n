@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Iterating over <code>Result</code>s</h1>
+<br>
+<p>An <code>Iter::map</code> operation might fail, for example:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let possible_numbers: Vec&lt;_&gt; = strings"></div><div data-l="        .into_iter()"></div><div data-l="        .map(|s| s.parse::&lt;i32&gt;())"></div><div data-l="        .collect();"></div><div data-l="    println!(&quot;Results: {:?}&quot;, possible_numbers);"></div><div data-l="}"></div></div>
+<br>
+<p>Let's step through strategies for handling this.</p>
+<br>
+<h2>Ignore the failed items with <code>filter_map()</code></h2>
+<br>
+<p><code>filter_map</code> calls a function and filters out the results that are <code>None</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let numbers: Vec&lt;_&gt; = strings"></div><div data-l="        .into_iter()"></div><div data-l="        .map(|s| s.parse::&lt;i32&gt;())"></div><div data-l="        .filter_map(Result::ok)"></div><div data-l="        .collect();"></div><div data-l="    println!(&quot;Results: {:?}&quot;, numbers);"></div><div data-l="}"></div></div>
+<br>
+<h2>Fail the entire operation with <code>collect()</code></h2>
+<br>
+<p><code>Result</code> implements <code>FromIter</code> so that a vector of results (<code>Vec&lt;Result&lt;T, E&gt;&gt;</code>)
+can be turned into a result with a vector (<code>Result&lt;Vec&lt;T&gt;, E&gt;</code>). Once an
+<code>Result::Err</code> is found, the iteration will terminate.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let numbers: Result&lt;Vec&lt;_&gt;, _&gt; = strings"></div><div data-l="        .into_iter()"></div><div data-l="        .map(|s| s.parse::&lt;i32&gt;())"></div><div data-l="        .collect();"></div><div data-l="    println!(&quot;Results: {:?}&quot;, numbers);"></div><div data-l="}"></div></div>
+<br>
+<p>This same technique can be used with <code>Option</code>.</p>
+<br>
+<h2>Collect all valid values and failures with <code>partition()</code></h2>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let (numbers, errors): (Vec&lt;_&gt;, Vec&lt;_&gt;) = strings"></div><div data-l="        .into_iter()"></div><div data-l="        .map(|s| s.parse::&lt;i32&gt;())"></div><div data-l="        .partition(Result::is_ok);"></div><div data-l="    println!(&quot;Numbers: {:?}&quot;, numbers);"></div><div data-l="    println!(&quot;Errors: {:?}&quot;, errors);"></div><div data-l="}"></div></div>
+<br>
+<p>When you look at the results, you'll note that everything is still wrapped in
+<code>Result</code>.  A little more boilerplate is needed for this.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let (numbers, errors): (Vec&lt;_&gt;, Vec&lt;_&gt;) = strings"></div><div data-l="        .into_iter()"></div><div data-l="        .map(|s| s.parse::&lt;i32&gt;())"></div><div data-l="        .partition(Result::is_ok);"></div><div data-l="    let numbers: Vec&lt;_&gt; = numbers.into_iter().map(Result::unwrap).collect();"></div><div data-l="    let errors: Vec&lt;_&gt; = errors.into_iter().map(Result::unwrap_err).collect();"></div><div data-l="    println!(&quot;Numbers: {:?}&quot;, numbers);"></div><div data-l="    println!(&quot;Errors: {:?}&quot;, errors);"></div><div data-l="}"></div></div>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1><code>crate_in_paths</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44660">#44660</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44660">#44660</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>crate_in_paths</code> feature allows to explicitly refer to the crate root in absolute paths
+using keyword <code>crate</code>.</p>
+<br>
+<p><code>crate</code> can be used <i>only</i> in absolute paths, i.e. either in <code>::crate::a::b::c</code> form or in <code>use</code>
+items where the starting <code>::</code> is added implicitly.  
+Paths like <code>crate::a::b::c</code> are not accepted currently.</p>
+<br>
+<p>This feature is required in <code>feature(extern_absolute_paths)</code> mode to refer to any absolute path
+in the local crate (absolute paths refer to extern crates by default in that mode), but can be
+used without <code>feature(extern_absolute_paths)</code> as well.</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(crate_in_paths)]"></div><div data-l=""></div><div data-l="#// Imports, `::` is added implicitly"></div><div data-l="// ">Imports, <code>::</code> is added implicitly</div><div data-l="use crate::m::f;"></div><div data-l="use crate as root;"></div><div data-l=""></div><div data-l="mod m {"></div><div data-l="    pub fn f() -&gt; u8 { 1 }"></div><div data-l="    pub fn g() -&gt; u8 { 2 }"></div><div data-l="    pub fn h() -&gt; u8 { 3 }"></div><div data-l=""></div><div data-l="#    // OK, visibilities implicitly add starting `::` as well, like imports"></div><div data-l="    // ">OK, visibilities implicitly add starting <code>::</code> as well, like imports</div><div data-l="    pub(in crate::m) struct S;"></div><div data-l="}"></div><div data-l=""></div><div data-l="mod n"></div><div data-l="{"></div><div data-l="    use crate::m::f;"></div><div data-l="    use crate as root;"></div><div data-l="    pub fn check() {"></div><div data-l="        assert_eq!(f(), 1);"></div><div data-l="#        // `::` is required in non-import paths"></div><div data-l="        // "><code>::</code> is required in non-import paths</div><div data-l="        assert_eq!(::crate::m::g(), 2);"></div><div data-l="        assert_eq!(root::m::h(), 3);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(f(), 1);"></div><div data-l="    assert_eq!(::crate::m::g(), 2);"></div><div data-l="    assert_eq!(root::m::h(), 3);"></div><div data-l="    n::check();"></div><div data-l="}"></div></div>

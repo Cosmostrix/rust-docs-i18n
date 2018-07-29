@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>unsized_tuple_coercion</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#42877">#42877</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/42877">#42877</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>This is a part of <a class="notranslate" href="#4RFC0401">RFC0401</a>. According to the RFC, there should be an implementation like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;..., T, U: ?Sized&gt; Unsized&lt;(..., U)&gt; for (..., T) where T: Unsized&lt;U&gt; {}"></div></div>
+<br>
+<p>This implementation is currently gated behind <code>#[feature(unsized_tuple_coercion)]</code> to avoid insta-stability. Therefore you can use it like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(unsized_tuple_coercion)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x : ([i32; 3], [i32; 3]) = ([1, 2, 3], [4, 5, 6]);"></div><div data-l="    let y : &amp;([i32; 3], [i32]) = &amp;x;"></div><div data-l="    assert_eq!(y.1[0], 4);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0401-coercions.md">RFC0401</a>

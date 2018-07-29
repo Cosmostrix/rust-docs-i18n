@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<h1>Operators and Overloading</h1>
+<br>
+<p>Rust allows for a limited form of operator overloading. There are certain
+operators that are able to be overloaded. To support a particular operator
+between types, there’s a specific trait that you can implement, which then
+overloads the operator.</p>
+<br>
+<p>For example, the <code>+</code> operator can be overloaded with the <code>Add</code> trait:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::ops::Add;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Add for Point {"></div><div data-l="    type Output = Point;"></div><div data-l=""></div><div data-l="    fn add(self, other: Point) -&gt; Point {"></div><div data-l="        Point { x: self.x + other.x, y: self.y + other.y }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let p1 = Point { x: 1, y: 0 };"></div><div data-l="    let p2 = Point { x: 2, y: 3 };"></div><div data-l=""></div><div data-l="    let p3 = p1 + p2;"></div><div data-l=""></div><div data-l="    println!(&quot;{:?}&quot;, p3);"></div><div data-l="}"></div></div>
+<br>
+<p>In <code>main</code>, we can use <code>+</code> on our two <code>Point</code>s, since we’ve implemented
+<code>Add&lt;Output=Point&gt;</code> for <code>Point</code>.</p>
+<br>
+<p>There are a number of operators that can be overloaded this way, and all of
+their associated traits live in the <a class="notranslate" href="#3stdops"><code>std::ops</code></a> module. Check out its
+documentation for the full list.</p>
+<br>
+<a class="notranslate" href="#1../../std/ops/index.html">stdops</a>
+<br>
+<p>Implementing these traits follows a pattern. Let’s look at <a class="notranslate" href="#3add"><code>Add</code></a> in more
+detail:</p>
+<br>
+<div data-lang="rust"><div data-l="# mod foo {"></div><div data-l="pub trait Add&lt;RHS = Self&gt; {"></div><div data-l="    type Output;"></div><div data-l=""></div><div data-l="    fn add(self, rhs: RHS) -&gt; Self::Output;"></div><div data-l="}"></div><div data-l="# }"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/ops/trait.Add.html">add</a>
+<br>
+<p>There’s three types in total involved here: the type you <code>impl Add</code> for, <code>RHS</code>,
+which defaults to <code>Self</code>, and <code>Output</code>. For an expression <code>let z = x + y</code>, <code>x</code>
+is the <code>Self</code> type, <code>y</code> is the RHS, and <code>z</code> is the <code>Self::Output</code> type.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point;"></div><div data-l="# use std::ops::Add;"></div><div data-l="impl Add&lt;i32&gt; for Point {"></div><div data-l="    type Output = f64;"></div><div data-l=""></div><div data-l="    fn add(self, rhs: i32) -&gt; f64 {"></div><div data-l="#        // Add an i32 to a Point and get an f64."></div><div data-l="        // ">Add an i32 to a Point and get an f64.</div><div data-l="# 1.0"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>will let you do this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//let p: Point = // ..."></div><div data-l="let p: Point = // ">...</div><div data-l="let x: f64 = p + 2i32;"></div></div>
+<br>
+<h1>Using operator traits in generic structs</h1>
+<br>
+<p>Now that we know how operator traits are defined, we can define our <code>HasArea</code>
+trait and <code>Square</code> struct from the <a href="#3traits">traits chapter</a> more generically:</p>
+<br>
+<a class="notranslate" href="#1traits.html">traits</a>
+<br>
+<div data-lang="rust"><div data-l="use std::ops::Mul;"></div><div data-l=""></div><div data-l="trait HasArea&lt;T&gt; {"></div><div data-l="    fn area(&amp;self) -&gt; T;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Square&lt;T&gt; {"></div><div data-l="    x: T,"></div><div data-l="    y: T,"></div><div data-l="    side: T,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; HasArea&lt;T&gt; for Square&lt;T&gt;"></div><div data-l="        where T: Mul&lt;Output=T&gt; + Copy {"></div><div data-l="    fn area(&amp;self) -&gt; T {"></div><div data-l="        self.side * self.side"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let s = Square {"></div><div data-l="        x: 0.0f64,"></div><div data-l="        y: 0.0f64,"></div><div data-l="        side: 12.0f64,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;Area of s: {}&quot;, s.area());"></div><div data-l="}"></div></div>
+<br>
+<p>For <code>HasArea</code> and <code>Square</code>, we declare a type parameter <code>T</code> and replace
+<code>f64</code> with it. The <code>impl</code> needs more involved modifications:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; HasArea&lt;T&gt; for Square&lt;T&gt;"></div><div data-l="        where T: Mul&lt;Output=T&gt; + Copy { ... }"></div></div>
+<br>
+<p>The <code>area</code> method requires that we can multiply the sides, so we declare that
+type <code>T</code> must implement <code>std::ops::Mul</code>. Like <code>Add</code>, mentioned above, <code>Mul</code>
+itself takes an <code>Output</code> parameter: since we know that numbers don't change
+type when multiplied, we also set it to <code>T</code>. <code>T</code> must also support copying, so
+Rust doesn't try to move <code>self.side</code> into the return value.</p>

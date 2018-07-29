@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Data Races and Race Conditions</h1>
+<br>
+<p>Safe Rust guarantees an absence of data races, which are defined as:</p>
+<br>
+<div data-b="*">two or more threads concurrently accessing a location of memory</div>
+<div data-b="*">one of them is a write</div>
+<div data-b="*">one of them is unsynchronized</div>
+<br>
+<p>A data race has Undefined Behavior, and is therefore impossible to perform
+in Safe Rust. Data races are <i>mostly</i> prevented through rust's ownership system:
+it's impossible to alias a mutable reference, so it's impossible to perform a
+data race. Interior mutability makes this more complicated, which is largely why
+we have the Send and Sync traits (see below).</p>
+<br>
+<p><b>However Rust does not prevent general race conditions.</b></p>
+<br>
+<p>This is pretty fundamentally impossible, and probably honestly undesirable. Your
+hardware is racy, your OS is racy, the other programs on your computer are racy,
+and the world this all runs in is racy. Any system that could genuinely claim to
+prevent <i>all</i> race conditions would be pretty awful to use, if not just
+incorrect.</p>
+<br>
+<p>So it's perfectly &quot;fine&quot; for a Safe Rust program to get deadlocked or do
+something nonsensical with incorrect synchronization. Obviously such a program
+isn't very good, but Rust can only hold your hand so far. Still, a race
+condition can't violate memory safety in a Rust program on its own. Only in
+conjunction with some other unsafe code can a race condition actually violate
+memory safety. For instance:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::thread;"></div><div data-l="use std::sync::atomic::{AtomicUsize, Ordering};"></div><div data-l="use std::sync::Arc;"></div><div data-l=""></div><div data-l="let data = vec![1, 2, 3, 4];"></div><div data-l="#// Arc so that the memory the AtomicUsize is stored in still exists for"></div><div data-l="#// the other thread to increment, even if we completely finish executing"></div><div data-l="#// before it. Rust won't compile the program without it, because of the"></div><div data-l="#// lifetime requirements of thread::spawn!"></div><div data-l="// ">Arc so that the memory the AtomicUsize is stored in still exists for the other thread to increment, even if we completely finish executing before it. Rust won't compile the program without it, because of the lifetime requirements of thread::spawn!</div><div data-l="let idx = Arc::new(AtomicUsize::new(0));"></div><div data-l="let other_idx = idx.clone();"></div><div data-l=""></div><div data-l="#// `move` captures other_idx by-value, moving it into this thread"></div><div data-l="// "><code>move</code> captures other_idx by-value, moving it into this thread</div><div data-l="thread::spawn(move || {"></div><div data-l="#    // It's ok to mutate idx because this value"></div><div data-l="#    // is an atomic, so it can't cause a Data Race."></div><div data-l="    // ">It's ok to mutate idx because this value is an atomic, so it can't cause a Data Race.</div><div data-l="    other_idx.fetch_add(10, Ordering::SeqCst);"></div><div data-l="});"></div><div data-l=""></div><div data-l="#// Index with the value loaded from the atomic. This is safe because we"></div><div data-l="#// read the atomic memory only once, and then pass a copy of that value"></div><div data-l="#// to the Vec's indexing implementation. This indexing will be correctly"></div><div data-l="#// bounds checked, and there's no chance of the value getting changed"></div><div data-l="#// in the middle. However our program may panic if the thread we spawned"></div><div data-l="#// managed to increment before this ran. A race condition because correct"></div><div data-l="#// program execution (panicking is rarely correct) depends on order of"></div><div data-l="#// thread execution."></div><div data-l="// ">Index with the value loaded from the atomic. This is safe because we read the atomic memory only once, and then pass a copy of that value to the Vec's indexing implementation. This indexing will be correctly bounds checked, and there's no chance of the value getting changed in the middle. However our program may panic if the thread we spawned managed to increment before this ran. A race condition because correct program execution (panicking is rarely correct) depends on order of thread execution.</div><div data-l="println!(&quot;{}&quot;, data[idx.load(Ordering::SeqCst)]);"></div></div>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::thread;"></div><div data-l="use std::sync::atomic::{AtomicUsize, Ordering};"></div><div data-l="use std::sync::Arc;"></div><div data-l=""></div><div data-l="let data = vec![1, 2, 3, 4];"></div><div data-l=""></div><div data-l="let idx = Arc::new(AtomicUsize::new(0));"></div><div data-l="let other_idx = idx.clone();"></div><div data-l=""></div><div data-l="#// `move` captures other_idx by-value, moving it into this thread"></div><div data-l="// "><code>move</code> captures other_idx by-value, moving it into this thread</div><div data-l="thread::spawn(move || {"></div><div data-l="#    // It's ok to mutate idx because this value"></div><div data-l="#    // is an atomic, so it can't cause a Data Race."></div><div data-l="    // ">It's ok to mutate idx because this value is an atomic, so it can't cause a Data Race.</div><div data-l="    other_idx.fetch_add(10, Ordering::SeqCst);"></div><div data-l="});"></div><div data-l=""></div><div data-l="if idx.load(Ordering::SeqCst) &lt; data.len() {"></div><div data-l="    unsafe {"></div><div data-l="#        // Incorrectly loading the idx after we did the bounds check."></div><div data-l="#        // It could have changed. This is a race condition, *and dangerous*"></div><div data-l="#        // because we decided to do `get_unchecked`, which is `unsafe`."></div><div data-l="        // ">Incorrectly loading the idx after we did the bounds check. It could have changed. This is a race condition, <i>and dangerous</i> because we decided to do <code>get_unchecked</code>, which is <code>unsafe</code>.</div><div data-l="        println!(&quot;{}&quot;, data.get_unchecked(idx.load(Ordering::SeqCst)));"></div><div data-l="    }"></div><div data-l="}"></div></div>

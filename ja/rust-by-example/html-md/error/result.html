@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1><code>Result</code></h1>
+<br>
+<p><a class="notranslate" href="#3result"><code>Result</code></a> is a richer version of the <a class="notranslate" href="#3option"><code>Option</code></a> type that
+describes possible <i>error</i> instead of possible <i>absence</i>.</p>
+<br>
+<p>That is, <code>Result&lt;T, E&gt;</code> could have one of two outcomes:</p>
+<br>
+<div data-b="*"><code>Ok&lt;T&gt;</code>: An element <code>T</code> was found</div>
+<div data-b="*"><code>Err&lt;E&gt;</code>: An error was found with element <code>E</code></div>
+<br>
+<p>By convention, the expected outcome is <code>Ok</code> while the unexpected outcome is <code>Err</code>.</p>
+<br>
+<p>Like <code>Option</code>, <code>Result</code> has many methods associated with it. <code>unwrap()</code>, for
+example, either yields the element <code>T</code> or <code>panic</code>s. For case handling,
+there are many combinators between <code>Result</code> and <code>Option</code> that overlap.</p>
+<br>
+<p>In working with Rust, you will likely encounter methods that return the
+<code>Result</code> type, such as the <a class="notranslate" href="#3parse"><code>parse()</code></a> method. It might not always
+be possible to parse a string into the other type, so <code>parse()</code> returns a
+<code>Result</code> indicating possible failure.</p>
+<br>
+<p>Let's see what happens when we successfully and unsuccessfully <code>parse()</code> a string:</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn multiply(first_number_str: &amp;str, second_number_str: &amp;str) -&gt; i32 {"></div><div data-l="#    // Let's try using `unwrap()` to get the number out. Will it bite us?"></div><div data-l="    // ">Let's try using <code>unwrap()</code> to get the number out. Will it bite us?</div><div data-l="    let first_number = first_number_str.parse::&lt;i32&gt;().unwrap();"></div><div data-l="    let second_number = second_number_str.parse::&lt;i32&gt;().unwrap();"></div><div data-l="    first_number * second_number"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let twenty = multiply(&quot;10&quot;, &quot;2&quot;);"></div><div data-l="    println!(&quot;double is {}&quot;, twenty);"></div><div data-l=""></div><div data-l="    let tt = multiply(&quot;t&quot;, &quot;2&quot;);"></div><div data-l="    println!(&quot;double is {}&quot;, tt);"></div><div data-l="}"></div></div>
+<br>
+<p>In the unsuccessful case, <code>parse()</code> leaves us with an error for <code>unwrap()</code>
+to <code>panic</code> on. Additionally, the <code>panic</code> exits our program and provides an
+unpleasant error message.</p>
+<br>
+<p>To improve the quality of our error message, we should be more specific
+about the return type and consider explicitly handling the error.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/option/enum.Option.html">option</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/result/enum.Result.html">result</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.parse">parse</a>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<h1>Summary</h1>
+<br>
+<p><a class="notranslate" href="#2index.md">Introduction</a></p>
+<br>
+<div data-b="-"><a href="#2hello.md">Hello World</a></div>
+<div data-b="    -"><a class="notranslate" href="#2hello/comment.md">Comments</a></div>
+<div data-b="    -"><a href="#2hello/print.md">Formatted print</a></div>
+<div data-b="        -"><a class="notranslate" href="#2hello/print/print_debug.md">Debug</a></div>
+<div data-b="        -"><a class="notranslate" href="#2hello/print/print_display.md">Display</a></div>
+<div data-b="            -"><a href="#2hello/print/print_display/testcase_list.md">Testcase: List</a></div>
+<div data-b="        -"><a class="notranslate" href="#2hello/print/fmt.md">Formatting</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2primitives.md">Primitives</a></div>
+<div data-b="    -"><a href="#2primitives/literals.md">Literals and operators</a></div>
+<div data-b="    -"><a class="notranslate" href="#2primitives/tuples.md">Tuples</a></div>
+<div data-b="    -"><a href="#2primitives/array.md">Arrays and Slices</a></div>
+<br>
+<div data-b="-"><a href="#2custom_types.md">Custom Types</a></div>
+<div data-b="    -"><a class="notranslate" href="#2custom_types/structs.md">Structures</a></div>
+<div data-b="    -"><a class="notranslate" href="#2custom_types/enum.md">Enums</a></div>
+<div data-b="        -"><a class="notranslate" href="#2custom_types/enum/enum_use.md">use</a></div>
+<div data-b="        -"><a class="notranslate" href="#2custom_types/enum/c_like.md">C-like</a></div>
+<div data-b="        -"><a href="#2custom_types/enum/testcase_linked_list.md">Testcase: linked-list</a></div>
+<div data-b="    -"><a class="notranslate" href="#2custom_types/constants.md">constants</a></div>
+<br>
+<div data-b="-"><a href="#2variable_bindings.md">Variable Bindings</a></div>
+<div data-b="    -"><a class="notranslate" href="#2variable_bindings/mut.md">Mutability</a></div>
+<div data-b="    -"><a href="#2variable_bindings/scope.md">Scope and Shadowing</a></div>
+<div data-b="    -"><a href="#2variable_bindings/declare.md">Declare first</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2types.md">Types</a></div>
+<div data-b="    -"><a class="notranslate" href="#2types/cast.md">Casting</a></div>
+<div data-b="    -"><a class="notranslate" href="#2types/literals.md">Literals</a></div>
+<div data-b="    -"><a class="notranslate" href="#2types/inference.md">Inference</a></div>
+<div data-b="    -"><a class="notranslate" href="#2types/alias.md">Aliasing</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2conversion.md">Conversion</a></div>
+<div data-b="    -"><a href="#2conversion/from_into.md"><code>From</code> and <code>Into</code></a></div>
+<div data-b="    -"><a href="#2conversion/string.md">To and from <code>String</code>s</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2expression.md">Expressions</a></div>
+<br>
+<div data-b="-"><a href="#2flow_control.md">Flow Control</a></div>
+<div data-b="    -"><a class="notranslate" href="#2flow_control/if_else.md">if/else</a></div>
+<div data-b="    -"><a class="notranslate" href="#2flow_control/loop.md">loop</a></div>
+<div data-b="        -"><a href="#2flow_control/loop/nested.md">Nesting and labels</a></div>
+<div data-b="        -"><a href="#2flow_control/loop/return.md">Returning from loops</a></div>
+<div data-b="    -"><a class="notranslate" href="#2flow_control/while.md">while</a></div>
+<div data-b="    -"><a href="#2flow_control/for.md">for and range</a></div>
+<div data-b="    -"><a class="notranslate" href="#2flow_control/match.md">match</a></div>
+<div data-b="        -"><a class="notranslate" href="#2flow_control/match/destructuring.md">Destructuring</a></div>
+<div data-b="            -"><a class="notranslate" href="#2flow_control/match/destructuring/destructure_tuple.md">tuples</a></div>
+<div data-b="            -"><a class="notranslate" href="#2flow_control/match/destructuring/destructure_enum.md">enums</a></div>
+<div data-b="            -"><a class="notranslate" href="#2flow_control/match/destructuring/destructure_pointers.md">pointers/ref</a></div>
+<div data-b="            -"><a class="notranslate" href="#2flow_control/match/destructuring/destructure_structures.md">structs</a></div>
+<div data-b="        -"><a class="notranslate" href="#2flow_control/match/guard.md">Guards</a></div>
+<div data-b="        -"><a class="notranslate" href="#2flow_control/match/binding.md">Binding</a></div>
+<div data-b="    -"><a href="#2flow_control/if_let.md">if let</a></div>
+<div data-b="    -"><a href="#2flow_control/while_let.md">while let</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2fn.md">Functions</a></div>
+<div data-b="    -"><a class="notranslate" href="#2fn/methods.md">Methods</a></div>
+<div data-b="    -"><a class="notranslate" href="#2fn/closures.md">Closures</a></div>
+<div data-b="        -"><a class="notranslate" href="#2fn/closures/capture.md">Capturing</a></div>
+<div data-b="        -"><a href="#2fn/closures/input_parameters.md">As input parameters</a></div>
+<div data-b="        -"><a href="#2fn/closures/anonymity.md">Type anonymity</a></div>
+<div data-b="        -"><a href="#2fn/closures/input_functions.md">Input functions</a></div>
+<div data-b="        -"><a href="#2fn/closures/output_parameters.md">As output parameters</a></div>
+<div data-b="        -"><a href="#2fn/closures/closure_examples.md">Examples in <code>std</code></a></div>
+<div data-b="            -"><a class="notranslate" href="#2fn/closures/closure_examples/iter_any.md">Iterator::any</a></div>
+<div data-b="            -"><a class="notranslate" href="#2fn/closures/closure_examples/iter_find.md">Iterator::find</a></div>
+<div data-b="    -"><a href="#2fn/hof.md">Higher Order Functions</a></div>
+<div data-b="    -"><a href="#2fn/diverging.md">Diverging functions</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2mod.md">Modules</a></div>
+<div data-b="    -"><a class="notranslate" href="#2mod/visibility.md">Visibility</a></div>
+<div data-b="    -"><a href="#2mod/struct_visibility.md">Struct visibility</a></div>
+<div data-b="    -"><a href="#2mod/use.md">The <code>use</code> declaration</a></div>
+<div data-b="    -"><a href="#2mod/super.md"><code>super</code> and <code>self</code></a></div>
+<div data-b="    -"><a href="#2mod/split.md">File hierarchy</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2crates.md">Crates</a></div>
+<div data-b="    -"><a class="notranslate" href="#2crates/lib.md">Library</a></div>
+<div data-b="    -"><a href="#2crates/link.md"><code>extern crate</code></a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2cargo.md">Cargo</a></div>
+<div data-b="    -"><a class="notranslate" href="#2cargo/deps.md">Dependencies</a></div>
+<div data-b="    -"><a class="notranslate" href="#2cargo/conventions.md">Conventions</a></div>
+<div data-b="    -"><a class="notranslate" href="#2cargo/test.md">Tests</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2attribute.md">Attributes</a></div>
+<div data-b="    -"><a class="notranslate" href="#2attribute/unused.md"><code>dead_code</code></a></div>
+<div data-b="    -"><a class="notranslate" href="#2attribute/crate.md">Crates</a></div>
+<div data-b="    -"><a class="notranslate" href="#2attribute/cfg.md"><code>cfg</code></a></div>
+<div data-b="        -"><a class="notranslate" href="#2attribute/cfg/custom.md">Custom</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2generics.md">Generics</a></div>
+<div data-b="    -"><a class="notranslate" href="#2generics/gen_fn.md">Functions</a></div>
+<div data-b="    -"><a class="notranslate" href="#2generics/impl.md">Implementation</a></div>
+<div data-b="    -"><a class="notranslate" href="#2generics/gen_trait.md">Traits</a></div>
+<div data-b="    -"><a class="notranslate" href="#2generics/bounds.md">Bounds</a></div>
+<div data-b="        -"><a href="#2generics/bounds/testcase_empty.md">Testcase: empty bounds</a></div>
+<div data-b="    -"><a href="#2generics/multi_bounds.md">Multiple bounds</a></div>
+<div data-b="    -"><a href="#2generics/where.md">Where clauses</a></div>
+<div data-b="    -"><a href="#2generics/new_types.md">New Type Idiom</a></div>
+<div data-b="    -"><a href="#2generics/assoc_items.md">Associated items</a></div>
+<div data-b="        -"><a href="#2generics/assoc_items/the_problem.md">The Problem</a></div>
+<div data-b="        -"><a href="#2generics/assoc_items/types.md">Associated types</a></div>
+<div data-b="    -"><a href="#2generics/phantom.md">Phantom type parameters</a></div>
+<div data-b="        -"><a href="#2generics/phantom/testcase_units.md">Testcase: unit clarification</a></div>
+<br>
+<div data-b="-"><a href="#2scope.md">Scoping rules</a></div>
+<div data-b="    -"><a class="notranslate" href="#2scope/raii.md">RAII</a></div>
+<div data-b="    -"><a href="#2scope/move.md">Ownership and moves</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/move/mut.md">Mutability</a></div>
+<div data-b="    -"><a class="notranslate" href="#2scope/borrow.md">Borrowing</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/borrow/mut.md">Mutability</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/borrow/freeze.md">Freezing</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/borrow/alias.md">Aliasing</a></div>
+<div data-b="        -"><a href="#2scope/borrow/ref.md">The ref pattern</a></div>
+<div data-b="    -"><a class="notranslate" href="#2scope/lifetime.md">Lifetimes</a></div>
+<div data-b="        -"><a href="#2scope/lifetime/explicit.md">Explicit annotation</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/fn.md">Functions</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/methods.md">Methods</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/struct.md">Structs</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/lifetime_bounds.md">Bounds</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/lifetime_coercion.md">Coercion</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/static_lifetime.md">Static</a></div>
+<div data-b="        -"><a class="notranslate" href="#2scope/lifetime/elision.md">Elision</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2trait.md">Traits</a></div>
+<div data-b="    -"><a class="notranslate" href="#2trait/derive.md">Derive</a></div>
+<div data-b="    -"><a href="#2trait/ops.md">Operator Overloading</a></div>
+<div data-b="    -"><a class="notranslate" href="#2trait/drop.md">Drop</a></div>
+<div data-b="    -"><a class="notranslate" href="#2trait/iter.md">Iterators</a></div>
+<div data-b="    -"><a class="notranslate" href="#2trait/clone.md">Clone</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2macros.md">macro_rules!</a></div>
+<div data-b="    -"><a class="notranslate" href="#2macros/syntax.md">Syntax</a></div>
+<div data-b="        -"><a class="notranslate" href="#2macros/designators.md">Designators</a></div>
+<div data-b="        -"><a class="notranslate" href="#2macros/overload.md">Overload</a></div>
+<div data-b="        -"><a class="notranslate" href="#2macros/repeat.md">Repeat</a></div>
+<div data-b="    -"><a href="#2macros/dry.md">DRY (Don't Repeat Yourself)</a></div>
+<div data-b="    -"><a href="#2macros/dsl.md">DSL (Domain Specific Languages)</a></div>
+<div data-b="    -"><a class="notranslate" href="#2macros/variadics.md">Variadics</a></div>
+<br>
+<div data-b="-"><a href="#2error.md">Error handling</a></div>
+<div data-b="    -"><a class="notranslate" href="#2error/panic.md"><code>panic</code></a></div>
+<div data-b="    -"><a href="#2error/option_unwrap.md"><code>Option</code> &amp; <code>unwrap</code></a></div>
+<div data-b="        -"><a href="#2error/option_unwrap/map.md">Combinators: <code>map</code></a></div>
+<div data-b="        -"><a href="#2error/option_unwrap/and_then.md">Combinators: <code>and_then</code></a></div>
+<div data-b="    -"><a class="notranslate" href="#2error/result.md"><code>Result</code></a></div>
+<div data-b="        -"><a href="#2error/result/result_map.md"><code>map</code> for <code>Result</code></a></div>
+<div data-b="        -"><a href="#2error/result/result_alias.md">aliases for <code>Result</code></a></div>
+<div data-b="        -"><a href="#2error/result/early_returns.md">Early returns</a></div>
+<div data-b="        -"><a href="#2error/result/enter_question_mark.md">Introducing <code>?</code></a></div>
+<div data-b="    -"><a href="#2error/multiple_error_types.md">Multiple error types</a></div>
+<div data-b="        -"><a href="#2error/multiple_error_types/option_result.md">Pulling <code>Result</code>s out of <code>Option</code>s</a></div>
+<div data-b="        -"><a href="#2error/multiple_error_types/define_error_type.md">Defining an error type</a></div>
+<div data-b="        -"><a href="#2error/multiple_error_types/boxing_errors.md"><code>Box</code>ing errors</a></div>
+<div data-b="        -"><a href="#2error/multiple_error_types/reenter_question_mark.md">Other uses of <code>?</code></a></div>
+<div data-b="        -"><a href="#2error/multiple_error_types/wrap_error.md">Wrapping errors</a></div>
+<div data-b="    -"><a href="#2error/iter_result.md">Iterating over <code>Result</code>s</a></div>
+<br>
+<div data-b="-"><a href="#2std.md">Std library types</a></div>
+<div data-b="    -"><a href="#2std/box.md">Box, stack and heap</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/vec.md">Vectors</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/str.md">Strings</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/option.md"><code>Option</code></a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/result.md"><code>Result</code></a></div>
+<div data-b="        -"><a class="notranslate" href="#2std/result/question_mark.md"><code>?</code></a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/panic.md"><code>panic€</code></a></div>
+<div data-b="    -"><a class="notranslate" href="#2std/hash.md">HashMap</a></div>
+<div data-b="        -"><a href="#2std/hash/alt_key_types.md">Alternate/custom key types</a></div>
+<div data-b="        -"><a class="notranslate" href="#2std/hash/hashset.md">HashSet</a></div>
+<br>
+<div data-b="-"><a href="#2std_misc.md">Std misc</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std_misc/threads.md">Threads</a></div>
+<div data-b="        -"><a href="#2std_misc/threads/testcase_mapreduce.md">Testcase: map-reduce</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std_misc/channels.md">Channels</a></div>
+<div data-b="    -"><a class="notranslate" href="#2std_misc/path.md">Path</a></div>
+<div data-b="    -"><a href="#2std_misc/file.md">File I/O</a></div>
+<div data-b="        -"><a class="notranslate" href="#2std_misc/file/open.md"><code>open</code></a></div>
+<div data-b="        -"><a class="notranslate" href="#2std_misc/file/create.md"><code>create</code></a></div>
+<div data-b="    -"><a href="#2std_misc/process.md">Child processes</a></div>
+<div data-b="        -"><a class="notranslate" href="#2std_misc/process/pipe.md">Pipes</a></div>
+<div data-b="        -"><a class="notranslate" href="#2std_misc/process/wait.md">Wait</a></div>
+<div data-b="    -"><a href="#2std_misc/fs.md">Filesystem Operations</a></div>
+<div data-b="    -"><a href="#2std_misc/arg.md">Program arguments</a></div>
+<div data-b="        -"><a href="#2std_misc/arg/matching.md">Argument parsing</a></div>
+<div data-b="    -"><a href="#2std_misc/ffi.md">Foreign Function Interface</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2testing.md">Testing</a></div>
+<div data-b="    -"><a href="#2testing/unit_testing.md">Unit testing</a></div>
+<div data-b="    -"><a href="#2testing/doc_testing.md">Documentation testing</a></div>
+<div data-b="    -"><a href="#2testing/integration_testing.md">Integration testing</a></div>
+<div data-b="    -"><a class="notranslate" href="#2testing/dev_dependencies.md">Dev-dependencies</a></div>
+<br>
+<div data-b="-"><a class="notranslate" href="#2meta.md">Meta</a></div>
+<div data-b="    -"><a class="notranslate" href="#2meta/doc.md">Documentation</a></div>
+<br>
+<div data-b="-"><a href="#2unsafe.md">Unsafe Operations</a></div>

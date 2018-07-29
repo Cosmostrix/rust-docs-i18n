@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<h1>Patterns</h1>
+<br>
+<p>Patterns are quite common in Rust. We use them in <a class="notranslate" href="#3bindings">variable
+bindings</a>, <a href="#3match">match expressions</a>, and other places, too. Let’s go
+on a whirlwind tour of all of the things patterns can do!</p>
+<br>
+<a class="notranslate" href="#1variable-bindings.html">bindings</a>
+<a class="notranslate" href="#1match.html">match</a>
+<br>
+<p>A quick refresher: you can match against literals directly, and <code>_</code> acts as an
+‘any’ case:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 =&gt; println!(&quot;one&quot;),"></div><div data-l="    2 =&gt; println!(&quot;two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>one</code>.</p>
+<br>
+<p>It's possible to create a binding for the value in the any case:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    y =&gt; println!(&quot;x: {} y: {}&quot;, x, y),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints:</p>
+<br>
+<div data-lang="text"><div data-l="x: 1 y: 1"></div></div>
+<br>
+<p>Note it is an error to have both a catch-all <code>_</code> and a catch-all binding in the same match block:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    y =&gt; println!(&quot;x: {} y: {}&quot;, x, y),"></div><div data-l="#//    _ =&gt; println!(&quot;anything&quot;), // this causes an error as it is unreachable"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;), // ">this causes an error as it is unreachable</div><div data-l="}"></div></div>
+<br>
+<p>There’s one pitfall with patterns: like anything that introduces a new binding,
+they introduce shadowing. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l="let c = 'c';"></div><div data-l=""></div><div data-l="match c {"></div><div data-l="    x =&gt; println!(&quot;x: {} c: {}&quot;, x, c),"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;x: {}&quot;, x)"></div></div>
+<br>
+<p>This prints:</p>
+<br>
+<div data-lang="text"><div data-l="x: c c: c"></div><div data-l="x: 1"></div></div>
+<br>
+<p>In other words, <code>x =&gt;</code> matches the pattern and introduces a new binding named
+<code>x</code>. This new binding is in scope for the match arm and takes on the value of
+<code>c</code>. Notice that the value of <code>x</code> outside the scope of the match has no bearing
+on the value of <code>x</code> within it. Because we already have a binding named <code>x</code>, this
+new <code>x</code> shadows it.</p>
+<br>
+<h1>Multiple patterns</h1>
+<br>
+<p>You can match multiple patterns with <code>|</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 | 2 =&gt; println!(&quot;one or two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>one or two</code>.</p>
+<br>
+<h1>Destructuring</h1>
+<br>
+<p>If you have a compound data type, like a <a class="notranslate" href="#3struct"><code>struct</code></a>, you can destructure it
+inside of a pattern:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let origin = Point { x: 0, y: 0 };"></div><div data-l=""></div><div data-l="match origin {"></div><div data-l="    Point { x, y } =&gt; println!(&quot;({},{})&quot;, x, y),"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1structs.html">struct</a>
+<br>
+<p>We can use <code>:</code> to give a value a different name.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let origin = Point { x: 0, y: 0 };"></div><div data-l=""></div><div data-l="match origin {"></div><div data-l="    Point { x: x1, y: y1 } =&gt; println!(&quot;({},{})&quot;, x1, y1),"></div><div data-l="}"></div></div>
+<br>
+<p>If we only care about some of the values, we don’t have to give them all names:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let point = Point { x: 2, y: 3 };"></div><div data-l=""></div><div data-l="match point {"></div><div data-l="    Point { x, .. } =&gt; println!(&quot;x is {}&quot;, x),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>x is 2</code>.</p>
+<br>
+<p>You can do this kind of match on any member, not only the first:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let point = Point { x: 2, y: 3 };"></div><div data-l=""></div><div data-l="match point {"></div><div data-l="    Point { y, .. } =&gt; println!(&quot;y is {}&quot;, y),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>y is 3</code>.</p>
+<br>
+<p>This ‘destructuring’ behavior works on any compound data type, like
+<a class="notranslate" href="#3tuples">tuples</a> or <a class="notranslate" href="#3enums">enums</a>.</p>
+<br>
+<a class="notranslate" href="#1primitive-types.html#tuples">tuples</a>
+<a class="notranslate" href="#1enums.html">enums</a>
+<br>
+<h1>Ignoring bindings</h1>
+<br>
+<p>You can use <code>_</code> in a pattern to disregard the type and value.
+For example, here’s a <code>match</code> against a <code>Result&lt;T, E&gt;</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# let some_value: Result&lt;i32, &amp;'static str&gt; = Err(&quot;There was an error&quot;);"></div><div data-l="match some_value {"></div><div data-l="    Ok(value) =&gt; println!(&quot;got a value: {}&quot;, value),"></div><div data-l="    Err(_) =&gt; println!(&quot;an error occurred&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>In the first arm, we bind the value inside the <code>Ok</code> variant to <code>value</code>. But
+in the <code>Err</code> arm, we use <code>_</code> to disregard the specific error, and print
+a general error message.</p>
+<br>
+<p><code>_</code> is valid in any pattern that creates a binding. This can be useful to
+ignore parts of a larger structure:</p>
+<br>
+<div data-lang="rust"><div data-l="fn coordinate() -&gt; (i32, i32, i32) {"></div><div data-l="#    // Generate and return some sort of triple tuple."></div><div data-l="    // ">Generate and return some sort of triple tuple.</div><div data-l="# (1, 2, 3)"></div><div data-l="}"></div><div data-l=""></div><div data-l="let (x, _, z) = coordinate();"></div></div>
+<br>
+<p>Here, we bind the first and last element of the tuple to <code>x</code> and <code>z</code>, but
+ignore the middle element.</p>
+<br>
+<p>It’s worth noting that using <code>_</code> never binds the value in the first place,
+which means that the value does not move:</p>
+<br>
+<div data-lang="rust"><div data-l="let tuple: (u32, String) = (5, String::from(&quot;five&quot;));"></div><div data-l=""></div><div data-l="#// Here, tuple is moved, because the String moved:"></div><div data-l="// ">Here, tuple is moved, because the String moved:</div><div data-l="let (x, _s) = tuple;"></div><div data-l=""></div><div data-l="#// The next line would give &quot;error: use of partially moved value: `tuple`&quot;."></div><div data-l="#// println!(&quot;Tuple is: {:?}&quot;, tuple);"></div><div data-l="// ">The next line would give &quot;error: use of partially moved value: <code>tuple</code>&quot;. println!(&quot;Tuple is: {:?}&quot;, tuple);</div><div data-l=""></div><div data-l="#// However,"></div><div data-l="// ">However,</div><div data-l=""></div><div data-l="let tuple = (5, String::from(&quot;five&quot;));"></div><div data-l=""></div><div data-l="#// Here, tuple is _not_ moved, as the String was never moved, and u32 is Copy:"></div><div data-l="// ">Here, tuple is <s>not</s> moved, as the String was never moved, and u32 is Copy:</div><div data-l="let (x, _) = tuple;"></div><div data-l=""></div><div data-l="#// That means this works:"></div><div data-l="// ">That means this works:</div><div data-l="println!(&quot;Tuple is: {:?}&quot;, tuple);"></div></div>
+<br>
+<p>This also means that any temporary variables will be dropped at the end of the
+statement:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Here, the String created will be dropped immediately, as it’s not bound:"></div><div data-l="// ">Here, the String created will be dropped immediately, as it’s not bound:</div><div data-l=""></div><div data-l="let _ = String::from(&quot;  hello  &quot;).trim();"></div></div>
+<br>
+<p>You can also use <code>..</code> in a pattern to disregard multiple values:</p>
+<br>
+<div data-lang="rust"><div data-l="enum OptionalTuple {"></div><div data-l="    Value(i32, i32, i32),"></div><div data-l="    Missing,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let x = OptionalTuple::Value(5, -2, 3);"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    OptionalTuple::Value(..) =&gt; println!(&quot;Got a tuple!&quot;),"></div><div data-l="    OptionalTuple::Missing =&gt; println!(&quot;No such luck.&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>Got a tuple€</code>.</p>
+<br>
+<h1>ref and ref mut</h1>
+<br>
+<p>If you want to get a <a class="notranslate" href="#3ref">reference</a>, use the <code>ref</code> keyword:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    ref r =&gt; println!(&quot;Got a reference to {}&quot;, r),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>Got a reference to 5</code>.</p>
+<br>
+<a class="notranslate" href="#1references-and-borrowing.html">ref</a>
+<br>
+<p>Here, the <code>r</code> inside the <code>match</code> has the type <code>&amp;i32</code>. In other words, the <code>ref</code>
+keyword <s>creates</s> a reference, for use in the pattern. If you need a mutable
+reference, <code>ref mut</code> will work in the same way:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut x = 5;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    ref mut mr =&gt; println!(&quot;Got a mutable reference to {}&quot;, mr),"></div><div data-l="}"></div></div>
+<br>
+<h1>Ranges</h1>
+<br>
+<p>You can match a range of values with <code>...</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 ... 5 =&gt; println!(&quot;one through five&quot;),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>one through five</code>.</p>
+<br>
+<p>Ranges are mostly used with integers and <code>char</code>s:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = '💅';"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    'a' ... 'j' =&gt; println!(&quot;early letter&quot;),"></div><div data-l="    'k' ... 'z' =&gt; println!(&quot;late letter&quot;),"></div><div data-l="    _ =&gt; println!(&quot;something else&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>something else</code>.</p>
+<br>
+<h1>Bindings</h1>
+<br>
+<p>You can bind values to names with <code>@</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    e @ 1 ... 5 =&gt; println!(&quot;got a range element {}&quot;, e),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>got a range element 1</code>. This is useful when you want to
+do a complicated match of part of a data structure:</p>
+<br>
+<div data-lang="rust"><div data-l="#[derive(Debug)]"></div><div data-l="struct Person {"></div><div data-l="    name: Option&lt;String&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let name = &quot;Steve&quot;.to_string();"></div><div data-l="let x: Option&lt;Person&gt; = Some(Person { name: Some(name) });"></div><div data-l="match x {"></div><div data-l="    Some(Person { name: ref a @ Some(_), .. }) =&gt; println!(&quot;{:?}&quot;, a),"></div><div data-l="    _ =&gt; {}"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>Some(&quot;Steve&quot;)</code>: we’ve bound the inner <code>name</code> to <code>a</code>.</p>
+<br>
+<p>If you use <code>@</code> with <code>|</code>, you need to make sure the name is bound in each part
+of the pattern:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    e @ 1 ... 5 | e @ 8 ... 10 =&gt; println!(&quot;got a range element {}&quot;, e),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<h1>Guards</h1>
+<br>
+<p>You can introduce ‘match guards’ with <code>if</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="enum OptionalInt {"></div><div data-l="    Value(i32),"></div><div data-l="    Missing,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let x = OptionalInt::Value(5);"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    OptionalInt::Value(i) if i &gt; 5 =&gt; println!(&quot;Got an int bigger than five!&quot;),"></div><div data-l="    OptionalInt::Value(..) =&gt; println!(&quot;Got an int!&quot;),"></div><div data-l="    OptionalInt::Missing =&gt; println!(&quot;No such luck.&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>Got an int€</code>.</p>
+<br>
+<p>If you’re using <code>if</code> with multiple patterns, the <code>if</code> applies to both sides:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 4;"></div><div data-l="let y = false;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    4 | 5 if y =&gt; println!(&quot;yes&quot;),"></div><div data-l="    _ =&gt; println!(&quot;no&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This prints <code>no</code>, because the <code>if</code> applies to the whole of <code>4 | 5</code>, and not to
+only the <code>5</code>. In other words, the precedence of <code>if</code> behaves like this:</p>
+<br>
+<div data-lang="text"><div data-l="(4 | 5) if y =&gt; ..."></div></div>
+<br>
+<p>not this:</p>
+<br>
+<div data-lang="text"><div data-l="4 | (5 if y) =&gt; ..."></div></div>
+<br>
+<h1>Mix and Match</h1>
+<br>
+<p>Whew! That’s a lot of different ways to match things, and they can all be
+mixed and matched, depending on what you’re doing:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="match x {"></div><div data-l="    Foo { x: Some(ref name), y: None } =&gt; ..."></div><div data-l="}"></div></div>
+<br>
+<p>Patterns are very powerful. Make good use of them.</p>

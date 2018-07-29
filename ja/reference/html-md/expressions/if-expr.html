@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<h1><code>if</code> and <code>if let</code> expressions</h1>
+<br>
+<h2><code>if</code> expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>IfExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>if</code> <a class="notranslate" href="#4_Expression_">_Expression_</a><sub><s>except struct expression</s></sub> <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>\
+&amp;nbsp;&amp;nbsp; (<code>else</code> (
+  <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>
+| <s>IfExpression</s>
+| <s>IfLetExpression</s> ) )<sup>\?</sup></p></blockquote>
+<br>
+<p>An <code>if</code> expression is a conditional branch in program control. The form of an
+<code>if</code> expression is a condition expression, followed by a consequent block, any
+number of <code>else if</code> conditions and blocks, and an optional trailing <code>else</code>
+block. The condition expressions must have type <code>bool</code>. If a condition
+expression evaluates to <code>true</code>, the consequent block is executed and any
+subsequent <code>else if</code> or <code>else</code> block is skipped. If a condition expression
+evaluates to <code>false</code>, the consequent block is skipped and any subsequent <code>else
+if</code> condition is evaluated. If all <code>if</code> and <code>else if</code> conditions evaluate to
+<code>false</code> then any <code>else</code> block is executed. An if expression evaluates to the
+same value as the executed block, or <code>()</code> if no block is evaluated. An <code>if</code>
+expression must have the same type in all situations.</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 3;"></div><div data-l="if x == 4 {"></div><div data-l="    println!(&quot;x is four&quot;);"></div><div data-l="} else if x == 3 {"></div><div data-l="    println!(&quot;x is three&quot;);"></div><div data-l="} else {"></div><div data-l="    println!(&quot;x is something else&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="let y = if 12 * 15 &gt; 150 {"></div><div data-l="    &quot;Bigger&quot;"></div><div data-l="} else {"></div><div data-l="    &quot;Smaller&quot;"></div><div data-l="};"></div><div data-l="assert_eq!(y, &quot;Bigger&quot;);"></div></div>
+<br>
+<h2><code>if let</code> expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>IfLetExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>if</code> <code>let</code> <s>Pattern</s> <code>=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a><sub><s>except struct expression</s></sub>
+             <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>\
+&amp;nbsp;&amp;nbsp; (<code>else</code> (
+  <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>
+| <s>IfExpression</s>
+| <s>IfLetExpression</s> ) )<sup>\?</sup></p></blockquote>
+<br>
+<p>An <code>if let</code> expression is semantically similar to an <code>if</code> expression but in
+place of a condition expression it expects the keyword <code>let</code> followed by a
+refutable pattern, an <code>=</code> and an expression. If the value of the expression on
+the right hand side of the <code>=</code> matches the pattern, the corresponding block
+will execute, otherwise flow proceeds to the following <code>else</code> block if it
+exists. Like <code>if</code> expressions, <code>if let</code> expressions have a value determined by
+the block that is evaluated.</p>
+<br>
+<div data-lang="rust"><div data-l="let dish = (&quot;Ham&quot;, &quot;Eggs&quot;);"></div><div data-l=""></div><div data-l="#// this body will be skipped because the pattern is refuted"></div><div data-l="// ">this body will be skipped because the pattern is refuted</div><div data-l="if let (&quot;Bacon&quot;, b) = dish {"></div><div data-l="    println!(&quot;Bacon is served with {}&quot;, b);"></div><div data-l="} else {"></div><div data-l="#    // This block is evaluated instead."></div><div data-l="    // ">This block is evaluated instead.</div><div data-l="    println!(&quot;No bacon will be served&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// this body will execute"></div><div data-l="// ">this body will execute</div><div data-l="if let (&quot;Ham&quot;, b) = dish {"></div><div data-l="    println!(&quot;Ham is served with {}&quot;, b);"></div><div data-l="}"></div></div>
+<br>
+<p><code>if</code> and <code>if let</code> expressions can be intermixed:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = Some(3);"></div><div data-l="let a = if let Some(1) = x {"></div><div data-l="    1"></div><div data-l="} else if x == Some(2) {"></div><div data-l="    2"></div><div data-l="} else if let Some(y) = x {"></div><div data-l="    y"></div><div data-l="} else {"></div><div data-l="    -1"></div><div data-l="};"></div><div data-l="assert_eq!(a, 3);"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1expressions/block-expr.html">_BlockExpression_</a>

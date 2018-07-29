@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<h1>Layout</h1>
+<br>
+<p>First off, we need to come up with the struct layout. A Vec has three parts:
+a pointer to the allocation, the size of the allocation, and the number of
+elements that have been initialized.</p>
+<br>
+<p>Naively, this means we just want this design:</p>
+<br>
+<div data-lang="rust"><div data-l="pub struct Vec&lt;T&gt; {"></div><div data-l="    ptr: *mut T,"></div><div data-l="    cap: usize,"></div><div data-l="    len: usize,"></div><div data-l="}"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>And indeed this would compile. Unfortunately, it would be incorrect. First, the
+compiler will give us too strict variance. So a <code>&amp;Vec&lt;&amp;'static str&gt;</code>
+couldn't be used where an <code>&amp;Vec&lt;&amp;'a str&gt;</code> was expected. More importantly, it
+will give incorrect ownership information to the drop checker, as it will
+conservatively assume we don't own any values of type <code>T</code>. See <a href="#3ownership">the chapter
+on ownership and lifetimes</a> for all the details on variance and
+drop check.</p>
+<br>
+<p>As we saw in the ownership chapter, we should use <code>Unique&lt;T&gt;</code> in place of
+<code>*mut T</code> when we have a raw pointer to an allocation we own. Unique is unstable,
+so we'd like to not use it if possible, though.</p>
+<br>
+<p>As a recap, Unique is a wrapper around a raw pointer that declares that:</p>
+<br>
+<div data-b="*">We are variant over <code>T</code></div>
+<div data-b="*">We may own a value of type <code>T</code> (for drop check)</div>
+<div data-b="*">We are Send/Sync if <code>T</code> is Send/Sync</div>
+<div data-b="*">Our pointer is never null (so <code>Option&lt;Vec&lt;T&gt;&gt;</code> is null-pointer-optimized)</div>
+<br>
+<p>We can implement all of the above requirements except for the last
+one in stable Rust:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::marker::PhantomData;"></div><div data-l="use std::ops::Deref;"></div><div data-l="use std::mem;"></div><div data-l=""></div><div data-l="struct Unique&lt;T&gt; {"></div><div data-l="#//    ptr: *const T,              // *const for variance"></div><div data-l="    ptr: *const T,              // ">*const for variance</div><div data-l="#//    _marker: PhantomData&lt;T&gt;,    // For the drop checker"></div><div data-l="    _marker: PhantomData&lt;T&gt;,    // ">For the drop checker</div><div data-l="}"></div><div data-l=""></div><div data-l="#// Deriving Send and Sync is safe because we are the Unique owners"></div><div data-l="#// of this data. It's like Unique&lt;T&gt; is &quot;just&quot; T."></div><div data-l="// ">Deriving Send and Sync is safe because we are the Unique owners of this data. It's like Unique<T> is &quot;just&quot; T.</div><div data-l="unsafe impl&lt;T: Send&gt; Send for Unique&lt;T&gt; {}"></div><div data-l="unsafe impl&lt;T: Sync&gt; Sync for Unique&lt;T&gt; {}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Unique&lt;T&gt; {"></div><div data-l="    pub fn new(ptr: *mut T) -&gt; Self {"></div><div data-l="        Unique { ptr: ptr, _marker: PhantomData }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    pub fn as_ptr(&amp;self) -&gt; *mut T {"></div><div data-l="        self.ptr as *mut T"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>Unfortunately the mechanism for stating that your value is non-zero is
+unstable and unlikely to be stabilized soon. As such we're just going to
+take the hit and use std's Unique:</p>
+<br>
+<br>
+<div data-lang="rust"><div data-l="#![feature(ptr_internals, unique)]"></div><div data-l=""></div><div data-l="use std::ptr::{Unique, self};"></div><div data-l=""></div><div data-l="pub struct Vec&lt;T&gt; {"></div><div data-l="    ptr: Unique&lt;T&gt;,"></div><div data-l="    cap: usize,"></div><div data-l="    len: usize,"></div><div data-l="}"></div><div data-l=""></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>If you don't care about the null-pointer optimization, then you can use the
+stable code. However we will be designing the rest of the code around enabling
+this optimization. It should be noted that <code>Unique::new</code> is unsafe to call, because
+putting <code>null</code> inside of it is Undefined Behavior. Our stable Unique doesn't
+need <code>new</code> to be unsafe because it doesn't make any interesting guarantees about
+its contents.</p>
+<br>
+<a class="notranslate" href="#1ownership.html">ownership</a>

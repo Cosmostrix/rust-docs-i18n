@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<h1>Where clauses</h1>
+<br>
+<p>A bound can also be expressed using a <code>where</code> clause immediately
+before the opening <code>{</code>, rather than at the type's first mention. 
+Additionally, <code>where</code> clauses can apply bounds to arbitrary types, 
+rather than just to type parameters.</p>
+<br>
+<p>Some cases that a <code>where</code> clause is useful:</p>
+<br>
+<div data-b="*">When specifying generic types and bounds separately is clearer:</div>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl &lt;A: TraitB + TraitC, D: TraitE + TraitF&gt; MyTrait&lt;A, D&gt; for YourType {}"></div><div data-l=""></div><div data-l="#// Expressing bounds with a `where` clause"></div><div data-l="// ">Expressing bounds with a <code>where</code> clause</div><div data-l="impl &lt;A, D&gt; MyTrait&lt;A, D&gt; for YourType where"></div><div data-l="    A: TraitB + TraitC,"></div><div data-l="    D: TraitE + TraitF {}"></div></div>
+<br>
+<div data-b="*">When using a <code>where</code> clause is more expressive than using normal syntax. </div>
+<p>The <code>impl</code> in this example cannot be directly expressed without a <code>where</code> clause:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="trait PrintInOption {"></div><div data-l="    fn print_in_option(self);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Because we would otherwise have to express this as `T: Debug` or "></div><div data-l="#// use another method of indirect approach, this requires a `where` clause:"></div><div data-l="// ">Because we would otherwise have to express this as <code>T: Debug</code> or  use another method of indirect approach, this requires a <code>where</code> clause:</div><div data-l="impl&lt;T&gt; PrintInOption for T where"></div><div data-l="    Option&lt;T&gt;: Debug {"></div><div data-l="#    // We want `Option&lt;T&gt;: Debug` as our bound because that is what's"></div><div data-l="#    // being printed. Doing otherwise would be using the wrong bound."></div><div data-l="    // ">We want <code>Option&lt;T&gt;: Debug</code> as our bound because that is what's being printed. Doing otherwise would be using the wrong bound.</div><div data-l="    fn print_in_option(self) {"></div><div data-l="        println!(&quot;{:?}&quot;, Some(self));"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let vec = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="    vec.print_in_option();"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3where">RFC</a>, <a class="notranslate" href="#3struct"><code>struct</code></a>, and <a class="notranslate" href="#3trait"><code>trait</code></a></p>
+<br>
+<a class="notranslate" href="#1custom_types/structs.html">struct</a>
+<a class="notranslate" href="#1trait.html">trait</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0135-where.md">where</a>

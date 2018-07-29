@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h1><code>return</code> expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>ReturnExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>return</code> <a class="notranslate" href="#4_Expression_">_Expression_</a><sup>?</sup></p></blockquote>
+<br>
+<p>Return expressions are denoted with the keyword <code>return</code>. Evaluating a <code>return</code>
+expression moves its argument into the designated output location for the
+current function call, destroys the current function activation frame, and
+transfers control to the caller frame.</p>
+<br>
+<p>An example of a <code>return</code> expression:</p>
+<br>
+<div data-lang="rust"><div data-l="fn max(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    if a &gt; b {"></div><div data-l="        return a;"></div><div data-l="    }"></div><div data-l="    return b;"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

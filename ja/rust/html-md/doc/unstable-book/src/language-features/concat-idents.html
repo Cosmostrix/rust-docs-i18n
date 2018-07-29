@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1><code>concat_idents</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29599">#29599</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29599">#29599</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>concat_idents</code> feature adds a macro for concatenating multiple identifiers
+into one identifier.</p>
+<br>
+<h2>Examples</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(concat_idents)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    fn foobar() -&gt; u32 { 23 }"></div><div data-l="    let f = concat_idents!(foo, bar);"></div><div data-l="    assert_eq!(f(), 23);"></div><div data-l="}"></div></div>

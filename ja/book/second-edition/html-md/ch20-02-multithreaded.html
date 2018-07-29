@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<h2>Turning Our Single-Threaded Server into a Multithreaded Server</h2>
+<br>
+<p>Right now, the server will process each request in turn, meaning it won’t
+process a second connection until the first is finished processing. If the
+server received more and more requests, this serial execution would be less and
+less optimal. If the server receives a request that takes a long time to
+process, subsequent requests will have to wait until the long request is
+finished, even if the new requests can be processed quickly. We’ll need to fix
+this, but first, we’ll look at the problem in action.</p>
+<br>
+<h3>Simulating a Slow Request in the Current Server Implementation</h3>
+<br>
+<p>We’ll look at how a slow-processing request can affect other requests made to
+our current server implementation. Listing 20-10 implements handling a request
+to <i>/sleep</i> with a simulated slow response that will cause the server to sleep
+for 5 seconds before responding.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l="use std::time::Duration;"></div><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="# use std::fs::File;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="#     let mut buffer = [0; 512];"></div><div data-l="#     stream.read(&amp;mut buffer).unwrap();"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l=""></div><div data-l="    let get = b&quot;GET / HTTP/1.1\r\n&quot;;"></div><div data-l="    let sleep = b&quot;GET /sleep HTTP/1.1\r\n&quot;;"></div><div data-l=""></div><div data-l="    let (status_line, filename) = if buffer.starts_with(get) {"></div><div data-l="        (&quot;HTTP/1.1 200 OK\r\n\r\n&quot;, &quot;hello.html&quot;)"></div><div data-l="    } else if buffer.starts_with(sleep) {"></div><div data-l="        thread::sleep(Duration::from_secs(5));"></div><div data-l="        (&quot;HTTP/1.1 200 OK\r\n\r\n&quot;, &quot;hello.html&quot;)"></div><div data-l="    } else {"></div><div data-l="        (&quot;HTTP/1.1 404 NOT FOUND\r\n\r\n&quot;, &quot;404.html&quot;)"></div><div data-l="    };"></div><div data-l=""></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-10: Simulating a slow request by recognizing
+<i>/sleep</i> and sleeping for 5 seconds</span></p>
+<br>
+<p>This code is a bit messy, but it’s good enough for simulation purposes. We
+created a second request <code>sleep</code>, whose data our server recognizes. We added an
+<code>else if</code> after the <code>if</code> block to check for the request to <i>/sleep</i>. When that
+request is received, the server will sleep for 5 seconds before rendering the
+successful HTML page.</p>
+<br>
+<p>You can see how primitive our server is: real libraries would handle the
+recognition of multiple requests in a much less verbose way!</p>
+<br>
+<p>Start the server using <code>cargo run</code>. Then open two browser windows: one for
+<i>http://127.0.0.1:7878/</i> and the other for <i>http://127.0.0.1:7878/sleep</i>. If
+you enter the <i>/</i> URI a few times, as before, you’ll see it respond quickly.
+But if you enter <i>/sleep</i> and then load <i>/</i>, you’ll see that <i>/</i> waits until
+<code>sleep</code> has slept for its full 5 seconds before loading.</p>
+<br>
+<p>There are multiple ways we could change how our web server works to avoid
+having more requests back up behind a slow request; the one we’ll implement is
+a thread pool.</p>
+<br>
+<h3>Improving Throughput with a Thread Pool</h3>
+<br>
+<p>A <i>thread pool</i> is a group of spawned threads that are waiting and ready to
+handle a task. When the program receives a new task, it assigns one of the
+threads in the pool to the task, and that thread will process the task. The
+remaining threads in the pool are available to handle any other tasks that come
+in while the first thread is processing. When the first thread is done
+processing its task, it’s returned to the pool of idle threads, ready to handle
+a new task. A thread pool allows you to process connections concurrently,
+increasing the throughput of your server.</p>
+<br>
+<p>We’ll limit the number of threads in the pool to a small number to protect us
+from Denial of Service (DoS) attacks; if we had our program create a new thread
+for each request as it came in, someone making 10 million requests to our
+server could create havoc by using up all our server’s resources and grinding
+the processing of requests to a halt.</p>
+<br>
+<p>Rather than spawning unlimited threads, we’ll have a fixed number of threads
+waiting in the pool. As requests come in, they’ll be sent to the pool for
+processing. The pool will maintain a queue of incoming requests. Each of the
+threads in the pool will pop off a request from this queue, handle the request,
+and then ask the queue for another request. With this design, we can process
+<code>N</code> requests concurrently, where <code>N</code> is the number of threads. If each thread
+is responding to a long-running request, subsequent requests can still back up
+in the queue, but we’ve increased the number of long-running requests we can
+handle before reaching that point.</p>
+<br>
+<p>This technique is just one of many ways to improve the throughput of a web
+server. Other options you might explore are the fork/join model and the
+single-threaded async I/O model. If you’re interested in this topic, you can
+read more about other solutions and try to implement them in Rust; with a
+low-level language like Rust, all of these options are possible.</p>
+<br>
+<p>Before we begin implementing a thread pool, let’s talk about what using the
+pool should look like. When you’re trying to design code, writing the client
+interface first can help guide your design. Write the API of the code so it’s
+structured in the way you want to call it; then implement the functionality
+within that structure rather than implementing the functionality and then
+designing the public API.</p>
+<br>
+<p>Similar to how we used test-driven development in the project in Chapter 12,
+we’ll use compiler-driven development here. We’ll write the code that calls the
+functions we want, and then we’ll look at errors from the compiler to determine
+what we should change next to get the code to work.</p>
+<br>
+<h4>Code Structure If We Could Spawn a Thread for Each Request</h4>
+<br>
+<p>First, let’s explore how our code might look if it did create a new thread for
+every connection. As mentioned earlier, this isn’t our final plan due to the
+problems with potentially spawning an unlimited number of threads, but it is a
+starting point. Listing 20-11 shows the changes to make to <code>main</code> to spawn a
+new thread to handle each stream within the <code>for</code> loop.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# use std::thread;"></div><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpListener;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l=""></div><div data-l="    for stream in listener.incoming() {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        thread::spawn(|| {"></div><div data-l="            handle_connection(stream);"></div><div data-l="        });"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="# fn handle_connection(mut stream: TcpStream) {}"></div></div>
+<br>
+<p><span class="caption">Listing 20-11: Spawning a new thread for each
+stream</span></p>
+<br>
+<p>As you learned in Chapter 16, <code>thread::spawn</code> will create a new thread and then
+run the code in the closure in the new thread. If you run this code and load
+<i>/sleep</i> in your browser, then <i>/</i> in two more browser tabs, you’ll indeed see
+that the requests to <i>/</i> don’t have to wait for <i>/sleep</i> to finish. But as we
+mentioned, this will eventually overwhelm the system because you’d be making
+new threads without any limit.</p>
+<br>
+<h4>Creating a Similar Interface for a Finite Number of Threads</h4>
+<br>
+<p>We want our thread pool to work in a similar, familiar way so switching from
+threads to a thread pool doesn’t require large changes to the code that uses
+our API. Listing 20-12 shows the hypothetical interface for a <code>ThreadPool</code>
+struct we want to use instead of <code>thread::spawn</code>.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# use std::thread;"></div><div data-l="# use std::io::prelude::*;"></div><div data-l="# use std::net::TcpListener;"></div><div data-l="# use std::net::TcpStream;"></div><div data-l="# struct ThreadPool;"></div><div data-l="# impl ThreadPool {"></div><div data-l="#    fn new(size: u32) -&gt; ThreadPool { ThreadPool }"></div><div data-l="#    fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="#        where F: FnOnce() + Send + 'static {}"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l="    let pool = ThreadPool::new(4);"></div><div data-l=""></div><div data-l="    for stream in listener.incoming() {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        pool.execute(|| {"></div><div data-l="            handle_connection(stream);"></div><div data-l="        });"></div><div data-l="    }"></div><div data-l="}"></div><div data-l="# fn handle_connection(mut stream: TcpStream) {}"></div></div>
+<br>
+<p><span class="caption">Listing 20-12: Our ideal <code>ThreadPool</code> interface</span></p>
+<br>
+<p>We use <code>ThreadPool::new</code> to create a new thread pool with a configurable number
+of threads, in this case four. Then, in the <code>for</code> loop, <code>pool.execute</code> has a
+similar interface as <code>thread::spawn</code> in that it takes a closure the pool should
+run for each stream. We need to implement <code>pool.execute</code> so it takes the
+closure and gives it to a thread in the pool to run. This code won’t yet
+compile, but we’ll try so the compiler can guide us in how to fix it.</p>
+<br>
+<h4>Building the <code>ThreadPool</code> Struct Using Compiler Driven Development</h4>
+<br>
+<p>Make the changes in Listing 20-12 to <i>src/main.rs</i>, and then let’s use the
+compiler errors from <code>cargo check</code> to drive our development. Here is the first
+error we get:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo check"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="error[E0433]: failed to resolve. Use of undeclared type or module `ThreadPool`"></div><div data-l="  --&gt; src\main.rs:10:16"></div><div data-l="   |"></div><div data-l="10 |     let pool = ThreadPool::new(4);"></div><div data-l="   |                ^^^^^^^^^^^^^^^ Use of undeclared type or module"></div><div data-l="   `ThreadPool`"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div></div>
+<br>
+<p>Great! This error tells us we need a <code>ThreadPool</code> type or module, so we’ll
+build one now. Our <code>ThreadPool</code> implementation will be independent of the kind
+of work our web server is doing. So, let’s switch the <code>hello</code> crate from a
+binary crate to a library crate to hold our <code>ThreadPool</code> implementation. After
+we change to a library crate, we could also use the separate thread pool
+library for any work we want to do using a thread pool, not just for serving
+web requests.</p>
+<br>
+<p>Create a <i>src/lib.rs</i> that contains the following, which is the simplest
+definition of a <code>ThreadPool</code> struct that we can have for now:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="pub struct ThreadPool;"></div></div>
+<br>
+<p>Then create a new directory, <i>src/bin</i>, and move the binary crate rooted in
+<i>src/main.rs</i> into <i>src/bin/main.rs</i>. Doing so will make the library crate the
+primary crate in the <i>hello</i> directory; we can still run the binary in
+<i>src/bin/main.rs</i> using <code>cargo run</code>. After moving the <i>main.rs</i> file, edit it
+to bring the library crate in and bring <code>ThreadPool</code> into scope by adding the
+following code to the top of <i>src/bin/main.rs</i>:</p>
+<br>
+<p><span class="filename">Filename: src/bin/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate hello;"></div><div data-l="use hello::ThreadPool;"></div></div>
+<br>
+<p>This code still won’t work, but let’s check it again to get the next error that
+we need to address:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo check"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="error[E0599]: no function or associated item named `new` found for type"></div><div data-l="`hello::ThreadPool` in the current scope"></div><div data-l=" --&gt; src/bin/main.rs:13:16"></div><div data-l="   |"></div><div data-l="13 |     let pool = ThreadPool::new(4);"></div><div data-l="   |                ^^^^^^^^^^^^^^^ function or associated item not found in"></div><div data-l="   `hello::ThreadPool`"></div></div>
+<br>
+<p>This error indicates that next we need to create an associated function named
+<code>new</code> for <code>ThreadPool</code>. We also know that <code>new</code> needs to have one parameter
+that can accept <code>4</code> as an argument and should return a <code>ThreadPool</code> instance.
+Let’s implement the simplest <code>new</code> function that will have those
+characteristics:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="pub struct ThreadPool;"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        ThreadPool"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We chose <code>usize</code> as the type of the <code>size</code> parameter, because we know that a
+negative number of threads doesn’t make any sense. We also know we’ll use this
+4 as the number of elements in a collection of threads, which is what the
+<code>usize</code> type is for, as discussed in the “Integer Types” section of Chapter 3.</p>
+<br>
+<p>Let’s check the code again:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo check"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="warning: unused variable: `size`"></div><div data-l=" --&gt; src/lib.rs:4:16"></div><div data-l="  |"></div><div data-l="4 |     pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="  |                ^^^^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(unused_variables)] on by default"></div><div data-l="  = note: to avoid this warning, consider using `_size` instead"></div><div data-l=""></div><div data-l="error[E0599]: no method named `execute` found for type `hello::ThreadPool` in the current scope"></div><div data-l="  --&gt; src/bin/main.rs:18:14"></div><div data-l="   |"></div><div data-l="18 |         pool.execute(|| {"></div><div data-l="   |              ^^^^^^^"></div></div>
+<br>
+<p>Now we get a warning and an error. Ignoring the warning for a moment, the error
+occurs because we don’t have an <code>execute</code> method on <code>ThreadPool</code>. Recall from
+the “Creating a Similar Interface for a Finite Number of Threads” section that
+we decided our thread pool should have an interface similar to <code>thread::spawn</code>.
+In addition, we’ll implement the <code>execute</code> function so it takes the closure
+it’s given and gives it to an idle thread in the pool to run.</p>
+<br>
+<p>We’ll define the <code>execute</code> method on <code>ThreadPool</code> to take a closure as a
+parameter. Recall from the “Storing Closures Using Generic Parameters and the
+<code>Fn</code> Traits” section in Chapter 13 that we can take closures as parameters with
+three different traits: <code>Fn</code>, <code>FnMut</code>, and <code>FnOnce</code>. We need to decide which
+kind of closure to use here. We know we’ll end up doing something similar to
+the standard library <code>thread::spawn</code> implementation, so we can look at what
+bounds the signature of <code>thread::spawn</code> has on its parameter. The documentation
+shows us the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn spawn&lt;F, T&gt;(f: F) -&gt; JoinHandle&lt;T&gt;"></div><div data-l="    where"></div><div data-l="        F: FnOnce() -&gt; T + Send + 'static,"></div><div data-l="        T: Send + 'static"></div></div>
+<br>
+<p>The <code>F</code> type parameter is the one we’re concerned with here; the <code>T</code> type
+parameter is related to the return value, and we’re not concerned with that. We
+can see that <code>spawn</code> uses <code>FnOnce</code> as the trait bound on <code>F</code>. This is probably
+what we want as well, because we’ll eventually pass the argument we get in
+<code>execute</code> to <code>spawn</code>. We can be further confident that <code>FnOnce</code> is the trait we
+want to use because the thread for running a request will only execute that
+request’s closure one time, which matches the <code>Once</code> in <code>FnOnce</code>.</p>
+<br>
+<p>The <code>F</code> type parameter also has the trait bound <code>Send</code> and the lifetime bound
+<code>'static</code>, which are useful in our situation: we need <code>Send</code> to transfer the
+closure from one thread to another and <code>'static</code> because we don’t know how long
+the thread will take to execute. Let’s create an <code>execute</code> method on
+<code>ThreadPool</code> that will take a generic parameter of type <code>F</code> with these bounds:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# pub struct ThreadPool;"></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l=""></div><div data-l="    pub fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="        where"></div><div data-l="            F: FnOnce() + Send + 'static"></div><div data-l="    {"></div><div data-l=""></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We still use the <code>()</code> after <code>FnOnce</code> because this <code>FnOnce</code> represents a closure
+that takes no parameters and doesn’t return a value. Just like function
+definitions, the return type can be omitted from the signature, but even if we
+have no parameters, we still need the parentheses.</p>
+<br>
+<p>Again, this is the simplest implementation of the <code>execute</code> method: it does
+nothing, but we’re trying only to make our code compile. Let’s check it again:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo check"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="warning: unused variable: `size`"></div><div data-l=" --&gt; src/lib.rs:4:16"></div><div data-l="  |"></div><div data-l="4 |     pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="  |                ^^^^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(unused_variables)] on by default"></div><div data-l="  = note: to avoid this warning, consider using `_size` instead"></div><div data-l=""></div><div data-l="warning: unused variable: `f`"></div><div data-l=" --&gt; src/lib.rs:8:30"></div><div data-l="  |"></div><div data-l="8 |     pub fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="  |                              ^"></div><div data-l="  |"></div><div data-l="  = note: to avoid this warning, consider using `_f` instead"></div></div>
+<br>
+<p>We’re receiving only warnings now, which means it compiles! But note that if
+you try <code>cargo run</code> and make a request in the browser, you’ll see the errors in
+the browser that we saw at the beginning of the chapter. Our library isn’t
+actually calling the closure passed to <code>execute</code> yet!</p>
+<br>
+<blockquote><p>Note: A saying you might hear about languages with strict compilers, such as
+Haskell and Rust, is “if the code compiles, it works.” But this saying is not
+universally true. Our project compiles, but it does absolutely nothing! If we
+were building a real, complete project, this would be a good time to start
+writing unit tests to check that the code compiles <i>and</i> has the behavior we
+want.</p></blockquote>
+<br>
+<h4>Validating the Number of Threads in <code>new</code></h4>
+<br>
+<p>We’ll continue to get warnings because we aren’t doing anything with the
+parameters to <code>new</code> and <code>execute</code>. Let’s implement the bodies of these
+functions with the behavior we want. To start, let’s think about <code>new</code>. Earlier
+we chose an unsigned type for the <code>size</code> parameter, because a pool with a
+negative number of threads makes no sense. However, a pool with zero threads
+also makes no sense, yet zero is a perfectly valid <code>usize</code>. We’ll add code to
+check that <code>size</code> is greater than zero before we return a <code>ThreadPool</code> instance
+and have the program panic if it receives a zero by using the <code>assert€</code> macro,
+as shown in Listing 20-13.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# pub struct ThreadPool;"></div><div data-l="impl ThreadPool {"></div><div data-l="#//    /// Create a new ThreadPool."></div><div data-l="    /// ">Create a new ThreadPool.</div><div data-l="    ///"></div><div data-l="#//    /// The size is the number of threads in the pool."></div><div data-l="    /// ">The size is the number of threads in the pool.</div><div data-l="    ///"></div><div data-l="#//    /// # Panics"></div><div data-l="    /// "># Panics</div><div data-l="    ///"></div><div data-l="#//    /// The `new` function will panic if the size is zero."></div><div data-l="    /// ">The <code>new</code> function will panic if the size is zero.</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        ThreadPool"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-13: Implementing <code>ThreadPool::new</code> to panic if
+<code>size</code> is zero</span></p>
+<br>
+<p>We’ve added some documentation for our <code>ThreadPool</code> with doc comments. Note
+that we followed good documentation practices by adding a section that calls
+out the situations in which our function can panic, as discussed in Chapter 14.
+Try running <code>cargo doc --open</code> and clicking the <code>ThreadPool</code> struct to see what
+the generated docs for <code>new</code> look like!</p>
+<br>
+<p>Instead of adding the <code>assert€</code> macro as we’ve done here, we could make <code>new</code>
+return a <code>Result</code> like we did with <code>Config::new</code> in the I/O project in Listing
+12-9. But we’ve decided in this case that trying to create a thread pool
+without any threads should be an unrecoverable error. If you’re feeling
+ambitious, try to write a version of <code>new</code> with the following signature to
+compare both versions:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn new(size: usize) -&gt; Result&lt;ThreadPool, PoolCreationError&gt; {"></div></div>
+<br>
+<h4>Creating Space to Store the Threads</h4>
+<br>
+<p>Now that we have a way to know we have a valid number of threads to store in
+the pool, we can create those threads and store them in the <code>ThreadPool</code> struct
+before returning it. But how do we “store” a thread? Let’s take another look at
+the <code>thread::spawn</code> signature:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn spawn&lt;F, T&gt;(f: F) -&gt; JoinHandle&lt;T&gt;"></div><div data-l="    where"></div><div data-l="        F: FnOnce() -&gt; T + Send + 'static,"></div><div data-l="        T: Send + 'static"></div></div>
+<br>
+<p>The <code>spawn</code> function returns a <code>JoinHandle&lt;T&gt;</code>, where <code>T</code> is the type that the
+closure returns. Let’s try using <code>JoinHandle</code> too and see what happens. In our
+case, the closures we’re passing to the thread pool will handle the connection
+and not return anything, so <code>T</code> will be the unit type <code>()</code>.</p>
+<br>
+<p>The code in Listing 20-14 will compile but doesn’t create any threads yet.
+We’ve changed the definition of <code>ThreadPool</code> to hold a vector of
+<code>thread::JoinHandle&lt;()&gt;</code> instances, initialized the vector with a capacity of
+<code>size</code>, set up a <code>for</code> loop that will run some code to create the threads, and
+returned a <code>ThreadPool</code> instance containing them.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="pub struct ThreadPool {"></div><div data-l="    threads: Vec&lt;thread::JoinHandle&lt;()&gt;&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let mut threads = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for _ in 0..size {"></div><div data-l="#            // create some threads and store them in the vector"></div><div data-l="            // ">create some threads and store them in the vector</div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            threads"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-14: Creating a vector for <code>ThreadPool</code> to hold
+the threads</span></p>
+<br>
+<p>We’ve brought <code>std::thread</code> into scope in the library crate, because we’re
+using <code>thread::JoinHandle</code> as the type of the items in the vector in
+<code>ThreadPool</code>.</p>
+<br>
+<p>Once a valid size is received, our <code>ThreadPool</code> creates a new vector that can
+hold <code>size</code> items. We haven’t used the <code>with_capacity</code> function in this book
+yet, which performs the same task as <code>Vec::new</code> but with an important
+difference: it preallocates space in the vector. Because we know we need to
+store <code>size</code> elements in the vector, doing this allocation up front is slightly
+more efficient than using <code>Vec::new</code>, which resizes itself as elements are
+inserted.</p>
+<br>
+<p>When you run <code>cargo check</code> again, you’ll get a few more warnings, but it should
+succeed.</p>
+<br>
+<h4>A <code>Worker</code> Struct Responsible for Sending Code from the <code>ThreadPool</code> to a Thread</h4>
+<br>
+<p>We left a comment in the <code>for</code> loop in Listing 20-14 regarding the creation of
+threads. Here, we’ll look at how we actually create threads. The standard
+library provides <code>thread::spawn</code> as a way to create threads, and
+<code>thread::spawn</code> expects to get some code the thread should run as soon as the
+thread is created. However, in our case, we want to create the threads and have
+them <i>wait</i> for code that we’ll send later. The standard library’s
+implementation of threads doesn’t include any way to do that; we have to
+implement it manually.</p>
+<br>
+<p>We’ll implement this behavior by introducing a new data structure between the
+<code>ThreadPool</code> and the threads that will manage this new behavior. We’ll call
+this data structure <code>Worker</code>, which is a common term in pooling
+implementations. Think of people working in the kitchen at a restaurant: the
+workers wait until orders come in from customers, and then they’re responsible
+for taking those orders and filling them.</p>
+<br>
+<p>Instead of storing a vector of <code>JoinHandle&lt;()&gt;</code> instances in the thread pool,
+we’ll store instances of the <code>Worker</code> struct. Each <code>Worker</code> will store a single
+<code>JoinHandle&lt;()&gt;</code> instance. Then we’ll implement a method on <code>Worker</code> that will
+take a closure of code to run and send it to the already running thread for
+execution. We’ll also give each worker an <code>id</code> so we can distinguish between
+the different workers in the pool when logging or debugging.</p>
+<br>
+<p>Let’s make the following changes to what happens when we create a <code>ThreadPool</code>.
+We’ll implement the code that sends the closure to the thread after we have
+<code>Worker</code> set up in this way:</p>
+<br>
+<div data-b="1.">Define a <code>Worker</code> struct that holds an <code>id</code> and a <code>JoinHandle&lt;()&gt;</code>.</div>
+<div data-b="2.">Change <code>ThreadPool</code> to hold a vector of <code>Worker</code> instances.</div>
+<div data-b="3.">Define a <code>Worker::new</code> function that takes an <code>id</code> number and returns a
+ <code>Worker</code> instance that holds the <code>id</code> and a thread spawned with an empty
+ closure.</div>
+<div data-b="4.">In <code>ThreadPool::new</code>, use the <code>for</code> loop counter to generate an <code>id</code>, create
+ a new <code>Worker</code> with that <code>id</code>, and store the worker in the vector.</div>
+<br>
+<p>If you’re up for a challenge, try implementing these changes on your own before
+looking at the code in Listing 20-15.</p>
+<br>
+<p>Ready? Here is Listing 20-15 with one way to make the preceding modifications.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="pub struct ThreadPool {"></div><div data-l="    workers: Vec&lt;Worker&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let mut workers = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for id in 0..size {"></div><div data-l="            workers.push(Worker::new(id));"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            workers"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div><div data-l=""></div><div data-l="struct Worker {"></div><div data-l="    id: usize,"></div><div data-l="    thread: thread::JoinHandle&lt;()&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize) -&gt; Worker {"></div><div data-l="        let thread = thread::spawn(|| {});"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-15: Modifying <code>ThreadPool</code> to hold <code>Worker</code>
+instances instead of holding threads directly</span></p>
+<br>
+<p>We’ve changed the name of the field on <code>ThreadPool</code> from <code>threads</code> to <code>workers</code>
+because it’s now holding <code>Worker</code> instances instead of <code>JoinHandle&lt;()&gt;</code>
+instances. We use the counter in the <code>for</code> loop as an argument to
+<code>Worker::new</code>, and we store each new <code>Worker</code> in the vector named <code>workers</code>.</p>
+<br>
+<p>External code (like our server in <i>src/bin/main.rs</i>) doesn’t need to know the
+implementation details regarding using a <code>Worker</code> struct within <code>ThreadPool</code>,
+so we make the <code>Worker</code> struct and its <code>new</code> function private. The
+<code>Worker::new</code> function uses the <code>id</code> we give it and stores a <code>JoinHandle&lt;()&gt;</code>
+instance that is created by spawning a new thread using an empty closure.</p>
+<br>
+<p>This code will compile and will store the number of <code>Worker</code> instances we
+specified as an argument to <code>ThreadPool::new</code>. But we’re <i>still</i> not processing
+the closure that we get in <code>execute</code>. Let’s look at how to do that next.</p>
+<br>
+<h4>Sending Requests to Threads via Channels</h4>
+<br>
+<p>Now we’ll tackle the problem that the closures given to <code>thread::spawn</code> do
+absolutely nothing. Currently, we get the closure we want to execute in the
+<code>execute</code> method. But we need to give <code>thread::spawn</code> a closure to run when we
+create each <code>Worker</code> during the creation of the <code>ThreadPool</code>.</p>
+<br>
+<p>We want the <code>Worker</code> structs that we just created to fetch code to run from a
+queue held in the <code>ThreadPool</code> and send that code to its thread to run.</p>
+<br>
+<p>In Chapter 16, you learned about <i>channels</i>—a simple way to communicate between
+two threads—that would be perfect for this use case. We’ll use a channel to
+function as the queue of jobs, and <code>execute</code> will send a job from the
+<code>ThreadPool</code> to the <code>Worker</code> instances, which will send the job to its thread.
+Here is the plan:</p>
+<br>
+<div data-b="1.">The <code>ThreadPool</code> will create a channel and hold on to the sending side of
+ the channel.</div>
+<div data-b="2.">Each <code>Worker</code> will hold on to the receiving side of the channel.</div>
+<div data-b="3.">We’ll create a new <code>Job</code> struct that will hold the closures we want to send
+ down the channel.</div>
+<div data-b="4.">The <code>execute</code> method will send the job it wants to execute down the sending
+ side of the channel.</div>
+<div data-b="5.">In its thread, the <code>Worker</code> will loop over its receiving side of the channel
+ and execute the closures of any jobs it receives.</div>
+<br>
+<p>Let’s start by creating a channel in <code>ThreadPool::new</code> and holding the sending
+side in the <code>ThreadPool</code> instance, as shown in Listing 20-16. The <code>Job</code> struct
+doesn’t hold anything for now but will be the type of item we’re sending down
+the channel.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::thread;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l="use std::sync::mpsc;"></div><div data-l=""></div><div data-l="pub struct ThreadPool {"></div><div data-l="    workers: Vec&lt;Worker&gt;,"></div><div data-l="    sender: mpsc::Sender&lt;Job&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Job;"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let (sender, receiver) = mpsc::channel();"></div><div data-l=""></div><div data-l="        let mut workers = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for id in 0..size {"></div><div data-l="            workers.push(Worker::new(id));"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            workers,"></div><div data-l="            sender,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div><div data-l="#"></div><div data-l="# struct Worker {"></div><div data-l="#     id: usize,"></div><div data-l="#     thread: thread::JoinHandle&lt;()&gt;,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# impl Worker {"></div><div data-l="#     fn new(id: usize) -&gt; Worker {"></div><div data-l="#         let thread = thread::spawn(|| {});"></div><div data-l="#"></div><div data-l="#         Worker {"></div><div data-l="#             id,"></div><div data-l="#             thread,"></div><div data-l="#         }"></div><div data-l="#     }"></div><div data-l="# }"></div></div>
+<br>
+<p><span class="caption">Listing 20-16: Modifying <code>ThreadPool</code> to store the
+sending end of a channel that sends <code>Job</code> instances</span></p>
+<br>
+<p>In <code>ThreadPool::new</code>, we create our new channel and have the pool hold the
+sending end. This will successfully compile, still with warnings.</p>
+<br>
+<p>Let’s try passing a receiving end of the channel into each worker as the thread
+pool creates the channel. We know we want to use the receiving end in the
+thread that the workers spawn, so we’ll reference the <code>receiver</code> parameter in
+the closure. The code in Listing 20-17 won’t quite compile yet.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let (sender, receiver) = mpsc::channel();"></div><div data-l=""></div><div data-l="        let mut workers = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for id in 0..size {"></div><div data-l="            workers.push(Worker::new(id, receiver));"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            workers,"></div><div data-l="            sender,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: mpsc::Receiver&lt;Job&gt;) -&gt; Worker {"></div><div data-l="        let thread = thread::spawn(|| {"></div><div data-l="            receiver;"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-17: Passing the receiving end of the channel
+to the workers</span></p>
+<br>
+<p>We’ve made some small and straightforward changes: we pass the receiving end of
+the channel into <code>Worker::new</code>, and then we use it inside the closure.</p>
+<br>
+<p>When we try to check this code, we get this error:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo check"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="error[E0382]: use of moved value: `receiver`"></div><div data-l="  --&gt; src/lib.rs:27:42"></div><div data-l="   |"></div><div data-l="27 |             workers.push(Worker::new(id, receiver));"></div><div data-l="   |                                          ^^^^^^^^ value moved here in"></div><div data-l="   previous iteration of loop"></div><div data-l="   |"></div><div data-l="   = note: move occurs because `receiver` has type"></div><div data-l="   `std::sync::mpsc::Receiver&lt;Job&gt;`, which does not implement the `Copy` trait"></div></div>
+<br>
+<p>The code is trying to pass <code>receiver</code> to multiple <code>Worker</code> instances. This
+won’t work, as you’ll recall from Chapter 16: the channel implementation that
+Rust provides is multiple <i>producer</i>, single <i>consumer</i>. This means we can’t
+just clone the consuming end of the channel to fix this code. Even if we could,
+that is not the technique we would want to use; instead, we want to distribute
+the jobs across threads by sharing the single <code>receiver</code> among all the workers.</p>
+<br>
+<p>Additionally, taking a job off the channel queue involves mutating the
+<code>receiver</code>, so the threads need a safe way to share and modify <code>receiver</code>;
+otherwise, we might get race conditions (as covered in Chapter 16).</p>
+<br>
+<p>Recall the thread-safe smart pointers discussed in Chapter 16: to share
+ownership across multiple threads and allow the threads to mutate the value, we
+need to use <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>. The <code>Arc</code> type will let multiple workers own the
+receiver, and <code>Mutex</code> will ensure that only one worker gets a job from the
+receiver at a time. Listing 20-18 shows the changes we need to make.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::thread;"></div><div data-l="# use std::sync::mpsc;"></div><div data-l="use std::sync::Arc;"></div><div data-l="use std::sync::Mutex;"></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="# pub struct ThreadPool {"></div><div data-l="#     workers: Vec&lt;Worker&gt;,"></div><div data-l="#     sender: mpsc::Sender&lt;Job&gt;,"></div><div data-l="# }"></div><div data-l="# struct Job;"></div><div data-l="#"></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let (sender, receiver) = mpsc::channel();"></div><div data-l=""></div><div data-l="        let receiver = Arc::new(Mutex::new(receiver));"></div><div data-l=""></div><div data-l="        let mut workers = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for id in 0..size {"></div><div data-l="            workers.push(Worker::new(id, Arc::clone(&amp;receiver)));"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            workers,"></div><div data-l="            sender,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l="}"></div><div data-l=""></div><div data-l="# struct Worker {"></div><div data-l="#     id: usize,"></div><div data-l="#     thread: thread::JoinHandle&lt;()&gt;,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {"></div><div data-l="#        // --snip--"></div><div data-l="        // ">--snip--</div><div data-l="#         let thread = thread::spawn(|| {"></div><div data-l="#            receiver;"></div><div data-l="#         });"></div><div data-l="#"></div><div data-l="#         Worker {"></div><div data-l="#             id,"></div><div data-l="#             thread,"></div><div data-l="#         }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-18: Sharing the receiving end of the channel
+among the workers using <code>Arc</code> and <code>Mutex</code></span></p>
+<br>
+<p>In <code>ThreadPool::new</code>, we put the receiving end of the channel in an <code>Arc</code> and a
+<code>Mutex</code>. For each new worker, we clone the <code>Arc</code> to bump the reference count so
+the workers can share ownership of the receiving end.</p>
+<br>
+<p>With these changes, the code compiles! We’re getting there!</p>
+<br>
+<h4>Implementing the <code>execute</code> Method</h4>
+<br>
+<p>Let’s finally implement the <code>execute</code> method on <code>ThreadPool</code>. We’ll also change
+<code>Job</code> from a struct to a type alias for a trait object that holds the type of
+closure that <code>execute</code> receives. As discussed in the “Creating Type Synonyms
+with Type Aliases” section of Chapter 19, type aliases allow us to make long
+types shorter. Look at Listing 20-19.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l="# pub struct ThreadPool {"></div><div data-l="#     workers: Vec&lt;Worker&gt;,"></div><div data-l="#     sender: mpsc::Sender&lt;Job&gt;,"></div><div data-l="# }"></div><div data-l="# use std::sync::mpsc;"></div><div data-l="# struct Worker {}"></div><div data-l=""></div><div data-l="type Job = Box&lt;FnOnce() + Send + 'static&gt;;"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l=""></div><div data-l="    pub fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="        where"></div><div data-l="            F: FnOnce() + Send + 'static"></div><div data-l="    {"></div><div data-l="        let job = Box::new(f);"></div><div data-l=""></div><div data-l="        self.sender.send(job).unwrap();"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div></div>
+<br>
+<p><span class="caption">Listing 20-19: Creating a <code>Job</code> type alias for a <code>Box</code>
+that holds each closure and then sending the job down the channel</span></p>
+<br>
+<p>After creating a new <code>Job</code> instance using the closure we get in <code>execute</code>, we
+send that job down the sending end of the channel. We’re calling <code>unwrap</code> on
+<code>send</code> for the case that sending fails. This might happen if, for example, we
+stop all our threads from executing, meaning the receiving end has stopped
+receiving new messages. At the moment, we can’t stop our threads from
+executing: our threads continue executing as long as the pool exists. The
+reason we use <code>unwrap</code> is that we know the failure case won’t happen, but the
+compiler doesn’t know that.</p>
+<br>
+<p>But we’re not quite done yet! In the worker, our closure being passed to
+<code>thread::spawn</code> still only <i>references</i> the receiving end of the channel.
+Instead, we need the closure to loop forever, asking the receiving end of the
+channel for a job and running the job when it gets one. Let’s make the change
+shown in Listing 20-20 to <code>Worker::new</code>.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {"></div><div data-l="        let thread = thread::spawn(move || {"></div><div data-l="            loop {"></div><div data-l="                let job = receiver.lock().unwrap().recv().unwrap();"></div><div data-l=""></div><div data-l="                println!(&quot;Worker {} got a job; executing.&quot;, id);"></div><div data-l=""></div><div data-l="                (*job)();"></div><div data-l="            }"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-20: Receiving and executing the jobs in the
+worker’s thread</span></p>
+<br>
+<p>Here, we first call <code>lock</code> on the <code>receiver</code> to acquire the mutex, and then we
+call <code>unwrap</code> to panic on any errors. Acquiring a lock might fail if the mutex
+is in a <i>poisoned</i> state, which can happen if some other thread panicked while
+holding the lock rather than releasing the lock. In this situation, calling
+<code>unwrap</code> to have this thread panic is the correct action to take. Feel free to
+change this <code>unwrap</code> to an <code>expect</code> with an error message that is meaningful to
+you.</p>
+<br>
+<p>If we get the lock on the mutex, we call <code>recv</code> to receive a <code>Job</code> from the
+channel. A final <code>unwrap</code> moves past any errors here as well, which might occur
+if the thread holding the sending side of the channel has shut down, similar to
+how the <code>send</code> method returns <code>Err</code> if the receiving side shuts down.</p>
+<br>
+<p>The call to <code>recv</code> blocks, so if there is no job yet, the current thread will
+wait until a job becomes available. The <code>Mutex&lt;T&gt;</code> ensures that only one
+<code>Worker</code> thread at a time is trying to request a job.</p>
+<br>
+<p>Theoretically, this code should compile. Unfortunately, the Rust compiler isn’t
+perfect yet, and we get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0161]: cannot move a value of type std::ops::FnOnce() +"></div><div data-l="std::marker::Send: the size of std::ops::FnOnce() + std::marker::Send cannot be"></div><div data-l="statically determined"></div><div data-l="  --&gt; src/lib.rs:63:17"></div><div data-l="   |"></div><div data-l="63 |                 (*job)();"></div><div data-l="   |                 ^^^^^^"></div></div>
+<br>
+<p>This error is fairly cryptic because the problem is fairly cryptic. To call a
+<code>FnOnce</code> closure that is stored in a <code>Box&lt;T&gt;</code> (which is what our <code>Job</code> type
+alias is), the closure needs to move itself <i>out</i> of the <code>Box&lt;T&gt;</code> because the
+closure takes ownership of <code>self</code> when we call it. In general, Rust doesn’t
+allow us to move a value out of a <code>Box&lt;T&gt;</code> because Rust doesn’t know how big
+the value inside the <code>Box&lt;T&gt;</code> will be: recall in Chapter 15 that we used
+<code>Box&lt;T&gt;</code> precisely because we had something of an unknown size that we wanted
+to store in a <code>Box&lt;T&gt;</code> to get a value of a known size.</p>
+<br>
+<p>As you saw in Listing 17-15, we can write methods that use the syntax <code>self:
+Box&lt;Self&gt;</code>, which allows the method to take ownership of a <code>Self</code> value stored
+in a <code>Box&lt;T&gt;</code>. That’s exactly what we want to do here, but unfortunately Rust
+won’t let us: the part of Rust that implements behavior when a closure is
+called isn’t implemented using <code>self: Box&lt;Self&gt;</code>. So Rust doesn’t yet
+understand that it could use <code>self: Box&lt;Self&gt;</code> in this situation to take
+ownership of the closure and move the closure out of the <code>Box&lt;T&gt;</code>.</p>
+<br>
+<p>Rust is still a work in progress with places where the compiler could be
+improved, but in the future, the code in Listing 20-20 should work just fine.
+People just like you are working to fix this and other issues! After you’ve
+finished this book, we would love for you to join in.</p>
+<br>
+<p>But for now, let’s work around this problem using a handy trick. We can tell
+Rust explicitly that in this case we can take ownership of the value inside the
+<code>Box&lt;T&gt;</code> using <code>self: Box&lt;Self&gt;</code>; then, once we have ownership of the closure,
+we can call it. This involves defining a new trait <code>FnBox</code> with the method
+<code>call_box</code> that will use <code>self: Box&lt;Self&gt;</code> in its signature, defining <code>FnBox</code>
+for any type that implements <code>FnOnce()</code>, changing our type alias to use the new
+trait, and changing <code>Worker</code> to use the <code>call_box</code> method. These changes are
+shown in Listing 20-21.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait FnBox {"></div><div data-l="    fn call_box(self: Box&lt;Self&gt;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;F: FnOnce()&gt; FnBox for F {"></div><div data-l="    fn call_box(self: Box&lt;F&gt;) {"></div><div data-l="        (*self)()"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="type Job = Box&lt;FnBox + Send + 'static&gt;;"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {"></div><div data-l="        let thread = thread::spawn(move || {"></div><div data-l="            loop {"></div><div data-l="                let job = receiver.lock().unwrap().recv().unwrap();"></div><div data-l=""></div><div data-l="                println!(&quot;Worker {} got a job; executing.&quot;, id);"></div><div data-l=""></div><div data-l="                job.call_box();"></div><div data-l="            }"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-21: Adding a new trait <code>FnBox</code> to work around
+the current limitations of <code>Box&lt;FnOnce()&gt;</code></span></p>
+<br>
+<p>First, we create a new trait named <code>FnBox</code>. This trait has the one method
+<code>call_box</code>, which is similar to the <code>call</code> methods on the other <code>Fn*</code> traits
+except that it takes <code>self: Box&lt;Self&gt;</code> to take ownership of <code>self</code> and move the
+value out of the <code>Box&lt;T&gt;</code>.</p>
+<br>
+<p>Next, we implement the <code>FnBox</code> trait for any type <code>F</code> that implements the
+<code>FnOnce()</code> trait. Effectively, this means that any <code>FnOnce()</code> closures can use
+our <code>call_box</code> method. The implementation of <code>call_box</code> uses <code>(*self)()</code> to
+move the closure out of the <code>Box&lt;T&gt;</code> and call the closure.</p>
+<br>
+<p>We now need our <code>Job</code> type alias to be a <code>Box</code> of anything that implements our
+new trait <code>FnBox</code>. This will allow us to use <code>call_box</code> in <code>Worker</code> when we get
+a <code>Job</code> value instead of invoking the closure directly. Implementing the
+<code>FnBox</code> trait for any <code>FnOnce()</code> closure means we don’t have to change anything
+about the actual values we’re sending down the channel. Now Rust is able to
+recognize that what we want to do is fine.</p>
+<br>
+<p>This trick is very sneaky and complicated. Don’t worry if it doesn’t make
+perfect sense; someday, it will be completely unnecessary.</p>
+<br>
+<p>With the implementation of this trick, our thread pool is in a working state!
+Give it a <code>cargo run</code> and make some requests:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="warning: field is never used: `workers`"></div><div data-l=" --&gt; src/lib.rs:7:5"></div><div data-l="  |"></div><div data-l="7 |     workers: Vec&lt;Worker&gt;,"></div><div data-l="  |     ^^^^^^^^^^^^^^^^^^^^"></div><div data-l="  |"></div><div data-l="  = note: #[warn(dead_code)] on by default"></div><div data-l=""></div><div data-l="warning: field is never used: `id`"></div><div data-l="  --&gt; src/lib.rs:61:5"></div><div data-l="   |"></div><div data-l="61 |     id: usize,"></div><div data-l="   |     ^^^^^^^^^"></div><div data-l="   |"></div><div data-l="   = note: #[warn(dead_code)] on by default"></div><div data-l=""></div><div data-l="warning: field is never used: `thread`"></div><div data-l="  --&gt; src/lib.rs:62:5"></div><div data-l="   |"></div><div data-l="62 |     thread: thread::JoinHandle&lt;()&gt;,"></div><div data-l="   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"></div><div data-l="   |"></div><div data-l="   = note: #[warn(dead_code)] on by default"></div><div data-l=""></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.99 secs"></div><div data-l="     Running `target/debug/hello`"></div><div data-l="Worker 0 got a job; executing."></div><div data-l="Worker 2 got a job; executing."></div><div data-l="Worker 1 got a job; executing."></div><div data-l="Worker 3 got a job; executing."></div><div data-l="Worker 0 got a job; executing."></div><div data-l="Worker 2 got a job; executing."></div><div data-l="Worker 1 got a job; executing."></div><div data-l="Worker 3 got a job; executing."></div><div data-l="Worker 0 got a job; executing."></div><div data-l="Worker 2 got a job; executing."></div></div>
+<br>
+<p>Success! We now have a thread pool that executes connections asynchronously.
+There are never more than four threads created, so our system won’t get
+overloaded if the server receives a lot of requests. If we make a request to
+<i>/sleep</i>, the server will be able to serve other requests by having another
+thread run them.</p>
+<br>
+<p>After learning about the <code>while let</code> loop in Chapter 18, you might be wondering
+why we didn’t write the worker thread code as shown in Listing 20-22.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {"></div><div data-l="        let thread = thread::spawn(move || {"></div><div data-l="            while let Ok(job) = receiver.lock().unwrap().recv() {"></div><div data-l="                println!(&quot;Worker {} got a job; executing.&quot;, id);"></div><div data-l=""></div><div data-l="                job.call_box();"></div><div data-l="            }"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-22: An alternative implementation of
+<code>Worker::new</code> using <code>while let</code></span></p>
+<br>
+<p>This code compiles and runs but doesn’t result in the desired threading
+behavior: a slow request will still cause other requests to wait to be
+processed. The reason is somewhat subtle: the <code>Mutex</code> struct has no public
+<code>unlock</code> method because the ownership of the lock is based on the lifetime of
+the <code>MutexGuard&lt;T&gt;</code> within the <code>LockResult&lt;MutexGuard&lt;T&gt;&gt;</code> that the <code>lock</code>
+method returns. At compile time, the borrow checker can then enforce the rule
+that a resource guarded by a <code>Mutex</code> cannot be accessed unless we hold the
+lock. But this implementation can also result in the lock being held longer
+than intended if we don’t think carefully about the lifetime of the
+<code>MutexGuard&lt;T&gt;</code>. Because the values in the <code>while</code> expression remain in scope
+for the duration of the block, the lock remains held for the duration of the
+call to <code>job.call_box()</code>, meaning other workers cannot receive jobs.</p>
+<br>
+<p>By using <code>loop</code> instead and acquiring the lock and a job within the block
+rather than outside it, the <code>MutexGuard</code> returned from the <code>lock</code> method is
+dropped as soon as the <code>let job</code> statement ends. This ensures that the lock is
+held during the call to <code>recv</code>, but it is released before the call to
+<code>job.call_box()</code>, allowing multiple requests to be serviced concurrently.</p>

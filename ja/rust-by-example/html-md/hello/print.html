@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<h1>Formatted print</h1>
+<br>
+<p>Printing is handled by a series of <a class="notranslate" href="#3macros"><code>macros</code></a> defined in <a class="notranslate" href="#3fmt"><code>std::fmt</code></a>
+some of which include:</p>
+<br>
+<div data-b="*"><code>format€</code>: write formatted text to <a class="notranslate" href="#3string"><code>String</code></a></div>
+<div data-b="*"><code>print€</code>: same as <code>format€</code> but the text is printed to the console (io::stdout).</div>
+<div data-b="*"><code>println€</code>: same as <code>print€</code> but a newline is appended.</div>
+<div data-b="*"><code>eprint€</code>: same as <code>format€</code> but the text is printed to the standard error (io::stderr).</div>
+<div data-b="*"><code>eprintln€</code>: sames as <code>eprint€</code>but a newline is appended.</div>
+<br>
+<p>All parse text in the same fashion. A plus is that the formatting correctness will
+be checked at compile time.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn main() {"></div><div data-l="#    // In general, the `{}` will be automatically replaced with any"></div><div data-l="#    // arguments. These will be stringified."></div><div data-l="    // ">In general, the <code>{}</code> will be automatically replaced with any arguments. These will be stringified.</div><div data-l="    println!(&quot;{} days&quot;, 31);"></div><div data-l=""></div><div data-l="#    // Without a suffix, 31 becomes an i32. You can change what type 31 is,"></div><div data-l="#    // with a suffix."></div><div data-l="    // ">Without a suffix, 31 becomes an i32. You can change what type 31 is, with a suffix.</div><div data-l=""></div><div data-l="#    // There are various optional patterns this works with. Positional"></div><div data-l="#    // arguments can be used."></div><div data-l="    // ">There are various optional patterns this works with. Positional arguments can be used.</div><div data-l="    println!(&quot;{0}, this is {1}. {1}, this is {0}&quot;, &quot;Alice&quot;, &quot;Bob&quot;);"></div><div data-l=""></div><div data-l="#    // As can named arguments."></div><div data-l="    // ">As can named arguments.</div><div data-l="    println!(&quot;{subject} {verb} {object}&quot;,"></div><div data-l="             object=&quot;the lazy dog&quot;,"></div><div data-l="             subject=&quot;the quick brown fox&quot;,"></div><div data-l="             verb=&quot;jumps over&quot;);"></div><div data-l=""></div><div data-l="#    // Special formatting can be specified after a `:`."></div><div data-l="    // ">Special formatting can be specified after a <code>:</code>.</div><div data-l="    println!(&quot;{} of {:b} people know binary, the other half doesn't&quot;, 1, 2);"></div><div data-l=""></div><div data-l="#    // You can right-align text with a specified width. This will output"></div><div data-l="#    // &quot;     1&quot;. 5 white spaces and a &quot;1&quot;."></div><div data-l="    // ">You can right-align text with a specified width. This will output &quot;     1&quot;. 5 white spaces and a &quot;1&quot;.</div><div data-l="    println!(&quot;{number:&gt;width$}&quot;, number=1, width=6);"></div><div data-l=""></div><div data-l="#    // You can pad numbers with extra zeroes. This will output &quot;000001&quot;."></div><div data-l="    // ">You can pad numbers with extra zeroes. This will output &quot;000001&quot;.</div><div data-l="    println!(&quot;{number:&gt;0width$}&quot;, number=1, width=6);"></div><div data-l=""></div><div data-l="#    // It will even check to make sure the correct number of arguments are"></div><div data-l="#    // used."></div><div data-l="    // ">It will even check to make sure the correct number of arguments are used.</div><div data-l="    println!(&quot;My name is {0}, {1} {0}&quot;, &quot;Bond&quot;);"></div><div data-l="#    // FIXME ^ Add the missing argument: &quot;James&quot;"></div><div data-l="    // ">FIXME ^ Add the missing argument: &quot;James&quot;</div><div data-l="    "></div><div data-l="#    // Create a structure which contains an `i32`. Name it `Structure`."></div><div data-l="    // ">Create a structure which contains an <code>i32</code>. Name it <code>Structure</code>.</div><div data-l="    #[allow(dead_code)]"></div><div data-l="    struct Structure(i32);"></div><div data-l=""></div><div data-l="#    // However, custom types such as this structure require more complicated"></div><div data-l="#    // handling. This will not work."></div><div data-l="    // ">However, custom types such as this structure require more complicated handling. This will not work.</div><div data-l="    println!(&quot;This struct `{}` won't print...&quot;, Structure(3));"></div><div data-l="#    // FIXME ^ Comment out this line."></div><div data-l="    // ">FIXME ^ Comment out this line.</div><div data-l="}"></div></div>
+<br>
+<p><a class="notranslate" href="#3fmt"><code>std::fmt</code></a> contains many <a class="notranslate" href="#3traits"><code>traits</code></a> which govern the display
+of text. The base form of two important ones are listed below:</p>
+<br>
+<div data-b="*"><code>fmt::Debug</code>: Uses the <code>{:?}</code> marker. Format text for debugging purposes.</div>
+<div data-b="*"><code>fmt::Display</code>: Uses the <code>{}</code> marker. Format text in a more elegant, user</div>
+<p>friendly fashion.</p>
+<br>
+<p>Here, <code>fmt::Display</code> was used because the std library provides implementations
+for these types. To print text for custom types, more steps are required.</p>
+<br>
+<h3>Activities</h3>
+<br>
+<div data-b=" *">Fix the two issues in the above code (see FIXME) so that it runs without
+error.</div>
+<div data-b=" *">Add a <code>println€</code> macro that prints: <code>Pi is roughly 3.142</code> by controlling
+the number of decimal places shown. For the purposes of this exercise,
+use <code>let pi = 3.141592</code> as an estimate for Pi. (Hint: you may need to
+check the <a class="notranslate" href="#3fmt"><code>std::fmt</code></a> documentation for setting the number of
+decimals to display)</div>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3fmt"><code>std::fmt</code></a>, <a class="notranslate" href="#3macros"><code>macros</code></a>, <a class="notranslate" href="#3structs"><code>struct</code></a>,
+and <a class="notranslate" href="#3traits"><code>traits</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/">fmt</a>
+<a class="notranslate" href="#1macros.html">macros</a>
+<a class="notranslate" href="#1std/str.html">string</a>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1trait.html">traits</a>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<h1>Macros</h1>
+<br>
+<br>
+<p><a id="c-evocative"></a>
+## Input syntax is evocative of the output (C-EVOCATIVE)</p>
+<br>
+<p>Rust macros let you dream up practically whatever input syntax you want. Aim to
+keep input syntax familiar and cohesive with the rest of your users' code by
+mirroring existing Rust syntax where possible. Pay attention to the choice and
+placement of keywords and punctuation.</p>
+<br>
+<p>A good guide is to use syntax, especially keywords and punctuation, that is
+similar to what will be produced in the output of the macro.</p>
+<br>
+<p>For example if your macro declares a struct with a particular name given in the
+input, preface the name with the keyword <code>struct</code> to signal to readers that a
+struct is being declared with the given name.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Prefer this..."></div><div data-l="// ">Prefer this...</div><div data-l="bitflags! {"></div><div data-l="    struct S: u32 { /* ... */ }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// ...over no keyword..."></div><div data-l="// ">...over no keyword...</div><div data-l="bitflags! {"></div><div data-l="    S: u32 { /* ... */ }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// ...or some ad-hoc word."></div><div data-l="// ">...or some ad-hoc word.</div><div data-l="bitflags! {"></div><div data-l="    flags S: u32 { /* ... */ }"></div><div data-l="}"></div></div>
+<br>
+<p>Another example is semicolons vs commas. Constants in Rust are followed by
+semicolons so if your macro declares a chain of constants, they should likely be
+followed by semicolons even if the syntax is otherwise slightly different from
+Rust's.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Ordinary constants use semicolons."></div><div data-l="// ">Ordinary constants use semicolons.</div><div data-l="const A: u32 = 0b000001;"></div><div data-l="const B: u32 = 0b000010;"></div><div data-l=""></div><div data-l="#// So prefer this..."></div><div data-l="// ">So prefer this...</div><div data-l="bitflags! {"></div><div data-l="    struct S: u32 {"></div><div data-l="        const C = 0b000100;"></div><div data-l="        const D = 0b001000;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// ...over this."></div><div data-l="// ">...over this.</div><div data-l="bitflags! {"></div><div data-l="    struct S: u32 {"></div><div data-l="        const E = 0b010000,"></div><div data-l="        const F = 0b100000,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Macros are so diverse that these specific examples won't be relevant, but think
+about how to apply the same principles to your situation.</p>
+<br>
+<br>
+<p><a id="c-macro-attr"></a>
+## Item macros compose well with attributes (C-MACRO-ATTR)</p>
+<br>
+<p>Macros that produce more than one output item should support adding attributes
+to any one of those items. One common use case would be putting individual items
+behind a cfg.</p>
+<br>
+<div data-lang="rust"><div data-l="bitflags! {"></div><div data-l="    struct Flags: u8 {"></div><div data-l="        #[cfg(windows)]"></div><div data-l="        const ControlCenter = 0b001;"></div><div data-l="        #[cfg(unix)]"></div><div data-l="        const Terminal = 0b010;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Macros that produce a struct or enum as output should support attributes so that
+the output can be used with derive.</p>
+<br>
+<div data-lang="rust"><div data-l="bitflags! {"></div><div data-l="    #[derive(Default, Serialize)]"></div><div data-l="    struct Flags: u8 {"></div><div data-l="        const ControlCenter = 0b001;"></div><div data-l="        const Terminal = 0b010;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-anywhere"></a>
+## Item macros work anywhere that items are allowed (C-ANYWHERE)</p>
+<br>
+<p>Rust allows items to be placed at the module level or within a tighter scope
+like a function. Item macros should work equally well as ordinary items in all
+of these places. The test suite should include invocations of the macro in at
+least the module scope and function scope.</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    test_your_macro_in_a!(module);"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn anywhere() {"></div><div data-l="        test_your_macro_in_a!(function);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>As a simple example of how things can go wrong, this macro works great in a
+module scope but fails in a function scope.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! broken {"></div><div data-l="    ($m:ident :: $t:ident) =&gt; {"></div><div data-l="        pub struct $t;"></div><div data-l="        pub mod $m {"></div><div data-l="            pub use super::$t;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#//broken!(m::T); // okay, expands to T and m::T"></div><div data-l="broken!(m::T); // ">okay, expands to T and m::T</div><div data-l=""></div><div data-l="fn g() {"></div><div data-l="#//    broken!(m::U); // fails to compile, super::U refers to the containing module not g"></div><div data-l="    broken!(m::U); // ">fails to compile, super::U refers to the containing module not g</div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-macro-vis"></a>
+## Item macros support visibility specifiers (C-MACRO-VIS)</p>
+<br>
+<p>Follow Rust syntax for visibility of items produced by a macro. Private by
+default, public if <code>pub</code> is specified.</p>
+<br>
+<div data-lang="rust"><div data-l="bitflags! {"></div><div data-l="    struct PrivateFlags: u8 {"></div><div data-l="        const A = 0b0001;"></div><div data-l="        const B = 0b0010;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="bitflags! {"></div><div data-l="    pub struct PublicFlags: u8 {"></div><div data-l="        const C = 0b0100;"></div><div data-l="        const D = 0b1000;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-macro-ty"></a>
+## Type fragments are flexible (C-MACRO-TY)</p>
+<br>
+<p>If your macro accepts a type fragment like <code>$t:ty</code> in the input, it should be
+usable with all of the following:</p>
+<br>
+<div data-b="-">Primitives: <code>u8</code>, <code>&amp;str</code></div>
+<div data-b="-">Relative paths: <code>m::Data</code></div>
+<div data-b="-">Absolute paths: <code>::base::Data</code></div>
+<div data-b="-">Upward relative paths: <code>super::Data</code></div>
+<div data-b="-">Generics: <code>Vec&lt;String&gt;</code></div>
+<br>
+<p>As a simple example of how things can go wrong, this macro works great with
+primitives and absolute paths but fails with relative paths.</p>
+<br>
+<div data-lang="rust"><div data-l="macro_rules! broken {"></div><div data-l="    ($m:ident =&gt; $t:ty) =&gt; {"></div><div data-l="        pub mod $m {"></div><div data-l="            pub struct Wrapper($t);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#//broken!(a =&gt; u8); // okay"></div><div data-l="broken!(a =&gt; u8); // ">okay</div><div data-l=""></div><div data-l="#//broken!(b =&gt; ::std::marker::PhantomData&lt;()&gt;); // okay"></div><div data-l="broken!(b =&gt; ::std::marker::PhantomData&lt;()&gt;); // ">okay</div><div data-l=""></div><div data-l="struct S;"></div><div data-l="#//broken!(c =&gt; S); // fails to compile"></div><div data-l="broken!(c =&gt; S); // ">fails to compile</div></div>

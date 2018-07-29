@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<h2>Defining and Instantiating Structs</h2>
+<br>
+<p>Structs are similar to tuples, which were discussed in Chapter 3. Like tuples,
+the pieces of a struct can be different types. Unlike with tuples, you’ll name
+each piece of data so it’s clear what the values mean. As a result of these
+names, structs are more flexible than tuples: you don’t have to rely on the
+order of the data to specify or access the values of an instance.</p>
+<br>
+<p>To define a struct, we enter the keyword <code>struct</code> and name the entire struct. A
+struct’s name should describe the significance of the pieces of data being
+grouped together. Then, inside curly brackets, we define the names and types of
+the pieces of data, which we call <i>fields</i>. For example, Listing 5-1 shows a
+struct that stores information about a user account:</p>
+<br>
+<div data-lang="rust"><div data-l="struct User {"></div><div data-l="    username: String,"></div><div data-l="    email: String,"></div><div data-l="    sign_in_count: u64,"></div><div data-l="    active: bool,"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 5-1: A <code>User</code> struct definition</span></p>
+<br>
+<p>To use a struct after we’ve defined it, we create an <i>instance</i> of that struct
+by specifying concrete values for each of the fields. We create an instance by
+stating the name of the struct and then add curly brackets containing <code>key:
+value</code> pairs, where the keys are the names of the fields and the values are the
+data we want to store in those fields. We don’t have to specify the fields in
+the same order in which we declared them in the struct. In other words, the
+struct definition is like a general template for the type, and instances fill
+in that template with particular data to create values of the type. For
+example, we can declare a particular user as shown in Listing 5-2:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="let user1 = User {"></div><div data-l="    email: String::from(&quot;someone@example.com&quot;),"></div><div data-l="    username: String::from(&quot;someusername123&quot;),"></div><div data-l="    active: true,"></div><div data-l="    sign_in_count: 1,"></div><div data-l="};"></div></div>
+<br>
+<p><span class="caption">Listing 5-2: Creating an instance of the <code>User</code>
+struct</span></p>
+<br>
+<p>To get a specific value from a struct, we can use dot notation. If we wanted
+just this user’s email address, we could use <code>user1.email</code> wherever we wanted
+to use this value. If the instance is mutable, we can change a value by using
+the dot notation and assigning into a particular field. Listing 5-3 shows how
+to change the value in the <code>email</code> field of a mutable <code>User</code> instance:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="let mut user1 = User {"></div><div data-l="    email: String::from(&quot;someone@example.com&quot;),"></div><div data-l="    username: String::from(&quot;someusername123&quot;),"></div><div data-l="    active: true,"></div><div data-l="    sign_in_count: 1,"></div><div data-l="};"></div><div data-l=""></div><div data-l="user1.email = String::from(&quot;anotheremail@example.com&quot;);"></div></div>
+<br>
+<p><span class="caption">Listing 5-3: Changing the value in the <code>email</code> field of a
+<code>User</code> instance</span></p>
+<br>
+<p>Note that the entire instance must be mutable; Rust doesn’t allow us to mark
+only certain fields as mutable.</p>
+<br>
+<p>As with any expression, we can construct a new instance of the struct as the
+last expression in the function body to implicitly return that new instance.
+Listing 5-4 shows a <code>build_user</code> function that returns a <code>User</code> instance with
+the given email and username. The <code>active</code> field gets the value of <code>true</code>, and
+the <code>sign_in_count</code> gets a value of <code>1</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn build_user(email: String, username: String) -&gt; User {"></div><div data-l="    User {"></div><div data-l="        email: email,"></div><div data-l="        username: username,"></div><div data-l="        active: true,"></div><div data-l="        sign_in_count: 1,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 5-4: A <code>build_user</code> function that takes an email
+and username and returns a <code>User</code> instance</span></p>
+<br>
+<p>It makes sense to name the function parameters with the same name as the struct
+fields, but having to repeat the <code>email</code> and <code>username</code> field names and
+variables is a bit tedious. If the struct had more fields, repeating each name
+would get even more annoying. Luckily, there’s a convenient shorthand!</p>
+<br>
+<h3>Using the Field Init Shorthand when Variables and Fields Have the Same Name</h3>
+<br>
+<p>Because the parameter names and the struct field names are exactly the same in
+Listing 5-4, we can use the <i>field init shorthand</i> syntax to rewrite
+<code>build_user</code> so that it behaves exactly the same but doesn’t have the
+repetition of <code>email</code> and <code>username</code> as shown in Listing 5-5.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn build_user(email: String, username: String) -&gt; User {"></div><div data-l="    User {"></div><div data-l="        email,"></div><div data-l="        username,"></div><div data-l="        active: true,"></div><div data-l="        sign_in_count: 1,"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 5-5: A <code>build_user</code> function that uses field init
+shorthand because the <code>email</code> and <code>username</code> parameters have the same name as
+struct fields</span></p>
+<br>
+<p>Here, we’re creating a new instance of the <code>User</code> struct, which has a field
+named <code>email</code>. We want to set the <code>email</code> field’s value to the value in the
+<code>email</code> parameter of the <code>build_user</code> function. Because the <code>email</code> field and
+the <code>email</code> parameter have the same name, we only need to write <code>email</code> rather
+than <code>email: email</code>.</p>
+<br>
+<h3>Creating Instances From Other Instances With Struct Update Syntax</h3>
+<br>
+<p>It’s often useful to create a new instance of a struct that uses most of an old
+instance’s values but changes some. You’ll do this using <i>struct update syntax</i>.</p>
+<br>
+<p>First, Listing 5-6 shows how we create a new <code>User</code> instance in <code>user2</code> without
+the update syntax. We set new values for <code>email</code> and <code>username</code> but otherwise
+use the same values from <code>user1</code> that we created in Listing 5-2:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# let user1 = User {"></div><div data-l="#     email: String::from(&quot;someone@example.com&quot;),"></div><div data-l="#     username: String::from(&quot;someusername123&quot;),"></div><div data-l="#     active: true,"></div><div data-l="#     sign_in_count: 1,"></div><div data-l="# };"></div><div data-l="#"></div><div data-l="let user2 = User {"></div><div data-l="    email: String::from(&quot;another@example.com&quot;),"></div><div data-l="    username: String::from(&quot;anotherusername567&quot;),"></div><div data-l="    active: user1.active,"></div><div data-l="    sign_in_count: user1.sign_in_count,"></div><div data-l="};"></div></div>
+<br>
+<p><span class="caption">Listing 5-6: Creating a new <code>User</code> instance using some of
+the values from <code>user1</code></span></p>
+<br>
+<p>Using struct update syntax, we can achieve the same effect with less code, as
+shown in Listing 5-7. The syntax <code>..</code> specifies that the remaining fields not
+explicitly set should have the same value as the fields in the given instance.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct User {"></div><div data-l="#     username: String,"></div><div data-l="#     email: String,"></div><div data-l="#     sign_in_count: u64,"></div><div data-l="#     active: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# let user1 = User {"></div><div data-l="#     email: String::from(&quot;someone@example.com&quot;),"></div><div data-l="#     username: String::from(&quot;someusername123&quot;),"></div><div data-l="#     active: true,"></div><div data-l="#     sign_in_count: 1,"></div><div data-l="# };"></div><div data-l="#"></div><div data-l="let user2 = User {"></div><div data-l="    email: String::from(&quot;another@example.com&quot;),"></div><div data-l="    username: String::from(&quot;anotherusername567&quot;),"></div><div data-l="    ..user1"></div><div data-l="};"></div></div>
+<br>
+<p><span class="caption">Listing 5-7: Using struct update syntax to set new
+<code>email</code> and <code>username</code> values for a <code>User</code> instance but use the rest of the
+values from the fields of the instance in the <code>user1</code> variable</span></p>
+<br>
+<p>The code in Listing 5-7 also creates an instance in <code>user2</code> that has a
+different value for <code>email</code> and <code>username</code> but has the same values for the
+<code>active</code> and <code>sign_in_count</code> fields from <code>user1</code>.</p>
+<br>
+<h3>Tuple Structs without Named Fields to Create Different Types</h3>
+<br>
+<p>You can also define structs that look similar to tuples, called <i>tuple
+structs</i>. Tuple structs have the added meaning the struct name provides but
+don’t have names associated with their fields; rather, they just have the types
+of the fields. Tuple structs are useful when you want to give the whole tuple a
+name and make the tuple be a different type than other tuples, and naming each
+field as in a regular struct would be verbose or redundant.</p>
+<br>
+<p>To define a tuple struct start with the <code>struct</code> keyword and the struct name
+followed by the types in the tuple. For example, here are definitions and
+usages of two tuple structs named <code>Color</code> and <code>Point</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Color(i32, i32, i32);"></div><div data-l="struct Point(i32, i32, i32);"></div><div data-l=""></div><div data-l="let black = Color(0, 0, 0);"></div><div data-l="let origin = Point(0, 0, 0);"></div></div>
+<br>
+<p>Note that the <code>black</code> and <code>origin</code> values are different types, because they’re
+instances of different tuple structs. Each struct you define is its own type,
+even though the fields within the struct have the same types. For example, a
+function that takes a parameter of type <code>Color</code> cannot take a <code>Point</code> as an
+argument, even though both types are made up of three <code>i32</code> values. Otherwise,
+tuple struct instances behave like tuples: you can destructure them into their
+individual pieces, you can use a <code>.</code> followed by the index to access an
+individual value, and so on.</p>
+<br>
+<h3>Unit-Like Structs Without Any Fields</h3>
+<br>
+<p>You can also define structs that don’t have any fields! These are called
+<i>unit-like structs</i> because they behave similarly to <code>()</code>, the unit type.
+Unit-like structs can be useful in situations in which you need to implement a
+trait on some type but don’t have any data that you want to store in the type
+itself. We’ll discuss traits in Chapter 10.</p>
+<br>
+<blockquote><h3>Ownership of Struct Data</h3>
+<br>
+<p>In the <code>User</code> struct definition in Listing 5-1, we used the owned <code>String</code>
+type rather than the <code>&amp;str</code> string slice type. This is a deliberate choice
+because we want instances of this struct to own all of its data and for that
+data to be valid for as long as the entire struct is valid.</p>
+<br>
+<p>It’s possible for structs to store references to data owned by something else,
+but to do so requires the use of <i>lifetimes</i>, a Rust feature that we’ll
+discuss in Chapter 10. Lifetimes ensure that the data referenced by a struct
+is valid for as long as the struct is. Let’s say you try to store a reference
+in a struct without specifying lifetimes, like this, which won’t work:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct User {"></div><div data-l="    username: &amp;str,"></div><div data-l="    email: &amp;str,"></div><div data-l="    sign_in_count: u64,"></div><div data-l="    active: bool,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let user1 = User {"></div><div data-l="        email: &quot;someone@example.com&quot;,"></div><div data-l="        username: &quot;someusername123&quot;,"></div><div data-l="        active: true,"></div><div data-l="        sign_in_count: 1,"></div><div data-l="    };"></div><div data-l="}"></div></div>
+<br>
+<p>The compiler will complain that it needs lifetime specifiers:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0106]: missing lifetime specifier"></div><div data-l=" --&gt;"></div><div data-l="  |"></div><div data-l="2 |     username: &amp;str,"></div><div data-l="  |               ^ expected lifetime parameter"></div><div data-l=""></div><div data-l="error[E0106]: missing lifetime specifier"></div><div data-l=" --&gt;"></div><div data-l="  |"></div><div data-l="3 |     email: &amp;str,"></div><div data-l="  |            ^ expected lifetime parameter"></div></div>
+<br>
+<p>In Chapter 10, we’ll discuss how to fix these errors so you can store
+references in structs, but for now, we’ll fix errors like these using owned
+types like <code>String</code> instead of references like <code>&amp;str</code>.</p></blockquote>

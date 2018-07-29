@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<h2>Referring to Names in Different Modules</h2>
+<br>
+<p>We’ve covered how to call functions defined within a module using the module
+name as part of the call, as in the call to the <code>nested_modules</code> function shown
+here in Listing 7-7.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="pub mod a {"></div><div data-l="    pub mod series {"></div><div data-l="        pub mod of {"></div><div data-l="            pub fn nested_modules() {}"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    a::series::of::nested_modules();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 7-7: Calling a function by fully specifying its
+enclosing module’s path</span></p>
+<br>
+<p>As you can see, referring to the fully qualified name can get quite lengthy.
+Fortunately, Rust has a keyword to make these calls more concise.</p>
+<br>
+<h3>Bringing Names into Scope with the <code>use</code> Keyword</h3>
+<br>
+<p>Rust’s <code>use</code> keyword shortens lengthy function calls by bringing the modules of
+the function you want to call into scope. Here’s an example of bringing the
+<code>a::series::of</code> module into a binary crate’s root scope:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="pub mod a {"></div><div data-l="    pub mod series {"></div><div data-l="        pub mod of {"></div><div data-l="            pub fn nested_modules() {}"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="use a::series::of;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    of::nested_modules();"></div><div data-l="}"></div></div>
+<br>
+<p>The line <code>use a::series::of;</code> means that rather than using the full
+<code>a::series::of</code> path wherever we want to refer to the <code>of</code> module, we can use
+<code>of</code>.</p>
+<br>
+<p>The <code>use</code> keyword brings only what we’ve specified into scope: it does not
+bring children of modules into scope. That’s why we still have to use
+<code>of::nested_modules</code> when we want to call the <code>nested_modules</code> function.</p>
+<br>
+<p>We could have chosen to bring the function into scope by instead specifying the
+function in the <code>use</code> as follows:</p>
+<br>
+<div data-lang="rust"><div data-l="pub mod a {"></div><div data-l="    pub mod series {"></div><div data-l="        pub mod of {"></div><div data-l="            pub fn nested_modules() {}"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="use a::series::of::nested_modules;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    nested_modules();"></div><div data-l="}"></div></div>
+<br>
+<p>Doing so allows us to exclude all the modules and reference the function
+directly.</p>
+<br>
+<p>Because enums also form a sort of namespace like modules, we can bring an
+enum’s variants into scope with <code>use</code> as well. For any kind of <code>use</code> statement,
+if you’re bringing multiple items from one namespace into scope, you can list
+them using curly brackets and commas in the last position, like so:</p>
+<br>
+<div data-lang="rust"><div data-l="enum TrafficLight {"></div><div data-l="    Red,"></div><div data-l="    Yellow,"></div><div data-l="    Green,"></div><div data-l="}"></div><div data-l=""></div><div data-l="use TrafficLight::{Red, Yellow};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let red = Red;"></div><div data-l="    let yellow = Yellow;"></div><div data-l="    let green = TrafficLight::Green;"></div><div data-l="}"></div></div>
+<br>
+<p>We’re still specifying the <code>TrafficLight</code> namespace for the <code>Green</code> variant
+because we didn’t include <code>Green</code> in the <code>use</code> statement.</p>
+<br>
+<h3>Bringing All Names into Scope with a Glob</h3>
+<br>
+<p>To bring all the items in a namespace into scope at once, we can use the <code>*</code>
+syntax, which is called the <i>glob operator</i>. This example brings all the
+variants of an enum into scope without having to list each specifically:</p>
+<br>
+<div data-lang="rust"><div data-l="enum TrafficLight {"></div><div data-l="    Red,"></div><div data-l="    Yellow,"></div><div data-l="    Green,"></div><div data-l="}"></div><div data-l=""></div><div data-l="use TrafficLight::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let red = Red;"></div><div data-l="    let yellow = Yellow;"></div><div data-l="    let green = Green;"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>*</code> operator will bring into scope all the visible items in the
+<code>TrafficLight</code> namespace. You should use globs sparingly: they are convenient,
+but a glob might also pull in more items than you expected and cause naming
+conflicts.</p>
+<br>
+<h3>Using <code>super</code> to Access a Parent Module</h3>
+<br>
+<p>As you saw at the beginning of this chapter, when you create a library crate,
+Cargo makes a <code>tests</code> module for you. Let’s go into more detail about that now.
+In your <code>communicator</code> project, open <i>src/lib.rs</i>:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub mod client;"></div><div data-l=""></div><div data-l="pub mod network;"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        assert_eq!(2 + 2, 4);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Chapter 11 explains more about testing, but parts of this example should make
+sense now: we have a module named <code>tests</code> that lives next to our other modules
+and contains one function named <code>it_works</code>. Even though there are special
+annotations, the <code>tests</code> module is just another module! So our module hierarchy
+looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="communicator"></div><div data-l=" ├── client"></div><div data-l=" ├── network"></div><div data-l=" |   └── client"></div><div data-l=" └── tests"></div></div>
+<br>
+<p>Tests are for exercising the code within our library, so let’s try to call our
+<code>client::connect</code> function from this <code>it_works</code> function, even though we won’t
+be checking any functionality right now. This won’t work yet:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        client::connect();"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Run the tests by invoking the <code>cargo test</code> command:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo test"></div><div data-l="   Compiling communicator v0.1.0 (file:///projects/communicator)"></div><div data-l="error[E0433]: failed to resolve. Use of undeclared type or module `client`"></div><div data-l=" --&gt; src/lib.rs:9:9"></div><div data-l="  |"></div><div data-l="9 |         client::connect();"></div><div data-l="  |         ^^^^^^ Use of undeclared type or module `client`"></div></div>
+<br>
+<p>The compilation failed, but why? We don’t need to place <code>communicator::</code> in
+front of the function, as we did in <i>src/main.rs</i>, because we are definitely
+within the <code>communicator</code> library crate here. The reason is that paths are
+always relative to the current module, which here is <code>tests</code>. The only
+exception is in a <code>use</code> statement, where paths are relative to the crate root
+by default. Our <code>tests</code> module needs the <code>client</code> module in its scope!</p>
+<br>
+<p>So how do we get back up one module in the module hierarchy to call the
+<code>client::connect</code> function in the <code>tests</code> module? In the <code>tests</code> module, we can
+either use leading colons to let Rust know that we want to start from the root
+and list the whole path, like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="::client::connect();"></div></div>
+<br>
+<p>Or, we can use <code>super</code> to move up one module in the hierarchy from our current
+module, like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="super::client::connect();"></div></div>
+<br>
+<p>These two options don’t look that different in this example, but if you’re
+deeper in a module hierarchy, starting from the root every time would make your
+code lengthy. In those cases, using <code>super</code> to get from the current module to
+sibling modules is a good shortcut. Plus, if you’ve specified the path from the
+root in many places in your code and then rearrange your modules by moving a
+subtree to another place, you’ll end up needing to update the path in several
+places, which would be tedious.</p>
+<br>
+<p>It would also be annoying to have to type <code>super::</code> in each test, but you’ve
+already seen the tool for that solution: <code>use</code>! The <code>super::</code> functionality
+changes the path you give to <code>use</code> so it is relative to the parent module
+instead of to the root module.</p>
+<br>
+<p>For these reasons, in the <code>tests</code> module especially, <code>use super::something</code> is
+usually the best solution. So now our test looks like this:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::client;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        client::connect();"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>When we run <code>cargo test</code> again, the test will pass, and the first part of the
+test result output will be the following:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo test"></div><div data-l="   Compiling communicator v0.1.0 (file:///projects/communicator)"></div><div data-l="     Running target/debug/communicator-92007ddb5330fa5a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test tests::it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<h2>Summary</h2>
+<br>
+<p>Now you know some new techniques for organizing your code! Use these techniques
+to group related functionality together, keep files from becoming too long, and
+present a tidy public API to your library users.</p>
+<br>
+<p>Next, we’ll look at some collection data structures in the standard library
+that you can use in your nice, neat code.</p>

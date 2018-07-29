@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<h1>Diverging functions</h1>
+<br>
+<p>Diverging functions never return. They are marked using <code>€</code>, which is an empty type.</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo() -&gt; ! {"></div><div data-l="    panic!(&quot;This call never returns.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>As opposed to all the other types, this one cannot be instantiated, because the
+set of all possible values this type can have is empty. Note, that it is
+different from the <code>()</code> type, which has exactly one possible value.</p>
+<br>
+<p>For example, this functions returns as usual, although there is no information
+in the return value.</p>
+<br>
+<div data-lang="rust"><div data-l="fn some_fn() {"></div><div data-l="    ()"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let a: () = some_fn();"></div><div data-l="    println!(&quot;This functions returns and you can see this line.&quot;)"></div><div data-l="}"></div></div>
+<br>
+<p>As opposed to this function, which will never return the control back to the caller.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(never_type)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x: ! = panic!(&quot;This call never returns.&quot;);"></div><div data-l="    println!(&quot;You will never see this line!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Although this might seem like an abstract concept, it is in fact very useful and
+often handy. The main advantage of this type is that it can be cast to any other
+one and therefore used at places where an exact type is required, for instance
+in <code>match</code> branches. This allows us to write code like this:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    fn sum_odd_numbers(up_to: u32) -&gt; u32 {"></div><div data-l="        let mut acc = 0;"></div><div data-l="        for i in 0..up_to {"></div><div data-l="#            // Notice that the return type of this match expression must be u32"></div><div data-l="#            // because of the type of the &quot;addition&quot; variable."></div><div data-l="            // ">Notice that the return type of this match expression must be u32 because of the type of the &quot;addition&quot; variable.</div><div data-l="            let addition: u32 = match i%2 == 1 {"></div><div data-l="#                // The &quot;i&quot; variable is of type u32, which is perfectly fine."></div><div data-l="                // ">The &quot;i&quot; variable is of type u32, which is perfectly fine.</div><div data-l="                true =&gt; i,"></div><div data-l="#                // On the other hand, the &quot;continue&quot; expression does not return"></div><div data-l="#                // u32, but it is still fine, because it never returns and therefore"></div><div data-l="#                // does not violate the type requirements of the match expression."></div><div data-l="                // ">On the other hand, the &quot;continue&quot; expression does not return u32, but it is still fine, because it never returns and therefore does not violate the type requirements of the match expression.</div><div data-l="                false =&gt; continue,"></div><div data-l="            };"></div><div data-l="            acc += addition;"></div><div data-l="        }"></div><div data-l="        acc"></div><div data-l="    }"></div><div data-l="    println!(&quot;Sum of odd numbers up to 9 (excluding): {}&quot;, sum_odd_numbers(9));"></div><div data-l="}"></div></div>
+<br>
+<p>It is also the return type of functions that loop forever (e.g. <code>loop {}</code>) like
+network servers or functions that terminates the process (e.g. <code>exit()</code>).</p>

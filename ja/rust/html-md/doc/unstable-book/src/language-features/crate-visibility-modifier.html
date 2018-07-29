@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1><code>crate_visibility_modifier</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#45388">#45388</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/45388">#45388</a>
+<br>
+<p>-----</p>
+<br>
+<p>The <code>crate_visibility_modifier</code> feature allows the <code>crate</code> keyword to be used
+as a visibility modifier synonymous to <code>pub(crate)</code>, indicating that a type
+(function, <s>&amp;c.</s>) is to be visible to the entire enclosing crate, but not to
+other crates.</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(crate_visibility_modifier)]"></div><div data-l=""></div><div data-l="crate struct Foo {"></div><div data-l="    bar: usize,"></div><div data-l="}"></div></div>

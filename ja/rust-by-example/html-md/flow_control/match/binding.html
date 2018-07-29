@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h1>Binding</h1>
+<br>
+<p>Indirectly accessing a variable makes it impossible to branch and use that
+variable without re-binding. <code>match</code> provides the <code>@</code> sigil for binding values to
+names:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// A function `age` which returns a `u32`."></div><div data-l="// ">A function <code>age</code> which returns a <code>u32</code>.</div><div data-l="fn age() -&gt; u32 {"></div><div data-l="    15"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Tell me type of person you are&quot;);"></div><div data-l=""></div><div data-l="    match age() {"></div><div data-l="        0             =&gt; println!(&quot;I'm not born yet I guess&quot;),"></div><div data-l="#        // Could `match` 1 ... 12 directly but then what age"></div><div data-l="#        // would the child be? Instead, bind to `n` for the"></div><div data-l="#        // sequence of 1 .. 12. Now the age can be reported."></div><div data-l="        // ">Could <code>match</code> 1 ... 12 directly but then what age would the child be? Instead, bind to <code>n</code> for the sequence of 1 .. 12. Now the age can be reported.</div><div data-l="        n @ 1  ... 12 =&gt; println!(&quot;I'm a child of age {:?}&quot;, n),"></div><div data-l="        n @ 13 ... 19 =&gt; println!(&quot;I'm a teen of age {:?}&quot;, n),"></div><div data-l="#        // Nothing bound. Return the result."></div><div data-l="        // ">Nothing bound. Return the result.</div><div data-l="        n             =&gt; println!(&quot;I'm an old person of age {:?}&quot;, n),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<p><a class="notranslate" href="#4functions">functions</a></p>
+<br>
+<a class="notranslate" href="#1fn.html">functions</a>

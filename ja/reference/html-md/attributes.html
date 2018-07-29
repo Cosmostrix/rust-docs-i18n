@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<h1>Attributes</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Attribute</s> :\
+&amp;nbsp;&amp;nbsp; <s>InnerAttribute</s> | <s>OuterAttribute</s></p>
+<br>
+<p><s>InnerAttribute</s> :\
+&amp;nbsp;&amp;nbsp; <code>#€[</code> MetaItem <code>]</code></p>
+<br>
+<p><s>OuterAttribute</s> :\
+&amp;nbsp;&amp;nbsp; <code>#[</code> MetaItem <code>]</code></p>
+<br>
+<p><s>MetaItem</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; IDENTIFIER\
+&amp;nbsp;&amp;nbsp; | IDENTIFIER <code>=</code> LITERAL\
+&amp;nbsp;&amp;nbsp; | IDENTIFIER <code>(</code> LITERAL <code>)</code>\
+&amp;nbsp;&amp;nbsp; | IDENTIFIER <code>(</code> <s>MetaSeq</s> <code>)</code></p>
+<br>
+<p><s>MetaSeq</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; EMPTY\
+&amp;nbsp;&amp;nbsp; | <s>MetaItem</s>\
+&amp;nbsp;&amp;nbsp; | <s>MetaItem</s> <code>,</code> <s>MetaSeq</s></p></blockquote>
+<br>
+<p>An <s>attribute</s> is a general, free-form metadatum that is interpreted according
+to name, convention, and language and compiler version. Attributes are modeled
+on Attributes in <a class="notranslate" href="#4ECMA-335">ECMA-335</a>, with the syntax coming from <a class="notranslate" href="#4ECMA-334">ECMA-334</a> \(C#).</p>
+<br>
+<p>Attributes may appear as any of:</p>
+<br>
+<div data-b="*">A single identifier, the <s>attribute name</s></div>
+<div data-b="*">An identifier followed by the equals sign '=' and a literal, providing a
+key/value pair</div>
+<div data-b="*">An identifier followed by a parenthesized literal, providing a
+key/value pair</div>
+<div data-b="*">An identifier followed by a parenthesized list of sub-attribute arguments</div>
+<br>
+<p><s>Inner attributes</s>, written with a bang (&quot;!&quot;) after the hash (&quot;#&quot;), apply to the
+item that the attribute is declared within. <s>Outer attributes</s>, written without
+the bang after the hash, apply to the item or generic parameter that follow the
+attribute.</p>
+<br>
+<p>Attributes may be applied to many things in the language:</p>
+<br>
+<div data-b="*">All <a class="notranslate" href="#4item declarations">item declarations</a> accept outer attributes while <a class="notranslate" href="#4external blocks">external blocks</a>,
+<a class="notranslate" href="#4functions">functions</a>, <a class="notranslate" href="#4implementations">implementations</a>, and <a class="notranslate" href="#4modules">modules</a> accept inner attributes.</div>
+<div data-b="*"><a class="notranslate" href="#4Statements">Statements</a> accept outer attributes.</div>
+<div data-b="*"><a class="notranslate" href="#4Block expressions">Block expressions</a> accept outer and inner attributes, but only when they are
+the outer expression of an <a class="notranslate" href="#4expression statement">expression statement</a> or the final expression of
+another block expression.</div>
+<div data-b="*"><a class="notranslate" href="#4Enum">Enum</a> variants and <a class="notranslate" href="#4struct">struct</a> and <a class="notranslate" href="#4union">union</a> fields accept outer attributes.</div>
+<div data-b="*"><a href="#3match expressions">Match expression arms</a> accept outer attributes.</div>
+<div data-b="*"><a href="#3generics">Generic lifetime or type parameter</a> accept outer attributes.</div>
+<br>
+<p>Some examples of attributes:</p>
+<br>
+<div data-lang="rust"><div data-l="#// General metadata applied to the enclosing module or crate."></div><div data-l="// ">General metadata applied to the enclosing module or crate.</div><div data-l="#![crate_type = &quot;lib&quot;]"></div><div data-l=""></div><div data-l="#// A function marked as a unit test"></div><div data-l="// ">A function marked as a unit test</div><div data-l="#[test]"></div><div data-l="fn test_foo() {"></div><div data-l="    /* ... */"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// A conditionally-compiled module"></div><div data-l="// ">A conditionally-compiled module</div><div data-l="#[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="mod bar {"></div><div data-l="    /* ... */"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// A lint attribute used to suppress a warning/error"></div><div data-l="// ">A lint attribute used to suppress a warning/error</div><div data-l="#[allow(non_camel_case_types)]"></div><div data-l="type int8_t = i8;"></div><div data-l=""></div><div data-l="#// Outer attribute applies to the entire function."></div><div data-l="// ">Outer attribute applies to the entire function.</div><div data-l="fn some_unused_variables() {"></div><div data-l="  #![allow(unused_variables)]"></div><div data-l="  "></div><div data-l="  let x = ();"></div><div data-l="  let y = ();"></div><div data-l="  let z = ();"></div><div data-l="}"></div></div>
+<br>
+<p>The rest of this page describes or links to descriptions of which attribute
+names have meaning.</p>
+<br>
+<h2>Crate-only attributes</h2>
+<br>
+<div data-b="-"><code>crate_name</code> - specify the crate's crate name.</div>
+<div data-b="-"><code>crate_type</code> - see <a class="notranslate" href="#2linkage.html">linkage</a>.</div>
+<div data-b="-"><code>no_builtins</code> - disable optimizing certain code patterns to invocations of
+                library functions that are assumed to exist</div>
+<div data-b="-"><code>no_main</code> - disable emitting the <code>main</code> symbol. Useful when some other
+ object being linked to defines <code>main</code>.</div>
+<div data-b="-"><code>no_start</code> - disable linking to the <code>native</code> crate, which specifies the
+&quot;start&quot; language item.</div>
+<div data-b="-"><code>no_std</code> - disable linking to the <code>std</code> crate.</div>
+<div data-b="-"><code>recursion_limit</code> - Sets the maximum depth for potentially
+                    infinitely-recursive compile-time operations like
+                    auto-dereference or macro expansion. The default is
+                    <code>#€[recursion_limit=&quot;64&quot;]</code>.</div>
+<div data-b="-"><code>windows_subsystem</code> - Indicates that when this crate is linked for a Windows
+                      target it will configure the resulting binary's
+                      <a class="notranslate" href="#4subsystem">subsystem</a> via the linker. Valid values for this
+                      attribute are <code>console</code> and <code>windows</code>, corresponding to
+                      those two respective subsystems. More subsystems may be
+                      allowed in the future, and this attribute is ignored on
+                      non-Windows targets.</div>
+<br>
+<a class="notranslate" href="#1https://msdn.microsoft.com/en-us/library/fcc1zstk.aspx">subsystem</a>
+<br>
+<h2>Module-only attributes</h2>
+<br>
+<div data-b="-"><code>no_implicit_prelude</code> - disable injecting <code>use std::prelude::*</code> in this
+module.</div>
+<div data-b="-"><code>path</code> - specifies the file to load the module from. <code>#[path=&quot;foo.rs&quot;] mod
+  bar;</code> is equivalent to <code>mod bar { /* contents of foo.rs */ }</code>. The path is
+taken relative to the directory that the current module is in.</div>
+<br>
+<h2>Function-only attributes</h2>
+<br>
+<div data-b="-"><code>test</code> - indicates that this function is a test function, to only be compiled
+in case of <code>--test</code>.</div>
+<div data-b="  -"><code>ignore</code> - indicates that this test function is disabled.</div>
+<div data-b="-"><code>should_panic</code> - indicates that this test function should panic, inverting the
+success condition.</div>
+<div data-b="-"><code>cold</code> - The function is unlikely to be executed, so optimize it (and calls
+to it) differently.</div>
+<br>
+<h2>FFI attributes</h2>
+<br>
+<p>On an <code>extern</code> block, the following attributes are interpreted:</p>
+<br>
+<div data-b="-"><code>link_args</code> - specify arguments to the linker, rather than just the library
+name and type. This is feature gated and the exact behavior is
+implementation-defined (due to variety of linker invocation syntax).</div>
+<div data-b="-"><code>link</code> - indicate that a native library should be linked to for the
+declarations in this block to be linked correctly. <code>link</code> supports an optional
+<code>kind</code> key with three possible values: <code>dylib</code>, <code>static</code>, and <code>framework</code>. See
+<a href="#2items/external-blocks.html">external blocks</a> for more about external blocks.
+Two examples: <code>#[link(name = &quot;readline&quot;)]</code> and
+<code>#[link(name = &quot;CoreFoundation&quot;, kind = &quot;framework&quot;)]</code>.</div>
+<div data-b="-"><code>linked_from</code> - indicates what native library this block of FFI items is
+coming from. This attribute is of the form <code>#[linked_from = &quot;foo&quot;]</code> where
+<code>foo</code> is the name of a library in either <code>#[link]</code> or a <code>-l</code> flag. This
+attribute is currently required to export symbols from a Rust dynamic library
+on Windows, and it is feature gated behind the <code>linked_from</code> feature.</div>
+<br>
+<p>On declarations inside an <code>extern</code> block, the following attributes are
+interpreted:</p>
+<br>
+<div data-b="-"><code>link_name</code> - the name of the symbol that this function or static should be
+imported as.</div>
+<div data-b="-"><code>linkage</code> - on a static, this specifies the <a href="#2http://llvm.org/docs/LangRef.html#linkage-types">linkage
+  type</a>.</div>
+<br>
+<p>See <a href="#2type-layout.html">type layout</a> for documentation on the <code>repr</code> attribute
+which can be used to control type layout.</p>
+<br>
+<h2>Macro-related attributes</h2>
+<br>
+<div data-b="-"><code>macro_use</code> on a <code>mod</code> — macros defined in this module will be visible in the
+module's parent, after this module has been included.</div>
+<br>
+<div data-b="-"><code>macro_use</code> on an <code>extern crate</code> — load macros from this crate.  An optional
+list of names <code>#[macro_use(foo, bar)]</code> restricts the import to just those
+macros named.  The <code>extern crate</code> must appear at the crate root, not inside
+<code>mod</code>, which ensures proper function of the <a href="#2../book/first-edition/macros.html#the-variable-crate"><code>$crate</code> macro
+  variable</a>.</div>
+<br>
+<div data-b="-"><code>macro_reexport</code> on an <code>extern crate</code> — re-export the named macros.</div>
+<br>
+<div data-b="-"><code>macro_export</code> - export a macro for cross-crate usage.</div>
+<br>
+<div data-b="-"><code>no_link</code> on an <code>extern crate</code> — even if we load this crate for macros, don't
+link it into the output.</div>
+<br>
+<p>See the <a href="#2../book/first-edition/macros.html#scoping-and-macro-importexport">macros section of the first edition of the
+book</a> for more
+information on macro scope.</p>
+<br>
+<h2>Miscellaneous attributes</h2>
+<br>
+<div data-b="-"><code>export_name</code> - on statics and functions, this determines the name of the
+exported symbol.</div>
+<div data-b="-"><code>link_section</code> - on statics and functions, this specifies the section of the
+object file that this item's contents will be placed into.</div>
+<div data-b="-"><code>no_mangle</code> - on any item, do not apply the standard name mangling. Set the
+symbol for this item to its identifier.</div>
+<br>
+<h3>Deprecation</h3>
+<br>
+<p>The <code>deprecated</code> attribute marks an item as deprecated. It has two optional
+fields, <code>since</code> and <code>note</code>.</p>
+<br>
+<div data-b="-"><code>since</code> expects a version number, as in <code>#[deprecated(since = &quot;1.4.1&quot;)]</code></div>
+<div data-b="    -"><code>rustc</code> doesn't know anything about versions, but external tools like
+<code>clippy</code> may check the validity of this field.</div>
+<div data-b="-"><code>note</code> is a free text field, allowing you to provide an explanation about
+the deprecation and preferred alternatives.</div>
+<br>
+<p>Only <a href="#2visibility-and-privacy.html">public items</a> can be given the
+<code>#[deprecated]</code> attribute. <code>#[deprecated]</code> on a module is inherited by all
+child items of that module.</p>
+<br>
+<p><code>rustc</code> will issue warnings on usage of <code>#[deprecated]</code> items. <code>rustdoc</code> will
+show item deprecation, including the <code>since</code> version and <code>note</code>, if available.</p>
+<br>
+<p>Here's an example.</p>
+<br>
+<div data-lang="rust"><div data-l="#[deprecated(since = &quot;5.2&quot;, note = &quot;foo was rarely used. Users should instead use bar&quot;)]"></div><div data-l="pub fn foo() {}"></div><div data-l=""></div><div data-l="pub fn bar() {}"></div></div>
+<br>
+<p>The <a class="notranslate" href="#31270-deprecation.md">RFC</a> contains motivations and more details.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1270-deprecation.md">1270-deprecation.md</a>
+<br>
+<h3>Documentation</h3>
+<br>
+<p>The <code>doc</code> attribute is used to document items and fields. <a class="notranslate" href="#4Doc comments">Doc comments</a>
+are transformed into <code>doc</code> attributes.</p>
+<br>
+<p>See <a class="notranslate" href="#4The Rustdoc Book">The Rustdoc Book</a> for reference material on this attribute.</p>
+<br>
+<h3>Conditional compilation</h3>
+<br>
+<p>Sometimes one wants to have different compiler outputs from the same code,
+depending on build target, such as targeted operating system, or to enable
+release builds.</p>
+<br>
+<p>Configuration options are boolean (on or off) and are named either with a
+single identifier (e.g. <code>foo</code>) or an identifier and a string (e.g. <code>foo = &quot;bar&quot;</code>;
+the quotes are required and spaces around the <code>=</code> are unimportant). Note that
+similarly-named options, such as <code>foo</code>, <code>foo=&quot;bar&quot;</code> and <code>foo=&quot;baz&quot;</code> may each be
+set or unset independently.</p>
+<br>
+<p>Configuration options are either provided by the compiler or passed in on the
+command line using <code>--cfg</code> (e.g. <code>rustc main.rs --cfg foo --cfg 'bar=&quot;baz&quot;'</code>).
+Rust code then checks for their presence using the <code>#[cfg(...)]</code> attribute:</p>
+<br>
+<div data-lang="rust"><div data-l="#// The function is only included in the build when compiling for macOS"></div><div data-l="// ">The function is only included in the build when compiling for macOS</div><div data-l="#[cfg(target_os = &quot;macos&quot;)]"></div><div data-l="fn macos_only() {"></div><div data-l="#  // ..."></div><div data-l="  // ">...</div><div data-l="}"></div><div data-l=""></div><div data-l="#// This function is only included when either foo or bar is defined"></div><div data-l="// ">This function is only included when either foo or bar is defined</div><div data-l="#[cfg(any(foo, bar))]"></div><div data-l="fn needs_foo_or_bar() {"></div><div data-l="#  // ..."></div><div data-l="  // ">...</div><div data-l="}"></div><div data-l=""></div><div data-l="#// This function is only included when compiling for a unixish OS with a 32-bit"></div><div data-l="#// architecture"></div><div data-l="// ">This function is only included when compiling for a unixish OS with a 32-bit architecture</div><div data-l="#[cfg(all(unix, target_pointer_width = &quot;32&quot;))]"></div><div data-l="fn on_32bit_unix() {"></div><div data-l="#  // ..."></div><div data-l="  // ">...</div><div data-l="}"></div><div data-l=""></div><div data-l="#// This function is only included when foo is not defined"></div><div data-l="// ">This function is only included when foo is not defined</div><div data-l="#[cfg(not(foo))]"></div><div data-l="fn needs_not_foo() {"></div><div data-l="#  // ..."></div><div data-l="  // ">...</div><div data-l="}"></div></div>
+<br>
+<p>This illustrates some conditional compilation can be achieved using the
+<code>#[cfg(...)]</code> attribute. <code>any</code>, <code>all</code> and <code>not</code> can be used to assemble
+arbitrarily complex configurations through nesting.</p>
+<br>
+<p>The following configurations must be defined by the implementation:</p>
+<br>
+<div data-b="*"><code>target_arch = &quot;...&quot;</code> - Target CPU architecture, such as <code>&quot;x86&quot;</code>,
+<code>&quot;x86_64&quot;</code> <code>&quot;mips&quot;</code>, <code>&quot;powerpc&quot;</code>, <code>&quot;powerpc64&quot;</code>, <code>&quot;arm&quot;</code>, or
+<code>&quot;aarch64&quot;</code>. This value is closely related to the first element of
+the platform target triple, though it is not identical.</div>
+<div data-b="*"><code>target_os = &quot;...&quot;</code> - Operating system of the target, examples
+include <code>&quot;windows&quot;</code>, <code>&quot;macos&quot;</code>, <code>&quot;ios&quot;</code>, <code>&quot;linux&quot;</code>, <code>&quot;android&quot;</code>,
+<code>&quot;freebsd&quot;</code>, <code>&quot;dragonfly&quot;</code>, <code>&quot;bitrig&quot;</code> , <code>&quot;openbsd&quot;</code> or
+<code>&quot;netbsd&quot;</code>. This value is closely related to the second and third
+element of the platform target triple, though it is not identical.</div>
+<div data-b="*"><code>target_family = &quot;...&quot;</code> - Operating system family of the target, e. g.
+<code>&quot;unix&quot;</code> or <code>&quot;windows&quot;</code>. The value of this configuration option is defined
+as a configuration itself, like <code>unix</code> or <code>windows</code>.</div>
+<div data-b="*"><code>unix</code> - See <code>target_family</code>.</div>
+<div data-b="*"><code>windows</code> - See <code>target_family</code>.</div>
+<div data-b="*"><code>target_env = &quot;..&quot;</code> - Further disambiguates the target platform with
+information about the ABI/libc. Presently this value is either
+<code>&quot;gnu&quot;</code>, <code>&quot;msvc&quot;</code>, <code>&quot;musl&quot;</code>, or the empty string. For historical
+reasons this value has only been defined as non-empty when needed
+for disambiguation. Thus on many GNU platforms this value will be
+empty. This value is closely related to the fourth element of the
+platform target triple, though it is not identical. For example,
+embedded ABIs such as <code>gnueabihf</code> will simply define <code>target_env</code> as
+<code>&quot;gnu&quot;</code>.</div>
+<div data-b="*"><code>target_endian = &quot;...&quot;</code> - Endianness of the target CPU, either <code>&quot;little&quot;</code> or
+<code>&quot;big&quot;</code>.</div>
+<div data-b="*"><code>target_pointer_width = &quot;...&quot;</code> - Target pointer width in bits. This is set
+to <code>&quot;32&quot;</code> for targets with 32-bit pointers, and likewise set to <code>&quot;64&quot;</code> for
+64-bit pointers.</div>
+<div data-b="*"><code>target_has_atomic = &quot;...&quot;</code> - Set of integer sizes on which the target can perform
+atomic operations. Values are <code>&quot;8&quot;</code>, <code>&quot;16&quot;</code>, <code>&quot;32&quot;</code>, <code>&quot;64&quot;</code> and <code>&quot;ptr&quot;</code>.</div>
+<div data-b="*"><code>target_vendor = &quot;...&quot;</code> - Vendor of the target, for example <code>apple</code>, <code>pc</code>, or
+simply <code>&quot;unknown&quot;</code>.</div>
+<div data-b="*"><code>test</code> - Enabled when compiling the test harness (using the <code>--test</code> flag).</div>
+<div data-b="*"><code>debug_assertions</code> - Enabled by default when compiling without optimizations.
+This can be used to enable extra debugging code in development but not in
+production.  For example, it controls the behavior of the standard library's
+<code>debug_assert€</code> macro.</div>
+<br>
+<p>You can also set another attribute based on a <code>cfg</code> variable with <code>cfg_attr</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[cfg_attr(a, b)]"></div></div>
+<br>
+<p>This is the same as <code>#[b]</code> if <code>a</code> is set by <code>cfg</code>, and nothing otherwise.</p>
+<br>
+<p>Lastly, configuration options can be used in expressions by invoking the <code>cfg€</code>
+macro: <code>cfg€(a)</code> evaluates to <code>true</code> if <code>a</code> is set, and <code>false</code> otherwise.</p>
+<br>
+<h3>Lint check attributes</h3>
+<br>
+<p>A lint check names a potentially undesirable coding pattern, such as
+unreachable code or omitted documentation, for the static entity to which the
+attribute applies.</p>
+<br>
+<p>For any lint check <code>C</code>:</p>
+<br>
+<div data-b="*"><code>allow(C)</code> overrides the check for <code>C</code> so that violations will go
+ unreported,</div>
+<div data-b="*"><code>deny(C)</code> signals an error after encountering a violation of <code>C</code>,</div>
+<div data-b="*"><code>forbid(C)</code> is the same as <code>deny(C)</code>, but also forbids changing the lint
+ level afterwards,</div>
+<div data-b="*"><code>warn(C)</code> warns about violations of <code>C</code> but continues compilation.</div>
+<br>
+<p>The lint checks supported by the compiler can be found via <code>rustc -W help</code>,
+along with their default settings.  <a class="notranslate" href="#3unstable book plugin">Compiler
+plugins</a> can provide additional lint checks.</p>
+<br>
+<div data-lang="rust"><div data-l="pub mod m1 {"></div><div data-l="#    // Missing documentation is ignored here"></div><div data-l="    // ">Missing documentation is ignored here</div><div data-l="    #[allow(missing_docs)]"></div><div data-l="    pub fn undocumented_one() -&gt; i32 { 1 }"></div><div data-l=""></div><div data-l="#    // Missing documentation signals a warning here"></div><div data-l="    // ">Missing documentation signals a warning here</div><div data-l="    #[warn(missing_docs)]"></div><div data-l="    pub fn undocumented_too() -&gt; i32 { 2 }"></div><div data-l=""></div><div data-l="#    // Missing documentation signals an error here"></div><div data-l="    // ">Missing documentation signals an error here</div><div data-l="    #[deny(missing_docs)]"></div><div data-l="    pub fn undocumented_end() -&gt; i32 { 3 }"></div><div data-l="}"></div></div>
+<br>
+<p>This example shows how one can use <code>allow</code> and <code>warn</code> to toggle a particular
+check on and off:</p>
+<br>
+<div data-lang="rust"><div data-l="#[warn(missing_docs)]"></div><div data-l="pub mod m2{"></div><div data-l="    #[allow(missing_docs)]"></div><div data-l="    pub mod nested {"></div><div data-l="#        // Missing documentation is ignored here"></div><div data-l="        // ">Missing documentation is ignored here</div><div data-l="        pub fn undocumented_one() -&gt; i32 { 1 }"></div><div data-l=""></div><div data-l="#        // Missing documentation signals a warning here,"></div><div data-l="#        // despite the allow above."></div><div data-l="        // ">Missing documentation signals a warning here, despite the allow above.</div><div data-l="        #[warn(missing_docs)]"></div><div data-l="        pub fn undocumented_two() -&gt; i32 { 2 }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // Missing documentation signals a warning here"></div><div data-l="    // ">Missing documentation signals a warning here</div><div data-l="    pub fn undocumented_too() -&gt; i32 { 3 }"></div><div data-l="}"></div></div>
+<br>
+<p>This example shows how one can use <code>forbid</code> to disallow uses of <code>allow</code> for
+that lint check:</p>
+<br>
+<div data-lang="rust,compile_fail"><div data-l="#[forbid(missing_docs)]"></div><div data-l="pub mod m3 {"></div><div data-l="#    // Attempting to toggle warning signals an error here"></div><div data-l="    // ">Attempting to toggle warning signals an error here</div><div data-l="    #[allow(missing_docs)]"></div><div data-l="#//    /// Returns 2."></div><div data-l="    /// ">Returns 2.</div><div data-l="    pub fn undocumented_too() -&gt; i32 { 2 }"></div><div data-l="}"></div></div>
+<br>
+<h4><code>must_use</code> Attribute</h4>
+<br>
+<p>The <code>must_use</code> attribute can be used on user-defined composite types
+(<a class="notranslate" href="#3struct"><code>struct</code>s</a>, <a class="notranslate" href="#3enum"><code>enum</code>s</a>, and <a class="notranslate" href="#3union"><code>union</code>s</a>) and <a class="notranslate" href="#4functions">functions</a>.</p>
+<br>
+<p>When used on user-defined composite types, if the <a class="notranslate" href="#4expression">expression</a> of an
+<a class="notranslate" href="#4expression statement">expression statement</a> has that type, then the <code>unused_must_use</code> lint is
+violated.</p>
+<br>
+<div data-lang="rust"><div data-l="#[must_use]"></div><div data-l="struct MustUse {"></div><div data-l="#  // some fields"></div><div data-l="  // ">some fields</div><div data-l="}"></div><div data-l=""></div><div data-l="# impl MustUse {"></div><div data-l="#   fn new() -&gt; MustUse { MustUse {} }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="#  // Violates the `unused_must_use` lint."></div><div data-l="  // ">Violates the <code>unused_must_use</code> lint.</div><div data-l="  MustUse::new();"></div><div data-l="}"></div></div>
+<br>
+<p>When used on a function, if the <a class="notranslate" href="#4expression">expression</a> of an
+<a class="notranslate" href="#4expression statement">expression statement</a> is a <a class="notranslate" href="#4call expression">call expression</a> to that function, then the
+<code>unused_must_use</code> lint is violated. The exceptions to this is if the return type
+of the function is <code>()</code>, <code>€</code>, or a <a class="notranslate" href="#4zero-variant enum">zero-variant enum</a>, in which case the
+attribute does nothing.</p>
+<br>
+<div data-lang="rust"><div data-l="#[must_use]"></div><div data-l="fn five() -&gt; i32 { 5i32 }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#  // Violates the unused_must_use lint."></div><div data-l="  // ">Violates the unused_must_use lint.</div><div data-l="  five();"></div><div data-l="}"></div></div>
+<br>
+<p>When used on a function in a trait declaration, then the behavior also applies
+when the call expression is a function from an implementation of the trait.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Trait {"></div><div data-l="  #[must_use]"></div><div data-l="  fn use_me(&amp;self) -&gt; i32;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Trait for i32 {"></div><div data-l="  fn use_me(&amp;self) -&gt; i32 { 0i32 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#  // Violates the `unused_must_use` lint."></div><div data-l="  // ">Violates the <code>unused_must_use</code> lint.</div><div data-l="  5i32.use_me();"></div><div data-l="}"></div></div>
+<br>
+<p>When used on a function in an implementation, the attribute does nothing.</p>
+<br>
+<blockquote><p>Note: Trivial no-op expressions containing the value will not violate the
+lint. Examples include wrapping the value in a type that does not implement
+<a class="notranslate" href="#4`Drop`">`Drop`</a> and then not using that type and being the final expression of a
+<a class="notranslate" href="#4block expression">block expression</a> that is not used.</p>
+<br>
+<div data-lang="rust"><div data-l="#[must_use]"></div><div data-l="fn five() -&gt; i32 { 5i32 }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#  // None of these violate the unused_must_use lint."></div><div data-l="  // ">None of these violate the unused_must_use lint.</div><div data-l="  (five(),);"></div><div data-l="  Some(five());"></div><div data-l="  { five() };"></div><div data-l="  if true { five() } else { 0i32 };"></div><div data-l="  match true {"></div><div data-l="    _ =&gt; five()"></div><div data-l="  };"></div><div data-l="}"></div></div></blockquote>
+<br>
+<blockquote><p>Note: It is idiomatic to use a <a class="notranslate" href="#4let statement">let statement</a> with a pattern of <code>_</code>
+when a must-used value is purposely discarded.</p>
+<br>
+<div data-lang="rust"><div data-l="#[must_use]"></div><div data-l="fn five() -&gt; i32 { 5i32 }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#  // Does not violate the unused_must_use lint."></div><div data-l="  // ">Does not violate the unused_must_use lint.</div><div data-l="  let _ = five();"></div><div data-l="}"></div></div></blockquote>
+<br>
+<p>The <code>must_use</code> attribute may also include a message by using
+<code>#[must_use = &quot;message&quot;]</code>. The message will be given alongside the warning.</p>
+<br>
+<h3>Inline attribute</h3>
+<br>
+<p>The inline attribute suggests that the compiler should place a copy of
+the function or static in the caller, rather than generating code to
+call the function or access the static where it is defined.</p>
+<br>
+<p>The compiler automatically inlines functions based on internal heuristics.
+Incorrectly inlining functions can actually make the program slower, so it
+should be used with care.</p>
+<br>
+<p><code>#[inline]</code> and <code>#[inline(always)]</code> always cause the function to be serialized
+into the crate metadata to allow cross-crate inlining.</p>
+<br>
+<p>There are three different types of inline attributes:</p>
+<br>
+<div data-b="*"><code>#[inline]</code> hints the compiler to perform an inline expansion.</div>
+<div data-b="*"><code>#[inline(always)]</code> asks the compiler to always perform an inline expansion.</div>
+<div data-b="*"><code>#[inline(never)]</code> asks the compiler to never perform an inline expansion.</div>
+<br>
+<h3><code>derive</code></h3>
+<br>
+<p>The <code>derive</code> attribute allows certain traits to be automatically implemented
+for data structures. For example, the following will create an <code>impl</code> for the
+<code>PartialEq</code> and <code>Clone</code> traits for <code>Foo</code>, the type parameter <code>T</code> will be given
+the <code>PartialEq</code> or <code>Clone</code> constraints for the appropriate <code>impl</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="#[derive(PartialEq, Clone)]"></div><div data-l="struct Foo&lt;T&gt; {"></div><div data-l="    a: i32,"></div><div data-l="    b: T,"></div><div data-l="}"></div></div>
+<br>
+<p>The generated <code>impl</code> for <code>PartialEq</code> is equivalent to</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Foo&lt;T&gt; { a: i32, b: T }"></div><div data-l="impl&lt;T: PartialEq&gt; PartialEq for Foo&lt;T&gt; {"></div><div data-l="    fn eq(&amp;self, other: &amp;Foo&lt;T&gt;) -&gt; bool {"></div><div data-l="        self.a == other.a &amp;&amp; self.b == other.b"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn ne(&amp;self, other: &amp;Foo&lt;T&gt;) -&gt; bool {"></div><div data-l="        self.a != other.a || self.b != other.b"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>You can implement <code>derive</code> for your own type through <a class="notranslate" href="#4procedural macros">procedural macros</a>.</p>
+<br>
+<a class="notranslate" href="#1comments.html#doc-comments">Doc comments</a>
+<a class="notranslate" href="#1../rustdoc/the-doc-attribute.html">The Rustdoc Book</a>
+<a class="notranslate" href="#1procedural-macros.html">procedural macros</a>
+<a class="notranslate" href="#1items/structs.html">struct</a>
+<a class="notranslate" href="#1items/enumerations.html">enum</a>
+<a class="notranslate" href="#1items/unions.html">union</a>
+<a class="notranslate" href="#1items/functions.html">functions</a>
+<a class="notranslate" href="#1expressions.html">expression</a>
+<a class="notranslate" href="#1statements.html#expression-statements">expression statement</a>
+<a class="notranslate" href="#1expressions/call-expr.html">call expression</a>
+<a class="notranslate" href="#1expressions/block-expr.html">block expression</a>
+<a class="notranslate" href="#1expressions/block-expr.html">block expressions</a>
+<a class="notranslate" href="#1special-types-and-traits.html#drop">`Drop`</a>
+<a class="notranslate" href="#1statements.html#let-statements">let statement</a>
+<a class="notranslate" href="#1../unstable-book/language-features/plugin.html#lint-plugins">unstable book plugin</a>
+<a class="notranslate" href="#1items/enumerations.html#zero-variant-enums">zero-variant enum</a>
+<a class="notranslate" href="#1https://www.ecma-international.org/publications/standards/Ecma-334.htm">ECMA-334</a>
+<a class="notranslate" href="#1https://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA-335</a>
+<a class="notranslate" href="#1items.html">item declarations</a>
+<a class="notranslate" href="#1items/generics.html">generics</a>
+<a class="notranslate" href="#1items/implementations.html">implementations</a>
+<a class="notranslate" href="#1items/modules.html">modules</a>
+<a class="notranslate" href="#1statements.html">statements</a>
+<a class="notranslate" href="#1expressions/match-expr.html">match expressions</a>
+<a class="notranslate" href="#1items/external-blocks.html">external blocks</a>

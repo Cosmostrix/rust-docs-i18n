@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Find loops for a given path</h2>
+<br>
+<p><a href="#3same_file">!<a class="notranslate" href="#4same_file-badge">same_file-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Use <a class="notranslate" href="#4`same_file::is_same_file`">`same_file::is_same_file`</a> to detect loops for a given path.
+For example, a loop could be created on a Unix system via symlinks:
+`<code class=2>bash
+mkdir -p /tmp/foo/bar/baz
+ln -s /tmp/foo/  /tmp/foo/bar/baz/qux
+</code>`
+The following would assert that a loop exists.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate same_file;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::path::{Path, PathBuf};"></div><div data-l="use same_file::is_same_file;"></div><div data-l=""></div><div data-l="fn contains_loop&lt;P: AsRef&lt;Path&gt;&gt;(path: P) -&gt; io::Result&lt;Option&lt;(PathBuf, PathBuf)&gt;&gt; {"></div><div data-l="    let path = path.as_ref();"></div><div data-l="    let mut path_buf = path.to_path_buf();"></div><div data-l="    while path_buf.pop() {"></div><div data-l="        if is_same_file(&amp;path_buf, path)? {"></div><div data-l="            return Ok(Some((path_buf, path.to_path_buf())));"></div><div data-l="        } else if let Some(looped_paths) = contains_loop(&amp;path_buf)? {"></div><div data-l="            return Ok(Some(looped_paths));"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="    return Ok(None);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!("></div><div data-l="        contains_loop(&quot;/tmp/foo/bar/baz/qux/bar/baz&quot;).unwrap(),"></div><div data-l="        Some(("></div><div data-l="            PathBuf::from(&quot;/tmp/foo&quot;),"></div><div data-l="            PathBuf::from(&quot;/tmp/foo/bar/baz/qux&quot;)"></div><div data-l="        ))"></div><div data-l="    );"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/same-file/*/same_file/fn.is_same_file.html">`same_file::is_same_file`</a>

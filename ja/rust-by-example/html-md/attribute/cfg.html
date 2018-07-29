@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1><code>cfg</code></h1>
+<br>
+<p>Conditional compilation is possible through two different operators:</p>
+<br>
+<div data-b="*">the <code>cfg</code> attribute: <code>#[cfg(...)]</code> in attribute position</div>
+<div data-b="*">the <code>cfg€</code> macro: <code>cfg€(...)</code> in boolean expressions</div>
+<br>
+<p>Both utilize identical argument syntax.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// This function only gets compiled if the target OS is linux"></div><div data-l="// ">This function only gets compiled if the target OS is linux</div><div data-l="#[cfg(target_os = &quot;linux&quot;)]"></div><div data-l="fn are_you_on_linux() {"></div><div data-l="    println!(&quot;You are running linux!&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// And this function only gets compiled if the target OS is *not* linux"></div><div data-l="// ">And this function only gets compiled if the target OS is <i>not</i> linux</div><div data-l="#[cfg(not(target_os = &quot;linux&quot;))]"></div><div data-l="fn are_you_on_linux() {"></div><div data-l="    println!(&quot;You are *not* running linux!&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    are_you_on_linux();"></div><div data-l="    "></div><div data-l="    println!(&quot;Are you sure?&quot;);"></div><div data-l="    if cfg!(target_os = &quot;linux&quot;) {"></div><div data-l="        println!(&quot;Yes. It's definitely linux!&quot;);"></div><div data-l="    } else {"></div><div data-l="        println!(&quot;Yes. It's definitely *not* linux!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3ref">the reference</a>, <a class="notranslate" href="#3cfg"><code>cfg€</code></a>, and <a class="notranslate" href="#3macros">macros</a>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/macro.cfg!.html">cfg</a>
+<a class="notranslate" href="#1macros.html">macros</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/attributes.html#conditional-compilation">ref</a>

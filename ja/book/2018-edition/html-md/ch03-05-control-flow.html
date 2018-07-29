@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<h2>Control Flow</h2>
+<br>
+<p>Deciding whether or not to run some code depending on if a condition is true
+and deciding to run some code repeatedly while a condition is true are basic
+building blocks in most programming languages. The most common constructs that
+let you control the flow of execution of Rust code are <code>if</code> expressions and
+loops.</p>
+<br>
+<h3><code>if</code> Expressions</h3>
+<br>
+<p>An <code>if</code> expression allows you to branch your code depending on conditions. You
+provide a condition and then state, “If this condition is met, run this block
+of code. If the condition is not met, do not run this block of code.”</p>
+<br>
+<p>Create a new project called <i>branches</i> in your <i>projects</i> directory to explore
+the <code>if</code> expression. In the <i>src/main.rs</i> file, input the following:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let number = 3;"></div><div data-l=""></div><div data-l="    if number &lt; 5 {"></div><div data-l="        println!(&quot;condition was true&quot;);"></div><div data-l="    } else {"></div><div data-l="        println!(&quot;condition was false&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><!-- NEXT PARAGRAPH WRAPPED WEIRD INTENTIONALLY SEE #199 --></p>
+<br>
+<p>All <code>if</code> expressions start with the keyword <code>if</code>, which is followed by a
+condition. In this case, the condition checks whether or not the variable
+<code>number</code> has a value less than 5. The block of code we want to execute if the
+condition is true is placed immediately after the condition inside curly
+brackets. Blocks of code associated with the conditions in <code>if</code> expressions are
+sometimes called <i>arms</i>, just like the arms in <code>match</code> expressions that we
+discussed in the “Comparing the Guess to the Secret Number” section of
+Chapter 2.</p>
+<br>
+<p>Optionally, we can also include an <code>else</code> expression, which we chose
+to do here, to give the program an alternative block of code to execute should
+the condition evaluate to false. If you don’t provide an <code>else</code> expression and
+the condition is false, the program will just skip the <code>if</code> block and move on
+to the next bit of code.</p>
+<br>
+<p>Try running this code; you should see the following output:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling branches v0.1.0 (file:///projects/branches)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/branches`"></div><div data-l="condition was true"></div></div>
+<br>
+<p>Let’s try changing the value of <code>number</code> to a value that makes the condition
+<code>false</code> to see what happens:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let number = 7;"></div></div>
+<br>
+<p>Run the program again, and look at the output:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling branches v0.1.0 (file:///projects/branches)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/branches`"></div><div data-l="condition was false"></div></div>
+<br>
+<p>It’s also worth noting that the condition in this code <i>must</i> be a <code>bool</code>. If
+the condition isn’t a <code>bool</code>, we’ll get an error. For example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let number = 3;"></div><div data-l=""></div><div data-l="    if number {"></div><div data-l="        println!(&quot;number was three&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>if</code> condition evaluates to a value of <code>3</code> this time, and Rust throws an
+error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0308]: mismatched types"></div><div data-l=" --&gt; src/main.rs:4:8"></div><div data-l="  |"></div><div data-l="4 |     if number {"></div><div data-l="  |        ^^^^^^ expected bool, found integral variable"></div><div data-l="  |"></div><div data-l="  = note: expected type `bool`"></div><div data-l="             found type `{integer}`"></div></div>
+<br>
+<p>The error indicates that Rust expected a <code>bool</code> but got an integer. Unlike
+languages such as Ruby and JavaScript, Rust will not automatically try to
+convert non-Boolean types to a Boolean. You must be explicit and always provide
+<code>if</code> with a Boolean as its condition. If we want the <code>if</code> code block to run
+only when a number is not equal to <code>0</code>, for example, we can change the <code>if</code>
+expression to the following:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let number = 3;"></div><div data-l=""></div><div data-l="    if number != 0 {"></div><div data-l="        println!(&quot;number was something other than zero&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Running this code will print <code>number was something other than zero</code>.</p>
+<br>
+<h4>Handling Multiple Conditions with <code>else if</code></h4>
+<br>
+<p>You can have multiple conditions by combining <code>if</code> and <code>else</code> in an <code>else if</code>
+expression. For example:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let number = 6;"></div><div data-l=""></div><div data-l="    if number % 4 == 0 {"></div><div data-l="        println!(&quot;number is divisible by 4&quot;);"></div><div data-l="    } else if number % 3 == 0 {"></div><div data-l="        println!(&quot;number is divisible by 3&quot;);"></div><div data-l="    } else if number % 2 == 0 {"></div><div data-l="        println!(&quot;number is divisible by 2&quot;);"></div><div data-l="    } else {"></div><div data-l="        println!(&quot;number is not divisible by 4, 3, or 2&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This program has four possible paths it can take. After running it, you should
+see the following output:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling branches v0.1.0 (file:///projects/branches)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/branches`"></div><div data-l="number is divisible by 3"></div></div>
+<br>
+<p>When this program executes, it checks each <code>if</code> expression in turn and executes
+the first body for which the condition holds true. Note that even though 6 is
+divisible by 2, we don’t see the output <code>number is divisible by 2</code>, nor do we
+see the <code>number is not divisible by 4, 3, or 2</code> text from the <code>else</code> block.
+That’s because Rust only executes the block for the first true condition, and
+once it finds one, it doesn’t even check the rest.</p>
+<br>
+<p>Using too many <code>else if</code> expressions can clutter your code, so if you have more
+than one, you might want to refactor your code. Chapter 6 describes a powerful
+Rust branching construct called <code>match</code> for these cases.</p>
+<br>
+<h4>Using <code>if</code> in a <code>let</code> Statement</h4>
+<br>
+<p>Because <code>if</code> is an expression, we can use it on the right side of a <code>let</code>
+statement, as in Listing 3-2:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let condition = true;"></div><div data-l="    let number = if condition {"></div><div data-l="        5"></div><div data-l="    } else {"></div><div data-l="        6"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;The value of number is: {}&quot;, number);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 3-2: Assigning the result of an <code>if</code> expression
+to a variable</span></p>
+<br>
+<p>The <code>number</code> variable will be bound to a value based on the outcome of the <code>if</code>
+expression. Run this code to see what happens:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling branches v0.1.0 (file:///projects/branches)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.30 secs"></div><div data-l="     Running `target/debug/branches`"></div><div data-l="The value of number is: 5"></div></div>
+<br>
+<p>Remember that blocks of code evaluate to the last expression in them, and
+numbers by themselves are also expressions. In this case, the value of the
+whole <code>if</code> expression depends on which block of code executes. This means the
+values that have the potential to be results from each arm of the <code>if</code> must be
+the same type; in Listing 3-2, the results of both the <code>if</code> arm and the <code>else</code>
+arm were <code>i32</code> integers. If the types are mismatched, as in the following
+example, we’ll get an error:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let condition = true;"></div><div data-l=""></div><div data-l="    let number = if condition {"></div><div data-l="        5"></div><div data-l="    } else {"></div><div data-l="        &quot;six&quot;"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    println!(&quot;The value of number is: {}&quot;, number);"></div><div data-l="}"></div></div>
+<br>
+<p>When we try to compile this code, we’ll get an error. The <code>if</code> and <code>else</code> arms have
+value types that are incompatible, and Rust indicates exactly where to find the
+problem in the program:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0308]: if and else have incompatible types"></div><div data-l=" --&gt; src/main.rs:4:18"></div><div data-l="  |"></div><div data-l="4 |       let number = if condition {"></div><div data-l="  |  __________________^"></div><div data-l="5 | |         5"></div><div data-l="6 | |     } else {"></div><div data-l="7 | |         &quot;six&quot;"></div><div data-l="8 | |     };"></div><div data-l="  | |_____^ expected integral variable, found &amp;str"></div><div data-l="  |"></div><div data-l="  = note: expected type `{integer}`"></div><div data-l="             found type `&amp;str`"></div></div>
+<br>
+<p>The expression in the <code>if</code> block evaluates to an integer, and the expression in
+the <code>else</code> block evaluates to a string. This won’t work because variables must
+have a single type. Rust needs to know at compile time what type the <code>number</code>
+variable is, definitively, so it can verify at compile time that its type is
+valid everywhere we use <code>number</code>. Rust wouldn’t be able to do that if the type
+of <code>number</code> was only determined at runtime; the compiler would be more complex
+and would make fewer guarantees about the code if it had to keep track of
+multiple hypothetical types for any variable.</p>
+<br>
+<h3>Repetition with Loops</h3>
+<br>
+<p>It’s often useful to execute a block of code more than once. For this task,
+Rust provides several <i>loops</i>. A loop runs through the code inside the loop
+body to the end and then starts immediately back at the beginning. To
+experiment with loops, let’s make a new project called <i>loops</i>.</p>
+<br>
+<p>Rust has three kinds of loops: <code>loop</code>, <code>while</code>, and <code>for</code>. Let’s try each one.</p>
+<br>
+<h4>Repeating Code with <code>loop</code></h4>
+<br>
+<p>The <code>loop</code> keyword tells Rust to execute a block of code over and over again
+forever or until you explicitly tell it to stop.</p>
+<br>
+<p>As an example, change the <i>src/main.rs</i> file in your <i>loops</i> directory to look
+like this:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    loop {"></div><div data-l="        println!(&quot;again!&quot;);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>When we run this program, we’ll see <code>again€</code> printed over and over continuously
+until we stop the program manually. Most terminals support a keyboard shortcut,
+<span class="keystroke">ctrl-c</span>, to halt a program that is stuck in a
+continual loop. Give it a try:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling loops v0.1.0 (file:///projects/loops)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.29 secs"></div><div data-l="     Running `target/debug/loops`"></div><div data-l="again!"></div><div data-l="again!"></div><div data-l="again!"></div><div data-l="again!"></div><div data-l="^Cagain!"></div></div>
+<br>
+<p>The symbol <code>^C</code> represents where you pressed <span class="keystroke">ctrl-c
+</span>. You may or may not see the word <code>again€</code> printed after the <code>^C</code>,
+depending on where the code was in the loop when it received the halt signal.</p>
+<br>
+<p>Fortunately, Rust provides another, more reliable way to break out of a loop.
+You can place the <code>break</code> keyword within the loop to tell the program when to
+stop executing the loop. Recall that we did this in the guessing game in the
+“Quitting After a Correct Guess” section of Chapter 2 to exit the
+program when the user won the game by guessing the correct number.</p>
+<br>
+<br>
+<h4>Returning from loops</h4>
+<br>
+<p>One of the uses of a <code>loop</code> is to retry an operation you know can fail, such as
+checking if a thread completed its job. However, you might need to pass the
+result of that operation to the rest of your code. If you add it to the <code>break</code>
+expression you use to stop the loop, it will be returned by the broken loop:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut counter = 0;"></div><div data-l=""></div><div data-l="    let result = loop {"></div><div data-l="        counter += 1;"></div><div data-l=""></div><div data-l="        if counter == 10 {"></div><div data-l="            break counter * 2;"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    assert_eq!(result, 20);"></div><div data-l="}"></div></div>
+<br>
+<h4>Conditional Loops with <code>while</code></h4>
+<br>
+<p>It’s often useful for a program to evaluate a condition within a loop. While
+the condition is true, the loop runs. When the condition ceases to be true, the
+program calls <code>break</code>, stopping the loop. This loop type could be implemented
+using a combination of <code>loop</code>, <code>if</code>, <code>else</code>, and <code>break</code>; you could try that
+now in a program, if you’d like.</p>
+<br>
+<p>However, this pattern is so common that Rust has a built-in language construct
+for it, called a <code>while</code> loop. Listing 3-3 uses <code>while</code>: the program loops
+three times, counting down each time, and then, after the loop, it prints
+another message and exits.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut number = 3;"></div><div data-l=""></div><div data-l="    while number != 0 {"></div><div data-l="        println!(&quot;{}!&quot;, number);"></div><div data-l=""></div><div data-l="        number = number - 1;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;LIFTOFF!!!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 3-3: Using a <code>while</code> loop to run code while a
+condition holds true</span></p>
+<br>
+<p>This construct eliminates a lot of nesting that would be necessary if you used
+<code>loop</code>, <code>if</code>, <code>else</code>, and <code>break</code>, and it’s clearer. While a condition holds
+true, the code runs; otherwise, it exits the loop.</p>
+<br>
+<h4>Looping Through a Collection with <code>for</code></h4>
+<br>
+<p>You could use the <code>while</code> construct to loop over the elements of a collection,
+such as an array. For example, let’s look at Listing 3-4:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = [10, 20, 30, 40, 50];"></div><div data-l="    let mut index = 0;"></div><div data-l=""></div><div data-l="    while index &lt; 5 {"></div><div data-l="        println!(&quot;the value is: {}&quot;, a[index]);"></div><div data-l=""></div><div data-l="        index = index + 1;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 3-4: Looping through each element of a collection
+using a <code>while</code> loop</span></p>
+<br>
+<p>Here, the code counts up through the elements in the array. It starts at index
+<code>0</code>, and then loops until it reaches the final index in the array (that is,
+when <code>index &lt; 5</code> is no longer true). Running this code will print every element
+in the array:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling loops v0.1.0 (file:///projects/loops)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.32 secs"></div><div data-l="     Running `target/debug/loops`"></div><div data-l="the value is: 10"></div><div data-l="the value is: 20"></div><div data-l="the value is: 30"></div><div data-l="the value is: 40"></div><div data-l="the value is: 50"></div></div>
+<br>
+<p>All five array values appear in the terminal, as expected. Even though <code>index</code>
+will reach a value of <code>5</code> at some point, the loop stops executing before trying
+to fetch a sixth value from the array.</p>
+<br>
+<p>But this approach is error prone; we could cause the program to panic if the
+index length is incorrect. It’s also slow, because the compiler adds runtime
+code to perform the conditional check on every element on every iteration
+through the loop.</p>
+<br>
+<p>As a more concise alternative, you can use a <code>for</code> loop and execute some code
+for each item in a collection. A <code>for</code> loop looks like this code in Listing 3-5:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let a = [10, 20, 30, 40, 50];"></div><div data-l=""></div><div data-l="    for element in a.iter() {"></div><div data-l="        println!(&quot;the value is: {}&quot;, element);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 3-5: Looping through each element of a collection
+using a <code>for</code> loop</span></p>
+<br>
+<p>When we run this code, we’ll see the same output as in Listing 3-4. More
+importantly, we’ve now increased the safety of the code and eliminated the
+chance of bugs that might result from going beyond the end of the array or not
+going far enough and missing some items.</p>
+<br>
+<p>For example, in the code in Listing 3-4, if you removed an item from the <code>a</code>
+array but forgot to update the condition to <code>while index &lt; 4</code>, the code would
+panic. Using the <code>for</code> loop, you wouldn’t need to remember to change any other
+code if you changed the number of values in the array.</p>
+<br>
+<p>The safety and conciseness of <code>for</code> loops make them the most commonly used loop
+construct in Rust. Even in situations in which you want to run some code a
+certain number of times, as in the countdown example that used a <code>while</code> loop
+in Listing 3-3, most Rustaceans would use a <code>for</code> loop. The way to do that
+would be to use a <code>Range</code>, which is a type provided by the standard library
+that generates all numbers in sequence starting from one number and ending
+before another number.</p>
+<br>
+<p>Here’s what the countdown would look like using a <code>for</code> loop and another method
+we’ve not yet talked about, <code>rev</code>, to reverse the range:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    for number in (1..4).rev() {"></div><div data-l="        println!(&quot;{}!&quot;, number);"></div><div data-l="    }"></div><div data-l="    println!(&quot;LIFTOFF!!!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>This code is a bit nicer, isn’t it?</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>You made it! That was a sizable chapter: you learned about variables, scalar
+and compound data types, functions, comments, <code>if</code> expressions, and loops! If
+you want to practice with the concepts discussed in this chapter, try building
+programs to do the following:</p>
+<br>
+<div data-b="*">Convert temperatures between Fahrenheit and Celsius.</div>
+<div data-b="*">Generate the nth Fibonacci number.</div>
+<div data-b="*">Print the lyrics to the Christmas carol “The Twelve Days of Christmas,”</div>
+<p>taking advantage of the repetition in the song.</p>
+<br>
+<p>When you’re ready to move on, we’ll talk about a concept in Rust that <i>doesn’t</i>
+commonly exist in other programming languages: ownership.</p>

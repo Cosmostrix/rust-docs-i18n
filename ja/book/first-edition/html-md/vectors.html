@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<h1>Vectors</h1>
+<br>
+<p>A ‘vector’ is a dynamic or ‘growable’ array, implemented as the standard
+library type <a class="notranslate" href="#3vec"><code>Vec&lt;T&gt;</code></a>. The <code>T</code> means that we can have vectors
+of any type (see the chapter on <a class="notranslate" href="#3generic">generics</a> for more).
+Vectors always allocate their data on the heap.
+You can create them with the <code>vec€</code> macro:</p>
+<br>
+<div data-lang="rust"><div data-l="#//let v = vec![1, 2, 3, 4, 5]; // v: Vec&lt;i32&gt;"></div><div data-l="let v = vec![1, 2, 3, 4, 5]; // ">v: Vec<i32></div></div>
+<br>
+<p>(Notice that unlike the <code>println€</code> macro we’ve used in the past, we use square
+brackets <code>[]</code> with <code>vec€</code> macro. Rust allows you to use either in either
+situation, this is just convention.)</p>
+<br>
+<p>There’s an alternate form of <code>vec€</code> for repeating an initial value:</p>
+<br>
+<div data-lang="rust"><div data-l="#//let v = vec![0; 10]; // A vector of ten zeroes."></div><div data-l="let v = vec![0; 10]; // ">A vector of ten zeroes.</div></div>
+<br>
+<p>Vectors store their contents as contiguous arrays of <code>T</code> on the heap. This means
+that they must be able to know the size of <code>T</code> at compile time (that is, how
+many bytes are needed to store a <code>T</code>?). The size of some things can't be known
+at compile time. For these you'll have to store a pointer to that thing:
+thankfully, the <a class="notranslate" href="#3box"><code>Box</code></a> type works perfectly for this.</p>
+<br>
+<h2>Accessing elements</h2>
+<br>
+<p>To get the value at a particular index in the vector, we use <code>[]</code>s:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="println!(&quot;The third element of v is {}&quot;, v[2]);"></div></div>
+<br>
+<p>The indices count from <code>0</code>, so the third element is <code>v[2]</code>.</p>
+<br>
+<p>It’s also important to note that you must index with the <code>usize</code> type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let v = vec![1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="let i: usize = 0;"></div><div data-l="let j: i32 = 0;"></div><div data-l=""></div><div data-l="#// Works:"></div><div data-l="// ">Works:</div><div data-l="v[i];"></div><div data-l=""></div><div data-l="#// Doesn’t:"></div><div data-l="// ">Doesn’t:</div><div data-l="v[j];"></div></div>
+<br>
+<p>Indexing with a non-<code>usize</code> type gives an error that looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="error: the trait bound `collections::vec::Vec&lt;_&gt; : core::ops::Index&lt;i32&gt;`"></div><div data-l="is not satisfied [E0277]"></div><div data-l="v[j];"></div><div data-l="^~~~"></div><div data-l="note: the type `collections::vec::Vec&lt;_&gt;` cannot be indexed by `i32`"></div><div data-l="error: aborting due to previous error"></div></div>
+<br>
+<p>There’s a lot of punctuation in that message, but the core of it makes sense:
+you cannot index with an <code>i32</code>.</p>
+<br>
+<h2>Out-of-bounds Access</h2>
+<br>
+<p>If you try to access an index that doesn’t exist:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let v = vec![1, 2, 3];"></div><div data-l="println!(&quot;Item 7 is {}&quot;, v[7]);"></div></div>
+<br>
+<p>then the current thread will <a class="notranslate" href="#4panic">panic</a> with a message like this:</p>
+<br>
+<div data-lang="text"><div data-l="thread 'main' panicked at 'index out of bounds: the len is 3 but the index is 7'"></div></div>
+<br>
+<p>If you want to handle out-of-bounds errors without panicking, you can use
+methods like <a class="notranslate" href="#3get"><code>get</code></a> or <a class="notranslate" href="#3get_mut"><code>get_mut</code></a> that return <code>None</code> when
+given an invalid index:</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3];"></div><div data-l="match v.get(7) {"></div><div data-l="    Some(x) =&gt; println!(&quot;Item 7 is {}&quot;, x),"></div><div data-l="    None =&gt; println!(&quot;Sorry, this vector is too short.&quot;)"></div><div data-l="}"></div></div>
+<br>
+<h2>Iterating</h2>
+<br>
+<p>Once you have a vector, you can iterate through its elements with <code>for</code>. There
+are three versions:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut v = vec![1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(&quot;A reference to {}&quot;, i);"></div><div data-l="}"></div><div data-l=""></div><div data-l="for i in &amp;mut v {"></div><div data-l="    println!(&quot;A mutable reference to {}&quot;, i);"></div><div data-l="}"></div><div data-l=""></div><div data-l="for i in v {"></div><div data-l="    println!(&quot;Take ownership of the vector and its element {}&quot;, i);"></div><div data-l="}"></div></div>
+<br>
+<p>Note: You cannot use the vector again once you have iterated by taking ownership of the vector.
+You can iterate the vector multiple times by taking a reference to the vector whilst iterating.
+For example, the following code does not compile.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let v = vec![1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="for i in v {"></div><div data-l="    println!(&quot;Take ownership of the vector and its element {}&quot;, i);"></div><div data-l="}"></div><div data-l=""></div><div data-l="for i in v {"></div><div data-l="    println!(&quot;Take ownership of the vector and its element {}&quot;, i);"></div><div data-l="}"></div></div>
+<br>
+<p>Whereas the following works perfectly,</p>
+<br>
+<div data-lang="rust"><div data-l="let v = vec![1, 2, 3, 4, 5];"></div><div data-l=""></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(&quot;This is a reference to {}&quot;, i);"></div><div data-l="}"></div><div data-l=""></div><div data-l="for i in &amp;v {"></div><div data-l="    println!(&quot;This is a reference to {}&quot;, i);"></div><div data-l="}"></div></div>
+<br>
+<p>Vectors have many more useful methods, which you can read about in <a href="#3vec">their
+API documentation</a>.</p>
+<br>
+<a class="notranslate" href="#1../../std/vec/index.html">vec</a>
+<a class="notranslate" href="#1../../std/boxed/index.html">box</a>
+<a class="notranslate" href="#1generics.html">generic</a>
+<a class="notranslate" href="#1concurrency.html#panics">panic</a>
+<a class="notranslate" href="#1../../std/vec/struct.Vec.html#method.get">get</a>
+<a class="notranslate" href="#1../../std/vec/struct.Vec.html#method.get_mut">get_mut</a>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<h1>Leaking</h1>
+<br>
+<p>Ownership-based resource management is intended to simplify composition. You
+acquire resources when you create the object, and you release the resources when
+it gets destroyed. Since destruction is handled for you, it means you can't
+forget to release the resources, and it happens as soon as possible! Surely this
+is perfect and all of our problems are solved.</p>
+<br>
+<p>Everything is terrible and we have new and exotic problems to try to solve.</p>
+<br>
+<p>Many people like to believe that Rust eliminates resource leaks. In practice,
+this is basically true. You would be surprised to see a Safe Rust program
+leak resources in an uncontrolled way.</p>
+<br>
+<p>However from a theoretical perspective this is absolutely not the case, no
+matter how you look at it. In the strictest sense, &quot;leaking&quot; is so abstract as
+to be unpreventable. It's quite trivial to initialize a collection at the start
+of a program, fill it with tons of objects with destructors, and then enter an
+infinite event loop that never refers to it. The collection will sit around
+uselessly, holding on to its precious resources until the program terminates (at
+which point all those resources would have been reclaimed by the OS anyway).</p>
+<br>
+<p>We may consider a more restricted form of leak: failing to drop a value that is
+unreachable. Rust also doesn't prevent this. In fact Rust <i>has a function for
+doing this</i>: <code>mem::forget</code>. This function consumes the value it is passed <i>and
+then doesn't run its destructor</i>.</p>
+<br>
+<p>In the past <code>mem::forget</code> was marked as unsafe as a sort of lint against using
+it, since failing to call a destructor is generally not a well-behaved thing to
+do (though useful for some special unsafe code). However this was generally
+determined to be an untenable stance to take: there are many ways to fail to
+call a destructor in safe code. The most famous example is creating a cycle of
+reference-counted pointers using interior mutability.</p>
+<br>
+<p>It is reasonable for safe code to assume that destructor leaks do not happen, as
+any program that leaks destructors is probably wrong. However <i>unsafe</i> code
+cannot rely on destructors to be run in order to be safe. For most types this
+doesn't matter: if you leak the destructor then the type is by definition
+inaccessible, so it doesn't matter, right? For instance, if you leak a <code>Box&lt;u8&gt;</code>
+then you waste some memory but that's hardly going to violate memory-safety.</p>
+<br>
+<p>However where we must be careful with destructor leaks are <i>proxy</i> types. These
+are types which manage access to a distinct object, but don't actually own it.
+Proxy objects are quite rare. Proxy objects you'll need to care about are even
+rarer. However we'll focus on three interesting examples in the standard
+library:</p>
+<br>
+<div data-b="*"><code>vec::Drain</code></div>
+<div data-b="*"><code>Rc</code></div>
+<div data-b="*"><code>thread::scoped::JoinGuard</code></div>
+<br>
+<br>
+<br>
+<h2>Drain</h2>
+<br>
+<p><code>drain</code> is a collections API that moves data out of the container without
+consuming the container. This enables us to reuse the allocation of a <code>Vec</code>
+after claiming ownership over all of its contents. It produces an iterator
+(Drain) that returns the contents of the Vec by-value.</p>
+<br>
+<p>Now, consider Drain in the middle of iteration: some values have been moved out,
+and others haven't. This means that part of the Vec is now full of logically
+uninitialized data! We could backshift all the elements in the Vec every time we
+remove a value, but this would have pretty catastrophic performance
+consequences.</p>
+<br>
+<p>Instead, we would like Drain to fix the Vec's backing storage when it is
+dropped. It should run itself to completion, backshift any elements that weren't
+removed (drain supports subranges), and then fix Vec's <code>len</code>. It's even
+unwinding-safe! Easy!</p>
+<br>
+<p>Now consider the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut vec = vec![Box::new(0); 4];"></div><div data-l=""></div><div data-l="{"></div><div data-l="#    // start draining, vec can no longer be accessed"></div><div data-l="    // ">start draining, vec can no longer be accessed</div><div data-l="    let mut drainer = vec.drain(..);"></div><div data-l=""></div><div data-l="#    // pull out two elements and immediately drop them"></div><div data-l="    // ">pull out two elements and immediately drop them</div><div data-l="    drainer.next();"></div><div data-l="    drainer.next();"></div><div data-l=""></div><div data-l="#    // get rid of drainer, but don't call its destructor"></div><div data-l="    // ">get rid of drainer, but don't call its destructor</div><div data-l="    mem::forget(drainer);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Oops, vec[0] was dropped, we're reading a pointer into free'd memory!"></div><div data-l="// ">Oops, vec<a class="notranslate" href="#40">0</a> was dropped, we're reading a pointer into free'd memory!</div><div data-l="println!(&quot;{}&quot;, vec[0]);"></div></div>
+<br>
+<p>This is pretty clearly Not Good. Unfortunately, we're kind of stuck between a
+rock and a hard place: maintaining consistent state at every step has an
+enormous cost (and would negate any benefits of the API). Failing to maintain
+consistent state gives us Undefined Behavior in safe code (making the API
+unsound).</p>
+<br>
+<p>So what can we do? Well, we can pick a trivially consistent state: set the Vec's
+len to be 0 when we start the iteration, and fix it up if necessary in the
+destructor. That way, if everything executes like normal we get the desired
+behavior with minimal overhead. But if someone has the <i>audacity</i> to
+mem::forget us in the middle of the iteration, all that does is <i>leak even more</i>
+(and possibly leave the Vec in an unexpected but otherwise consistent state).
+Since we've accepted that mem::forget is safe, this is definitely safe. We call
+leaks causing more leaks a <i>leak amplification</i>.</p>
+<br>
+<br>
+<br>
+<br>
+<h2>Rc</h2>
+<br>
+<p>Rc is an interesting case because at first glance it doesn't appear to be a
+proxy value at all. After all, it manages the data it points to, and dropping
+all the Rcs for a value will drop that value. Leaking an Rc doesn't seem like it
+would be particularly dangerous. It will leave the refcount permanently
+incremented and prevent the data from being freed or dropped, but that seems
+just like Box, right?</p>
+<br>
+<p>Nope.</p>
+<br>
+<p>Let's consider a simplified implementation of Rc:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Rc&lt;T&gt; {"></div><div data-l="    ptr: *mut RcBox&lt;T&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct RcBox&lt;T&gt; {"></div><div data-l="    data: T,"></div><div data-l="    ref_count: usize,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Rc&lt;T&gt; {"></div><div data-l="    fn new(data: T) -&gt; Self {"></div><div data-l="        unsafe {"></div><div data-l="#            // Wouldn't it be nice if heap::allocate worked like this?"></div><div data-l="            // ">Wouldn't it be nice if heap::allocate worked like this?</div><div data-l="            let ptr = heap::allocate::&lt;RcBox&lt;T&gt;&gt;();"></div><div data-l="            ptr::write(ptr, RcBox {"></div><div data-l="                data: data,"></div><div data-l="                ref_count: 1,"></div><div data-l="            });"></div><div data-l="            Rc { ptr: ptr }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn clone(&amp;self) -&gt; Self {"></div><div data-l="        unsafe {"></div><div data-l="            (*self.ptr).ref_count += 1;"></div><div data-l="        }"></div><div data-l="        Rc { ptr: self.ptr }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for Rc&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="            (*self.ptr).ref_count -= 1;"></div><div data-l="            if (*self.ptr).ref_count == 0 {"></div><div data-l="#                // drop the data and then free it"></div><div data-l="                // ">drop the data and then free it</div><div data-l="                ptr::read(self.ptr);"></div><div data-l="                heap::deallocate(self.ptr);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This code contains an implicit and subtle assumption: <code>ref_count</code> can fit in a
+<code>usize</code>, because there can't be more than <code>usize::MAX</code> Rcs in memory. However
+this itself assumes that the <code>ref_count</code> accurately reflects the number of Rcs
+in memory, which we know is false with <code>mem::forget</code>. Using <code>mem::forget</code> we can
+overflow the <code>ref_count</code>, and then get it down to 0 with outstanding Rcs. Then
+we can happily use-after-free the inner data. Bad Bad Not Good.</p>
+<br>
+<p>This can be solved by just checking the <code>ref_count</code> and doing <i>something</i>. The
+standard library's stance is to just abort, because your program has become
+horribly degenerate. Also <i>oh my gosh</i> it's such a ridiculous corner case.</p>
+<br>
+<br>
+<br>
+<br>
+<h2>thread::scoped::JoinGuard</h2>
+<br>
+<p>The thread::scoped API intends to allow threads to be spawned that reference
+data on their parent's stack without any synchronization over that data by
+ensuring the parent joins the thread before any of the shared data goes out
+of scope.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn scoped&lt;'a, F&gt;(f: F) -&gt; JoinGuard&lt;'a&gt;"></div><div data-l="    where F: FnOnce() + Send + 'a"></div></div>
+<br>
+<p>Here <code>f</code> is some closure for the other thread to execute. Saying that
+<code>F: Send +'a</code> is saying that it closes over data that lives for <code>'a</code>, and it
+either owns that data or the data was Sync (implying <code>&amp;data</code> is Send).</p>
+<br>
+<p>Because JoinGuard has a lifetime, it keeps all the data it closes over
+borrowed in the parent thread. This means the JoinGuard can't outlive
+the data that the other thread is working on. When the JoinGuard <i>does</i> get
+dropped it blocks the parent thread, ensuring the child terminates before any
+of the closed-over data goes out of scope in the parent.</p>
+<br>
+<p>Usage looked like:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];"></div><div data-l="{"></div><div data-l="    let guards = vec![];"></div><div data-l="    for x in &amp;mut data {"></div><div data-l="#        // Move the mutable reference into the closure, and execute"></div><div data-l="#        // it on a different thread. The closure has a lifetime bound"></div><div data-l="#        // by the lifetime of the mutable reference `x` we store in it."></div><div data-l="#        // The guard that is returned is in turn assigned the lifetime"></div><div data-l="#        // of the closure, so it also mutably borrows `data` as `x` did."></div><div data-l="#        // This means we cannot access `data` until the guard goes away."></div><div data-l="        // ">Move the mutable reference into the closure, and execute it on a different thread. The closure has a lifetime bound by the lifetime of the mutable reference <code>x</code> we store in it. The guard that is returned is in turn assigned the lifetime of the closure, so it also mutably borrows <code>data</code> as <code>x</code> did. This means we cannot access <code>data</code> until the guard goes away.</div><div data-l="        let guard = thread::scoped(move || {"></div><div data-l="            *x *= 2;"></div><div data-l="        });"></div><div data-l="#        // store the thread's guard for later"></div><div data-l="        // ">store the thread's guard for later</div><div data-l="        guards.push(guard);"></div><div data-l="    }"></div><div data-l="#    // All guards are dropped here, forcing the threads to join"></div><div data-l="#    // (this thread blocks here until the others terminate)."></div><div data-l="#    // Once the threads join, the borrow expires and the data becomes"></div><div data-l="#    // accessible again in this thread."></div><div data-l="    // ">All guards are dropped here, forcing the threads to join (this thread blocks here until the others terminate). Once the threads join, the borrow expires and the data becomes accessible again in this thread.</div><div data-l="}"></div><div data-l="#// data is definitely mutated here."></div><div data-l="// ">data is definitely mutated here.</div></div>
+<br>
+<p>In principle, this totally works! Rust's ownership system perfectly ensures it!
+...except it relies on a destructor being called to be safe.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut data = Box::new(0);"></div><div data-l="{"></div><div data-l="    let guard = thread::scoped(|| {"></div><div data-l="#        // This is at best a data race. At worst, it's also a use-after-free."></div><div data-l="        // ">This is at best a data race. At worst, it's also a use-after-free.</div><div data-l="        *data += 1;"></div><div data-l="    });"></div><div data-l="#    // Because the guard is forgotten, expiring the loan without blocking this"></div><div data-l="#    // thread."></div><div data-l="    // ">Because the guard is forgotten, expiring the loan without blocking this thread.</div><div data-l="    mem::forget(guard);"></div><div data-l="}"></div><div data-l="#// So the Box is dropped here while the scoped thread may or may not be trying"></div><div data-l="#// to access it."></div><div data-l="// ">So the Box is dropped here while the scoped thread may or may not be trying to access it.</div></div>
+<br>
+<p>Dang. Here the destructor running was pretty fundamental to the API, and it had
+to be scrapped in favor of a completely different design.</p>

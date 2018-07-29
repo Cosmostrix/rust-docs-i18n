@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<h1>Testing</h1>
+<br>
+<blockquote><p>Program testing can be a very effective way to show the presence of bugs, but
+it is hopelessly inadequate for showing their absence.</p>
+<br>
+<p>Edsger W. Dijkstra, &quot;The Humble Programmer&quot; (1972)</p></blockquote>
+<br>
+<p>Let's talk about how to test Rust code. What we will not be talking about is
+the right way to test Rust code. There are many schools of thought regarding
+the right and wrong way to write tests. All of these approaches use the same
+basic tools, and so we'll show you the syntax for using them.</p>
+<br>
+<h1>The <code>test</code> attribute</h1>
+<br>
+<p>At its simplest, a test in Rust is a function that's annotated with the <code>test</code>
+attribute. Let's make a new project with Cargo called <code>adder</code>:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo new adder"></div><div data-l="$ cd adder"></div></div>
+<br>
+<p>Cargo will automatically generate a simple test when you make a new project.
+Here's the contents of <code>src/lib.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>For now, let's remove the <code>mod</code> bit, and focus on just the function:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[test]"></div><div data-l="fn it_works() {"></div><div data-l="}"></div></div>
+<br>
+<p>Note the <code>#[test]</code>. This attribute indicates that this is a test function. It
+currently has no body. That's good enough to pass! We can run the tests with
+<code>cargo test</code>:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.15 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>Cargo compiled and ran our tests. There are two sets of output here: one
+for the test we wrote, and another for documentation tests. We'll talk about
+those later. For now, see this line:</p>
+<br>
+<div data-lang="text"><div data-l="test it_works ... ok"></div></div>
+<br>
+<p>Note the <code>it_works</code>. This comes from the name of our function:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn main() {"></div><div data-l="fn it_works() {"></div><div data-l="}"></div><div data-l="# }"></div></div>
+<br>
+<p>We also get a summary line:</p>
+<br>
+<div data-lang="text"><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>So why does our do-nothing test pass? Any test which doesn't <code>panic€</code> passes,
+and any test that does <code>panic€</code> fails. Let's make our test fail:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[test]"></div><div data-l="fn it_works() {"></div><div data-l="    assert!(false);"></div><div data-l="}"></div></div>
+<br>
+<p><code>assert€</code> is a macro provided by Rust which takes one argument: if the argument
+is <code>true</code>, nothing happens. If the argument is <code>false</code>, it will <code>panic€</code>. Let's
+run our tests again:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.17 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... FAILED"></div><div data-l=""></div><div data-l="failures:"></div><div data-l=""></div><div data-l="---- it_works stdout ----"></div><div data-l="        thread 'it_works' panicked at 'assertion failed: false', src/lib.rs:5"></div><div data-l="note: Run with `RUST_BACKTRACE=1` for a backtrace."></div><div data-l=""></div><div data-l=""></div><div data-l="failures:"></div><div data-l="    it_works"></div><div data-l=""></div><div data-l="test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="error: test failed"></div></div>
+<br>
+<p>Rust indicates that our test failed:</p>
+<br>
+<div data-lang="text"><div data-l="test it_works ... FAILED"></div></div>
+<br>
+<p>And that's reflected in the summary line:</p>
+<br>
+<div data-lang="text"><div data-l="test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>We also get a non-zero status code. We can use <code>$?</code> on macOS and Linux:</p>
+<br>
+<div data-lang="bash"><div data-l="$ echo $?"></div><div data-l="101"></div></div>
+<br>
+<p>On Windows, if you’re using <code>cmd</code>:</p>
+<br>
+<div data-lang="bash"><div data-l="&gt; echo %ERRORLEVEL%"></div></div>
+<br>
+<p>And if you’re using PowerShell:</p>
+<br>
+<div data-lang="bash"><div data-l="&gt; echo $LASTEXITCODE # the code itself"></div><div data-l="&gt; echo $? # a boolean, fail or succeed"></div></div>
+<br>
+<p>This is useful if you want to integrate <code>cargo test</code> into other tooling.</p>
+<br>
+<p>We can invert our test's failure with another attribute: <code>should_panic</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[test]"></div><div data-l="#[should_panic]"></div><div data-l="fn it_works() {"></div><div data-l="    assert!(false);"></div><div data-l="}"></div></div>
+<br>
+<p>This test will now succeed if we <code>panic€</code> and fail if we complete. Let's try it:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.17 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>Rust provides another macro, <code>assert_eq€</code>, that compares two arguments for
+equality:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[test]"></div><div data-l="#[should_panic]"></div><div data-l="fn it_works() {"></div><div data-l="    assert_eq!(&quot;Hello&quot;, &quot;world&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Does this test pass or fail? Because of the <code>should_panic</code> attribute, it
+passes:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.21 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p><code>should_panic</code> tests can be fragile, as it's hard to guarantee that the test
+didn't fail for an unexpected reason. To help with this, an optional <code>expected</code>
+parameter can be added to the <code>should_panic</code> attribute. The test harness will
+make sure that the failure message contains the provided text. A safer version
+of the example above would be:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#[test]"></div><div data-l="#[should_panic(expected = &quot;assertion failed&quot;)]"></div><div data-l="fn it_works() {"></div><div data-l="    assert_eq!(&quot;Hello&quot;, &quot;world&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>That's all there is to the basics! Let's write one 'real' test:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="pub fn add_two(a: i32) -&gt; i32 {"></div><div data-l="    a + 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn it_works() {"></div><div data-l="    assert_eq!(4, add_two(2));"></div><div data-l="}"></div></div>
+<br>
+<p>This is a very common use of <code>assert_eq€</code>: call some function with
+some known arguments and compare it to the expected output.</p>
+<br>
+<h1>The <code>ignore</code> attribute</h1>
+<br>
+<p>Sometimes a few specific tests can be very time-consuming to execute. These
+can be disabled by default by using the <code>ignore</code> attribute:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="pub fn add_two(a: i32) -&gt; i32 {"></div><div data-l="    a + 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn it_works() {"></div><div data-l="    assert_eq!(4, add_two(2));"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="#[ignore]"></div><div data-l="fn expensive_test() {"></div><div data-l="#    // Code that takes an hour to run..."></div><div data-l="    // ">Code that takes an hour to run...</div><div data-l="}"></div></div>
+<br>
+<p>Now we run our tests and see that <code>it_works</code> is run, but <code>expensive_test</code> is
+not:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.20 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 2 tests"></div><div data-l="test expensive_test ... ignored"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>The expensive tests can be run explicitly using <code>cargo test -- --ignored</code>:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test -- --ignored"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running target/debug/deps/adder-941f01916ca4a642"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test expensive_test ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>The <code>--ignored</code> argument is an argument to the test binary, and not to Cargo,
+which is why the command is <code>cargo test -- --ignored</code>.</p>
+<br>
+<h1>The <code>tests</code> module</h1>
+<br>
+<p>There is one way in which our existing example is not idiomatic: it's
+missing the <code>tests</code> module. You might have noticed this test module was
+present in the code that was initially generated with <code>cargo new</code> but
+was missing from our last example. Let's explain what this does.</p>
+<br>
+<p>The idiomatic way of writing our example looks like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="pub fn add_two(a: i32) -&gt; i32 {"></div><div data-l="    a + 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::add_two;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        assert_eq!(4, add_two(2));"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>There's a few changes here. The first is the introduction of a <code>mod tests</code> with
+a <code>cfg</code> attribute. The module allows us to group all of our tests together, and
+to also define helper functions if needed, that don't become a part of the rest
+of our crate. The <code>cfg</code> attribute only compiles our test code if we're
+currently trying to run the tests. This can save compile time, and also ensures
+that our tests are entirely left out of a normal build.</p>
+<br>
+<p>The second change is the <code>use</code> declaration. Because we're in an inner module,
+we need to bring the tested function into scope. This can be annoying if you have
+a large module, and so this is a common use of globs. Let's change our
+<code>src/lib.rs</code> to make use of it:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="pub fn add_two(a: i32) -&gt; i32 {"></div><div data-l="    a + 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        assert_eq!(4, add_two(2));"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Note the different <code>use</code> line. Now we run our tests:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="    Updating registry `https://github.com/rust-lang/crates.io-index`"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="     Running target/debug/deps/adder-91b3e234d4ed382a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test tests::it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>It works!</p>
+<br>
+<p>The current convention is to use the <code>tests</code> module to hold your &quot;unit-style&quot;
+tests. Anything that tests one small bit of functionality makes sense to
+go here. But what about &quot;integration-style&quot; tests instead? For that, we have
+the <code>tests</code> directory.</p>
+<br>
+<h1>The <code>tests</code> directory</h1>
+<br>
+<p>Each file in <code>tests/*.rs</code> directory is treated as an individual crate.
+To write an integration test, let's make a <code>tests</code> directory and
+put a <code>tests/integration_test.rs</code> file inside with this as its contents:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="#//# // Sadly, this code will not work in play.rust-lang.org, because we have no"></div><div data-l="# // ">Sadly, this code will not work in play.rust-lang.org, because we have no</div><div data-l="#//# // crate adder to import. You'll need to try this part on your own machine."></div><div data-l="# // ">crate adder to import. You'll need to try this part on your own machine.</div><div data-l="extern crate adder;"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn it_works() {"></div><div data-l="    assert_eq!(4, adder::add_two(2));"></div><div data-l="}"></div></div>
+<br>
+<p>This looks similar to our previous tests, but slightly different. We now have
+an <code>extern crate adder</code> at the top. This is because each test in the <code>tests</code>
+directory is an entirely separate crate, and so we need to import our library.
+This is also why <code>tests</code> is a suitable place to write integration-style tests:
+they use the library like any other consumer of it would.</p>
+<br>
+<p>Let's run them:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0 (file:///home/you/projects/adder)"></div><div data-l="     Running target/debug/deps/adder-91b3e234d4ed382a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test tests::it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="     Running target/debug/integration_test-68064b69521c828a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>Now we have three sections: our previous test is also run, as well as our new
+one.</p>
+<br>
+<p>Cargo will ignore files in subdirectories of the <code>tests/</code> directory.
+Therefore shared modules in integrations tests are possible.
+For example <code>tests/common/mod.rs</code> is not separately compiled by cargo but can
+be imported in every test with <code>mod common;</code></p>
+<br>
+<p>That's all there is to the <code>tests</code> directory. The <code>tests</code> module isn't needed
+here, since the whole thing is focused on tests.</p>
+<br>
+<p>Note, when building integration tests, cargo will not pass the <code>test</code> attribute
+to the compiler. It means that all parts in <code>cfg(test)</code> won't be included in
+the build used in your integration tests.</p>
+<br>
+<p>Let's finally check out that third section: documentation tests.</p>
+<br>
+<h1>Documentation tests</h1>
+<br>
+<p>Nothing is better than documentation with examples. Nothing is worse than
+examples that don't actually work, because the code has changed since the
+documentation has been written. To this end, Rust supports automatically
+running examples in your documentation (<b>note:</b> this only works in library
+crates, not binary crates). Here's a fleshed-out <code>src/lib.rs</code> with examples:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//# // The next line exists to trick play.rust-lang.org into running our code as a"></div><div data-l="# // ">The next line exists to trick play.rust-lang.org into running our code as a</div><div data-l="#//# // test:"></div><div data-l="# // ">test:</div><div data-l="#//# // fn main"></div><div data-l="# // ">fn main</div><div data-l="#"></div><div data-l="//! The `adder` crate provides functions that add numbers to other numbers."></div><div data-l="//!"></div><div data-l="//! # Examples"></div><div data-l="//!"></div><div data-l="//! ```"></div><div data-l="//! assert_eq!(4, adder::add_two(2));"></div><div data-l="//! ```"></div><div data-l=""></div><div data-l="#///// This function adds two to its argument."></div><div data-l="/// ">This function adds two to its argument.</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// use adder::add_two;"></div><div data-l="/// ">use adder::add_two;</div><div data-l="///"></div><div data-l="#///// assert_eq!(4, add_two(2));"></div><div data-l="/// ">assert_eq!(4, add_two(2));</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="pub fn add_two(a: i32) -&gt; i32 {"></div><div data-l="    a + 2"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn it_works() {"></div><div data-l="        assert_eq!(4, add_two(2));"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Note the module-level documentation with <code>//€</code> and the function-level
+documentation with <code>///</code>. Rust's documentation supports Markdown in comments,
+and so triple graves mark code blocks. It is conventional to include the
+<code># Examples</code> section, exactly like that, with examples following.</p>
+<br>
+<p>Let's run the tests again:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="   Compiling adder v0.1.0. (file:///home/you/projects/adder)"></div><div data-l="     Running target/debug/deps/adder-91b3e234d4ed382a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test tests::it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="     Running target/debug/integration_test-68064b69521c828a"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test it_works ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 2 tests"></div><div data-l="test add_two_0 ... ok"></div><div data-l="test _0 ... ok"></div><div data-l=""></div><div data-l="test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured"></div></div>
+<br>
+<p>Now we have all three kinds of tests running! Note the names of the
+documentation tests: the <code>_0</code> is generated for the module test, and <code>add_two_0</code>
+for the function test. These will auto increment with names like <code>add_two_1</code> as
+you add more examples.</p>
+<br>
+<p>We haven’t covered all of the details with writing documentation tests. For more,
+please see the <a href="#2documentation.html">Documentation chapter</a>.</p>
+<br>
+<h1>Testing and concurrency</h1>
+<br>
+<p>It is important to note that tests are run concurrently using threads. For this
+reason, care should be taken to ensure your tests do not depend on each-other,
+or on any shared state. &quot;Shared state&quot; can also include the environment, such
+as the current working directory, or environment variables.</p>
+<br>
+<p>If this is an issue it is possible to control this concurrency, either by
+setting the environment variable <code>RUST_TEST_THREADS</code>, or by passing the argument
+<code>--test-threads</code> to the tests:</p>
+<br>
+<div data-lang="bash"><div data-l="$ RUST_TEST_THREADS=1 cargo test   # Run tests with no concurrency"></div><div data-l="..."></div><div data-l="$ cargo test -- --test-threads=1   # Same as above"></div><div data-l="..."></div></div>
+<br>
+<h1>Test output</h1>
+<br>
+<p>By default Rust's test library captures and discards output to standard
+out/error, e.g. output from <code>println€()</code>. This too can be controlled using the
+environment or a switch:</p>
+<br>
+<br>
+<div data-lang="bash"><div data-l="$ RUST_TEST_NOCAPTURE=1 cargo test   # Preserve stdout/stderr"></div><div data-l="..."></div><div data-l="$ cargo test -- --nocapture          # Same as above"></div><div data-l="..."></div></div>
+<br>
+<p>However a better method avoiding capture is to use logging rather than raw
+output. Rust has a <a href="#3log">standard logging API</a>, which provides a frontend to
+multiple logging implementations. This can be used in conjunction with the
+default <a class="notranslate" href="#4env_logger">env_logger</a> to output any debugging information in a manner that can be
+controlled at runtime.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/log">log</a>
+<a class="notranslate" href="#1https://crates.io/crates/env_logger">env_logger</a>

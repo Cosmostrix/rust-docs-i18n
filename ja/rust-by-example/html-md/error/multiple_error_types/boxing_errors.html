@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1><code>Box</code>ing errors</h1>
+<br>
+<p>A way to write simple code while preserving the original errors is to <a class="notranslate" href="#3box"><code>Box</code></a>
+them.  The drawback is that the underlying error type is only known at runtime and not
+<a href="#3dynamic_dispatch">statically determined</a>.</p>
+<br>
+<p>The stdlib helps in boxing our errors by having <code>Box</code> implement conversion from
+any type that implements the <code>Error</code> trait into the trait object <code>Box&lt;Error&gt;</code>,
+via <a class="notranslate" href="#3from"><code>From</code></a>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::error;"></div><div data-l="use std::fmt;"></div><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="#// Change the alias to `Box&lt;error::Error&gt;`."></div><div data-l="// ">Change the alias to <code>Box&lt;error::Error&gt;</code>.</div><div data-l="type Result&lt;T&gt; = std::result::Result&lt;T, Box&lt;error::Error&gt;&gt;;"></div><div data-l=""></div><div data-l="#[derive(Debug, Clone)]"></div><div data-l="struct EmptyVec;"></div><div data-l=""></div><div data-l="impl fmt::Display for EmptyVec {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        write!(f, &quot;invalid first item to double&quot;)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl error::Error for EmptyVec {"></div><div data-l="    fn description(&amp;self) -&gt; &amp;str {"></div><div data-l="        &quot;invalid first item to double&quot;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn cause(&amp;self) -&gt; Option&lt;&amp;error::Error&gt; {"></div><div data-l="#        // Generic error, underlying cause isn't tracked."></div><div data-l="        // ">Generic error, underlying cause isn't tracked.</div><div data-l="        None"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn double_first(vec: Vec&lt;&amp;str&gt;) -&gt; Result&lt;i32&gt; {"></div><div data-l="    vec.first()"></div><div data-l="#//       .ok_or_else(|| EmptyVec.into())  // Converts to Box"></div><div data-l="       .ok_or_else(|| EmptyVec.into())  // ">Converts to Box</div><div data-l="       .and_then(|s| s.parse::&lt;i32&gt;()"></div><div data-l="#//            .map_err(|e| e.into())  // Converts to Box"></div><div data-l="            .map_err(|e| e.into())  // ">Converts to Box</div><div data-l="            .map(|i| 2 * i))"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(result: Result&lt;i32&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;The first doubled is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let numbers = vec![&quot;42&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let empty = vec![];"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l=""></div><div data-l="    print(double_first(numbers));"></div><div data-l="    print(double_first(empty));"></div><div data-l="    print(double_first(strings));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3dynamic_dispatch">Dynamic dispatch</a> and <a href="#3error"><code>Error</code> trait</a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/boxed/struct.Box.html">box</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/second-edition/ch17-02-trait-objects.html#trait-objects-perform-dynamic-dispatch">dynamic_dispatch</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html">error</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/convert/trait.From.html">from</a>

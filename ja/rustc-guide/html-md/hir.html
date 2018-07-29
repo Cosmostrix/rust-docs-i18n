@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<h1>The HIR</h1>
+<br>
+<p>The HIR – &quot;High-Level Intermediate Representation&quot; – is the primary IR used
+in most of rustc. It is a compiler-friendly representation of the abstract
+syntax tree (AST) that is generated after parsing, macro expansion, and name
+resolution (see <a class="notranslate" href="#2./lowering.html">Lowering</a> for how the HIR is created).
+Many parts of HIR resemble Rust surface syntax quite closely, with
+the exception that some of Rust's expression forms have been desugared away.
+For example, <code>for</code> loops are converted into a <code>loop</code> and do not appear in
+the HIR. This makes HIR more amenable to analysis than a normal AST.</p>
+<br>
+<p>This chapter covers the main concepts of the HIR.</p>
+<br>
+<p>You can view the HIR representation of your code by passing the
+<code>-Zunpretty=hir-tree</code> flag to rustc:</p>
+<br>
+<div data-lang="bash"><div data-l="&gt; cargo rustc -- -Zunpretty=hir-tree"></div></div>
+<br>
+<h3>Out-of-band storage and the <code>Crate</code> type</h3>
+<br>
+<p>The top-level data-structure in the HIR is the <code>Crate</code>, which stores
+the contents of the crate currently being compiled (we only ever
+construct HIR for the current crate). Whereas in the AST the crate
+data structure basically just contains the root module, the HIR
+<code>Crate</code> structure contains a number of maps and other things that
+serve to organize the content of the crate for easier access.</p>
+<br>
+<p>For example, the contents of individual items (e.g. modules,
+functions, traits, impls, etc) in the HIR are not immediately
+accessible in the parents. So, for example, if there is a module item
+<code>foo</code> containing a function <code>bar()</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="mod foo {"></div><div data-l="    fn bar() { }"></div><div data-l="}"></div></div>
+<br>
+<p>then in the HIR the representation of module <code>foo</code> (the <code>Mod</code>
+stuct) would only have the <b>`ItemId`</b> <code>I</code> of <code>bar()</code>. To get the
+details of the function <code>bar()</code>, we would lookup <code>I</code> in the
+<code>items</code> map.</p>
+<br>
+<p>One nice result from this representation is that one can iterate
+over all items in the crate by iterating over the key-value pairs
+in these maps (without the need to trawl through the whole HIR).
+There are similar maps for things like trait items and impl items,
+as well as &quot;bodies&quot; (explained below).</p>
+<br>
+<p>The other reason to set up the representation this way is for better
+integration with incremental compilation. This way, if you gain access
+to an <code>&amp;hir::Item</code> (e.g. for the mod <code>foo</code>), you do not immediately
+gain access to the contents of the function <code>bar()</code>. Instead, you only
+gain access to the <b>id</b> for <code>bar()</code>, and you must invoke some
+function to lookup the contents of <code>bar()</code> given its id; this gives the
+compiler a chance to observe that you accessed the data for <code>bar()</code>,
+and then record the dependency.</p>
+<br>
+<p><a name="hir-id"></a></p>
+<br>
+<h3>Identifiers in the HIR</h3>
+<br>
+<p>Most of the code that has to deal with things in HIR tends not to
+carry around references into the HIR, but rather to carry around
+<i>identifier numbers</i> (or just &quot;ids&quot;). Right now, you will find four
+sorts of identifiers in active use:</p>
+<br>
+<div data-b="-"><code>DefId</code>, which primarily names &quot;definitions&quot; or top-level items.</div>
+<div data-b="  -">You can think of a <code>DefId</code> as being shorthand for a very explicit
+and complete path, like <code>std::collections::HashMap</code>. However,
+these paths are able to name things that are not nameable in
+normal Rust (e.g. impls), and they also include extra information
+about the crate (such as its version number, as two versions of
+the same crate can co-exist).</div>
+<div data-b="  -">A <code>DefId</code> really consists of two parts, a <code>CrateNum</code> (which
+identifies the crate) and a <code>DefIndex</code> (which indixes into a list
+of items that is maintained per crate).</div>
+<div data-b="-"><code>HirId</code>, which combines the index of a particular item with an
+offset within that item.</div>
+<div data-b="  -">the key point of a <code>HirId</code> is that it is <i>relative</i> to some item
+(which is named via a <code>DefId</code>).</div>
+<div data-b="-"><code>BodyId</code>, this is an absolute identifier that refers to a specific
+body (definition of a function or constant) in the crate. It is currently
+effectively a &quot;newtype'd&quot; <code>NodeId</code>.</div>
+<div data-b="-"><code>NodeId</code>, which is an absolute id that identifies a single node in the HIR
+tree.</div>
+<div data-b="  -">While these are still in common use, <b>they are being slowly phased out</b>.</div>
+<div data-b="  -">Since they are absolute within the crate, adding a new node anywhere in the
+tree causes the <code>NodeId</code>s of all subsequent code in the crate to change.
+This is terrible for incremental compilation, as you can perhaps imagine.</div>
+<br>
+<h3>The HIR Map</h3>
+<br>
+<p>Most of the time when you are working with the HIR, you will do so via
+the <b>HIR Map</b>, accessible in the tcx via <code>tcx.hir</code> (and defined in
+the <code>hir::map</code> module). The HIR map contains a number of methods to
+convert between IDs of various kinds and to lookup data associated
+with an HIR node.</p>
+<br>
+<p>For example, if you have a <code>DefId</code>, and you would like to convert it
+to a <code>NodeId</code>, you can use <code>tcx.hir.as_local_node_id(def_id)</code>. This
+returns an <code>Option&lt;NodeId&gt;</code> – this will be <code>None</code> if the def-id
+refers to something outside of the current crate (since then it has no
+HIR node), but otherwise returns <code>Some(n)</code> where <code>n</code> is the node-id of
+the definition.</p>
+<br>
+<p>Similarly, you can use <code>tcx.hir.find(n)</code> to lookup the node for a
+<code>NodeId</code>. This returns a <code>Option&lt;Node&lt;'tcx&gt;&gt;</code>, where <code>Node</code> is an enum
+defined in the map; by matching on this you can find out what sort of
+node the node-id referred to and also get a pointer to the data
+itself. Often, you know what sort of node <code>n</code> is – e.g. if you know
+that <code>n</code> must be some HIR expression, you can do
+<code>tcx.hir.expect_expr(n)</code>, which will extract and return the
+<code>&amp;hir::Expr</code>, panicking if <code>n</code> is not in fact an expression.</p>
+<br>
+<p>Finally, you can use the HIR map to find the parents of nodes, via
+calls like <code>tcx.hir.get_parent_node(n)</code>.</p>
+<br>
+<h3>HIR Bodies</h3>
+<br>
+<p>A <b>body</b> represents some kind of executable code, such as the body
+of a function/closure or the definition of a constant. Bodies are
+associated with an <b>owner</b>, which is typically some kind of item
+(e.g. an <code>fn()</code> or <code>const</code>), but could also be a closure expression
+(e.g. <code>|x, y| x + y</code>). You can use the HIR map to find the body
+associated with a given def-id (<code>maybe_body_owned_by()</code>) or to find
+the owner of a body (<code>body_owner_def_id()</code>).</p>

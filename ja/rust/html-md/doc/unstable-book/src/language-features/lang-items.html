@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<h1><code>lang_items</code></h1>
+<br>
+<p>The tracking issue for this feature is: None.</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>rustc</code> compiler has certain pluggable operations, that is,
+functionality that isn't hard-coded into the language, but is
+implemented in libraries, with a special marker to tell the compiler
+it exists. The marker is the attribute <code>#[lang = &quot;...&quot;]</code> and there are
+various different values of <code>...</code>, i.e. various different 'lang
+items'.</p>
+<br>
+<p>For example, <code>Box</code> pointers require two lang items, one for allocation
+and one for deallocation. A freestanding program that uses the <code>Box</code>
+sugar for dynamic allocations via <code>malloc</code> and <code>free</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(lang_items, box_syntax, start, libc, core_intrinsics)]"></div><div data-l="#![no_std]"></div><div data-l="use core::intrinsics;"></div><div data-l="use core::panic::PanicInfo;"></div><div data-l=""></div><div data-l="extern crate libc;"></div><div data-l=""></div><div data-l="#[lang = &quot;owned_box&quot;]"></div><div data-l="pub struct Box&lt;T&gt;(*mut T);"></div><div data-l=""></div><div data-l="#[lang = &quot;exchange_malloc&quot;]"></div><div data-l="unsafe fn allocate(size: usize, _align: usize) -&gt; *mut u8 {"></div><div data-l="    let p = libc::malloc(size as libc::size_t) as *mut u8;"></div><div data-l=""></div><div data-l="#    // Check if `malloc` failed:"></div><div data-l="    // ">Check if <code>malloc</code> failed:</div><div data-l="    if p as usize == 0 {"></div><div data-l="        intrinsics::abort();"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    p"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[lang = &quot;box_free&quot;]"></div><div data-l="unsafe fn box_free&lt;T: ?Sized&gt;(ptr: *mut T) {"></div><div data-l="    libc::free(ptr as *mut libc::c_void)"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[start]"></div><div data-l="fn main(_argc: isize, _argv: *const *const u8) -&gt; isize {"></div><div data-l="    let _x = box 1;"></div><div data-l=""></div><div data-l="    0"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[lang = &quot;eh_personality&quot;] extern fn rust_eh_personality() {}"></div><div data-l="#[lang = &quot;panic_impl&quot;] extern fn rust_begin_panic(info: &amp;PanicInfo) -&gt; ! { unsafe { intrinsics::abort() } }"></div><div data-l="#[lang = &quot;eh_unwind_resume&quot;] extern fn rust_eh_unwind_resume() {}"></div><div data-l="#[no_mangle] pub extern fn rust_eh_register_frames () {}"></div><div data-l="#[no_mangle] pub extern fn rust_eh_unregister_frames () {}"></div></div>
+<br>
+<p>Note the use of <code>abort</code>: the <code>exchange_malloc</code> lang item is assumed to
+return a valid pointer, and so needs to do the check internally.</p>
+<br>
+<p>Other features provided by lang items include:</p>
+<br>
+<div data-b="-">overloadable operators via traits: the traits corresponding to the
+<code>==</code>, <code>&lt;</code>, dereferencing (<code>*</code>) and <code>+</code> (etc.) operators are all
+marked with lang items; those specific four are <code>eq</code>, <code>ord</code>,
+<code>deref</code>, and <code>add</code> respectively.</div>
+<div data-b="-">stack unwinding and general failure; the <code>eh_personality</code>,
+<code>eh_unwind_resume</code>, <code>fail</code> and <code>fail_bounds_checks</code> lang items.</div>
+<div data-b="-">the traits in <code>std::marker</code> used to indicate types of
+various kinds; lang items <code>send</code>, <code>sync</code> and <code>copy</code>.</div>
+<div data-b="-">the marker types and variance indicators found in
+<code>std::marker</code>; lang items <code>covariant_type</code>,
+<code>contravariant_lifetime</code>, etc.</div>
+<br>
+<p>Lang items are loaded lazily by the compiler; e.g. if one never uses
+<code>Box</code> then there is no need to define functions for <code>exchange_malloc</code>
+and <code>box_free</code>. <code>rustc</code> will emit an error when an item is needed
+but not found in the current crate or any that it depends on.</p>
+<br>
+<p>Most lang items are defined by <code>libcore</code>, but if you're trying to build
+an executable without the standard library, you'll run into the need
+for lang items. The rest of this page focuses on this use-case, even though
+lang items are a bit broader than that.</p>
+<br>
+<h3>Using libc</h3>
+<br>
+<p>In order to build a <code>#[no_std]</code> executable we will need libc as a dependency.
+We can specify this using our <code>Cargo.toml</code> file:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l="libc = { version = &quot;0.2.14&quot;, default-features = false }"></div></div>
+<br>
+<p>Note that the default features have been disabled. This is a critical step -
+<b>the default features of libc include the standard library and so must be
+disabled.</b></p>
+<br>
+<h3>Writing an executable without stdlib</h3>
+<br>
+<p>Controlling the entry point is possible in two ways: the <code>#[start]</code> attribute,
+or overriding the default shim for the C <code>main</code> function with your own.</p>
+<br>
+<p>The function marked <code>#[start]</code> is passed the command line parameters
+in the same format as C:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(lang_items, core_intrinsics)]"></div><div data-l="#![feature(start)]"></div><div data-l="#![no_std]"></div><div data-l="use core::intrinsics;"></div><div data-l="use core::panic::PanicInfo;"></div><div data-l=""></div><div data-l="#// Pull in the system libc library for what crt0.o likely requires."></div><div data-l="// ">Pull in the system libc library for what crt0.o likely requires.</div><div data-l="extern crate libc;"></div><div data-l=""></div><div data-l="#// Entry point for this program."></div><div data-l="// ">Entry point for this program.</div><div data-l="#[start]"></div><div data-l="fn start(_argc: isize, _argv: *const *const u8) -&gt; isize {"></div><div data-l="    0"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// These functions are used by the compiler, but not"></div><div data-l="#// for a bare-bones hello world. These are normally"></div><div data-l="#// provided by libstd."></div><div data-l="// ">These functions are used by the compiler, but not for a bare-bones hello world. These are normally provided by libstd.</div><div data-l="#[lang = &quot;eh_personality&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_eh_personality() {"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// This function may be needed based on the compilation target."></div><div data-l="// ">This function may be needed based on the compilation target.</div><div data-l="#[lang = &quot;eh_unwind_resume&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_eh_unwind_resume() {"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[lang = &quot;panic_impl&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_begin_panic(info: &amp;PanicInfo) -&gt; ! {"></div><div data-l="    unsafe { intrinsics::abort() }"></div><div data-l="}"></div></div>
+<br>
+<p>To override the compiler-inserted <code>main</code> shim, one has to disable it
+with <code>#€[no_main]</code> and then create the appropriate symbol with the
+correct ABI and the correct name, which requires overriding the
+compiler's name mangling too:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(lang_items, core_intrinsics)]"></div><div data-l="#![feature(start)]"></div><div data-l="#![no_std]"></div><div data-l="#![no_main]"></div><div data-l="use core::intrinsics;"></div><div data-l="use core::panic::PanicInfo;"></div><div data-l=""></div><div data-l="#// Pull in the system libc library for what crt0.o likely requires."></div><div data-l="// ">Pull in the system libc library for what crt0.o likely requires.</div><div data-l="extern crate libc;"></div><div data-l=""></div><div data-l="#// Entry point for this program."></div><div data-l="// ">Entry point for this program.</div><div data-l="#//#[no_mangle] // ensure that this symbol is called `main` in the output"></div><div data-l="#[no_mangle] // ">ensure that this symbol is called <code>main</code> in the output</div><div data-l="pub extern fn main(_argc: i32, _argv: *const *const u8) -&gt; i32 {"></div><div data-l="    0"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// These functions are used by the compiler, but not"></div><div data-l="#// for a bare-bones hello world. These are normally"></div><div data-l="#// provided by libstd."></div><div data-l="// ">These functions are used by the compiler, but not for a bare-bones hello world. These are normally provided by libstd.</div><div data-l="#[lang = &quot;eh_personality&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_eh_personality() {"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// This function may be needed based on the compilation target."></div><div data-l="// ">This function may be needed based on the compilation target.</div><div data-l="#[lang = &quot;eh_unwind_resume&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_eh_unwind_resume() {"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[lang = &quot;panic_impl&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub extern fn rust_begin_panic(info: &amp;PanicInfo) -&gt; ! {"></div><div data-l="    unsafe { intrinsics::abort() }"></div><div data-l="}"></div></div>
+<br>
+<p>In many cases, you may need to manually link to the <code>compiler_builtins</code> crate
+when building a <code>no_std</code> binary. You may observe this via linker error messages
+such as &quot;`<code class=2>undefined reference to `__rust_probestack'</code><code>&quot;. Using this crate
+also requires enabling the library feature </code>compiler_builtins_lib`. You can read
+more about this <a class="notranslate" href="#3compiler-builtins-lib">here</a>.</p>
+<br>
+<a class="notranslate" href="#1library-features/compiler-builtins-lib.html">compiler-builtins-lib</a>
+<br>
+<h2>More about the language items</h2>
+<br>
+<p>The compiler currently makes a few assumptions about symbols which are
+available in the executable to call. Normally these functions are provided by
+the standard library, but without it you must define your own. These symbols
+are called &quot;language items&quot;, and they each have an internal name, and then a
+signature that an implementation must conform to.</p>
+<br>
+<p>The first of these functions, <code>rust_eh_personality</code>, is used by the failure
+mechanisms of the compiler. This is often mapped to GCC's personality function
+(see the <a href="#3unwind">libstd implementation</a> for more information), but crates
+which do not trigger a panic can be assured that this function is never
+called. The language item's name is <code>eh_personality</code>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/libpanic_unwind/gcc.rs">unwind</a>
+<br>
+<p>The second function, <code>rust_begin_panic</code>, is also used by the failure mechanisms of the
+compiler. When a panic happens, this controls the message that's displayed on
+the screen. While the language item's name is <code>panic_impl</code>, the symbol name is
+<code>rust_begin_panic</code>.</p>
+<br>
+<p>A third function, <code>rust_eh_unwind_resume</code>, is also needed if the <code>custom_unwind_resume</code>
+flag is set in the options of the compilation target. It allows customizing the
+process of resuming unwind at the end of the landing pads. The language item's name
+is <code>eh_unwind_resume</code>.</p>
+<br>
+<h2>List of all language items</h2>
+<br>
+<p>This is a list of all language items in Rust along with where they are located in
+the source code.</p>
+<br>
+<div data-b="-">Primitives</div>
+<div data-b="  -"><code>i8</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>i16</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>i32</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>i64</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>i128</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>isize</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>u8</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>u16</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>u32</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>u64</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>u128</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>usize</code>: <code>libcore/num/mod.rs</code></div>
+<div data-b="  -"><code>f32</code>: <code>libstd/f32.rs</code></div>
+<div data-b="  -"><code>f64</code>: <code>libstd/f64.rs</code></div>
+<div data-b="  -"><code>char</code>: <code>libcore/char.rs</code></div>
+<div data-b="  -"><code>slice</code>: <code>liballoc/slice.rs</code></div>
+<div data-b="  -"><code>str</code>: <code>liballoc/str.rs</code></div>
+<div data-b="  -"><code>const_ptr</code>: <code>libcore/ptr.rs</code></div>
+<div data-b="  -"><code>mut_ptr</code>: <code>libcore/ptr.rs</code></div>
+<div data-b="  -"><code>unsafe_cell</code>: <code>libcore/cell.rs</code></div>
+<div data-b="-">Runtime</div>
+<div data-b="  -"><code>start</code>: <code>libstd/rt.rs</code></div>
+<div data-b="  -"><code>eh_personality</code>: <code>libpanic_unwind/emcc.rs</code> (EMCC)</div>
+<div data-b="  -"><code>eh_personality</code>: <code>libpanic_unwind/seh64_gnu.rs</code> (SEH64 GNU)</div>
+<div data-b="  -"><code>eh_personality</code>: <code>libpanic_unwind/seh.rs</code> (SEH)</div>
+<div data-b="  -"><code>eh_unwind_resume</code>: <code>libpanic_unwind/seh64_gnu.rs</code> (SEH64 GNU)</div>
+<div data-b="  -"><code>eh_unwind_resume</code>: <code>libpanic_unwind/gcc.rs</code> (GCC)</div>
+<div data-b="  -"><code>msvc_try_filter</code>: <code>libpanic_unwind/seh.rs</code> (SEH)</div>
+<div data-b="  -"><code>panic</code>: <code>libcore/panicking.rs</code></div>
+<div data-b="  -"><code>panic_bounds_check</code>: <code>libcore/panicking.rs</code></div>
+<div data-b="  -"><code>panic_impl</code>: <code>libcore/panicking.rs</code></div>
+<div data-b="  -"><code>panic_impl</code>: <code>libstd/panicking.rs</code></div>
+<div data-b="-">Allocations</div>
+<div data-b="  -"><code>owned_box</code>: <code>liballoc/boxed.rs</code></div>
+<div data-b="  -"><code>exchange_malloc</code>: <code>liballoc/heap.rs</code></div>
+<div data-b="  -"><code>box_free</code>: <code>liballoc/heap.rs</code></div>
+<div data-b="-">Operands</div>
+<div data-b="  -"><code>not</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitand</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitor</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitxor</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>shl</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>shr</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitand_assign</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitor_assign</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>bitxor_assign</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>shl_assign</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>shr_assign</code>: <code>libcore/ops/bit.rs</code></div>
+<div data-b="  -"><code>deref</code>: <code>libcore/ops/deref.rs</code></div>
+<div data-b="  -"><code>deref_mut</code>: <code>libcore/ops/deref.rs</code></div>
+<div data-b="  -"><code>index</code>: <code>libcore/ops/index.rs</code></div>
+<div data-b="  -"><code>index_mut</code>: <code>libcore/ops/index.rs</code></div>
+<div data-b="  -"><code>add</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>sub</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>mul</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>div</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>rem</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>neg</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>add_assign</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>sub_assign</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>mul_assign</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>div_assign</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>rem_assign</code>: <code>libcore/ops/arith.rs</code></div>
+<div data-b="  -"><code>eq</code>: <code>libcore/cmp.rs</code></div>
+<div data-b="  -"><code>ord</code>: <code>libcore/cmp.rs</code></div>
+<div data-b="-">Functions</div>
+<div data-b="  -"><code>fn</code>: <code>libcore/ops/function.rs</code></div>
+<div data-b="  -"><code>fn_mut</code>: <code>libcore/ops/function.rs</code></div>
+<div data-b="  -"><code>fn_once</code>: <code>libcore/ops/function.rs</code></div>
+<div data-b="  -"><code>generator_state</code>: <code>libcore/ops/generator.rs</code></div>
+<div data-b="  -"><code>generator</code>: <code>libcore/ops/generator.rs</code></div>
+<div data-b="-">Other</div>
+<div data-b="  -"><code>coerce_unsized</code>: <code>libcore/ops/unsize.rs</code></div>
+<div data-b="  -"><code>drop</code>: <code>libcore/ops/drop.rs</code></div>
+<div data-b="  -"><code>drop_in_place</code>: <code>libcore/ptr.rs</code></div>
+<div data-b="  -"><code>clone</code>: <code>libcore/clone.rs</code></div>
+<div data-b="  -"><code>copy</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>send</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>sized</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>unsize</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>sync</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>phantom_data</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>freeze</code>: <code>libcore/marker.rs</code></div>
+<div data-b="  -"><code>debug_trait</code>: <code>libcore/fmt/mod.rs</code></div>
+<div data-b="  -"><code>non_zero</code>: <code>libcore/nonzero.rs</code></div>

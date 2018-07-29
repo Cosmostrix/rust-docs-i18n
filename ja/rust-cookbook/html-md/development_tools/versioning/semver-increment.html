@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Parse and increment a version string.</h2>
+<br>
+<p><a href="#3semver">!<a class="notranslate" href="#4semver-badge">semver-badge</a></a> <a href="#3cat-config">!<a class="notranslate" href="#4cat-config-badge">cat-config-badge</a></a></p>
+<br>
+<p>Constructs a <a class="notranslate" href="#4`semver::Version`">`semver::Version`</a> from a string literal using <a class="notranslate" href="#4`Version::parse`">`Version::parse`</a>,
+then increments it by patch, minor, and major version number one by one.</p>
+<br>
+<p>Note that in accordance with the <a class="notranslate" href="#4Semantic Versioning Specification">Semantic Versioning Specification</a>,
+incrementing the minor version number resets the patch version number to 0 and
+incrementing the major version number resets both the minor and patch version
+numbers to 0.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate semver;"></div><div data-l=""></div><div data-l="use semver::Version;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         SemVer(semver::SemVerError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let mut parsed_version = Version::parse(&quot;0.2.6&quot;)?;"></div><div data-l=""></div><div data-l="    assert_eq!("></div><div data-l="        parsed_version,"></div><div data-l="        Version {"></div><div data-l="            major: 0,"></div><div data-l="            minor: 2,"></div><div data-l="            patch: 6,"></div><div data-l="            pre: vec![],"></div><div data-l="            build: vec![],"></div><div data-l="        }"></div><div data-l="    );"></div><div data-l=""></div><div data-l="    parsed_version.increment_patch();"></div><div data-l="    assert_eq!(parsed_version.to_string(), &quot;0.2.7&quot;);"></div><div data-l="    println!(&quot;New patch release: v{}&quot;, parsed_version);"></div><div data-l=""></div><div data-l="    parsed_version.increment_minor();"></div><div data-l="    assert_eq!(parsed_version.to_string(), &quot;0.3.0&quot;);"></div><div data-l="    println!(&quot;New minor release: v{}&quot;, parsed_version);"></div><div data-l=""></div><div data-l="    parsed_version.increment_major();"></div><div data-l="    assert_eq!(parsed_version.to_string(), &quot;1.0.0&quot;);"></div><div data-l="    println!(&quot;New major release: v{}&quot;, parsed_version);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.Version.html">`semver::Version`</a>
+<a class="notranslate" href="#1https://docs.rs/semver/*/semver/struct.Version.html#method.parse">`Version::parse`</a>
+<br>
+<a class="notranslate" href="#1http://semver.org/">Semantic Versioning Specification</a>

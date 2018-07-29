@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<h1>Debug</h1>
+<br>
+<p>All types which want to use <code>std::fmt</code> formatting <code>traits</code> require an
+implementation to be printable. Automatic implementations are only provided
+for types such as in the <code>std</code> library. All others <i>must</i> be manually
+implemented somehow.</p>
+<br>
+<p>The <code>fmt::Debug</code> <code>trait</code> makes this very straightforward. <i>All</i> types can
+<code>derive</code> (automatically create) the <code>fmt::Debug</code> implementation. This is
+not true for <code>fmt::Display</code> which must be manually implemented.</p>
+<br>
+<div data-lang="rust"><div data-l="#// This structure cannot be printed either with `fmt::Display` or"></div><div data-l="#// with `fmt::Debug`"></div><div data-l="// ">This structure cannot be printed either with <code>fmt::Display</code> or with <code>fmt::Debug</code></div><div data-l="struct UnPrintable(i32);"></div><div data-l=""></div><div data-l="#// The `derive` attribute automatically creates the implementation"></div><div data-l="#// required to make this `struct` printable with `fmt::Debug`."></div><div data-l="// ">The <code>derive</code> attribute automatically creates the implementation required to make this <code>struct</code> printable with <code>fmt::Debug</code>.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct DebugPrintable(i32);"></div></div>
+<br>
+<p>All <code>std</code> library types automatically are printable with <code>{:?}</code> too:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// Derive the `fmt::Debug` implementation for `Structure`. `Structure`"></div><div data-l="#// is a structure which contains a single `i32`."></div><div data-l="// ">Derive the <code>fmt::Debug</code> implementation for <code>Structure</code>. <code>Structure</code> is a structure which contains a single <code>i32</code>.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct Structure(i32);"></div><div data-l=""></div><div data-l="#// Put a `Structure` inside of the structure `Deep`. Make it printable"></div><div data-l="#// also."></div><div data-l="// ">Put a <code>Structure</code> inside of the structure <code>Deep</code>. Make it printable also.</div><div data-l="#[derive(Debug)]"></div><div data-l="struct Deep(Structure);"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Printing with `{:?}` is similar to with `{}`."></div><div data-l="    // ">Printing with <code>{:?}</code> is similar to with <code>{}</code>.</div><div data-l="    println!(&quot;{:?} months in a year.&quot;, 12);"></div><div data-l="    println!(&quot;{1:?} {0:?} is the {actor:?} name.&quot;,"></div><div data-l="             &quot;Slater&quot;,"></div><div data-l="             &quot;Christian&quot;,"></div><div data-l="             actor=&quot;actor's&quot;);"></div><div data-l=""></div><div data-l="#    // `Structure` is printable!"></div><div data-l="    // "><code>Structure</code> is printable!</div><div data-l="    println!(&quot;Now {:?} will print!&quot;, Structure(3));"></div><div data-l="    "></div><div data-l="#    // The problem with `derive` is there is no control over how"></div><div data-l="#    // the results look. What if I want this to just show a `7`?"></div><div data-l="    // ">The problem with <code>derive</code> is there is no control over how the results look. What if I want this to just show a <code>7</code>?</div><div data-l="    println!(&quot;Now {:?} will print!&quot;, Deep(Structure(7)));"></div><div data-l="}"></div></div>
+<br>
+<p>So <code>fmt::Debug</code> definitely makes this printable but sacrifices some
+elegance. Rust also provides &quot;pretty printing&quot; with <code>{:#?}</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#[derive(Debug)]"></div><div data-l="struct Person&lt;'a&gt; {"></div><div data-l="    name: &amp;'a str,"></div><div data-l="    age: u8"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let name = &quot;Peter&quot;;"></div><div data-l="    let age = 27;"></div><div data-l="    let peter = Person { name, age };"></div><div data-l=""></div><div data-l="#    // Pretty print"></div><div data-l="    // ">Pretty print</div><div data-l="    println!(&quot;{:#?}&quot;, peter);"></div><div data-l="}"></div></div>
+<br>
+<p>One can manually implement <code>fmt::Display</code> to control the display.</p>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3attributes">attributes</a>, <a class="notranslate" href="#3derive"><code>derive</code></a>, <a class="notranslate" href="#3fmt"><code>std::fmt</code></a>,
+and <a class="notranslate" href="#3structs"><code>struct</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/attributes.html">attributes</a>
+<a class="notranslate" href="#1trait/derive.html">derive</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/">fmt</a>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<br>

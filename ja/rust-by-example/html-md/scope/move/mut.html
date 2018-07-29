@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<h1>Mutability</h1>
+<br>
+<p>Mutability of data can be changed when ownership is transferred.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let immutable_box = Box::new(5u32);"></div><div data-l=""></div><div data-l="    println!(&quot;immutable_box contains {}&quot;, immutable_box);"></div><div data-l=""></div><div data-l="#    // Mutability error"></div><div data-l="    // ">Mutability error</div><div data-l="    //*immutable_box = 4;"></div><div data-l=""></div><div data-l="#    // *Move* the box, changing the ownership (and mutability)"></div><div data-l="    // "><i>Move</i> the box, changing the ownership (and mutability)</div><div data-l="    let mut mutable_box = immutable_box;"></div><div data-l=""></div><div data-l="    println!(&quot;mutable_box contains {}&quot;, mutable_box);"></div><div data-l=""></div><div data-l="#    // Modify the contents of the box"></div><div data-l="    // ">Modify the contents of the box</div><div data-l="    *mutable_box = 4;"></div><div data-l=""></div><div data-l="    println!(&quot;mutable_box now contains {}&quot;, mutable_box);"></div><div data-l="}"></div></div>

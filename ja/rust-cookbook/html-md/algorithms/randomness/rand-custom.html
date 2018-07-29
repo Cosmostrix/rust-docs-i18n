@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Generate random values of a custom type</h2>
+<br>
+<p><a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-science">!<a class="notranslate" href="#4cat-science-badge">cat-science-badge</a></a></p>
+<br>
+<p>Randomly generates a tuple <code>(i32, bool, f64)</code> and variable of user defined type <code>Point</code>.
+Implements the <a class="notranslate" href="#4`Distribution`">`Distribution`</a> trait on type Point for <a class="notranslate" href="#4`Standard`">`Standard`</a> in order to allow random generation.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use rand::Rng;"></div><div data-l="use rand::distributions::{Distribution, Standard};"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Distribution&lt;Point&gt; for Standard {"></div><div data-l="    fn sample&lt;R: Rng + ?Sized&gt;(&amp;self, rng: &amp;mut R) -&gt; Point {"></div><div data-l="        let (rand_x, rand_y) = rng.gen();"></div><div data-l="        Point {"></div><div data-l="            x: rand_x,"></div><div data-l="            y: rand_y,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut rng = rand::thread_rng();"></div><div data-l="    let rand_tuple = rng.gen::&lt;(i32, bool, f64)&gt;();"></div><div data-l="    let rand_point: Point = rng.gen();"></div><div data-l="    println!(&quot;Random tuple: {:?}&quot;, rand_tuple);"></div><div data-l="    println!(&quot;Random Point: {:?}&quot;, rand_point);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/trait.Distribution.html">`Distribution`</a>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/distributions/struct.Standard.html">`Standard`</a>

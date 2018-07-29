@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Closures</h1>
+<br>
+<p>Closures in Rust, also called lambda expressions or lambdas, are functions that can capture 
+the enclosing environment. For example, a closure that captures the x 
+variable:
+`<code class=2>Rust
+|val| val + x
+</code>`</p>
+<br>
+<p>The syntax and capabilities of closures make them very convenient for 
+on the fly usage. Calling a closure is exactly like calling a function.
+However, both input and return types <i>can</i> be inferred and input 
+variable names <i>must</i> be specified.</p>
+<br>
+<p>Other characteristics of closures include:
+* using <code>||</code> instead of <code>()</code> around input variables.
+* optional body delimination (<code>{}</code>) for a single expression (mandatory otherwise).
+* the ability to capture the outer environment variables.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // Increment via closures and functions."></div><div data-l="    // ">Increment via closures and functions.</div><div data-l="    fn  function            (i: i32) -&gt; i32 { i + 1 }"></div><div data-l=""></div><div data-l="#    // Closures are anonymous, here we are binding them to references"></div><div data-l="#    // Annotation is identical to function annotation but is optional"></div><div data-l="#    // as are the `{}` wrapping the body. These nameless functions"></div><div data-l="#    // are assigned to appropriately named variables."></div><div data-l="    // ">Closures are anonymous, here we are binding them to references Annotation is identical to function annotation but is optional as are the <code>{}</code> wrapping the body. These nameless functions are assigned to appropriately named variables.</div><div data-l="    let closure_annotated = |i: i32| -&gt; i32 { i + 1 };"></div><div data-l="    let closure_inferred  = |i     |          i + 1  ;"></div><div data-l=""></div><div data-l="    let i = 1;"></div><div data-l="#    // Call the function and closures."></div><div data-l="    // ">Call the function and closures.</div><div data-l="    println!(&quot;function: {}&quot;, function(i));"></div><div data-l="    println!(&quot;closure_annotated: {}&quot;, closure_annotated(i));"></div><div data-l="    println!(&quot;closure_inferred: {}&quot;, closure_inferred(i));"></div><div data-l=""></div><div data-l="#    // A closure taking no arguments which returns an `i32`."></div><div data-l="#    // The return type is inferred."></div><div data-l="    // ">A closure taking no arguments which returns an <code>i32</code>. The return type is inferred.</div><div data-l="    let one = || 1;"></div><div data-l="    println!(&quot;closure returning one: {}&quot;, one());"></div><div data-l=""></div><div data-l="}"></div></div>

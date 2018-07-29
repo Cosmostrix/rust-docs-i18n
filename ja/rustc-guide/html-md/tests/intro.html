@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<h1>The compiler testing framework</h1>
+<br>
+<p>The Rust project runs a wide variety of different tests, orchestrated
+by the build system (<code>x.py test</code>).  The main test harness for testing
+the compiler itself is a tool called compiletest (sources in the
+<a class="notranslate" href="#4`src/tools/compiletest`">`src/tools/compiletest`</a>). This section gives a brief overview of how
+the testing framework is setup, and then gets into some of the details
+on <a href="#2./tests/running.html#ui">how to run tests</a> as well as
+<a href="#2./tests/adding.html">how to add new tests</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/compiletest">`src/tools/compiletest`</a>
+<br>
+<h2>Compiletest test suites</h2>
+<br>
+<p>The compiletest tests are located in the tree in the <a class="notranslate" href="#4`src/test`">`src/test`</a>
+directory. Immediately within you will see a series of subdirectories
+(e.g. <code>ui</code>, <code>run-make</code>, and so forth). Each of those directories is
+called a <b>test suite</b> – they house a group of tests that are run in
+a distinct mode.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test">`src/test`</a>
+<br>
+<p>Here is a brief summary of the test suites as of this writing and what
+they mean. In some cases, the test suites are linked to parts of the manual
+that give more details.</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2./tests/adding.html#ui"><code>ui</code></a> – tests that check the exact
+stdout/stderr from compilation and/or running the test</div>
+<div data-b="-"><code>run-pass</code> – tests that are expected to compile and execute
+successfully (no panics)</div>
+<div data-b="  -"><code>run-pass-valgrind</code> – tests that ought to run with valgrind</div>
+<div data-b="-"><code>run-fail</code> – tests that are expected to compile but then panic
+during execution</div>
+<div data-b="-"><code>compile-fail</code> – tests that are expected to fail compilation.</div>
+<div data-b="-"><code>parse-fail</code> – tests that are expected to fail to parse</div>
+<div data-b="-"><code>pretty</code> – tests targeting the Rust &quot;pretty printer&quot;, which
+generates valid Rust code from the AST</div>
+<div data-b="-"><code>debuginfo</code> – tests that run in gdb or lldb and query the debug info</div>
+<div data-b="-"><code>codegen</code> – tests that compile and then test the generated LLVM
+code to make sure that the optimizations we want are taking effect.</div>
+<div data-b="-"><code>mir-opt</code> – tests that check parts of the generated MIR to make
+sure we are building things correctly or doing the optimizations we
+expect.</div>
+<div data-b="-"><code>incremental</code> – tests for incremental compilation, checking that
+when certain modifications are performed, we are able to reuse the
+results from previous compilations.</div>
+<div data-b="-"><code>run-make</code> – tests that basically just execute a <code>Makefile</code>; the
+ultimate in flexibility but quite annoying to write.</div>
+<div data-b="-"><code>rustdoc</code> – tests for rustdoc, making sure that the generated files
+contain the expected documentation.</div>
+<div data-b="-"><code>*-fulldeps</code> – same as above, but indicates that the test depends
+on things other than <code>libstd</code> (and hence those things must be built)</div>
+<br>
+<h2>Other Tests</h2>
+<br>
+<p>The Rust build system handles running tests for various other things,
+including:</p>
+<br>
+<div data-b="-"><b>Tidy</b> – This is a custom tool used for validating source code
+style and formatting conventions, such as rejecting long lines.
+There is more information in the
+<a href="#2./conventions.html#formatting">section on coding conventions</a>.</div>
+<br>
+<p>  Example: <code>./x.py test src/tools/tidy</code></p>
+<br>
+<div data-b="-"><b>Unit tests</b> – The Rust standard library and many of the Rust packages
+include typical Rust <code>#[test]</code> unittests.  Under the hood, <code>x.py</code> will run
+<code>cargo test</code> on each package to run all the tests.</div>
+<br>
+<p>  Example: <code>./x.py test src/libstd</code></p>
+<br>
+<div data-b="-"><b>Doc tests</b> – Example code embedded within Rust documentation is executed
+via <code>rustdoc --test</code>.  Examples:</div>
+<br>
+<p>  <code>./x.py test src/doc</code> – Runs <code>rustdoc --test</code> for all documentation in
+  <code>src/doc</code>.</p>
+<br>
+<p>  <code>./x.py test --doc src/libstd</code> – Runs <code>rustdoc --test</code> on the standard
+  library.</p>
+<br>
+<div data-b="-"><b>Link checker</b> – A small tool for verifying <code>href</code> links within
+documentation.</div>
+<br>
+<p>  Example: <code>./x.py test src/tools/linkchecker</code></p>
+<br>
+<div data-b="-"><b>Dist check</b> – This verifies that the source distribution tarball created
+by the build system will unpack, build, and run all tests.</div>
+<br>
+<p>  Example: <code>./x.py test distcheck</code></p>
+<br>
+<div data-b="-"><b>Tool tests</b> – Packages that are included with Rust have all of their
+tests run as well (typically by running <code>cargo test</code> within their
+directory).  This includes things such as cargo, clippy, rustfmt, rls, miri,
+bootstrap (testing the Rust build system itself), etc.</div>
+<br>
+<div data-b="-"><b>Cargo test</b> – This is a small tool which runs <code>cargo test</code> on a few
+significant projects (such as <code>servo</code>, <code>ripgrep</code>, <code>tokei</code>, etc.) just to
+ensure there aren't any significant regressions.</div>
+<br>
+<p>  Example: <code>./x.py test src/tools/cargotest</code></p>
+<br>
+<h2>Testing infrastructure</h2>
+<br>
+<p>When a Pull Request is opened on Github, <a class="notranslate" href="#4Travis">Travis</a> will automatically launch a
+build that will run all tests on a single configuration (x86-64 linux). In
+essence, it runs <code>./x.py test</code> after building.</p>
+<br>
+<p>The integration bot <a class="notranslate" href="#4bors">bors</a> is used for coordinating merges to the master
+branch. When a PR is approved, it goes into a <a class="notranslate" href="#4queue">queue</a> where merges are tested
+one at a time on a wide set of platforms using Travis and <a class="notranslate" href="#4Appveyor">Appveyor</a>
+(currently over 50 different configurations).  Most platforms only run the
+build steps, some run a restricted set of tests, only a subset run the full
+suite of tests (see Rust's <a class="notranslate" href="#4platform tiers">platform tiers</a>).</p>
+<br>
+<a class="notranslate" href="#1https://travis-ci.org/rust-lang/rust">Travis</a>
+<a class="notranslate" href="#1https://github.com/servo/homu">bors</a>
+<a class="notranslate" href="#1https://buildbot2.rust-lang.org/homu/queue/rust">queue</a>
+<a class="notranslate" href="#1https://ci.appveyor.com/project/rust-lang/rust">Appveyor</a>
+<a class="notranslate" href="#1https://forge.rust-lang.org/platform-support.html">platform tiers</a>
+<br>
+<h2>Testing with Docker images</h2>
+<br>
+<p>The Rust tree includes <a class="notranslate" href="#4Docker">Docker</a> image definitions for the platforms used on
+Travis in <a class="notranslate" href="#4src/ci/docker">src/ci/docker</a>.  The script <a class="notranslate" href="#4src/ci/docker/run.sh">src/ci/docker/run.sh</a> is used to build
+the Docker image, run it, build Rust within the image, and run the tests.</p>
+<br>
+<blockquote><p>TODO: What is a typical workflow for testing/debugging on a platform that
+you don't have easy access to?  Do people build Docker images and enter them
+to test things out?</p></blockquote>
+<br>
+<a class="notranslate" href="#1https://www.docker.com/">Docker</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/ci/docker">src/ci/docker</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/blob/master/src/ci/docker/run.sh">src/ci/docker/run.sh</a>
+<br>
+<h2>Testing on emulators</h2>
+<br>
+<p>Some platforms are tested via an emulator for architectures that aren't
+readily available.  There is a set of tools for orchestrating running the
+tests within the emulator.  Platforms such as <code>arm-android</code> and
+<code>arm-unknown-linux-gnueabihf</code> are set up to automatically run the tests under
+emulation on Travis.  The following will take a look at how a target's tests
+are run under emulation.</p>
+<br>
+<p>The Docker image for <a class="notranslate" href="#4armhf-gnu">armhf-gnu</a> includes <a class="notranslate" href="#4QEMU">QEMU</a> to emulate the ARM CPU
+architecture.  Included in the Rust tree are the tools <a class="notranslate" href="#4remote-test-client">remote-test-client</a>
+and <a class="notranslate" href="#4remote-test-server">remote-test-server</a> which are programs for sending test programs and
+libraries to the emulator, and running the tests within the emulator, and
+reading the results.  The Docker image is set up to launch
+<code>remote-test-server</code> and the build tools use <code>remote-test-client</code> to
+communicate with the server to coordinate running tests (see
+<a class="notranslate" href="#4src/bootstrap/test.rs">src/bootstrap/test.rs</a>).</p>
+<br>
+<blockquote><p>TODO: What are the steps for manually running tests within an emulator?
+<code>./src/ci/docker/run.sh armhf-gnu</code> will do everything, but takes hours to
+run and doesn't offer much help with interacting within the emulator.</p>
+<br>
+<p>Is there any support for emulating other (non-Android) platforms, such as
+running on an iOS emulator?</p>
+<br>
+<p>Is there anything else interesting that can be said here about running tests
+remotely on real hardware?</p>
+<br>
+<p>It's also unclear to me how the wasm or asm.js tests are run.</p></blockquote>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/ci/docker/armhf-gnu">armhf-gnu</a>
+<a class="notranslate" href="#1https://www.qemu.org/">QEMU</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/remote-test-client">remote-test-client</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/tools/remote-test-server">remote-test-server</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/bootstrap/test.rs">src/bootstrap/test.rs</a>
+<br>
+<h2>Crater</h2>
+<br>
+<p><a class="notranslate" href="#2https://github.com/rust-lang-nursery/crater">Crater</a> is a tool for compiling
+and running tests for <s>every</s> crate on <a class="notranslate" href="#2https://crates.io/">crates.io</a> (and a
+few on GitHub). It is mainly used for checking for extent of breakage when
+implementing potentially breaking changes and ensuring lack of breakage by
+running beta vs stable compiler versions.</p>
+<br>
+<h3>When to run Crater</h3>
+<br>
+<p>You should request a crater run if your PR makes large changes to the compiler
+or could cause breakage. If you are unsure, feel free to ask your PR's reviewer.</p>
+<br>
+<h3>Requesting Crater Runs</h3>
+<br>
+<p>The rust team maintains a few machines that can be used for running crater runs
+on the changes introduced by a PR. If your PR needs a crater run, leave a
+comment for the triage team in the PR thread. Please inform the team whether
+you require a &quot;check-only&quot; crater run, a &quot;build only&quot; crater run, or a
+&quot;build-and-test&quot; crater run. The difference is primarily in time; the
+conservative (if you're not sure) option is to go for the build-and-test run.
+If making changes that will only have an effect at compile-time (e.g.,
+implementing a new trait) then you only need a check run.</p>
+<br>
+<p>Your PR will be enqueued by the triage team and the results will be posted when
+they are ready. Check runs will take around ~3-4 days, with the other two
+taking 5-6 days on average.</p>
+<br>
+<p>While crater is really useful, it is also important to be aware of a few
+caveats:</p>
+<br>
+<div data-b="-">Not all code is on crates.io! There is a lot of code in repos on GitHub and
+elsewhere. Also, companies may not wish to publish their code. Thus, a
+successful crater run is not a magically green light that there will be no
+breakage; you still need to be careful.</div>
+<br>
+<div data-b="-">Crater only runs Linux builds on x86_64. Thus, other architectures and
+platforms are not tested. Critically, this includes Windows.</div>
+<br>
+<div data-b="-">Many crates are not tested. This could be for a lot of reasons, including
+that the crate doesn't compile any more (e.g. used old nightly features),
+has broken or flaky tests, requires network access, or other reasons.</div>
+<br>
+<div data-b="-">Before crater can be run, <code>@bors try</code> needs to succeed in building artifacts.
+This means that if your code doesn't compile, you cannot run crater.</div>
+<br>
+<h2>Perf runs</h2>
+<br>
+<p>A lot of work is put into improving the performance of the compiler and
+preventing performance regressions. A &quot;perf run&quot; is used to compare the
+performance of the compiler in different configurations for a large collection
+of popular crates. Different configurations include &quot;fresh builds&quot;, builds
+with incremental compilation, etc.</p>
+<br>
+<p>The result of a perf run is a comparison between two versions of the
+compiler (by their commit hashes).</p>
+<br>
+<p>You should request a perf run if your PR may affect performance, especially
+if it can affect performance adversely.</p>
+<br>
+<h2>Further reading</h2>
+<br>
+<p>The following blog posts may also be of interest:</p>
+<br>
+<div data-b="-">brson's classic <a href="#3howtest">&quot;How Rust is tested&quot;</a></div>
+<br>
+<a class="notranslate" href="#1https://brson.github.io/2017/07/10/how-rust-is-tested">howtest</a>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<h1>Glossary</h1>
+<br>
+<h3>Abstract Syntax Tree</h3>
+<br>
+<p>An ‘abstract syntax tree’, or ‘AST’, is an intermediate representation of
+the structure of the program when the compiler is compiling it.</p>
+<br>
+<h3>Alignment</h3>
+<br>
+<p>The alignment of a value specifies what addresses values are preferred to
+start at. Always a power of two. References to a value must be aligned.
+<a class="notranslate" href="#3alignment">More</a>.</p>
+<br>
+<h3>Arity</h3>
+<br>
+<p>Arity refers to the number of arguments a function or operator takes.
+For some examples, <code>f(2, 3)</code> and <code>g(4, 6)</code> have arity 2, while <code>h(8, 2, 6)</code>
+has arity 3. The <code>€</code> operator has arity 1.</p>
+<br>
+<h3>Array</h3>
+<br>
+<p>An array, sometimes also called a fixed-size array or an inline array, is a value
+describing a collection of elements, each selected by an index that can be computed
+at run time by the program. It occupies a contiguous region of memory.</p>
+<br>
+<h3>Associated Item</h3>
+<br>
+<p>An associated item is an item that is associated with another item. Associated
+items are defined in <a class="notranslate" href="#4implementations">implementations</a> and declared in <a class="notranslate" href="#4traits">traits</a>. Only functions,
+constants, and type aliases can be associated.</p>
+<br>
+<h3>Bound</h3>
+<br>
+<p>Bounds are constraints on a type or trait. For example, if a bound
+is placed on the argument a function takes, types passed to that function
+must abide by that constraint.</p>
+<br>
+<h3>Combinator</h3>
+<br>
+<p>Combinators are higher-order functions that apply only functions and
+earlier defined combinators to provide a result from its arguments.
+They can be used to manage control flow in a modular fashion.</p>
+<br>
+<h3>Dispatch</h3>
+<br>
+<p>Dispatch is the mechanism to determine which specific version of code is actually
+run when it involves polymorphism. Two major forms of dispatch are static dispatch and
+dynamic dispatch. While Rust favors static dispatch, it also supports dynamic dispatch
+through a mechanism called ‘trait objects’.</p>
+<br>
+<h3>Dynamically Sized Type</h3>
+<br>
+<p>A dynamically sized type (DST) is a type without a statically known size or alignment.</p>
+<br>
+<h3>Expression</h3>
+<br>
+<p>An expression is a combination of values, constants, variables, operators
+and functions that evaluate to a single value, with or without side-effects.</p>
+<br>
+<p>For example, <code>2 + (3 * 4)</code> is an expression that returns the value 14.</p>
+<br>
+<h3>Initialized</h3>
+<br>
+<p>A variable is initialized if it has been assigned a value and hasn't since been
+moved from. All other memory locations are assumed to be initialized. Only
+unsafe Rust can create such a memory without initializing it.</p>
+<br>
+<h3>Nominal Types</h3>
+<br>
+<p>Types that can be referred to by a path directly. Specifically <a class="notranslate" href="#4enums">enums</a>,
+<a class="notranslate" href="#4structs">structs</a>, <a class="notranslate" href="#4unions">unions</a>, and <a class="notranslate" href="#4trait objects">trait objects</a>.</p>
+<br>
+<h3>Object Safe Traits</h3>
+<br>
+<p><a class="notranslate" href="#4Traits">Traits</a> that can be used as <a class="notranslate" href="#4trait objects">trait objects</a>. Only traits that follow specific
+<a class="notranslate" href="#3object safety">rules</a> are object safe.</p>
+<br>
+<h3>Prelude</h3>
+<br>
+<p>Prelude, or The Rust Prelude, is a small collection of items - mostly traits - that are
+imported into every module of every crate. The traits in the prelude are pervasive.</p>
+<br>
+<h3>Size</h3>
+<br>
+<p>The size of a value has two definitions.</p>
+<br>
+<p>The first is that it is how much memory must be allocated to store that value.</p>
+<br>
+<p>The second is that it is the offset in bytes between successive elements in an
+array with that item type.</p>
+<br>
+<p>It is a multiple of the alignment, including zero. The size can change
+depending on compiler version (as new optimizations are made) and target
+platform (similar to how <code>usize</code> varies per-platform).</p>
+<br>
+<p><a class="notranslate" href="#3alignment">More</a>.</p>
+<br>
+<h3>Slice</h3>
+<br>
+<p>A slice is dynamically-sized view into a contiguous sequence, written as <code>[T]</code>.</p>
+<br>
+<p>It is often seen in its borrowed forms, either mutable or shared. The shared
+slice type is <code>&amp;[T]</code>, while the mutable slice type is <code>&amp;mut [T]</code>, where <code>T</code> represents
+the element type.</p>
+<br>
+<h3>Statement</h3>
+<br>
+<p>A statement is the smallest standalone element of a programming language
+that commands a computer to perform an action.</p>
+<br>
+<h3>String literal</h3>
+<br>
+<p>A string literal is a string stored directly in the final binary, and so will be
+valid for the <code>'static</code> duration.</p>
+<br>
+<p>Its type is <code>'static</code> duration borrowed string slice, <code>&amp;'static str</code>.</p>
+<br>
+<h3>String slice</h3>
+<br>
+<p>A string slice is the most primitive string type in Rust, written as <code>str</code>. It is
+often seen in its borrowed forms, either mutable or shared. The shared
+string slice type is <code>&amp;str</code>, while the mutable string slice type is <code>&amp;mut str</code>.</p>
+<br>
+<p>Strings slices are always valid UTF-8.</p>
+<br>
+<h3>Trait</h3>
+<br>
+<p>A trait is a language item that is used for describing the functionalities a type must provide.
+It allows a type to make certain promises about its behavior.</p>
+<br>
+<p>Generic functions and generic structs can use traits to constrain, or bound, the types they accept.</p>
+<br>
+<a class="notranslate" href="#1type-layout.html#size-and-alignment">alignment</a>
+<a class="notranslate" href="#1items/enumerations.html">enums</a>
+<a class="notranslate" href="#1items/structs.html">structs</a>
+<a class="notranslate" href="#1items/unions.html">unions</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait objects</a>
+<a class="notranslate" href="#1items/implementations.html">implementations</a>
+<a class="notranslate" href="#1items/traits.html">traits</a>
+<a class="notranslate" href="#1items/traits.html#object-safety">object safety</a>

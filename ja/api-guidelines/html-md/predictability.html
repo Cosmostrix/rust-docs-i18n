@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<h1>Predictability</h1>
+<br>
+<br>
+<p><a id="c-smart-ptr"></a>
+## Smart pointers do not add inherent methods (C-SMART-PTR)</p>
+<br>
+<p>For example, this is why the <a class="notranslate" href="#4`Box::into_raw`">`Box::into_raw`</a> function is defined the way it
+is.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/boxed/struct.Box.html#method.into_raw">`Box::into_raw`</a>
+<br>
+<div data-lang="rust"><div data-l="impl&lt;T&gt; Box&lt;T&gt; where T: ?Sized {"></div><div data-l="    fn into_raw(b: Box&lt;T&gt;) -&gt; *mut T { /* ... */ }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let boxed_str: Box&lt;str&gt; = /* ... */;"></div><div data-l="let ptr = Box::into_raw(boxed_str);"></div></div>
+<br>
+<p>If this were defined as an inherent method instead, it would be confusing at the
+call site whether the method being called is a method on <code>Box&lt;T&gt;</code> or a method on
+<code>T</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="impl&lt;T&gt; Box&lt;T&gt; where T: ?Sized {"></div><div data-l="#    // Do not do this."></div><div data-l="    // ">Do not do this.</div><div data-l="    fn into_raw(self) -&gt; *mut T { /* ... */ }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let boxed_str: Box&lt;str&gt; = /* ... */;"></div><div data-l=""></div><div data-l="#// This is a method on str accessed through the smart pointer Deref impl."></div><div data-l="// ">This is a method on str accessed through the smart pointer Deref impl.</div><div data-l="boxed_str.chars()"></div><div data-l=""></div><div data-l="#// This is a method on Box&lt;str&gt;...?"></div><div data-l="// ">This is a method on Box<str>...?</div><div data-l="boxed_str.into_raw()"></div></div>
+<br>
+<br>
+<p><a id="c-conv-specific"></a>
+## Conversions live on the most specific type involved (C-CONV-SPECIFIC)</p>
+<br>
+<p>When in doubt, prefer <code>to_</code>/<code>as_</code>/<code>into_</code> to <code>from_</code>, because they are more
+ergonomic to use (and can be chained with other methods).</p>
+<br>
+<p>For many conversions between two types, one of the types is clearly more
+&quot;specific&quot;: it provides some additional invariant or interpretation that is not
+present in the other type. For example, <a class="notranslate" href="#4`str`">`str`</a> is more specific than <code>&amp;[u8]</code>,
+since it is a UTF-8 encoded sequence of bytes.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html">`str`</a>
+<br>
+<p>Conversions should live with the more specific of the involved types. Thus,
+<code>str</code> provides both the <a class="notranslate" href="#4`as_bytes`">`as_bytes`</a> method and the <a class="notranslate" href="#4`from_utf8`">`from_utf8`</a> constructor
+for converting to and from <code>&amp;[u8]</code> values. Besides being intuitive, this
+convention avoids polluting concrete types like <code>&amp;[u8]</code> with endless conversion
+methods.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.as_bytes">`as_bytes`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/str/fn.from_utf8.html">`from_utf8`</a>
+<br>
+<br>
+<p><a id="c-method"></a>
+## Functions with a clear receiver are methods (C-METHOD)</p>
+<br>
+<p>Prefer</p>
+<br>
+<div data-lang="rust"><div data-l="impl Foo {"></div><div data-l="    pub fn frob(&amp;self, w: widget) { /* ... */ }"></div><div data-l="}"></div></div>
+<br>
+<p>over</p>
+<br>
+<div data-lang="rust"><div data-l="pub fn frob(foo: &amp;Foo, w: widget) { /* ... */ }"></div></div>
+<br>
+<p>for any operation that is clearly associated with a particular type.</p>
+<br>
+<p>Methods have numerous advantages over functions:</p>
+<br>
+<div data-b="*">They do not need to be imported or qualified to be used: all you need is a
+value of the appropriate type.</div>
+<div data-b="*">Their invocation performs autoborrowing (including mutable borrows).</div>
+<div data-b="*">They make it easy to answer the question &quot;what can I do with a value of type
+<code>T</code>&quot; (especially when using rustdoc).</div>
+<div data-b="*">They provide <code>self</code> notation, which is more concise and often more clearly
+conveys ownership distinctions.</div>
+<br>
+<br>
+<p><a id="c-no-out"></a>
+## Functions do not take out-parameters (C-NO-OUT)</p>
+<br>
+<p>Prefer</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo() -&gt; (Bar, Bar)"></div></div>
+<br>
+<p>over</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(output: &amp;mut Bar) -&gt; Bar"></div></div>
+<br>
+<p>for returning multiple <code>Bar</code> values.</p>
+<br>
+<p>Compound return types like tuples and structs are efficiently compiled and do
+not require heap allocation. If a function needs to return multiple values, it
+should do so via one of these types.</p>
+<br>
+<p>The primary exception: sometimes a function is meant to modify data that the
+caller already owns, for example to re-use a buffer:</p>
+<br>
+<div data-lang="rust"><div data-l="fn read(&amp;mut self, buf: &amp;mut [u8]) -&gt; io::Result&lt;usize&gt;"></div></div>
+<br>
+<br>
+<p><a id="c-overload"></a>
+## Operator overloads are unsurprising (C-OVERLOAD)</p>
+<br>
+<p>Operators with built in syntax (<code>*</code>, <code>|</code>, and so on) can be provided for a type
+by implementing the traits in <a class="notranslate" href="#4`std::ops`">`std::ops`</a>. These operators come with strong
+expectations: implement <code>Mul</code> only for an operation that bears some resemblance
+to multiplication (and shares the expected properties, e.g. associativity), and
+so on for the other traits.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/index.html#traits">`std::ops`</a>
+<br>
+<br>
+<p><a id="c-deref"></a>
+## Only smart pointers implement <code>Deref</code> and <code>DerefMut</code> (C-DEREF)</p>
+<br>
+<p>The <code>Deref</code> traits are used implicitly by the compiler in many circumstances,
+and interact with method resolution. The relevant rules are designed
+specifically to accommodate smart pointers, and so the traits should be used
+only for that purpose.</p>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/boxed/struct.Box.html"><code>Box&lt;T&gt;</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/string/struct.String.html"><code>String</code></a> is a smart
+pointer to <a class="notranslate" href="#2https://doc.rust-lang.org/std/primitive.str.html"><code>str</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/rc/struct.Rc.html"><code>Rc&lt;T&gt;</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc&lt;T&gt;</code></a></div>
+<div data-b="-"><a href="#2https://doc.rust-lang.org/std/borrow/enum.Cow.html"><code>Cow&lt;'a, T&gt;</code></a></div>
+<br>
+<br>
+<p><a id="c-ctor"></a>
+## Constructors are static, inherent methods (C-CTOR)</p>
+<br>
+<p>In Rust, &quot;constructors&quot; are just a convention. There are a variety of
+conventions around constructor naming, and the distinctions are often
+subtle.</p>
+<br>
+<p>A constructor in its most basic form is a <code>new</code> method with no arguments.</p>
+<br>
+<div data-lang="rust"><div data-l="impl&lt;T&gt; Example&lt;T&gt; {"></div><div data-l="    pub fn new() -&gt; Example&lt;T&gt; { /* ... */ }"></div><div data-l="}"></div></div>
+<br>
+<p>Constructors are static (no <code>self</code>) inherent methods for the type that they
+construct. Combined with the practice of fully importing type names, this
+convention leads to informative but concise construction:</p>
+<br>
+<div data-lang="rust"><div data-l="use example::Example;"></div><div data-l=""></div><div data-l="#// Construct a new Example."></div><div data-l="// ">Construct a new Example.</div><div data-l="let ex = Example::new();"></div></div>
+<br>
+<p>The name <code>new</code> should generally be used for the primary method of instantiating
+a type. Sometimes it takes no arguments, as in the examples above. Sometimes it
+does take arguments, like <a class="notranslate" href="#4`Box::new`">`Box::new`</a> which is passed the value to place in the
+<code>Box</code>.</p>
+<br>
+<p>Some types' constructors, most notably I/O resource types, use distinct naming
+conventions for their constructors, as in <a class="notranslate" href="#4`File::open`">`File::open`</a>, <a class="notranslate" href="#4`Mmap::open`">`Mmap::open`</a>,
+<a class="notranslate" href="#4`TcpStream::connect`">`TcpStream::connect`</a>, and <a class="notranslate" href="#4`UpdSocket::bind`">`UpdSocket::bind`</a>. In these cases names are chosen
+as appropriate for the domain.</p>
+<br>
+<p>Often there are multiple ways to construct a type. It's common in these cases
+for secondary constructors to be suffixed <code>_with_foo</code>, as in
+<a class="notranslate" href="#4`Mmap::open_with_offset`">`Mmap::open_with_offset`</a>. If your type has a multiplicity of construction
+options though, consider the builder pattern (<a class="notranslate" href="#4C-BUILDER">C-BUILDER</a>) instead.</p>
+<br>
+<p>Some constructors are &quot;conversion constructors&quot;, methods that create a new type
+from an existing value of a different type. These typically have names begining
+with <code>from_</code> as in <a class="notranslate" href="#4`std::io::Error::from_raw_os_error`">`std::io::Error::from_raw_os_error`</a>. Note also though the
+<code>From</code> trait (<a class="notranslate" href="#4C-CONV-TRAITS">C-CONV-TRAITS</a>), which is quite similar. There are three
+distinctions between a <code>from_</code>-prefixed conversion constructor and a <code>From&lt;T&gt;</code>
+impl.</p>
+<br>
+<div data-b="-">A <code>from_</code> constructor can be unsafe; a <code>From</code> impl cannot. One example of this
+is <a class="notranslate" href="#4`Box::from_raw`">`Box::from_raw`</a>.</div>
+<div data-b="-">A <code>from_</code> constructor can accept additional arguments to disambiguate the
+meaning of the source data, as in <a class="notranslate" href="#4`u64::from_str_radix`">`u64::from_str_radix`</a>.</div>
+<div data-b="-">A <code>From</code> impl is only appropriate when the source data type is sufficient to
+determine the encoding of the output data type. When the input is just a bag
+of bits like in <a class="notranslate" href="#4`u64::from_be`">`u64::from_be`</a> or <a class="notranslate" href="#4`String::from_utf8`">`String::from_utf8`</a>, the conversion
+constructor name is able to identify their meaning.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/boxed/struct.Box.html#method.from_raw">`Box::from_raw`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.u64.html#method.from_str_radix">`u64::from_str_radix`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.u64.html#method.from_be">`u64::from_be`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/string/struct.String.html#method.from_utf8">`String::from_utf8`</a>
+<br>
+<p>Note that it is common and expected for types to implement both <code>Default</code> and a
+<code>new</code> constructor. For types that have both, they should have the same behavior.
+Either one may be implemented in terms of the other.</p>
+<br>
+<a class="notranslate" href="#1type-safety.html#c-builder">C-BUILDER</a>
+<a class="notranslate" href="#1interoperability.html#c-conv-traits">C-CONV-TRAITS</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`std::io::Error::new`">`std::io::Error::new`</a> is the commonly used constructor for an IO error.</div>
+<div data-b="-"><a class="notranslate" href="#4`std::io::Error::from_raw_os_error`">`std::io::Error::from_raw_os_error`</a> is a conversion constructor
+based on an error code received from the operating system.</div>
+<div data-b="-"><a class="notranslate" href="#4`Box::new`">`Box::new`</a> creates a new container type, taking a single argument.</div>
+<div data-b="-"><a class="notranslate" href="#4`File::open`">`File::open`</a> opens a file resource.</div>
+<div data-b="-"><a class="notranslate" href="#4`Mmap::open_with_offset`">`Mmap::open_with_offset`</a> opens a memory-mapped file, with additional options.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/stable/std/fs/struct.File.html#method.open">`File::open`</a>
+<a class="notranslate" href="#1https://docs.rs/memmap/0.5.2/memmap/struct.Mmap.html#method.open">`Mmap::open`</a>
+<a class="notranslate" href="#1https://docs.rs/memmap/0.5.2/memmap/struct.Mmap.html#method.open_with_offset">`Mmap::open_with_offset`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/stable/std/net/struct.TcpStream.html#method.connect">`TcpStream::connect`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/stable/std/net/struct.UdpSocket.html#method.bind">`UpdSocket::bind`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.Error.html#method.new">`std::io::Error::new`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.Error.html#method.from_raw_os_error">`std::io::Error::from_raw_os_error`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/stable/std/boxed/struct.Box.html#method.new">`Box::new`</a>
+<br>

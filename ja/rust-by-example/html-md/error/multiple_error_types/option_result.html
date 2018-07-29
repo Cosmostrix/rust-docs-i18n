@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Pulling <code>Result</code>s out of <code>Option</code>s</h1>
+<br>
+<p>The most basic way of handling mixed error types is to just embed them in each
+other.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn double_first(vec: Vec&lt;&amp;str&gt;) -&gt; Option&lt;Result&lt;i32, ParseIntError&gt;&gt; {"></div><div data-l="    vec.first().map(|first| {"></div><div data-l="        first.parse::&lt;i32&gt;().map(|n| 2 * n)"></div><div data-l="    })"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let numbers = vec![&quot;42&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let empty = vec![];"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(numbers));"></div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(empty));"></div><div data-l="#    // Error 1: the input vector is empty"></div><div data-l="    // ">Error 1: the input vector is empty</div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(strings));"></div><div data-l="#    // Error 2: the element doesn't parse to a number"></div><div data-l="    // ">Error 2: the element doesn't parse to a number</div><div data-l="}"></div></div>
+<br>
+<p>There are times when we'll want to stop processing on errors (like with
+<a class="notranslate" href="#3enter_question_mark"><code>?</code></a>) but keep going when the <code>Option</code> is <code>None</code>. A
+couple of combinators come in handy to swap the <code>Result</code> and <code>Option</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="fn double_first(vec: Vec&lt;&amp;str&gt;) -&gt; Result&lt;Option&lt;i32&gt;, ParseIntError&gt; {"></div><div data-l="    let opt = vec.first().map(|first| {"></div><div data-l="        first.parse::&lt;i32&gt;().map(|n| 2 * n)"></div><div data-l="    });"></div><div data-l=""></div><div data-l="    let opt = opt.map_or(Ok(None), |r| r.map(Some))?;"></div><div data-l=""></div><div data-l="    Ok(opt)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let numbers = vec![&quot;42&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let empty = vec![];"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l=""></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(numbers));"></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(empty));"></div><div data-l="    println!(&quot;The first doubled is {:?}&quot;, double_first(strings));"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1error/result/enter_question_mark.html">enter_question_mark</a>

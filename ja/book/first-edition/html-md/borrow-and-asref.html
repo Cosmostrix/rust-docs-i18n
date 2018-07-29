@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h1>Borrow and AsRef</h1>
+<br>
+<p>The <a class="notranslate" href="#3borrow"><code>Borrow</code></a> and <a class="notranslate" href="#3asref"><code>AsRef</code></a> traits are very similar, but
+different. Here’s a quick refresher on what these two traits mean.</p>
+<br>
+<a class="notranslate" href="#1../../std/borrow/trait.Borrow.html">borrow</a>
+<a class="notranslate" href="#1../../std/convert/trait.AsRef.html">asref</a>
+<br>
+<h1>Borrow</h1>
+<br>
+<p>The <code>Borrow</code> trait is used when you’re writing a data structure, and you want to
+use either an owned or borrowed type as synonymous for some purpose.</p>
+<br>
+<p>For example, <a class="notranslate" href="#3hashmap"><code>HashMap</code></a> has a <a href="#3get"><code>get</code> method</a> which uses <code>Borrow</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn get&lt;Q: ?Sized&gt;(&amp;self, k: &amp;Q) -&gt; Option&lt;&amp;V&gt;"></div><div data-l="    where K: Borrow&lt;Q&gt;,"></div><div data-l="          Q: Hash + Eq"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/collections/struct.HashMap.html">hashmap</a>
+<a class="notranslate" href="#1../../std/collections/struct.HashMap.html#method.get">get</a>
+<br>
+<p>This signature is pretty complicated. The <code>K</code> parameter is what we’re interested
+in here. It refers to a parameter of the <code>HashMap</code> itself:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct HashMap&lt;K, V, S = RandomState&gt; {"></div></div>
+<br>
+<p>The <code>K</code> parameter is the type of <s>key</s> the <code>HashMap</code> uses. So, looking at
+the signature of <code>get()</code> again, we can use <code>get()</code> when the key implements
+<code>Borrow&lt;Q&gt;</code>. That way, we can make a <code>HashMap</code> which uses <code>String</code> keys,
+but use <code>&amp;str</code>s when we’re searching:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::collections::HashMap;"></div><div data-l=""></div><div data-l="let mut map = HashMap::new();"></div><div data-l="map.insert(&quot;Foo&quot;.to_string(), 42);"></div><div data-l=""></div><div data-l="assert_eq!(map.get(&quot;Foo&quot;), Some(&amp;42));"></div></div>
+<br>
+<p>This is because the standard library has <code>impl Borrow&lt;str&gt; for String</code>.</p>
+<br>
+<p>For most types, when you want to take an owned or borrowed type, a <code>&amp;T</code> is
+enough. But one area where <code>Borrow</code> is effective is when there’s more than one
+kind of borrowed value. This is especially true of references and slices: you
+can have both an <code>&amp;T</code> or a <code>&amp;mut T</code>. If we wanted to accept both of these types,
+<code>Borrow</code> is up for it:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::borrow::Borrow;"></div><div data-l="use std::fmt::Display;"></div><div data-l=""></div><div data-l="fn foo&lt;T: Borrow&lt;i32&gt; + Display&gt;(a: T) {"></div><div data-l="    println!(&quot;a is borrowed: {}&quot;, a);"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut i = 5;"></div><div data-l=""></div><div data-l="foo(&amp;i);"></div><div data-l="foo(&amp;mut i);"></div></div>
+<br>
+<p>This will print out <code>a is borrowed: 5</code> twice.</p>
+<br>
+<h1>AsRef</h1>
+<br>
+<p>The <code>AsRef</code> trait is a conversion trait. It’s used for converting some value to
+a reference in generic code. Like this:</p>
+<br>
+<div data-lang="rust"><div data-l="let s = &quot;Hello&quot;.to_string();"></div><div data-l=""></div><div data-l="fn foo&lt;T: AsRef&lt;str&gt;&gt;(s: T) {"></div><div data-l="    let slice = s.as_ref();"></div><div data-l="}"></div></div>
+<br>
+<h1>Which should I use?</h1>
+<br>
+<p>We can see how they’re kind of the same: they both deal with owned and borrowed
+versions of some type. However, they’re a bit different.</p>
+<br>
+<p>Choose <code>Borrow</code> when you want to abstract over different kinds of borrowing, or
+when you’re building a data structure that treats owned and borrowed values in
+equivalent ways, such as hashing and comparison.</p>
+<br>
+<p>Choose <code>AsRef</code> when you want to convert something to a reference directly, and
+you’re writing generic code.</p>

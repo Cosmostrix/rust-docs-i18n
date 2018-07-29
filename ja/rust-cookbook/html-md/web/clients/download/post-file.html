@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>POST a file to paste-rs.</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p><a class="notranslate" href="#4`reqwest::Client`">`reqwest::Client`</a> establishes a connection to https://paste.rs
+following the <a class="notranslate" href="#4`reqwest::RequestBuilder`">`reqwest::RequestBuilder`</a> pattern.  Calling <a class="notranslate" href="#4`Client::post`">`Client::post`</a>
+with a URL establishes the destination, <a class="notranslate" href="#4`RequestBuilder::body`">`RequestBuilder::body`</a> sets the
+content to send by reading the file, and <a class="notranslate" href="#4`RequestBuilder::send`">`RequestBuilder::send`</a> blocks until
+the file uploads and the response returns.  <a class="notranslate" href="#4`read_to_string`">`read_to_string`</a> returns the
+response and displays in the console.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l="use reqwest::Client;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         HttpRequest(reqwest::Error);"></div><div data-l="#         IoError(::std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let paste_api = &quot;https://paste.rs&quot;;"></div><div data-l="    let file = File::open(&quot;message&quot;)?;"></div><div data-l=""></div><div data-l="    let mut response = Client::new().post(paste_api).body(file).send()?;"></div><div data-l="    let mut response_body = String::new();"></div><div data-l="    response.read_to_string(&amp;mut response_body)?;"></div><div data-l="    println!(&quot;Your paste is located at: {}&quot;, response_body);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html#method.post">`Client::post`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Read.html#method.read_to_string">`read_to_string`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.body">`RequestBuilder::body`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html#method.send">`RequestBuilder::send`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Client.html">`reqwest::Client`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.RequestBuilder.html">`reqwest::RequestBuilder`</a>

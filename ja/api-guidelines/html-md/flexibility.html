@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<h1>Flexibility</h1>
+<br>
+<br>
+<p><a id="c-intermediate"></a>
+## Functions expose intermediate results to avoid duplicate work (C-INTERMEDIATE)</p>
+<br>
+<p>Many functions that answer a question also compute interesting related data. If
+this data is potentially of interest to the client, consider exposing it in the
+API.</p>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`Vec::binary_search`">`Vec::binary_search`</a> does not return a <code>bool</code> of whether the value was
+found, nor an <code>Option&lt;usize&gt;</code> of the index at which the value was maybe found.
+Instead it returns information about the index if found, and also the index at
+which the value would need to be inserted if not found.</div>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`String::from_utf8`">`String::from_utf8`</a> may fail if the input bytes are not UTF-8. In the error
+case it returns an intermediate result that exposes the byte offset up to
+which the input was valid UTF-8, as well as handing back ownership of the
+input bytes.</div>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`HashMap::insert`">`HashMap::insert`</a> returns an <code>Option&lt;T&gt;</code> that returns the preexisting value
+for a given key, if any. For cases where the user wants to recover this value
+having it returned by the insert operation avoids the user having to do a second
+hash table lookup.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.binary_search">`Vec::binary_search`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/string/struct.String.html#method.from_utf8">`String::from_utf8`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/stable/std/collections/struct.HashMap.html#method.insert">`HashMap::insert`</a>
+<br>
+<br>
+<p><a id="c-caller-control"></a>
+## Caller decides where to copy and place data (C-CALLER-CONTROL)</p>
+<br>
+<p>If a function requires ownership of an argument, it should take ownership of the
+argument rather than borrowing and cloning the argument.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Prefer this:"></div><div data-l="// ">Prefer this:</div><div data-l="fn foo(b: Bar) {"></div><div data-l="    /* use b as owned, directly */"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Over this:"></div><div data-l="// ">Over this:</div><div data-l="fn foo(b: &amp;Bar) {"></div><div data-l="    let b = b.clone();"></div><div data-l="    /* use b as owned after cloning */"></div><div data-l="}"></div></div>
+<br>
+<p>If a function <i>does not</i> require ownership of an argument, it should take a
+shared or exclusive borrow of the argument rather than taking ownership and
+dropping the argument.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Prefer this:"></div><div data-l="// ">Prefer this:</div><div data-l="fn foo(b: &amp;Bar) {"></div><div data-l="    /* use b as borrowed */"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Over this:"></div><div data-l="// ">Over this:</div><div data-l="fn foo(b: Bar) {"></div><div data-l="    /* use b as borrowed, it is implicitly dropped before function returns */"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>Copy</code> trait should only be used as a bound when absolutely needed, not as a
+way of signaling that copies should be cheap to make.</p>
+<br>
+<br>
+<p><a id="c-generic"></a>
+## Functions minimize assumptions about parameters by using generics (C-GENERIC)</p>
+<br>
+<p>The fewer assumptions a function makes about its inputs, the more widely usable
+it becomes.</p>
+<br>
+<p>Prefer</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo&lt;I: IntoIterator&lt;Item = i64&gt;&gt;(iter: I) { /* ... */ }"></div></div>
+<br>
+<p>over any of</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(c: &amp;[i64]) { /* ... */ }"></div><div data-l="fn foo(c: &amp;Vec&lt;i64&gt;) { /* ... */ }"></div><div data-l="fn foo(c: &amp;SomeOtherCollection&lt;i64&gt;) { /* ... */ }"></div></div>
+<br>
+<p>if the function only needs to iterate over the data.</p>
+<br>
+<p>More generally, consider using generics to pinpoint the assumptions a function
+needs to make about its arguments.</p>
+<br>
+<h3>Advantages of generics</h3>
+<br>
+<div data-b="*"><s>Reusability</s>. Generic functions can be applied to an open-ended collection of
+types, while giving a clear contract for the functionality those types must
+provide.</div>
+<br>
+<div data-b="*"><s>Static dispatch and optimization</s>. Each use of a generic function is
+specialized (&quot;monomorphized&quot;) to the particular types implementing the trait
+bounds, which means that (1) invocations of trait methods are static, direct
+calls to the implementation and (2) the compiler can inline and otherwise
+optimize these calls.</div>
+<br>
+<div data-b="*"><s>Inline layout</s>. If a <code>struct</code> and <code>enum</code> type is generic over some type
+parameter <code>T</code>, values of type <code>T</code> will be laid out inline in the
+<code>struct</code>/<code>enum</code>, without any indirection.</div>
+<br>
+<div data-b="*"><s>Inference</s>. Since the type parameters to generic functions can usually be
+inferred, generic functions can help cut down on verbosity in code where
+explicit conversions or other method calls would usually be necessary.</div>
+<br>
+<div data-b="*"><s>Precise types</s>. Because generic give a <s>name</s> to the specific type
+implementing a trait, it is possible to be precise about places where that
+exact type is required or produced. For example, a function</div>
+<br>
+<p>  `<code class=2>rust
+  fn binary&lt;T: Trait&gt;(x: T, y: T) -&gt; T
+  </code>`</p>
+<br>
+<p>  is guaranteed to consume and produce elements of exactly the same type <code>T</code>; it
+  cannot be invoked with parameters of different types that both implement
+  <code>Trait</code>.</p>
+<br>
+<h3>Disadvantages of generics</h3>
+<br>
+<div data-b="*"><s>Code size</s>. Specializing generic functions means that the function body is
+duplicated. The increase in code size must be weighed against the performance
+benefits of static dispatch.</div>
+<br>
+<div data-b="*"><s>Homogeneous types</s>. This is the other side of the &quot;precise types&quot; coin: if
+<code>T</code> is a type parameter, it stands for a <s>single</s> actual type. So for example
+a <code>Vec&lt;T&gt;</code> contains elements of a single concrete type (and, indeed, the
+vector representation is specialized to lay these out in line). Sometimes
+heterogeneous collections are useful; see <a href="#3C-OBJECT">trait objects</a>.</div>
+<br>
+<div data-b="*"><s>Signature verbosity</s>. Heavy use of generics can make it more difficult to
+read and understand a function's signature.</div>
+<br>
+<a class="notranslate" href="#1#c-object">C-OBJECT</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`std::fs::File::open`">`std::fs::File::open`</a> takes an argument of generic type <code>AsRef&lt;Path&gt;</code>. This
+allows files to be opened conveniently from a string literal <code>&quot;f.txt&quot;</code>, a
+<a class="notranslate" href="#4`Path`">`Path`</a>, an <a class="notranslate" href="#4`OsString`">`OsString`</a>, and a few other types.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html#method.open">`std::fs::File::open`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/path/struct.Path.html">`Path`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ffi/struct.OsString.html">`OsString`</a>
+<br>
+<br>
+<p><a id="c-object"></a>
+## Traits are object-safe if they may be useful as a trait object (C-OBJECT)</p>
+<br>
+<p>Trait objects have some significant limitations: methods invoked through a trait
+object cannot use generics, and cannot use <code>Self</code> except in receiver position.</p>
+<br>
+<p>When designing a trait, decide early on whether the trait will be used as an
+object or as a bound on generics.</p>
+<br>
+<p>If a trait is meant to be used as an object, its methods should take and return
+trait objects rather than use generics.</p>
+<br>
+<p>A <code>where</code> clause of <code>Self: Sized</code> may be used to exclude specific methods from
+the trait's object. The following trait is not object-safe due to the generic
+method.</p>
+<br>
+<div data-lang="rust"><div data-l="trait MyTrait {"></div><div data-l="    fn object_safe(&amp;self, i: i32);"></div><div data-l=""></div><div data-l="    fn not_object_safe&lt;T&gt;(&amp;self, t: T);"></div><div data-l="}"></div></div>
+<br>
+<p>Adding a requirement of <code>Self: Sized</code> to the generic method excludes it from the
+trait object and makes the trait object-safe.</p>
+<br>
+<div data-lang="rust"><div data-l="trait MyTrait {"></div><div data-l="    fn object_safe(&amp;self, i: i32);"></div><div data-l=""></div><div data-l="    fn not_object_safe&lt;T&gt;(&amp;self, t: T) where Self: Sized;"></div><div data-l="}"></div></div>
+<br>
+<h3>Advantages of trait objects</h3>
+<br>
+<div data-b="*"><s>Heterogeneity</s>. When you need it, you really need it.</div>
+<div data-b="*"><s>Code size</s>. Unlike generics, trait objects do not generate specialized
+(monomorphized) versions of code, which can greatly reduce code size.</div>
+<br>
+<h3>Disadvantages of trait objects</h3>
+<br>
+<div data-b="*"><s>No generic methods</s>. Trait objects cannot currently provide generic methods.</div>
+<div data-b="*"><s>Dynamic dispatch and fat pointers</s>. Trait objects inherently involve
+indirection and vtable dispatch, which can carry a performance penalty.</div>
+<div data-b="*"><s>No Self</s>. Except for the method receiver argument, methods on trait objects
+cannot use the <code>Self</code> type.</div>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-">The <a class="notranslate" href="#4`io::Read`">`io::Read`</a> and <a class="notranslate" href="#4`io::Write`">`io::Write`</a> traits are often used as objects.</div>
+<div data-b="-">The <a class="notranslate" href="#4`Iterator`">`Iterator`</a> trait has several generic methods marked with <code>where Self:
+  Sized</code> to retain the ability to use <code>Iterator</code> as an object.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Read.html">`io::Read`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Write.html">`io::Write`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html">`Iterator`</a>

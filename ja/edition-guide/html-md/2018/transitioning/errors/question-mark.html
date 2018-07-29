@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<h1><code>?</code> in <code>fn main()</code> and <code>#[test]</code>s</h1>
+<br>
+<p>Rust's error handling revolves around returning <code>Result</code> and using
+<code>?</code> to propagate errors. For those who write many small programs and, hopefully,
+many tests, one common paper cut has been mixing entry points such as <code>main</code>
+and <code>#[test]</code>s with error handling.</p>
+<br>
+<p>As an example, you might have tried to write:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fs::File;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let f = File::open(&quot;bar.txt&quot;)?;"></div><div data-l="}"></div></div>
+<br>
+<p>Since <code>?</code> works by propagating the <code>Result</code> with an early return to the
+enclosing function, the snippet above does not work, and results today
+in the following error:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="error[E0277]: the `?` operator can only be used in a function that returns `Result`"></div><div data-l="              or `Option` (or another type that implements `std::ops::Try`)"></div><div data-l=" --&gt; src/main.rs:5:13"></div><div data-l="  |"></div><div data-l="5 |     let f = File::open(&quot;bar.txt&quot;)?;"></div><div data-l="  |             ^^^^^^^^^^^^^^^^^^^^^^ cannot use the `?` operator in a function that returns `()`"></div><div data-l="  |"></div><div data-l="  = help: the trait `std::ops::Try` is not implemented for `()`"></div><div data-l="  = note: required by `std::ops::Try::from_error`"></div></div>
+<br>
+<p>To solve this problem in Rust 2015, you might have written something like:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="# use std::process;"></div><div data-l="# use std::error::Error;"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;(), Box&lt;Error&gt;&gt; {"></div><div data-l="#    // real logic.."></div><div data-l="    // ">real logic..</div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    if let Err(e) = run() {"></div><div data-l="        println!(&quot;Application error: {}&quot;, e);"></div><div data-l="        process::exit(1);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>However, in this case, the <code>run</code> function has all the interesting logic and
+<code>main</code> is just boilerplate. The problem is even worse for <code>#[test]</code>s, since
+there tend to be a lot more of them.</p>
+<br>
+<p>In Rust 2018 you can instead let your <code>#[test]</code>s and <code>main</code> functions return
+a <code>Result</code>:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l=""></div><div data-l="fn main() -&gt; Result&lt;(), std::io::Error&gt; {"></div><div data-l="    let f = File::open(&quot;bar.txt&quot;)?;"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div></div>
+<br>
+<p>In this case, if say the file doesn't exist and there is an <code>Err(err)</code> somewhere,
+then <code>main</code> will exit with an error code (not <code>0</code>) and print out a <code>Debug</code>
+representation of <code>err</code>.</p>
+<br>
+<h2>More details</h2>
+<br>
+<p>Getting <code>-&gt; Result&lt;..&gt;</code> to work in the context of <code>main</code> and <code>#[test]</code>s is not
+magic. It is all backed up by a <code>Termination</code> trait which all valid return
+types of <code>main</code> and testing functions must implement. The trait is defined as:</p>
+<br>
+<div data-lang="rust"><div data-l="pub trait Termination {"></div><div data-l="    fn report(self) -&gt; i32;"></div><div data-l="}"></div></div>
+<br>
+<p>When setting up the entry point for your application, the compiler will use this
+trait and call <code>.report()</code> on the <code>Result</code> of the <code>main</code> function you have written.</p>
+<br>
+<p>Two simplified example implementations of this trait for <code>Result</code> and <code>()</code> are:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(process_exitcode_placeholder, termination_trait_lib)]"></div><div data-l="# use std::process::ExitCode;"></div><div data-l="# use std::fmt;"></div><div data-l="#"></div><div data-l="# pub trait Termination { fn report(self) -&gt; i32; }"></div><div data-l=""></div><div data-l="impl Termination for () {"></div><div data-l="    fn report(self) -&gt; i32 {"></div><div data-l="        # use std::process::Termination;"></div><div data-l="        ExitCode::SUCCESS.report()"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;E: fmt::Debug&gt; Termination for Result&lt;(), E&gt; {"></div><div data-l="    fn report(self) -&gt; i32 {"></div><div data-l="        match self {"></div><div data-l="            Ok(()) =&gt; ().report(),"></div><div data-l="            Err(err) =&gt; {"></div><div data-l="                eprintln!(&quot;Error: {:?}&quot;, err);"></div><div data-l="                # use std::process::Termination;"></div><div data-l="                ExitCode::FAILURE.report()"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>As you can see in the case of <code>()</code>, a success code is simply returned.
+In the case of <code>Result</code>, the success case delegates to the implementation for
+<code>()</code> but prints out an error message and a failure exit code on <code>Err(..)</code>.</p>
+<br>
+<p>To learn more about the finer details, consult either <a href="#2https://github.com/rust-lang/rust/issues/43301">the tracking issue</a> or <a href="#2https://github.com/rust-lang/rfcs/blob/master/text/1937-ques-in-main.md">the RFC</a>.</p>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<h1>Appendix B: Background topics</h1>
+<br>
+<p>This section covers a numbers of common compiler terms that arise in
+this guide. We try to give the general definition while providing some
+Rust-specific context.</p>
+<br>
+<p><a name="cfg"></a></p>
+<br>
+<h2>What is a control-flow graph?</h2>
+<br>
+<p>A control-flow graph is a common term from compilers. If you've ever
+used a flow-chart, then the concept of a control-flow graph will be
+pretty familiar to you. It's a representation of your program that
+exposes the underlying control flow in a very clear way.</p>
+<br>
+<p>A control-flow graph is structured as a set of <b>basic blocks</b>
+connected by edges. The key idea of a basic block is that it is a set
+of statements that execute &quot;together&quot; – that is, whenever you branch
+to a basic block, you start at the first statement and then execute
+all the remainder. Only at the end of the block is there the
+possibility of branching to more than one place (in MIR, we call that
+final statement the <b>terminator</b>):</p>
+<br>
+<div data-lang="mir"><div data-l="bb0: {"></div><div data-l="    statement0;"></div><div data-l="    statement1;"></div><div data-l="    statement2;"></div><div data-l="    ..."></div><div data-l="    terminator;"></div><div data-l="}"></div></div>
+<br>
+<p>Many expressions that you are used to in Rust compile down to multiple
+basic blocks. For example, consider an if statement:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="a = 1;"></div><div data-l="if some_variable {"></div><div data-l="    b = 1;"></div><div data-l="} else {"></div><div data-l="    c = 1;"></div><div data-l="}"></div><div data-l="d = 1;"></div></div>
+<br>
+<p>This would compile into four basic blocks:</p>
+<br>
+<div data-lang="mir"><div data-l="BB0: {"></div><div data-l="    a = 1;"></div><div data-l="    if some_variable { goto BB1 } else { goto BB2 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="BB1: {"></div><div data-l="    b = 1;"></div><div data-l="    goto BB3;"></div><div data-l="}"></div><div data-l=""></div><div data-l="BB2: {"></div><div data-l="    c = 1;"></div><div data-l="    goto BB3;"></div><div data-l="}"></div><div data-l=""></div><div data-l="BB3: {"></div><div data-l="    d = 1;"></div><div data-l="    ...;"></div><div data-l="}"></div></div>
+<br>
+<p>When using a control-flow graph, a loop simply appears as a cycle in
+the graph, and the <code>break</code> keyword translates into a path out of that
+cycle.</p>
+<br>
+<p><a name="dataflow"></a></p>
+<br>
+<h2>What is a dataflow analysis?</h2>
+<br>
+<p><a href="#2https://cs.au.dk/~amoeller/spa/"><i>Static Program Analysis</i></a> by Anders Møller
+and Michael I. Schwartzbach is an incredible resource!</p>
+<br>
+<p><i>to be written</i></p>
+<br>
+<p><a name="quantified"></a></p>
+<br>
+<h2>What is &quot;universally quantified&quot;? What about &quot;existentially quantified&quot;?</h2>
+<br>
+<p><i>to be written</i></p>
+<br>
+<p><a name="variance"></a></p>
+<br>
+<h2>What is co- and contra-variance?</h2>
+<br>
+<p>Check out the subtyping chapter from the
+<a href="#2https://doc.rust-lang.org/nomicon/subtyping.html">Rust Nomicon</a>.</p>
+<br>
+<p>See the <a class="notranslate" href="#2./variance.html">variance</a> chapter of this guide for more info on how
+the type checker handles variance.</p>
+<br>
+<p><a name="free-vs-bound"></a></p>
+<br>
+<h2>What is a &quot;free region&quot; or a &quot;free variable&quot;? What about &quot;bound region&quot;?</h2>
+<br>
+<p>Let's describe the concepts of free vs bound in terms of program
+variables, since that's the thing we're most familiar with.</p>
+<br>
+<div data-b="-">Consider this expression, which creates a closure: <code>|a,
+  b| a + b</code>. Here, the <code>a</code> and <code>b</code> in <code>a + b</code> refer to the arguments
+that the closure will be given when it is called. We say that the
+<code>a</code> and <code>b</code> there are <b>bound</b> to the closure, and that the closure
+signature <code>|a, b|</code> is a <b>binder</b> for the names <code>a</code> and <code>b</code>
+(because any references to <code>a</code> or <code>b</code> within refer to the variables
+that it introduces).</div>
+<div data-b="-">Consider this expression: <code>a + b</code>. In this expression, <code>a</code> and <code>b</code>
+refer to local variables that are defined <i>outside</i> of the
+expression. We say that those variables <b>appear free</b> in the
+expression (i.e., they are <b>free</b>, not <b>bound</b> (tied up)).</div>
+<br>
+<p>So there you have it: a variable &quot;appears free&quot; in some
+expression/statement/whatever if it refers to something defined
+outside of that expressions/statement/whatever. Equivalently, we can
+then refer to the &quot;free variables&quot; of an expression – which is just
+the set of variables that &quot;appear free&quot;.</p>
+<br>
+<p>So what does this have to do with regions? Well, we can apply the
+analogous concept to type and regions. For example, in the type <code>&amp;'a
+u32</code>, <code>'a</code> appears free.  But in the type <code>for&lt;'a&gt; fn(&amp;'a u32)</code>, it
+does not.</p>

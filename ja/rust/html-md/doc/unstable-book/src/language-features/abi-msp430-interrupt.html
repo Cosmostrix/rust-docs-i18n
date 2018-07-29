@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1><code>abi_msp430_interrupt</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#38487">#38487</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/38487">#38487</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>In the MSP430 architecture, interrupt handlers have a special calling
+convention. You can use the <code>&quot;msp430-interrupt&quot;</code> ABI to make the compiler apply
+the right calling convention to the interrupt handlers you define.</p>
+<br>
+<p><!-- NOTE(ignore) this example is specific to the msp430 target --></p>
+<br>
+<div data-lang=" rust,ignore"><div data-l="#![feature(abi_msp430_interrupt)]"></div><div data-l="#![no_std]"></div><div data-l=""></div><div data-l="#// Place the interrupt handler at the appropriate memory address"></div><div data-l="#// (Alternatively, you can use `#[used]` and remove `pub` and `#[no_mangle]`)"></div><div data-l="// ">Place the interrupt handler at the appropriate memory address (Alternatively, you can use <code>#[used]</code> and remove <code>pub</code> and <code>#[no_mangle]</code>)</div><div data-l="#[link_section = &quot;__interrupt_vector_10&quot;]"></div><div data-l="#[no_mangle]"></div><div data-l="pub static TIM0_VECTOR: extern &quot;msp430-interrupt&quot; fn() = tim0;"></div><div data-l=""></div><div data-l="#// The interrupt handler"></div><div data-l="// ">The interrupt handler</div><div data-l="extern &quot;msp430-interrupt&quot; fn tim0() {"></div><div data-l="#    // .."></div><div data-l="    // ">..</div><div data-l="}"></div></div>
+<br>
+<div data-lang=" text"><div data-l="$ msp430-elf-objdump -CD ./target/msp430/release/app"></div><div data-l="Disassembly of section __interrupt_vector_10:"></div><div data-l=""></div><div data-l="0000fff2 &lt;TIM0_VECTOR&gt;:"></div><div data-l="    fff2:       00 c0           interrupt service routine at 0xc000"></div><div data-l=""></div><div data-l="Disassembly of section .text:"></div><div data-l=""></div><div data-l="0000c000 &lt;int::tim0&gt;:"></div><div data-l="    c000:       00 13           reti"></div></div>

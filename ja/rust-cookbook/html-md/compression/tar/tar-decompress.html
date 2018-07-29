@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h2>Decompress a tarball</h2>
+<br>
+<p><a href="#3flate2">!<a class="notranslate" href="#4flate2-badge">flate2-badge</a></a> <a href="#3tar">!<a class="notranslate" href="#4tar-badge">tar-badge</a></a> <a href="#3cat-compression">!<a class="notranslate" href="#4cat-compression-badge">cat-compression-badge</a></a></p>
+<br>
+<p>Decompress (<a class="notranslate" href="#4`GzDecoder`">`GzDecoder`</a>) and
+extract (<a class="notranslate" href="#4`Archive::unpack`">`Archive::unpack`</a>) all files from a compressed tarball
+named <code>archive.tar.gz</code> located in the current working directory
+to the same location.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate flate2;"></div><div data-l="extern crate tar;"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use flate2::read::GzDecoder;"></div><div data-l="use tar::Archive;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let path = &quot;archive.tar.gz&quot;;"></div><div data-l=""></div><div data-l="    let tar_gz = File::open(path)?;"></div><div data-l="    let tar = GzDecoder::new(tar_gz);"></div><div data-l="    let mut archive = Archive::new(tar);"></div><div data-l="    archive.unpack(&quot;.&quot;)?;"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/tar/*/tar/struct.Archive.html#method.unpack">`Archive::unpack`</a>
+<a class="notranslate" href="#1https://docs.rs/flate2/*/flate2/read/struct.GzDecoder.html">`GzDecoder`</a>

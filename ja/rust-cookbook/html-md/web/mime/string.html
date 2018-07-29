@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h2>Get MIME type from string</h2>
+<br>
+<p><a href="#3mime">!<a class="notranslate" href="#4mime-badge">mime-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>The following example shows how to parse a <a class="notranslate" href="#4`MIME`">`MIME`</a> type from a string using the
+<a class="notranslate" href="#4mime">mime</a> crate. <a class="notranslate" href="#4`FromStrError`">`FromStrError`</a> produces a default <a class="notranslate" href="#4`MIME`">`MIME`</a> type in an
+<code>unwrap_or</code> clause.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate mime;"></div><div data-l="use mime::{Mime, APPLICATION_OCTET_STREAM};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let invalid_mime_type = &quot;i n v a l i d&quot;;"></div><div data-l="    let default_mime = invalid_mime_type"></div><div data-l="        .parse::&lt;Mime&gt;()"></div><div data-l="        .unwrap_or(APPLICATION_OCTET_STREAM);"></div><div data-l=""></div><div data-l="    println!("></div><div data-l="        &quot;MIME for {:?} used default value {:?}&quot;,"></div><div data-l="        invalid_mime_type, default_mime"></div><div data-l="    );"></div><div data-l=""></div><div data-l="    let valid_mime_type = &quot;TEXT/PLAIN&quot;;"></div><div data-l="    let parsed_mime = valid_mime_type"></div><div data-l="        .parse::&lt;Mime&gt;()"></div><div data-l="        .unwrap_or(APPLICATION_OCTET_STREAM);"></div><div data-l=""></div><div data-l="    println!("></div><div data-l="        &quot;MIME for {:?} was parsed as {:?}&quot;,"></div><div data-l="        valid_mime_type, parsed_mime"></div><div data-l="    );"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/mime/*/mime/struct.FromStrError.html">`FromStrError`</a>
+<a class="notranslate" href="#1https://docs.rs/mime/*/mime/struct.Mime.html">`MIME`</a>

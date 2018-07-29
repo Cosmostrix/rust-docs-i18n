@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<h1>Aliasing</h1>
+<br>
+<p>First off, let's get some important caveats out of this way:</p>
+<br>
+<div data-b="*">We will be using the broadest possible definition of aliasing for the sake</div>
+<p>of discussion. Rust's definition will probably be more restricted to factor
+in mutations and liveness.</p>
+<br>
+<div data-b="*">We will be assuming a single-threaded, interrupt-free, execution. We will also</div>
+<p>be ignoring things like memory-mapped hardware. Rust assumes these things
+don't happen unless you tell it otherwise. For more details, see the
+<a href="#2concurrency.html">Concurrency Chapter</a>.</p>
+<br>
+<p>With that said, here's our working definition: variables and pointers <i>alias</i>
+if they refer to overlapping regions of memory.</p>
+<br>
+<br>
+<br>
+<br>
+<h1>Why Aliasing Matters</h1>
+<br>
+<p>So why should we care about aliasing?</p>
+<br>
+<p>Consider this simple function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn compute(input: &amp;u32, output: &amp;mut u32) {"></div><div data-l="    if *input &gt; 10 {"></div><div data-l="        *output = 1;"></div><div data-l="    }"></div><div data-l="    if *input &gt; 5 {"></div><div data-l="        *output *= 2;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We would <i>like</i> to be able to optimize it to the following function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn compute(input: &amp;u32, output: &amp;mut u32) {"></div><div data-l="#//    let cached_input = *input; // keep *input in a register"></div><div data-l="    let cached_input = *input; // ">keep *input in a register</div><div data-l="    if cached_input &gt; 10 {"></div><div data-l="#//        *output = 2;  // x &gt; 10 implies x &gt; 5, so double and exit immediately"></div><div data-l="        *output = 2;  // ">x &gt; 10 implies x &gt; 5, so double and exit immediately</div><div data-l="    } else if cached_input &gt; 5 {"></div><div data-l="        *output *= 2;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In Rust, this optimization should be sound. For almost any other language, it
+wouldn't be (barring global analysis). This is because the optimization relies
+on knowing that aliasing doesn't occur, which most languages are fairly liberal
+with. Specifically, we need to worry about function arguments that make <code>input</code>
+and <code>output</code> overlap, such as <code>compute(&amp;x, &amp;mut x)</code>.</p>
+<br>
+<p>With that input, we could get this execution:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#                    //  input ==  output == 0xabad1dea"></div><div data-l="#                    // *input == *output == 20"></div><div data-l="                    // "> input ==  output == 0xabad1dea <i>input == </i>output == 20</div><div data-l="#//if *input &gt; 10 {    // true  (*input == 20)"></div><div data-l="if *input &gt; 10 {    // ">true  (*input == 20)</div><div data-l="#//    *output = 1;    // also overwrites *input, because they are the same"></div><div data-l="    *output = 1;    // ">also overwrites *input, because they are the same</div><div data-l="}"></div><div data-l="#//if *input &gt; 5 {     // false (*input == 1)"></div><div data-l="if *input &gt; 5 {     // ">false (*input == 1)</div><div data-l="    *output *= 2;"></div><div data-l="}"></div><div data-l="#                    // *input == *output == 1"></div><div data-l="                    // "><i>input == </i>output == 1</div></div>
+<br>
+<p>Our optimized function would produce <code>*output == 2</code> for this input, so the
+correctness of our optimization relies on this input being impossible.</p>
+<br>
+<p>In Rust we know this input should be impossible because <code>&amp;mut</code> isn't allowed to be
+aliased. So we can safely reject its possibility and perform this optimization.
+In most other languages, this input would be entirely possible, and must be considered.</p>
+<br>
+<p>This is why alias analysis is important: it lets the compiler perform useful
+optimizations! Some examples:</p>
+<br>
+<div data-b="*">keeping values in registers by proving no pointers access the value's memory</div>
+<div data-b="*">eliminating reads by proving some memory hasn't been written to since last we read it</div>
+<div data-b="*">eliminating writes by proving some memory is never read before the next write to it</div>
+<div data-b="*">moving or reordering reads and writes by proving they don't depend on each other</div>
+<br>
+<p>These optimizations also tend to prove the soundness of bigger optimizations
+such as loop vectorization, constant propagation, and dead code elimination.</p>
+<br>
+<p>In the previous example, we used the fact that <code>&amp;mut u32</code> can't be aliased to prove
+that writes to <code>*output</code> can't possibly affect <code>*input</code>. This let us cache <code>*input</code>
+in a register, eliminating a read.</p>
+<br>
+<p>By caching this read, we knew that the the write in the <code>&gt; 10</code> branch couldn't
+affect whether we take the <code>&gt; 5</code> branch, allowing us to also eliminate a
+read-modify-write (doubling <code>*output</code>) when <code>*input &gt; 10</code>.</p>
+<br>
+<p>The key thing to remember about alias analysis is that writes are the primary
+hazard for optimizations. That is, the only thing that prevents us
+from moving a read to any other part of the program is the possibility of us
+re-ordering it with a write to the same location.</p>
+<br>
+<p>For instance, we have no concern for aliasing in the following modified version
+of our function, because we've moved the only write to <code>*output</code> to the very
+end of our function. This allows us to freely reorder the reads of <code>*input</code> that
+occur before it:</p>
+<br>
+<div data-lang="rust"><div data-l="fn compute(input: &amp;u32, output: &amp;mut u32) {"></div><div data-l="    let mut temp = *output;"></div><div data-l="    if *input &gt; 10 {"></div><div data-l="        temp = 1;"></div><div data-l="    }"></div><div data-l="    if *input &gt; 5 {"></div><div data-l="        temp *= 2;"></div><div data-l="    }"></div><div data-l="    *output = temp;"></div><div data-l="}"></div></div>
+<br>
+<p>We're still relying on alias analysis to assume that <code>temp</code> doesn't alias
+<code>input</code>, but the proof is much simpler: the value of a local variable can't be
+aliased by things that existed before it was declared. This is an assumption
+every language freely makes, and so this version of the function could be
+optimized the way we want in any language.</p>
+<br>
+<p>This is why the definition of &quot;alias&quot; that Rust will use likely involves some
+notion of liveness and mutation: we don't actually care if aliasing occurs if
+there aren't any actual writes to memory happening.</p>
+<br>
+<p>Of course, a full aliasing model for Rust must also take into consideration things like
+function calls (which may mutate things we don't see), raw pointers (which have
+no aliasing requirements on their own), and UnsafeCell (which lets the referent
+of an <code>&amp;</code> be mutated).</p>
+<br>
+<br>
+<br>

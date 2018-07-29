@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<h1>Match</h1>
+<br>
+<p>Often, a simple <a class="notranslate" href="#3if"><code>if</code></a>/<code>else</code> isn’t enough, because you have more than two
+possible options. Also, conditions can get quite complex. Rust
+has a keyword, <code>match</code>, that allows you to replace complicated <code>if</code>/<code>else</code>
+groupings with something more powerful. Check it out:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 =&gt; println!(&quot;one&quot;),"></div><div data-l="    2 =&gt; println!(&quot;two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    4 =&gt; println!(&quot;four&quot;),"></div><div data-l="    5 =&gt; println!(&quot;five&quot;),"></div><div data-l="    _ =&gt; println!(&quot;something else&quot;),"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1if.html">if</a>
+<br>
+<p><code>match</code> takes an expression and then branches based on its value. Each ‘arm’ of
+the branch is of the form <code>val =&gt; expression</code>. When the value matches, that arm’s
+expression will be evaluated. It’s called <code>match</code> because of the term ‘pattern
+matching’, which <code>match</code> is an implementation of. There’s a <a href="#3patterns">separate section on
+patterns</a> that covers all the patterns that are possible here.</p>
+<br>
+<a class="notranslate" href="#1patterns.html">patterns</a>
+<br>
+<p>One of the many advantages of <code>match</code> is it enforces ‘exhaustiveness checking’.
+For example if we remove the last arm with the underscore <code>_</code>, the compiler will
+give us an error:</p>
+<br>
+<div data-lang="text"><div data-l="error: non-exhaustive patterns: `_` not covered"></div></div>
+<br>
+<p>Rust is telling us that we forgot some value. The compiler infers from <code>x</code> that it
+can have any 32bit integer value; for example -2,147,483,648 to 2,147,483,647. The <code>_</code> acts 
+as a 'catch-all', and will catch all possible values that <i>aren't</i> specified in 
+an arm of <code>match</code>. As you can see in the previous example, we provide <code>match</code> 
+arms for integers 1-5, if <code>x</code> is 6 or any other value, then it is caught by <code>_</code>.</p>
+<br>
+<p><code>match</code> is also an expression, which means we can use it on the right-hand
+side of a <code>let</code> binding or directly where an expression is used:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l=""></div><div data-l="let number = match x {"></div><div data-l="    1 =&gt; &quot;one&quot;,"></div><div data-l="    2 =&gt; &quot;two&quot;,"></div><div data-l="    3 =&gt; &quot;three&quot;,"></div><div data-l="    4 =&gt; &quot;four&quot;,"></div><div data-l="    5 =&gt; &quot;five&quot;,"></div><div data-l="    _ =&gt; &quot;something else&quot;,"></div><div data-l="};"></div></div>
+<br>
+<p>Sometimes it’s a nice way of converting something from one type to another; in
+this example the integers are converted to <code>String</code>.</p>
+<br>
+<h1>Matching on enums</h1>
+<br>
+<p>Another important use of the <code>match</code> keyword is to process the possible
+variants of an enum:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Message {"></div><div data-l="    Quit,"></div><div data-l="    ChangeColor(i32, i32, i32),"></div><div data-l="    Move { x: i32, y: i32 },"></div><div data-l="    Write(String),"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn quit() { /* ... */ }"></div><div data-l="fn change_color(r: i32, g: i32, b: i32) { /* ... */ }"></div><div data-l="fn move_cursor(x: i32, y: i32) { /* ... */ }"></div><div data-l=""></div><div data-l="fn process_message(msg: Message) {"></div><div data-l="    match msg {"></div><div data-l="        Message::Quit =&gt; quit(),"></div><div data-l="        Message::ChangeColor(r, g, b) =&gt; change_color(r, g, b),"></div><div data-l="        Message::Move { x, y: new_name_for_y } =&gt; move_cursor(x, new_name_for_y),"></div><div data-l="        Message::Write(s) =&gt; println!(&quot;{}&quot;, s),"></div><div data-l="    };"></div><div data-l="}"></div></div>
+<br>
+<p>Again, the Rust compiler checks exhaustiveness, so it demands that you
+have a match arm for every variant of the enum. If you leave one off, it
+will give you a compile-time error unless you use <code>_</code> or provide all possible
+arms.</p>
+<br>
+<p>Unlike the previous uses of <code>match</code>, you can’t use the normal <code>if</code>
+statement to do this. You can use the <a href="#3if-let"><code>if let</code></a> statement,
+which can be seen as an abbreviated form of <code>match</code>.</p>
+<br>
+<a class="notranslate" href="#1if-let.html">if-let</a>

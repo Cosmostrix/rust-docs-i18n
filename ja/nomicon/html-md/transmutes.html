@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1>Transmutes</h1>
+<br>
+<p>Get out of our way type system! We're going to reinterpret these bits or die
+trying! Even though this book is all about doing things that are unsafe, I
+really can't emphasize that you should deeply think about finding Another Way
+than the operations covered in this section. This is really, truly, the most
+horribly unsafe thing you can do in Rust. The railguards here are dental floss.</p>
+<br>
+<p><code>mem::transmute&lt;T, U&gt;</code> takes a value of type <code>T</code> and reinterprets it to have
+type <code>U</code>. The only restriction is that the <code>T</code> and <code>U</code> are verified to have the
+same size. The ways to cause Undefined Behavior with this are mind boggling.</p>
+<br>
+<div data-b="*">First and foremost, creating an instance of <i>any</i> type with an invalid state
+is going to cause arbitrary chaos that can't really be predicted.</div>
+<div data-b="*">Transmute has an overloaded return type. If you do not specify the return type
+it may produce a surprising type to satisfy inference.</div>
+<div data-b="*">Making a primitive with an invalid value is UB</div>
+<div data-b="*">Transmuting between non-repr(C) types is UB</div>
+<div data-b="*">Transmuting an &amp; to &amp;mut is UB</div>
+<div data-b="    *">Transmuting an &amp; to &amp;mut is <i>always</i> UB</div>
+<div data-b="    *">No you can't do it</div>
+<div data-b="    *">No you're not special</div>
+<div data-b="*">Transmuting to a reference without an explicitly provided lifetime
+produces an <a class="notranslate" href="#4unbounded lifetime">unbounded lifetime</a></div>
+<br>
+<p><code>mem::transmute_copy&lt;T, U&gt;</code> somehow manages to be <i>even more</i> wildly unsafe than
+this. It copies <code>size_of&lt;U&gt;</code> bytes out of an <code>&amp;T</code> and interprets them as a <code>U</code>.
+The size check that <code>mem::transmute</code> has is gone (as it may be valid to copy
+out a prefix), though it is Undefined Behavior for <code>U</code> to be larger than <code>T</code>.</p>
+<br>
+<p>Also of course you can get most of the functionality of these functions using
+pointer casts.</p>
+<br>
+<br>
+<a class="notranslate" href="#1unbounded-lifetimes.html">unbounded lifetime</a>

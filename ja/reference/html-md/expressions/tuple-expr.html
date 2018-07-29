@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<h1>Tuple and tuple indexing expressions</h1>
+<br>
+<h2>Tuple expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>TupleExpression</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <code>(</code> <code>)</code>\
+&amp;nbsp;&amp;nbsp; | <code>(</code> ( <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>,</code> )<sup>+</sup> <a class="notranslate" href="#4_Expression_">_Expression_</a><sup>?</sup> <code>)</code></p></blockquote>
+<br>
+<p>Tuples are written by enclosing zero or more comma-separated expressions in
+parentheses. They are used to create <a class="notranslate" href="#2types.html#tuple-types">tuple-typed</a>
+values.</p>
+<br>
+<div data-lang="rust"><div data-l="(0.0, 4.5);"></div><div data-l="(&quot;a&quot;, 4usize, true);"></div><div data-l="();"></div></div>
+<br>
+<p>You can disambiguate a single-element tuple from a value in parentheses with a
+comma:</p>
+<br>
+<div data-lang="rust"><div data-l="#//(0,); // single-element tuple"></div><div data-l="(0,); // ">single-element tuple</div><div data-l="#//(0); // zero in parentheses"></div><div data-l="(0); // ">zero in parentheses</div></div>
+<br>
+<h2>Tuple indexing expressions</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>TupleIndexingExpression</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>.</code> <a class="notranslate" href="#4TUPLE_INDEX">TUPLE_INDEX</a></p></blockquote>
+<br>
+<p><a class="notranslate" href="#2types.html#tuple-types">Tuples</a> and <a href="#2items/structs.html">struct tuples</a> can be
+indexed using the number corresponding to the position of the field. The index
+must be written as a <a href="#2tokens.html#integer-literals">decimal literal</a> with no
+underscores or suffix. Tuple indexing expressions also differ from field
+expressions in that they can unambiguously be called as a function. In all
+other aspects they have the same behavior.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point(f32, f32);"></div><div data-l="let pair = (1, 2);"></div><div data-l="assert_eq!(pair.1, 2);"></div><div data-l="let unit_x = Point(1.0, 0.0);"></div><div data-l="assert_eq!(unit_x.0, 1.0);"></div></div>
+<br>
+<a class="notranslate" href="#1tokens.html#integer-literals">TUPLE_INDEX</a>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

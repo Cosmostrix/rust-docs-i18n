@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<h1>Formatting</h1>
+<br>
+<p>We've seen that formatting is specified via a <i>format string</i>:</p>
+<br>
+<div data-b="*"><code>format€(&quot;{}&quot;, foo)</code> -&gt; <code>&quot;3735928559&quot;</code></div>
+<div data-b="*"><code>format€(&quot;0x{:X}&quot;, foo)</code> -&gt;
+<a class="notranslate" href="#3deadbeef"><code>&quot;0xDEADBEEF&quot;</code></a></div>
+<div data-b="*"><code>format€(&quot;0o{:o}&quot;, foo)</code> -&gt; <code>&quot;0o33653337357&quot;</code></div>
+<br>
+<p>The same variable (<code>foo</code>) can be formatted differently depending on which
+<i>argument type</i> is used: <code>X</code> vs <code>o</code> vs <i>unspecified</i>.</p>
+<br>
+<p>This formatting functionality is implemented via traits, and there is one trait
+for each argument type. The most common formatting trait is <code>Display</code>, which
+handles cases where the argument type is left unspecified: <code>{}</code> for instance.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::fmt::{self, Formatter, Display};"></div><div data-l=""></div><div data-l="struct City {"></div><div data-l="    name: &amp;'static str,"></div><div data-l="#    // Latitude"></div><div data-l="    // ">Latitude</div><div data-l="    lat: f32,"></div><div data-l="#    // Longitude"></div><div data-l="    // ">Longitude</div><div data-l="    lon: f32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Display for City {"></div><div data-l="#    // `f` is a buffer, this method must write the formatted string into it"></div><div data-l="    // "><code>f</code> is a buffer, this method must write the formatted string into it</div><div data-l="    fn fmt(&amp;self, f: &amp;mut Formatter) -&gt; fmt::Result {"></div><div data-l="        let lat_c = if self.lat &gt;= 0.0 { 'N' } else { 'S' };"></div><div data-l="        let lon_c = if self.lon &gt;= 0.0 { 'E' } else { 'W' };"></div><div data-l=""></div><div data-l="#        // `write!` is like `format!`, but it will write the formatted string"></div><div data-l="#        // into a buffer (the first argument)"></div><div data-l="        // "><code>write€</code> is like <code>format€</code>, but it will write the formatted string into a buffer (the first argument)</div><div data-l="        write!(f, &quot;{}: {:.3}°{} {:.3}°{}&quot;,"></div><div data-l="               self.name, self.lat.abs(), lat_c, self.lon.abs(), lon_c)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Color {"></div><div data-l="    red: u8,"></div><div data-l="    green: u8,"></div><div data-l="    blue: u8,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    for city in ["></div><div data-l="        City { name: &quot;Dublin&quot;, lat: 53.347778, lon: -6.259722 },"></div><div data-l="        City { name: &quot;Oslo&quot;, lat: 59.95, lon: 10.75 },"></div><div data-l="        City { name: &quot;Vancouver&quot;, lat: 49.25, lon: -123.1 },"></div><div data-l="    ].iter() {"></div><div data-l="        println!(&quot;{}&quot;, *city);"></div><div data-l="    }"></div><div data-l="    for color in ["></div><div data-l="        Color { red: 128, green: 255, blue: 90 },"></div><div data-l="        Color { red: 0, green: 3, blue: 254 },"></div><div data-l="        Color { red: 0, green: 0, blue: 0 },"></div><div data-l="    ].iter() {"></div><div data-l="#        // Switch this to use {} once you've added an implementation"></div><div data-l="#        // for fmt::Display"></div><div data-l="        // ">Switch this to use {} once you've added an implementation for fmt::Display</div><div data-l="        println!(&quot;{:?}&quot;, *color);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>You can view a <a href="#3fmt_traits">full list of formatting traits</a> and their argument
+types in the <a class="notranslate" href="#3fmt"><code>std::fmt</code></a> documentation.</p>
+<br>
+<h3>Activity</h3>
+<p>Add an implementation of the <code>fmt::Display</code> trait for the <code>Color</code> struct above
+so that the output displays as:</p>
+<br>
+<div data-lang="text"><div data-l="RGB (128, 255, 90) 0x80FF5A"></div><div data-l="RGB (0, 3, 254) 0x0003FE"></div><div data-l="RGB (0, 0, 0) 0x000000"></div></div>
+<br>
+<p>Two hints if you get stuck:
+ * You <a href="#3argument_types">may need to list each color more than once</a>,
+ * You can <a href="#3fmt_width">pad with zeros to a width of 2</a> with <code>:02</code>.</p>
+<br>
+<h3>See also</h3>
+<br>
+<p><a class="notranslate" href="#3fmt"><code>std::fmt</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/#argument-types">argument_types</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Deadbeef#Magic_debug_values">deadbeef</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/">fmt</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/#formatting-traits">fmt_traits</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fmt/#width">fmt_width</a>

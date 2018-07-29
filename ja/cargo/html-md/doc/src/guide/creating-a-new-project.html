@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<h2>Creating a New Project</h2>
+<br>
+<p>To start a new project with Cargo, use <code>cargo new</code>:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo new hello_world --bin"></div></div>
+<br>
+<p>We’re passing <code>--bin</code> because we’re making a binary program: if we
+were making a library, we’d pass <code>--lib</code>. This also initializes a new <code>git</code>
+repository by default. If you don't want it to do that, pass <code>--vcs none</code>.</p>
+<br>
+<p>Let’s check out what Cargo has generated for us:</p>
+<br>
+<div data-lang="console"><div data-l="$ cd hello_world"></div><div data-l="$ tree ."></div><div data-l="."></div><div data-l="├── Cargo.toml"></div><div data-l="└── src"></div><div data-l="    └── main.rs"></div><div data-l=""></div><div data-l="1 directory, 2 files"></div></div>
+<br>
+<p>Let’s take a closer look at <code>Cargo.toml</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div></div>
+<br>
+<p>This is called a <b>manifest</b>, and it contains all of the metadata that Cargo
+needs to compile your project.</p>
+<br>
+<p>Here’s what’s in <code>src/main.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello, world!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Cargo generated a “hello world” for us. Let’s compile it:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo build"></div><div data-l="   Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div></div>
+<br>
+<p>And then run it:</p>
+<br>
+<div data-lang="console"><div data-l="$ ./target/debug/hello_world"></div><div data-l="Hello, world!"></div></div>
+<br>
+<p>We can also use <code>cargo run</code> to compile and then run it, all in one step (You
+won't see the <code>Compiling</code> line if you have not made any changes since you last
+compiled):</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo run"></div><div data-l="   Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div><div data-l="     Running `target/debug/hello_world`"></div><div data-l="Hello, world!"></div></div>
+<br>
+<p>You’ll now notice a new file, <code>Cargo.lock</code>. It contains information about our
+dependencies. Since we don’t have any yet, it’s not very interesting.</p>
+<br>
+<p>Once you’re ready for release, you can use <code>cargo build --release</code> to compile
+your files with optimizations turned on:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo build --release"></div><div data-l="   Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div></div>
+<br>
+<p><code>cargo build --release</code> puts the resulting binary in <code>target/release</code> instead of
+<code>target/debug</code>.</p>
+<br>
+<p>Compiling in debug mode is the default for development-- compilation time is
+shorter since the compiler doesn't do optimizations, but the code will run
+slower. Release mode takes longer to compile, but the code will run faster.</p>

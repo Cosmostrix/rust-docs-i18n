@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<h2>External tools</h2>
+<br>
+<p>One of the goals of Cargo is simple integration with third-party tools, like
+IDEs and other build systems. To make integration easier, Cargo has several
+facilities:</p>
+<br>
+<div data-b="*">a <code>cargo metadata</code> command, which outputs project structure and dependencies
+information in JSON,</div>
+<br>
+<div data-b="*">a <code>--message-format</code> flag, which outputs information about a particular build,
+and</div>
+<br>
+<div data-b="*">support for custom subcommands.</div>
+<br>
+<br>
+<h3>Information about project structure</h3>
+<br>
+<p>You can use <code>cargo metadata</code> command to get information about project structure
+and dependencies. The output of the command looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="{"></div><div data-l="#  // Integer version number of the format."></div><div data-l="  // ">Integer version number of the format.</div><div data-l="  &quot;version&quot;: integer,"></div><div data-l=""></div><div data-l="#  // List of packages for this workspace, including dependencies."></div><div data-l="  // ">List of packages for this workspace, including dependencies.</div><div data-l="  &quot;packages&quot;: ["></div><div data-l="    {"></div><div data-l="#      // Opaque package identifier."></div><div data-l="      // ">Opaque package identifier.</div><div data-l="      &quot;id&quot;: PackageId,"></div><div data-l=""></div><div data-l="      &quot;name&quot;: string,"></div><div data-l=""></div><div data-l="      &quot;version&quot;: string,"></div><div data-l=""></div><div data-l="      &quot;source&quot;: SourceId,"></div><div data-l=""></div><div data-l="#      // A list of declared dependencies, see `resolve` field for actual dependencies."></div><div data-l="      // ">A list of declared dependencies, see <code>resolve</code> field for actual dependencies.</div><div data-l="      &quot;dependencies&quot;: [ Dependency ],"></div><div data-l=""></div><div data-l="      &quot;targets: [ Target ],"></div><div data-l=""></div><div data-l="#      // Path to Cargo.toml"></div><div data-l="      // ">Path to Cargo.toml</div><div data-l="      &quot;manifest_path&quot;: string,"></div><div data-l="    }"></div><div data-l="  ],"></div><div data-l=""></div><div data-l="  &quot;workspace_members&quot;: [ PackageId ],"></div><div data-l=""></div><div data-l="#  // Dependencies graph."></div><div data-l="  // ">Dependencies graph.</div><div data-l="  &quot;resolve&quot;: {"></div><div data-l="     &quot;nodes&quot;: ["></div><div data-l="       {"></div><div data-l="         &quot;id&quot;: PackageId,"></div><div data-l="         &quot;dependencies&quot;: [ PackageId ]"></div><div data-l="       }"></div><div data-l="     ]"></div><div data-l="  }"></div><div data-l="}"></div></div>
+<br>
+<p>The format is stable and versioned. When calling <code>cargo metadata</code>, you should
+pass <code>--format-version</code> flag explicitly to avoid forward incompatibility
+hazard.</p>
+<br>
+<p>If you are using Rust, there is <a class="notranslate" href="#4cargo_metadata">cargo_metadata</a> crate.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/cargo_metadata">cargo_metadata</a>
+<br>
+<br>
+<h3>Information about build</h3>
+<br>
+<p>When passing <code>--message-format=json</code>, Cargo will output the following
+information during the build:</p>
+<br>
+<div data-b="*">compiler errors and warnings,</div>
+<br>
+<div data-b="*">produced artifacts,</div>
+<br>
+<div data-b="*">results of the build scripts (for example, native dependencies).</div>
+<br>
+<p>The output goes to stdout in the JSON object per line format. The <code>reason</code> field
+distinguishes different kinds of messages.</p>
+<br>
+<p>Information about dependencies in the Makefile-compatible format is stored in
+the <code>.d</code> files alongside the artifacts.</p>
+<br>
+<br>
+<h3>Custom subcommands</h3>
+<br>
+<p>Cargo is designed to be extensible with new subcommands without having to modify
+Cargo itself. This is achieved by translating a cargo invocation of the form
+cargo <code>(?&lt;command&gt;[^ ]+)</code> into an invocation of an external tool
+<code>cargo-${command}</code>. The external tool must be present in one of the user's
+<code>$PATH</code> directories.</p>
+<br>
+<p>When Cargo invokes a custom subcommand, the first argument to the subcommand
+will be the filename of the custom subcommand, as usual. The second argument
+will be the subcommand name itself. For example, the second argument would be
+<code>${command}</code> when invoking <code>cargo-${command}</code>. Any additional arguments on the
+command line will be forwarded unchanged.</p>
+<br>
+<p>Cargo can also display the help output of a custom subcommand with <code>cargo help
+${command}</code>. Cargo assumes that the subcommand will print a help message if its
+third argument is <code>--help</code>. So, <code>cargo help ${command}</code> would invoke
+<code>cargo-${command} ${command} --help</code>.</p>
+<br>
+<p>Custom subcommands may use the <code>CARGO</code> environment variable to call back to
+Cargo. Alternatively, it can link to <code>cargo</code> crate as a library, but this
+approach has drawbacks:</p>
+<br>
+<div data-b="*">Cargo as a library is unstable: the  API may change without deprecation</div>
+<br>
+<div data-b="*">versions of the linked Cargo library may be different from the Cargo binary</div>

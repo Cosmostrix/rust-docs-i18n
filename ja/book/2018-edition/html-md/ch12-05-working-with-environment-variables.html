@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<h2>Working with Environment Variables</h2>
+<br>
+<p>We’ll improve <code>minigrep</code> by adding an extra feature: an option for
+case-insensitive searching that the user can turn on via an environment
+variable. We could make this feature a command line option and require that
+users enter it each time they want it to apply, but instead we’ll use an
+environment variable. Doing so allows our users to set the environment variable
+once and have all their searches be case insensitive in that terminal session.</p>
+<br>
+<h3>Writing a Failing Test for the Case-Insensitive <code>search</code> Function</h3>
+<br>
+<p>We want to add a new <code>search_case_insensitive</code> function that we’ll call when
+the environment variable is on. We’ll continue to follow the TDD process, so
+the first step is again to write a failing test. We’ll add a new test for the
+new <code>search_case_insensitive</code> function and rename our old test from
+<code>one_result</code> to <code>case_sensitive</code> to clarify the differences between the two
+tests, as shown in Listing 12-20:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(test)]"></div><div data-l="mod tests {"></div><div data-l="    use super::*;"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn case_sensitive() {"></div><div data-l="        let query = &quot;duct&quot;;"></div><div data-l="        let contents = &quot;\"></div><div data-l="Rust:"></div><div data-l="safe, fast, productive."></div><div data-l="Pick three."></div><div data-l="Duct tape.&quot;;"></div><div data-l=""></div><div data-l="        assert_eq!("></div><div data-l="            vec![&quot;safe, fast, productive.&quot;],"></div><div data-l="            search(query, contents)"></div><div data-l="        );"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    #[test]"></div><div data-l="    fn case_insensitive() {"></div><div data-l="        let query = &quot;rUsT&quot;;"></div><div data-l="        let contents = &quot;\"></div><div data-l="Rust:"></div><div data-l="safe, fast, productive."></div><div data-l="Pick three."></div><div data-l="Trust me.&quot;;"></div><div data-l=""></div><div data-l="        assert_eq!("></div><div data-l="            vec![&quot;Rust:&quot;, &quot;Trust me.&quot;],"></div><div data-l="            search_case_insensitive(query, contents)"></div><div data-l="        );"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 12-20: Adding a new failing test for the
+case-insensitive function we’re about to add</span></p>
+<br>
+<p>Note that we’ve edited the old test’s <code>contents</code> too. We’ve added a new line
+with the text <code>&quot;Duct tape.&quot;</code> using a capital D that shouldn’t match the query
+“duct” when we’re searching in a case-sensitive manner. Changing the old test
+in this way helps ensure that we don’t accidentally break the case-sensitive
+search functionality that we’ve already implemented. This test should pass now
+and should continue to pass as we work on the case-insensitive search.</p>
+<br>
+<p>The new test for the case-<i>insensitive</i> search uses <code>&quot;rUsT&quot;</code> as its query. In
+the <code>search_case_insensitive</code> function we’re about to add, the query <code>&quot;rUsT&quot;</code>
+should match the line containing <code>&quot;Rust:&quot;</code> with a capital R and match the line
+<code>&quot;Trust me.&quot;</code> even though both have different casing than the query. This is
+our failing test, and it will fail to compile because we haven’t yet defined
+the <code>search_case_insensitive</code> function. Feel free to add a skeleton
+implementation that always returns an empty vector, similar to the way we did
+for the <code>search</code> function in Listing 12-16 to see the test compile and fail.</p>
+<br>
+<h3>Implementing the <code>search_case_insensitive</code> Function</h3>
+<br>
+<p>The <code>search_case_insensitive</code> function, shown in Listing 12-21, will be almost
+the same as the <code>search</code> function. The only difference is that we’ll lowercase
+the <code>query</code> and each <code>line</code> so whatever the case of the input arguments,
+they’ll be the same case when we check whether the line contains the query.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn search_case_insensitive&lt;'a&gt;(query: &amp;str, contents: &amp;'a str) -&gt; Vec&lt;&amp;'a str&gt; {"></div><div data-l="    let query = query.to_lowercase();"></div><div data-l="    let mut results = Vec::new();"></div><div data-l=""></div><div data-l="    for line in contents.lines() {"></div><div data-l="        if line.to_lowercase().contains(&amp;query) {"></div><div data-l="            results.push(line);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    results"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 12-21: Defining the <code>search_case_insensitive</code>
+function to lowercase the query and the line before comparing them</span></p>
+<br>
+<p>First, we lowercase the <code>query</code> string and store it in a shadowed variable with
+the same name. Calling <code>to_lowercase</code> on the query is necessary so no matter
+whether the user’s query is <code>&quot;rust&quot;</code>, <code>&quot;RUST&quot;</code>, <code>&quot;Rust&quot;</code>, or <code>&quot;rUsT&quot;</code>, we’ll
+treat the query as if it were <code>&quot;rust&quot;</code> and be insensitive to the case.</p>
+<br>
+<p>Note that <code>query</code> is now a <code>String</code> rather than a string slice, because calling
+<code>to_lowercase</code> creates new data rather than referencing existing data. Say the
+query is <code>&quot;rUsT&quot;</code>, as an example: that string slice doesn’t contain a lowercase
+<code>u</code> or <code>t</code> for us to use, so we have to allocate a new <code>String</code> containing
+<code>&quot;rust&quot;</code>. When we pass <code>query</code> as an argument to the <code>contains</code> method now, we
+need to add an ampersand because the signature of <code>contains</code> is defined to take
+a string slice.</p>
+<br>
+<p>Next, we add a call to <code>to_lowercase</code> on each <code>line</code> before we check whether it
+contains <code>query</code> to lowercase all characters. Now that we’ve converted <code>line</code>
+and <code>query</code> to lowercase, we’ll find matches no matter what the case of the
+query is.</p>
+<br>
+<p>Let’s see if this implementation passes the tests:</p>
+<br>
+<div data-lang="text"><div data-l="running 2 tests"></div><div data-l="test tests::case_insensitive ... ok"></div><div data-l="test tests::case_sensitive ... ok"></div><div data-l=""></div><div data-l="test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<p>Great! They passed. Now, let’s call the new <code>search_case_insensitive</code> function
+from the <code>run</code> function. First, we’ll add a configuration option to the
+<code>Config</code> struct to switch between case-sensitive and case-insensitive search.
+Adding this field will cause compiler errors since we aren’t initializing this
+field anywhere yet:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="pub struct Config {"></div><div data-l="    pub query: String,"></div><div data-l="    pub filename: String,"></div><div data-l="    pub case_sensitive: bool,"></div><div data-l="}"></div></div>
+<br>
+<p>Note that we added the <code>case_sensitive</code> field that holds a Boolean. Next, we
+need the <code>run</code> function to check the <code>case_sensitive</code> field’s value and use
+that to decide whether to call the <code>search</code> function or the
+<code>search_case_insensitive</code> function, as shown in Listing 12-22. Note this still
+won’t compile yet:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::error::Error;"></div><div data-l="# use std::fs::{self, File};"></div><div data-l="# use std::io::prelude::*;"></div><div data-l="#"></div><div data-l="# fn search&lt;'a&gt;(query: &amp;str, contents: &amp;'a str) -&gt; Vec&lt;&amp;'a str&gt; {"></div><div data-l="#      vec![]"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# fn search_case_insensitive&lt;'a&gt;(query: &amp;str, contents: &amp;'a str) -&gt; Vec&lt;&amp;'a str&gt; {"></div><div data-l="#      vec![]"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="# pub struct Config {"></div><div data-l="#     query: String,"></div><div data-l="#     filename: String,"></div><div data-l="#     case_sensitive: bool,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="pub fn run(config: Config) -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {"></div><div data-l="    let contents = fs::read_to_string(config.filename)?;"></div><div data-l=""></div><div data-l="    let results = if config.case_sensitive {"></div><div data-l="        search(&amp;config.query, &amp;contents)"></div><div data-l="    } else {"></div><div data-l="        search_case_insensitive(&amp;config.query, &amp;contents)"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    for line in results {"></div><div data-l="        println!(&quot;{}&quot;, line);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 12-22: Calling either <code>search</code> or
+<code>search_case_insensitive</code> based on the value in <code>config.case_sensitive</code></span></p>
+<br>
+<p>Finally, we need to check for the environment variable. The functions for
+working with environment variables are in the <code>env</code> module in the standard
+library, so we want to bring that module into scope with a <code>use std::env;</code> line
+at the top of <i>src/lib.rs</i>. Then we’ll use the <code>var</code> method from the <code>env</code>
+module to check for an environment variable named <code>CASE_INSENSITIVE</code>, as shown
+in Listing 12-23:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::env;"></div><div data-l="# struct Config {"></div><div data-l="#     query: String,"></div><div data-l="#     filename: String,"></div><div data-l="#     case_sensitive: bool,"></div><div data-l="# }"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Config {"></div><div data-l="    pub fn new(args: &amp;[String]) -&gt; Result&lt;Config, &amp;'static str&gt; {"></div><div data-l="        if args.len() &lt; 3 {"></div><div data-l="            return Err(&quot;not enough arguments&quot;);"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        let query = args[1].clone();"></div><div data-l="        let filename = args[2].clone();"></div><div data-l=""></div><div data-l="        let case_sensitive = env::var(&quot;CASE_INSENSITIVE&quot;).is_err();"></div><div data-l=""></div><div data-l="        Ok(Config { query, filename, case_sensitive })"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 12-23: Checking for an environment variable named
+<code>CASE_INSENSITIVE</code></span></p>
+<br>
+<p>Here, we create a new variable <code>case_sensitive</code>. To set its value, we call the
+<code>env::var</code> function and pass it the name of the <code>CASE_INSENSITIVE</code> environment
+variable. The <code>env::var</code> method returns a <code>Result</code> that will be the successful
+<code>Ok</code> variant that contains the value of the environment variable if the
+environment variable is set. It will return the <code>Err</code> variant if the
+environment variable is not set.</p>
+<br>
+<p>We’re using the <code>is_err</code> method on the <code>Result</code> to check whether it’s an error
+and therefore unset, which means it <i>should</i> do a case-sensitive search. If the
+<code>CASE_INSENSITIVE</code> environment variable is set to anything, <code>is_err</code> will
+return false and the program will perform a case-insensitive search. We don’t
+care about the <i>value</i> of the environment variable, just whether it’s set or
+unset, so we’re checking <code>is_err</code> rather than using <code>unwrap</code>, <code>expect</code>, or any
+of the other methods we’ve seen on <code>Result</code>.</p>
+<br>
+<p>We pass the value in the <code>case_sensitive</code> variable to the <code>Config</code> instance so
+the <code>run</code> function can read that value and decide whether to call <code>search</code> or
+<code>search_case_insensitive</code>, as we implemented in Listing 12-22.</p>
+<br>
+<p>Let’s give it a try! First, we’ll run our program without the environment
+variable set and with the query <code>to</code>, which should match any line that contains
+the word “to” in all lowercase:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run to poem.txt"></div><div data-l="   Compiling minigrep v0.1.0 (file:///projects/minigrep)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running `target/debug/minigrep to poem.txt`"></div><div data-l="Are you nobody, too?"></div><div data-l="How dreary to be somebody!"></div></div>
+<br>
+<p>Looks like that still works! Now, let’s run the program with <code>CASE_INSENSITIVE</code>
+set to <code>1</code> but with the same query <code>to</code>.</p>
+<br>
+<p>If you’re using PowerShell, you will need to set the environment variable and
+run the program in two commands rather than one:</p>
+<br>
+<div data-lang="text"><div data-l="$ $env:CASE_INSENSITIVE=1"></div><div data-l="$ cargo run to poem.txt"></div></div>
+<br>
+<p>We should get lines that contain “to” that might have uppercase letters:</p>
+<br>
+<div data-lang="text"><div data-l="$ CASE_INSENSITIVE=1 cargo run to poem.txt"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running `target/debug/minigrep to poem.txt`"></div><div data-l="Are you nobody, too?"></div><div data-l="How dreary to be somebody!"></div><div data-l="To tell your name the livelong day"></div><div data-l="To an admiring bog!"></div></div>
+<br>
+<p>Excellent, we also got lines containing “To”! Our <code>minigrep</code> program can now do
+case-insensitive searching controlled by an environment variable. Now you know
+how to manage options set using either command line arguments or environment
+variables.</p>
+<br>
+<p>Some programs allow arguments <i>and</i> environment variables for the same
+configuration. In those cases, the programs decide that one or the other takes
+precedence. For another exercise on your own, try controlling case
+insensitivity through either a command line argument or an environment
+variable. Decide whether the command line argument or the environment variable
+should take precedence if the program is run with one set to case sensitive and
+one set to case insensitive.</p>
+<br>
+<p>The <code>std::env</code> module contains many more useful features for dealing with
+environment variables: check out its documentation to see what is available.</p>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<h1>Types</h1>
+<br>
+<p>Every variable, item and value in a Rust program has a type. The <s>type</s> of a
+<i>value</i> defines the interpretation of the memory holding it.</p>
+<br>
+<p>Built-in types are tightly integrated into the language, in nontrivial ways
+that are not possible to emulate in user-defined types. User-defined types have
+limited capabilities.</p>
+<br>
+<h2>Primitive types</h2>
+<br>
+<p>Some types are defined by the language, rather than as part of the standard
+library, these are called <s>primitive types</s>. Some of these are individual
+types:</p>
+<br>
+<div data-b="*">The boolean type <code>bool</code> with values <code>true</code> and <code>false</code>.</div>
+<div data-b="*">The <a class="notranslate" href="#4machine types">machine types</a> (integer and floating-point).</div>
+<div data-b="*">The <a class="notranslate" href="#4machine-dependent integer types">machine-dependent integer types</a>.</div>
+<div data-b="*">The <a class="notranslate" href="#4textual types">textual types</a> <code>char</code> and <code>str</code>.</div>
+<div data-b="*">The <a class="notranslate" href="#4never type">never type</a> <code>€</code></div>
+<br>
+<p>There are also some primitive constructs for generic types built in to the
+language:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Tuples">Tuples</a></div>
+<div data-b="*"><a class="notranslate" href="#4Arrays">Arrays</a></div>
+<div data-b="*"><a class="notranslate" href="#4Slices">Slices</a></div>
+<div data-b="*"><a class="notranslate" href="#4Function pointers">Function pointers</a></div>
+<div data-b="*"><a class="notranslate" href="#4References">References</a></div>
+<div data-b="*"><a class="notranslate" href="#4Pointers">Pointers</a></div>
+<br>
+<a class="notranslate" href="#1#machine-types">machine types</a>
+<a class="notranslate" href="#1#machine-dependent-integer-types">machine-dependent integer types</a>
+<a class="notranslate" href="#1#textual-types">textual types</a>
+<a class="notranslate" href="#1#never-type">never-type</a>
+<a class="notranslate" href="#1#tuple-types">Tuples</a>
+<a class="notranslate" href="#1#array-and-slice-types">Arrays</a>
+<a class="notranslate" href="#1#array-and-slice-types">Slices</a>
+<a class="notranslate" href="#1#pointer-types">References</a>
+<a class="notranslate" href="#1#raw-pointers-const-and-mut">Pointers</a>
+<a class="notranslate" href="#1#function-pointer-types">Function pointers</a>
+<a class="notranslate" href="#1#function-types">function</a>
+<a class="notranslate" href="#1#closure-types">closure</a>
+<br>
+<h2>Numeric types</h2>
+<br>
+<h3>Machine types</h3>
+<br>
+<p>The machine types are the following:</p>
+<br>
+<div data-b="*">The unsigned word types <code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, and <code>u128</code> with values drawn from
+the integer intervals <a class="notranslate" href="#40, 2^8 - 1">0, 2^8 - 1</a>, <a class="notranslate" href="#40, 2^16 - 1">0, 2^16 - 1</a>, <a class="notranslate" href="#40, 2^32 - 1">0, 2^32 - 1</a>,
+<a class="notranslate" href="#40, 2^64 - 1">0, 2^64 - 1</a>, and <a class="notranslate" href="#40, 2^128 - 1">0, 2^128 - 1</a> respectively.</div>
+<br>
+<div data-b="*">The signed two's complement word types <code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, and <code>i128</code>, with
+values drawn from the integer intervals <a class="notranslate" href="#4-(2^7), 2^7 - 1">-(2^7), 2^7 - 1</a>,
+<a class="notranslate" href="#4-(2^15), 2^15 - 1">-(2^15), 2^15 - 1</a>, <a class="notranslate" href="#4-(2^31), 2^31 - 1">-(2^31), 2^31 - 1</a>, <a class="notranslate" href="#4-(2^63), 2^63 - 1">-(2^63), 2^63 - 1</a>, and
+<a class="notranslate" href="#4-(2^127), 2^127 - 1">-(2^127), 2^127 - 1</a> respectively.</div>
+<br>
+<div data-b="*">The IEEE 754-2008 &quot;binary32&quot; and &quot;binary64&quot; floating-point types: <code>f32</code> and
+<code>f64</code>, respectively.</div>
+<br>
+<h3>Machine-dependent integer types</h3>
+<br>
+<p>The <code>usize</code> type is an unsigned integer type with the same number of bits as the
+platform's pointer type. It can represent every memory address in the process.</p>
+<br>
+<p>The <code>isize</code> type is a signed integer type with the same number of bits as the
+platform's pointer type. The theoretical upper bound on object and array size
+is the maximum <code>isize</code> value. This ensures that <code>isize</code> can be used to calculate
+differences between pointers into an object or array and can address every byte
+within an object along with one byte past the end.</p>
+<br>
+<h2>Textual types</h2>
+<br>
+<p>The types <code>char</code> and <code>str</code> hold textual data.</p>
+<br>
+<p>A value of type <code>char</code> is a <a href="#2
+http://www.unicode.org/glossary/#unicode_scalar_value">Unicode scalar value</a> (i.e. a code point that
+is not a surrogate), represented as a 32-bit unsigned word in the 0x0000 to
+0xD7FF or 0xE000 to 0x10FFFF range. A <code>[char]</code> is effectively a UCS-4 / UTF-32
+string.</p>
+<br>
+<p>A value of type <code>str</code> is a Unicode string, represented as an array of 8-bit
+unsigned bytes holding a sequence of UTF-8 code points. Since <code>str</code> is a
+<a class="notranslate" href="#4dynamically sized type">dynamically sized type</a>, it is not a <s>first-class</s> type, but can only be
+instantiated through a pointer type, such as <code>&amp;str</code>.</p>
+<br>
+<h2>Never type</h2>
+<br>
+<p>The never type <code>€</code> is a type with no values, representing the result of
+computations that never complete. Expressions of type <code>€</code> can be coerced into
+any other type.</p>
+<br>
+<h2>Tuple types</h2>
+<br>
+<p>A tuple <i>type</i> is a heterogeneous product of other types, called the <i>elements</i>
+of the tuple. It has no nominal name and is instead structurally typed.</p>
+<br>
+<p>Tuple types and values are denoted by listing the types or values of their
+elements, respectively, in a parenthesized, comma-separated list.</p>
+<br>
+<p>Because tuple elements don't have a name, they can only be accessed by
+pattern-matching or by using <code>N</code> directly as a field to access the <code>N</code>th
+element.</p>
+<br>
+<p>An example of a tuple type and its use:</p>
+<br>
+<div data-lang="rust"><div data-l="type Pair&lt;'a&gt; = (i32, &amp;'a str);"></div><div data-l="let p: Pair&lt;'static&gt; = (10, &quot;ten&quot;);"></div><div data-l="let (a, b) = p;"></div><div data-l=""></div><div data-l="assert_eq!(a, 10);"></div><div data-l="assert_eq!(b, &quot;ten&quot;);"></div><div data-l="assert_eq!(p.0, 10);"></div><div data-l="assert_eq!(p.1, &quot;ten&quot;);"></div></div>
+<br>
+<p>For historical reasons and convenience, the tuple type with no elements (<code>()</code>)
+is often called ‘unit’ or ‘the unit type’.</p>
+<br>
+<h2>Array, and Slice types</h2>
+<br>
+<p>Rust has two different types for a list of items:</p>
+<br>
+<div data-b="*"><code>[T; N]</code>, an 'array'</div>
+<div data-b="*"><code>[T]</code>, a 'slice'</div>
+<br>
+<p>An array has a fixed size, and can be allocated on either the stack or the
+heap.</p>
+<br>
+<p>A slice is a <a class="notranslate" href="#4dynamically sized type">dynamically sized type</a> representing a 'view' into an array. To
+use a slice type it generally has to be used behind a pointer for example as</p>
+<br>
+<div data-b="*"><code>&amp;[T]</code>, a 'shared slice', often just called a 'slice', it doesn't own the
+data it points to, it borrows it.</div>
+<div data-b="*"><code>&amp;mut [T]</code>, a 'mutable slice', mutably borrows the data it points to.</div>
+<div data-b="*"><code>Box&lt;[T]&gt;</code>, a 'boxed slice'</div>
+<br>
+<p>Examples:</p>
+<br>
+<div data-lang="rust"><div data-l="#// A stack-allocated array"></div><div data-l="// ">A stack-allocated array</div><div data-l="let array: [i32; 3] = [1, 2, 3];"></div><div data-l=""></div><div data-l="#// A heap-allocated array, coerced to a slice"></div><div data-l="// ">A heap-allocated array, coerced to a slice</div><div data-l="let boxed_array: Box&lt;[i32]&gt; = Box::new([1, 2, 3]);"></div><div data-l=""></div><div data-l="#// A (shared) slice into an array"></div><div data-l="// ">A (shared) slice into an array</div><div data-l="let slice: &amp;[i32] = &amp;boxed_array[..];"></div></div>
+<br>
+<p>All elements of arrays and slices are always initialized, and access to an
+array or slice is always bounds-checked in safe methods and operators.</p>
+<br>
+<blockquote><p>Note: The <a class="notranslate" href="#4`Vec<T>`">`Vec<T>`</a> standard library type provides a heap-allocated resizable
+array type.</p></blockquote>
+<br>
+<h2>Struct types</h2>
+<br>
+<p>A <code>struct</code> <i>type</i> is a heterogeneous product of other types, called the
+<i>fields</i> of the type.<a class="notranslate" href="#4^structtype">^structtype</a></p>
+<br>
+<p>New instances of a <code>struct</code> can be constructed with a <a class="notranslate" href="#2expressions/struct-expr.html">struct
+expression</a>.</p>
+<br>
+<p>The memory layout of a <code>struct</code> is undefined by default to allow for compiler
+optimizations like field reordering, but it can be fixed with the
+<code>#[repr(...)]</code> attribute. In either case, fields may be given in any order in a
+corresponding struct <i>expression</i>; the resulting <code>struct</code> value will always
+have the same memory layout.</p>
+<br>
+<p>The fields of a <code>struct</code> may be qualified by <a class="notranslate" href="#2visibility-and-privacy.html">visibility
+modifiers</a>, to allow access to data in a struct
+outside a module.</p>
+<br>
+<p>A <s>tuple struct</s> type is just like a struct type, except that the fields are
+anonymous.</p>
+<br>
+<p>A <s>unit-like struct</s> type is like a struct type, except that it has no fields.
+The one value constructed by the associated <a class="notranslate" href="#4struct expression">struct expression</a> is the only
+value that inhabits such a type.</p>
+<br>
+<a class="notranslate" href="#1`struct` types are analogous to `struct` types in C, the">^structtype</a>
+<p>    <i>record</i> types of the ML family, or the <i>struct</i> types of the Lisp family.</p>
+<br>
+<h2>Enumerated types</h2>
+<br>
+<p>An <i>enumerated type</i> is a nominal, heterogeneous disjoint union type, denoted
+by the name of an <a href="#2items/enumerations.html"><code>enum</code> item</a>. <a class="notranslate" href="#4^enumtype">^enumtype</a></p>
+<br>
+<p>An <a href="#2items/enumerations.html"><code>enum</code> item</a> declares both the type and a number
+of <i>variants</i>, each of which is independently named and has the syntax of a
+struct, tuple struct or unit-like struct.</p>
+<br>
+<p>New instances of an <code>enum</code> can be constructed in an <a href="#2expressions/enum-variant-expr.html">enumeration variant
+expression</a>.</p>
+<br>
+<p>Any <code>enum</code> value consumes as much memory as the largest variant for its
+corresponding <code>enum</code> type, as well as the size needed to store a discriminant.</p>
+<br>
+<p>Enum types cannot be denoted <i>structurally</i> as types, but must be denoted by
+named reference to an <a href="#2items/enumerations.html"><code>enum</code> item</a>.</p>
+<br>
+<a class="notranslate" href="#1The `enum` type is analogous to a `data` constructor declaration in">^enumtype</a>
+<p>             ML, or a <i>pick ADT</i> in Limbo.</p>
+<br>
+<h2>Union types</h2>
+<br>
+<p>A <i>union type</i> is a nominal, heterogeneous C-like union, denoted by the name of
+a <a href="#2items/unions.html"><code>union</code> item</a>.</p>
+<br>
+<p>A union contains the value of any one of its fields. Since the accessing the
+wrong field can cause unexpected or undefined behaviour, <code>unsafe</code> is required
+to read from a union field or to write to a field that doesn't implement
+<a class="notranslate" href="#4`Copy`">`Copy`</a>.</p>
+<br>
+<p>The memory layout of a <code>union</code> is undefined by default, but the <code>#[repr(...)]</code>
+attribute can be used to fix a layout.</p>
+<br>
+<a class="notranslate" href="#1special-types-and-traits.html#copy">`Copy`</a>
+<br>
+<h2>Recursive types</h2>
+<br>
+<p>Nominal types &amp;mdash; <a class="notranslate" href="#2#struct-types">structs</a>,
+<a class="notranslate" href="#2#enumerated-types">enumerations</a> and <a class="notranslate" href="#2#union-types">unions</a> &amp;mdash; may be
+recursive. That is, each <code>enum</code> variant or <code>struct</code> or <code>union</code> field may refer,
+directly or indirectly, to the enclosing <code>enum</code> or <code>struct</code> type itself. Such
+recursion has restrictions:</p>
+<br>
+<div data-b="*">Recursive types must include a nominal type in the recursion (not mere <a href="#2../grammar.html#type-definitions">type
+  definitions</a>, or other structural types
+such as <a class="notranslate" href="#2#array-and-slice-types">arrays</a> or <a class="notranslate" href="#2#tuple-types">tuples</a>). So
+<code>type Rec = &amp;'static [Rec]</code> is not allowed.</div>
+<div data-b="*">The size of a recursive type must be finite; in other words the recursive
+fields of the type must be <a href="#2#pointer-types">pointer types</a>.</div>
+<div data-b="*">Recursive type definitions can cross module boundaries, but not module</div>
+<p>  <i>visibility</i> boundaries, or crate boundaries (in order to simplify the module
+  system and type checker).</p>
+<br>
+<p>An example of a <i>recursive</i> type and its use:</p>
+<br>
+<div data-lang="rust"><div data-l="enum List&lt;T&gt; {"></div><div data-l="    Nil,"></div><div data-l="    Cons(T, Box&lt;List&lt;T&gt;&gt;)"></div><div data-l="}"></div><div data-l=""></div><div data-l="let a: List&lt;i32&gt; = List::Cons(7, Box::new(List::Cons(13, Box::new(List::Nil))));"></div></div>
+<br>
+<h2>Pointer types</h2>
+<br>
+<p>All pointers in Rust are explicit first-class values. They can be moved or
+copied, stored into data structs, and returned from functions.</p>
+<br>
+<h3>Shared references (<code>&amp;</code>)</h3>
+<br>
+<p>These point to memory <s>owned by some other value</s>. When a shared reference to a
+value is created it prevents direct mutation of the value. <a class="notranslate" href="#2interior-mutability.html">Interior
+mutability</a> provides an exception for this in certain
+circumstances. As the name suggests, any number of shared references to a value
+may exit. A shared reference type is written <code>&amp;type</code>, or <code>&amp;'a type</code> when you
+need to specify an explicit lifetime. Copying a reference is a &quot;shallow&quot;
+operation: it involves only copying the pointer itself, that is, pointers are
+<code>Copy</code>. Releasing a reference has no effect on the value it points to, but
+referencing of a <a href="#2expressions.html#temporary-lifetimes">temporary value</a> will
+keep it alive during the scope of the reference itself.</p>
+<br>
+<h3>Mutable references (<code>&amp;mut</code>)</h3>
+<br>
+<p>These also point to memory owned by some other value. A mutable reference type
+is written <code>&amp;mut type</code> or <code>&amp;'a mut type</code>. A mutable reference (that hasn't been
+borrowed) is the only way to access the value it points to, so is not <code>Copy</code>.</p>
+<br>
+<h3>Raw pointers (<code>*const</code> and <code>*mut</code>)</h3>
+<br>
+<p>Raw pointers are pointers without safety or liveness guarantees. Raw pointers
+are written as <code>*const T</code> or <code>*mut T</code>, for example <code>*const i32</code> means a raw
+pointer to a 32-bit integer. Copying or dropping a raw pointer has no effect on
+the lifecycle of any other value. Dereferencing a raw pointer is an <a class="notranslate" href="#2unsafe-functions.html"><code>unsafe</code>
+operation</a>, this can also be used to convert a raw
+pointer to a reference by reborrowing it (<code>&amp;*</code> or <code>&amp;mut *</code>). Raw pointers are
+generally discouraged in Rust code; they exist to support interoperability with
+foreign code, and writing performance-critical or low-level functions.</p>
+<br>
+<p>When comparing pointers they are compared by their address, rather than by what
+they point to. When comparing pointers to <a href="#2dynamically-sized-types.html">dynamically sized
+types</a> they also have their addition data
+compared.</p>
+<br>
+<h3>Smart Pointers</h3>
+<br>
+<p>The standard library contains additional 'smart pointer' types beyond references
+and raw pointers.</p>
+<br>
+<h2>Function item types</h2>
+<br>
+<p>When referred to, a function item, or the constructor of a tuple-like struct or
+enum variant, yields a zero-sized value of its <s>function item type</s>. That type
+explicitly identifies the function - its name, its type arguments, and its
+early-bound lifetime arguments (but not its late-bound lifetime arguments,
+which are only assigned when the function is called) - so the value does not
+need to contain an actual function pointer, and no indirection is needed when
+the function is called.</p>
+<br>
+<p>There is no syntax that directly refers to a function item type, but the
+compiler will display the type as something like <code>fn(u32) -&gt; i32 {fn_name}</code> in
+error messages.</p>
+<br>
+<p>Because the function item type explicitly identifies the function, the item
+types of different functions - different items, or the same item with different
+generics - are distinct, and mixing them will create a type error:</p>
+<br>
+<div data-lang="rust,compile_fail,E0308"><div data-l="fn foo&lt;T&gt;() { }"></div><div data-l="let x = &amp;mut foo::&lt;i32&gt;;"></div><div data-l="*x = foo::&lt;u32&gt;; //~ ERROR mismatched types"></div></div>
+<br>
+<p>However, there is a <a class="notranslate" href="#4coercion">coercion</a> from function items to <a class="notranslate" href="#2#function-pointer-types">function
+pointers</a> with the same signature, which is triggered
+not only when a function item is used when a function pointer is directly
+expected, but also when different function item types with the same signature
+meet in different arms of the same <code>if</code> or <code>match</code>:</p>
+<br>
+<a class="notranslate" href="#1type-coercions.html">coercion</a>
+<br>
+<div data-lang="rust"><div data-l="# let want_i32 = false;"></div><div data-l="# fn foo&lt;T&gt;() { }"></div><div data-l=""></div><div data-l="#// `foo_ptr_1` has function pointer type `fn()` here"></div><div data-l="// "><code>foo_ptr_1</code> has function pointer type <code>fn()</code> here</div><div data-l="let foo_ptr_1: fn() = foo::&lt;i32&gt;;"></div><div data-l=""></div><div data-l="#// ... and so does `foo_ptr_2` - this type-checks."></div><div data-l="// ">... and so does <code>foo_ptr_2</code> - this type-checks.</div><div data-l="let foo_ptr_2 = if want_i32 {"></div><div data-l="    foo::&lt;i32&gt;"></div><div data-l="} else {"></div><div data-l="    foo::&lt;u32&gt;"></div><div data-l="};"></div></div>
+<br>
+<p>All function items implement <a class="notranslate" href="#4`Fn`">`Fn`</a>, <a class="notranslate" href="#4`FnMut`">`FnMut`</a>, <a class="notranslate" href="#4`FnOnce`">`FnOnce`</a>, <a class="notranslate" href="#4`Copy`">`Copy`</a>,
+<a class="notranslate" href="#4`Clone`">`Clone`</a>, <a class="notranslate" href="#4`Send`">`Send`</a>, and <a class="notranslate" href="#4`Sync`">`Sync`</a>.</p>
+<br>
+<h2>Function pointer types</h2>
+<br>
+<p>Function pointer types, written using the <code>fn</code> keyword, refer to a function
+whose identity is not necessarily known at compile-time. They can be created
+via a coercion from both <a href="#2#function-item-types">function items</a> and
+non-capturing <a class="notranslate" href="#2#closure-types">closures</a>.</p>
+<br>
+<p>A function pointer type consists of a possibly-empty set of function-type
+modifiers (such as <code>unsafe</code> or <code>extern</code>), a sequence of input types and an
+output type.</p>
+<br>
+<p>An example where <code>Binop</code> is defined as a function pointer type:</p>
+<br>
+<div data-lang="rust"><div data-l="fn add(x: i32, y: i32) -&gt; i32 {"></div><div data-l="    x + y"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut x = add(5,7);"></div><div data-l=""></div><div data-l="type Binop = fn(i32, i32) -&gt; i32;"></div><div data-l="let bo: Binop = add;"></div><div data-l="x = bo(5,7);"></div></div>
+<br>
+<h2>Closure types</h2>
+<br>
+<p>A <a class="notranslate" href="#4closure expression">closure expression</a> produces a closure value with a unique, anonymous type
+that cannot be written out. A closure type is approximately equivalent to a
+struct which contains the captured variables. For instance, the following
+closure:</p>
+<br>
+<div data-lang="rust"><div data-l="fn f&lt;F : FnOnce() -&gt; String&gt; (g: F) {"></div><div data-l="    println!(&quot;{}&quot;, g());"></div><div data-l="}"></div><div data-l=""></div><div data-l="let mut s = String::from(&quot;foo&quot;);"></div><div data-l="let t = String::from(&quot;bar&quot;);"></div><div data-l=""></div><div data-l="f(|| {"></div><div data-l="    s += &amp;*t;"></div><div data-l="    s"></div><div data-l="});"></div><div data-l="#// Prints &quot;foobar&quot;."></div><div data-l="// ">Prints &quot;foobar&quot;.</div></div>
+<br>
+<p>generates a closure type roughly like the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Closure&lt;'a&gt; {"></div><div data-l="    s : String,"></div><div data-l="    t : &amp;'a String,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;'a&gt; (FnOnce() -&gt; String) for Closure&lt;'a&gt; {"></div><div data-l="    fn call_once(self) -&gt; String {"></div><div data-l="        self.s += &amp;*self.t;"></div><div data-l="        self.s"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>so that the call to <code>f</code> works as if it were:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="f(Closure{s: s, t: &amp;t});"></div></div>
+<br>
+<h3>Capture modes</h3>
+<br>
+<p>The compiler prefers to capture a closed-over variable by immutable borrow,
+followed by unique immutable borrow (see below), by mutable borrow, and finally
+by move. It will pick the first choice of these that allows the closure to
+compile. The choice is made only with regards to the contents of the closure
+expression; the compiler does not take into account surrounding code, such as
+the lifetimes of involved variables.</p>
+<br>
+<p>If the <code>move</code> keyword is used, then all captures are by move or, for <code>Copy</code>
+types, by copy, regardless of whether a borrow would work. The <code>move</code> keyword is
+usually used to allow the closure to outlive the captured values, such as if the
+closure is being returned or used to spawn a new thread.</p>
+<br>
+<p>Composite types such as structs, tuples, and enums are always captured entirely,
+not by individual fields. It may be necessary to borrow into a local variable in
+order to capture a single field:</p>
+<br>
+<div data-lang="rust"><div data-l="# use std::collections::HashSet;"></div><div data-l="#"></div><div data-l="struct SetVec {"></div><div data-l="    set: HashSet&lt;u32&gt;,"></div><div data-l="    vec: Vec&lt;u32&gt;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl SetVec {"></div><div data-l="    fn populate(&amp;mut self) {"></div><div data-l="        let vec = &amp;mut self.vec;"></div><div data-l="        self.set.iter().for_each(|&amp;n| {"></div><div data-l="            vec.push(n);"></div><div data-l="        })"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>If, instead, the closure were to use <code>self.vec</code> directly, then it would attempt
+to capture <code>self</code> by mutable reference. But since <code>self.set</code> is already
+borrowed to iterate over, the code would not compile.</p>
+<br>
+<h3>Unique immutable borrows in captures</h3>
+<br>
+<p>Captures can occur by a special kind of borrow called a <s>unique immutable
+borrow</s>, which cannot be used anywhere else in the language and cannot be
+written out explicitly. It occurs when modifying the referent of a mutable
+reference, as in the following example:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut b = false;"></div><div data-l="let x = &amp;mut b;"></div><div data-l="{"></div><div data-l="    let mut c = || { *x = true; };"></div><div data-l="#    // The following line is an error:"></div><div data-l="#    // let y = &amp;x;"></div><div data-l="    // ">The following line is an error: let y = &amp;x;</div><div data-l="    c();"></div><div data-l="}"></div><div data-l="let z = &amp;x;"></div></div>
+<br>
+<p>In this case, borrowing <code>x</code> mutably is not possible, because <code>x</code> is not <code>mut</code>.
+But at the same time, borrowing <code>x</code> immutably would make the assignment illegal,
+because a <code>&amp; &amp;mut</code> reference may not be unique, so it cannot safely be used to
+modify a value. So a unique immutable borrow is used: it borrows <code>x</code> immutably,
+but like a mutable borrow, it must be unique. In the above example, uncommenting
+the declaration of <code>y</code> will produce an error because it would violate the
+uniqueness of the closure's borrow of <code>x</code>; the declaration of z is valid because
+the closure's lifetime has expired at the end of the block, releasing the borrow.</p>
+<br>
+<h3>Call traits and coercions</h3>
+<br>
+<p>Closure types all implement <a class="notranslate" href="#4`FnOnce`">`FnOnce`</a>, indicating that they can be called once
+by consuming ownership of the closure. Additionally, some closures implement
+more specific call traits:</p>
+<br>
+<div data-b="*">A closure which does not move out of any captured variables implements
+<a class="notranslate" href="#4`FnMut`">`FnMut`</a>, indicating that it can be called by mutable reference.</div>
+<br>
+<div data-b="*">A closure which does not mutate or move out of any captured variables
+implements <a class="notranslate" href="#4`Fn`">`Fn`</a>, indicating that it can be called by shared reference.</div>
+<br>
+<blockquote><p>Note: <code>move</code> closures may still implement <a class="notranslate" href="#4`Fn`">`Fn`</a> or <a class="notranslate" href="#4`FnMut`">`FnMut`</a>, even though
+they capture variables by move. This is because the traits implemented by a
+closure type are determined by what the closure does with captured values,
+not how it captures them.</p></blockquote>
+<br>
+<p><i>Non-capturing closures</i> are closures that don't capture anything from their
+environment. They can be coerced to function pointers (<code>fn</code>) with the matching
+signature.</p>
+<br>
+<div data-lang="rust"><div data-l="let add = |x, y| x + y;"></div><div data-l=""></div><div data-l="let mut x = add(5,7);"></div><div data-l=""></div><div data-l="type Binop = fn(i32, i32) -&gt; i32;"></div><div data-l="let bo: Binop = add;"></div><div data-l="x = bo(5,7);"></div></div>
+<br>
+<h3>Other traits</h3>
+<br>
+<p>All closure types implement <a class="notranslate" href="#4`Sized`">`Sized`</a>. Additionally, closure types implement the
+following traits if allowed to do so by the types of the captures it stores:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4`Clone`">`Clone`</a></div>
+<div data-b="*"><a class="notranslate" href="#4`Copy`">`Copy`</a></div>
+<div data-b="*"><a class="notranslate" href="#4`Sync`">`Sync`</a></div>
+<div data-b="*"><a class="notranslate" href="#4`Send`">`Send`</a></div>
+<br>
+<p>The rules for <a class="notranslate" href="#4`Send`">`Send`</a> and <a class="notranslate" href="#4`Sync`">`Sync`</a> match those for normal struct types, while
+<a class="notranslate" href="#4`Clone`">`Clone`</a> and <a class="notranslate" href="#4`Copy`">`Copy`</a> behave as if <a class="notranslate" href="#3derive">derived</a>. For <a class="notranslate" href="#4`Clone`">`Clone`</a>, the order
+of cloning of the captured variables is left unspecified.</p>
+<br>
+<p>Because captures are often by reference, the following general rules arise:</p>
+<br>
+<div data-b="*">A closure is <a class="notranslate" href="#4`Sync`">`Sync`</a> if all captured variables are <a class="notranslate" href="#4`Sync`">`Sync`</a>.</div>
+<div data-b="*">A closure is <a class="notranslate" href="#4`Send`">`Send`</a> if all variables captured by non-unique immutable
+reference are <a class="notranslate" href="#4`Sync`">`Sync`</a>, and all values captured by unique immutable or mutable
+reference, copy, or move are <a class="notranslate" href="#4`Send`">`Send`</a>.</div>
+<div data-b="*">A closure is <a class="notranslate" href="#4`Clone`">`Clone`</a> or <a class="notranslate" href="#4`Copy`">`Copy`</a> if it does not capture any values by
+unique immutable or mutable reference, and if all values it captures by copy
+or move are <a class="notranslate" href="#4`Clone`">`Clone`</a> or <a class="notranslate" href="#4`Copy`">`Copy`</a>, respectively.</div>
+<br>
+<h2>Trait objects</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>
+<s>TraitObjectType</s> :
+&amp;nbsp;&amp;nbsp; <code>dyn</code><sup>?</sup> <s>TypeParamBounds</s></p></blockquote>
+<br>
+<p>A <i>trait object</i> is an opaque value of another type that implements a set of
+traits. The set of traits is made up of an <a class="notranslate" href="#4object safe">object safe</a> <i>base trait</i> plus any
+number of <a class="notranslate" href="#4auto traits">auto traits</a>.</p>
+<br>
+<p>Trait objects implement the base trait, its auto traits, and any <a class="notranslate" href="#4supertraits">supertraits</a>
+of the base trait.</p>
+<br>
+<p>Trait objects are written as the optional keyword <code>dyn</code> followed by a set of
+trait bounds, but with the following restrictions on the trait bounds. All
+traits except the first trait must be auto traits, there may not be more than
+one lifetime, and opt-out bounds (e.g. <code>?sized</code>) are not allowed. Furthermore,
+paths to traits may be parenthesized.</p>
+<br>
+<p>For example, given a trait <code>Trait</code>, the following are all trait objects:</p>
+<br>
+<div data-b="*"><code>Trait</code></div>
+<div data-b="*"><code>dyn Trait</code></div>
+<div data-b="*"><code>dyn Trait + Send</code></div>
+<div data-b="*"><code>dyn Trait + Send + Sync</code></div>
+<div data-b="*"><code>dyn Trait + 'static</code></div>
+<div data-b="*"><code>dyn Trait + Send + 'static</code></div>
+<div data-b="*"><code>dyn Trait +</code></div>
+<div data-b="*"><code>dyn 'static + Trait</code>.</div>
+<div data-b="*"><code>dyn (Trait)</code></div>
+<br>
+<p>If the first bound of the trait object is a path that starts with <code>::</code>, then the
+<code>dyn</code> will be treated as a part of the path. The first path can be put in
+parenthesis to get around this. As such, if you want a trait object with the
+trait <code>::your_module::Trait</code>, you should write it as
+<code>dyn (::your_module::Trait)</code>.</p>
+<br>
+<blockquote><p>Note: For clarity, it is recommended to always use the <code>dyn</code> keyword on your
+trait objects unless your codebase supports compiling with Rust 1.26 or lower.</p></blockquote>
+<br>
+<p>Two trait object types alias each other if the base traits alias each other and
+if the sets of auto traits are the same and the lifetime bounds are the same.
+For example, <code>dyn Trait + Send + UnwindSafe</code> is the same as
+<code>dyn Trait + Unwindsafe + Send</code>.</p>
+<br>
+<p><div class="warning"></p>
+<br>
+<p>*<b>Warning:</b>* With two trait object types, even when the complete set of traits
+is the same, if the base traits differ, the type is different. For example,
+<code>dyn Send + Sync</code> is a different type from <code>dyn Sync + Send</code>. See <a class="notranslate" href="#4issue 33140">issue 33140</a>.</p>
+<br>
+<p></div></p>
+<br>
+<p>Due to the opaqueness of which concrete type the value is of, trait objects are
+<a class="notranslate" href="#4dynamically sized types">dynamically sized types</a>. Like all
+<abbr title="dynamically sized types">DSTs</abbr>, trait objects are used
+behind some type of pointer; for example <code>&amp;dyn SomeTrait</code> or
+<code>Box&lt;dyn SomeTrait&gt;</code>. Each instance of a pointer to a trait object includes:</p>
+<br>
+<div data-b=" -">a pointer to an instance of a type <code>T</code> that implements <code>SomeTrait</code></div>
+<div data-b=" -">a <s>virtual method table</s>, often just called a <s>vtable</s>, which contains, for
+each method of <code>SomeTrait</code> and its <a class="notranslate" href="#4supertraits">supertraits</a> that <code>T</code> implements, a
+pointer to <code>T</code>'s implementation (i.e. a function pointer).</div>
+<br>
+<p>The purpose of trait objects is to permit &quot;late binding&quot; of methods. Calling a
+method on a trait object results in virtual dispatch at runtime: that is, a
+function pointer is loaded from the trait object vtable and invoked indirectly.
+The actual implementation for each vtable entry can vary on an object-by-object
+basis.</p>
+<br>
+<p>An example of a trait object:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Printable {"></div><div data-l="    fn stringify(&amp;self) -&gt; String;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Printable for i32 {"></div><div data-l="    fn stringify(&amp;self) -&gt; String { self.to_string() }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(a: Box&lt;dyn Printable&gt;) {"></div><div data-l="    println!(&quot;{}&quot;, a.stringify());"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    print(Box::new(10) as Box&lt;dyn Printable&gt;);"></div><div data-l="}"></div></div>
+<br>
+<p>In this example, the trait <code>Printable</code> occurs as a trait object in both the
+type signature of <code>print</code>, and the cast expression in <code>main</code>.</p>
+<br>
+<h3>Trait Object Lifetime Bounds</h3>
+<br>
+<p>Since a trait object can contain references, the lifetimes of those references
+need to be expressed as part of the trait object. This lifetime is written as
+<code>Trait + 'a</code>. There are <a class="notranslate" href="#4defaults">defaults</a> that allow this lifetime to usually be
+inferred with a sensible choice.</p>
+<br>
+<a class="notranslate" href="#1lifetime-elision.html#default-trait-object-lifetimes">defaults</a>
+<br>
+<h2>Type parameters</h2>
+<br>
+<p>Within the body of an item that has type parameter declarations, the names of
+its type parameters are types:</p>
+<br>
+<div data-lang="rust"><div data-l="fn to_vec&lt;A: Clone&gt;(xs: &amp;[A]) -&gt; Vec&lt;A&gt; {"></div><div data-l="    if xs.is_empty() {"></div><div data-l="        return vec![];"></div><div data-l="    }"></div><div data-l="    let first: A = xs[0].clone();"></div><div data-l="    let mut rest: Vec&lt;A&gt; = to_vec(&amp;xs[1..]);"></div><div data-l="    rest.insert(0, first);"></div><div data-l="    rest"></div><div data-l="}"></div></div>
+<br>
+<p>Here, <code>first</code> has type <code>A</code>, referring to <code>to_vec</code>'s <code>A</code> type parameter; and
+<code>rest</code> has type <code>Vec&lt;A&gt;</code>, a vector with element type <code>A</code>.</p>
+<br>
+<h2>Anonymous type parameters</h2>
+<br>
+<blockquote><p>Note: This section is a placeholder for more comprehensive reference
+material.</p></blockquote>
+<br>
+<blockquote><p>Note: This is often called &quot;impl Trait in argument position&quot;.</p></blockquote>
+<br>
+<p>Functions can declare an argument to be an anonymous type parameter where the
+callee must provide a type that has the bounds declared by the anonymous type
+parameter and the function can only use the methods available by the trait
+bounds of the anonymous type parameter.</p>
+<br>
+<p>They are written as <code>impl</code> followed by a set of trait bounds.</p>
+<br>
+<h2>Abstract return types</h2>
+<br>
+<blockquote><p>Note: This section is a placeholder for more comprehensive reference
+material.</p></blockquote>
+<br>
+<blockquote><p>Note: This is often called &quot;impl Trait in return position&quot;.</p></blockquote>
+<br>
+<p>Functions, except for associated trait functions, can return an abstract
+return type. These  types stand in for another concrete type where the
+use-site may only use the trait methods declared by the trait bounds of the
+type.</p>
+<br>
+<p>They are written as <code>impl</code> followed by a set of trait bounds.</p>
+<br>
+<h2>Self types</h2>
+<br>
+<p>The special type <code>Self</code> has a meaning within traits and implementations: it
+refers to the implementing type. For example, in:</p>
+<br>
+<div data-lang="rust"><div data-l="pub trait From&lt;T&gt; {"></div><div data-l="    fn from(T) -&gt; Self;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl From&lt;i32&gt; for String {"></div><div data-l="    fn from(x: i32) -&gt; Self {"></div><div data-l="        x.to_string()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The notation <code>Self</code> in the impl refers to the implementing type: <code>String</code>. In
+another example:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Printable {"></div><div data-l="    fn make_string(&amp;self) -&gt; String;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Printable for String {"></div><div data-l="    fn make_string(&amp;self) -&gt; String {"></div><div data-l="        (*self).clone()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<blockquote><p>Note: The notation <code>&amp;self</code> is a shorthand for <code>self: &amp;Self</code>.</p></blockquote>
+<br>
+<a class="notranslate" href="#1../std/ops/trait.Fn.html">`Fn`</a>
+<a class="notranslate" href="#1../std/ops/trait.FnMut.html">`FnMut`</a>
+<a class="notranslate" href="#1../std/ops/trait.FnOnce.html">`FnOnce`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#copy">`Copy`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#clone">`Clone`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#send">`Send`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#sync">`Sync`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#sized">`Sized`</a>
+<a class="notranslate" href="#1attributes.html#derive">derive</a>
+<a class="notranslate" href="#1../std/vec/struct.Vec.html">`Vec&lt;T&gt;`</a>
+<a class="notranslate" href="#1dynamically-sized-types.html">dynamically sized type</a>
+<a class="notranslate" href="#1dynamically-sized-types.html">dynamically sized types</a>
+<a class="notranslate" href="#1expressions/struct-expr.html">struct expression</a>
+<a class="notranslate" href="#1expressions/closure-expr.html">closure expression</a>
+<a class="notranslate" href="#1special-types-and-traits.html#auto-traits">auto traits</a>
+<a class="notranslate" href="#1items/traits.html#object-safety">object safe</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/47010">issue 47010</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/33140">issue 33140</a>
+<a class="notranslate" href="#1paths.html">_PATH_</a>
+<a class="notranslate" href="#1tokens.html#lifetimes-and-loop-labels">_LIFETIME_OR_LABEL_</a>
+<a class="notranslate" href="#1items/traits.html#supertraits">supertraits</a>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>HashMap</h1>
+<br>
+<p>Where vectors store values by an integer index, <code>HashMap</code>s store values by key. 
+<code>HashMap</code> keys can be booleans, integers, strings, 
+or any other type that implements the <code>Eq</code> and <code>Hash</code> traits. 
+More on this in the next section.</p>
+<br>
+<p>Like vectors, <code>HashMap</code>s are growable, but HashMaps can also shrink themselves 
+when they have excess space. 
+You can create a HashMap with a certain starting capacity using 
+<code>HashMap::with_capacity(uint)</code>, or use <code>HashMap::new()</code> to get a HashMap 
+with a default initial capacity (recommended).</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::collections::HashMap;"></div><div data-l=""></div><div data-l="fn call(number: &amp;str) -&gt; &amp;str {"></div><div data-l="    match number {"></div><div data-l="        &quot;798-1364&quot; =&gt; &quot;We're sorry, the call cannot be completed as dialed. "></div><div data-l="            Please hang up and try again.&quot;,"></div><div data-l="        &quot;645-7689&quot; =&gt; &quot;Hello, this is Mr. Awesome's Pizza. My name is Fred."></div><div data-l="            What can I get for you today?&quot;,"></div><div data-l="        _ =&gt; &quot;Hi! Who is this again?&quot;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() { "></div><div data-l="    let mut contacts = HashMap::new();"></div><div data-l=""></div><div data-l="    contacts.insert(&quot;Daniel&quot;, &quot;798-1364&quot;);"></div><div data-l="    contacts.insert(&quot;Ashley&quot;, &quot;645-7689&quot;);"></div><div data-l="    contacts.insert(&quot;Katie&quot;, &quot;435-8291&quot;);"></div><div data-l="    contacts.insert(&quot;Robert&quot;, &quot;956-1745&quot;);"></div><div data-l=""></div><div data-l="#    // Takes a reference and returns Option&lt;&amp;V&gt;"></div><div data-l="    // ">Takes a reference and returns Option<&V></div><div data-l="    match contacts.get(&amp;&quot;Daniel&quot;) {"></div><div data-l="        Some(&amp;number) =&gt; println!(&quot;Calling Daniel: {}&quot;, call(number)),"></div><div data-l="        _ =&gt; println!(&quot;Don't have Daniel's number.&quot;),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // `HashMap::insert()` returns `None`"></div><div data-l="#    // if the inserted value is new, `Some(value)` otherwise"></div><div data-l="    // "><code>HashMap::insert()</code> returns <code>None</code> if the inserted value is new, <code>Some(value)</code> otherwise</div><div data-l="    contacts.insert(&quot;Daniel&quot;, &quot;164-6743&quot;);"></div><div data-l=""></div><div data-l="    match contacts.get(&amp;&quot;Ashley&quot;) {"></div><div data-l="        Some(&amp;number) =&gt; println!(&quot;Calling Ashley: {}&quot;, call(number)),"></div><div data-l="        _ =&gt; println!(&quot;Don't have Ashley's number.&quot;),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    contacts.remove(&amp;&quot;Ashley&quot;); "></div><div data-l=""></div><div data-l="#    // `HashMap::iter()` returns an iterator that yields "></div><div data-l="#    // (&amp;'a key, &amp;'a value) pairs in arbitrary order."></div><div data-l="    // "><code>HashMap::iter()</code> returns an iterator that yields  (&amp;'a key, &amp;'a value) pairs in arbitrary order.</div><div data-l="    for (contact, &amp;number) in contacts.iter() {"></div><div data-l="        println!(&quot;Calling {}: {}&quot;, contact, call(number)); "></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>For more information on how hashing and hash maps 
+(sometimes called hash tables) work, have a look at 
+<a href="#3wiki-hash">Hash Table Wikipedia</a></p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Hash_table">wiki-hash</a>

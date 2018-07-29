@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h1>Repeat</h1>
+<br>
+<p>Macros can use <code>+</code> in the argument list to indicate that an argument may
+repeat at least once, or <code>*</code>, to indicate that the argument may repeat zero or
+more times.</p>
+<br>
+<p>In the following example, surrounding the matcher with <code>$(...),+</code> will
+match one or more expression, separated by commas.
+Also note that the semicolon is optional on the last case.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// `min!` will calculate the minimum of any number of arguments."></div><div data-l="// "><code>min€</code> will calculate the minimum of any number of arguments.</div><div data-l="macro_rules! find_min {"></div><div data-l="#    // Base case:"></div><div data-l="    // ">Base case:</div><div data-l="    ($x:expr) =&gt; ($x);"></div><div data-l="#    // `$x` followed by at least one `$y,`"></div><div data-l="    // "><code>$x</code> followed by at least one <code>$y,</code></div><div data-l="    ($x:expr, $($y:expr),+) =&gt; ("></div><div data-l="#        // Call `find_min!` on the tail `$y`"></div><div data-l="        // ">Call <code>find_min€</code> on the tail <code>$y</code></div><div data-l="        std::cmp::min($x, find_min!($($y),+))"></div><div data-l="    )"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;{}&quot;, find_min!(1u32));"></div><div data-l="    println!(&quot;{}&quot;, find_min!(1u32 + 2 , 2u32));"></div><div data-l="    println!(&quot;{}&quot;, find_min!(5u32, 2u32 * 3, 4u32));"></div><div data-l="}"></div></div>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Extract the URL origin (scheme / host / port)</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>The <a class="notranslate" href="#4`Url`">`Url`</a> struct exposes various methods to extract information about the URL
+it represents.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::{Url, Host};"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let s = &quot;ftp://rust-lang.org/examples&quot;;"></div><div data-l=""></div><div data-l="    let url = Url::parse(s)?;"></div><div data-l=""></div><div data-l="    assert_eq!(url.scheme(), &quot;ftp&quot;);"></div><div data-l="    assert_eq!(url.host(), Some(Host::Domain(&quot;rust-lang.org&quot;)));"></div><div data-l="    assert_eq!(url.port_or_known_default(), Some(21));"></div><div data-l="    println!(&quot;The origin is as expected!&quot;);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<p><a class="notranslate" href="#4`origin`">`origin`</a> produces the same result.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::{Url, Origin, Host};"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let s = &quot;ftp://rust-lang.org/examples&quot;;"></div><div data-l=""></div><div data-l="    let url = Url::parse(s)?;"></div><div data-l=""></div><div data-l="    let expected_scheme = &quot;ftp&quot;.to_owned();"></div><div data-l="    let expected_host = Host::Domain(&quot;rust-lang.org&quot;.to_owned());"></div><div data-l="    let expected_port = 21;"></div><div data-l="    let expected = Origin::Tuple(expected_scheme, expected_host, expected_port);"></div><div data-l=""></div><div data-l="    let origin = url.origin();"></div><div data-l="    assert_eq!(origin, expected);"></div><div data-l="    println!(&quot;The origin is as expected!&quot;);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html#method.origin">`origin`</a>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html">`Url`</a>

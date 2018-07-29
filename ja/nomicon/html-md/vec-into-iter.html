@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<h1>IntoIter</h1>
+<br>
+<p>Let's move on to writing iterators. <code>iter</code> and <code>iter_mut</code> have already been
+written for us thanks to The Magic of Deref. However there's two interesting
+iterators that Vec provides that slices can't: <code>into_iter</code> and <code>drain</code>.</p>
+<br>
+<p>IntoIter consumes the Vec by-value, and can consequently yield its elements
+by-value. In order to enable this, IntoIter needs to take control of Vec's
+allocation.</p>
+<br>
+<p>IntoIter needs to be DoubleEnded as well, to enable reading from both ends.
+Reading from the back could just be implemented as calling <code>pop</code>, but reading
+from the front is harder. We could call <code>remove(0)</code> but that would be insanely
+expensive. Instead we're going to just use ptr::read to copy values out of
+either end of the Vec without mutating the buffer at all.</p>
+<br>
+<p>To do this we're going to use a very common C idiom for array iteration. We'll
+make two pointers; one that points to the start of the array, and one that
+points to one-element past the end. When we want an element from one end, we'll
+read out the value pointed to at that end and move the pointer over by one. When
+the two pointers are equal, we know we're done.</p>
+<br>
+<p>Note that the order of read and offset are reversed for <code>next</code> and <code>next_back</code>
+For <code>next_back</code> the pointer is always after the element it wants to read next,
+while for <code>next</code> the pointer is always at the element it wants to read next.
+To see why this is, consider the case where every element but one has been
+yielded.</p>
+<br>
+<p>The array looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="          S  E"></div><div data-l="[X, X, X, O, X, X, X]"></div></div>
+<br>
+<p>If E pointed directly at the element it wanted to yield next, it would be
+indistinguishable from the case where there are no more elements to yield.</p>
+<br>
+<p>Although we don't actually care about it during iteration, we also need to hold
+onto the Vec's allocation information in order to free it once IntoIter is
+dropped.</p>
+<br>
+<p>So we're going to use the following struct:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct IntoIter&lt;T&gt; {"></div><div data-l="    buf: Unique&lt;T&gt;,"></div><div data-l="    cap: usize,"></div><div data-l="    start: *const T,"></div><div data-l="    end: *const T,"></div><div data-l="}"></div></div>
+<br>
+<p>And this is what we end up with for initialization:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Vec&lt;T&gt; {"></div><div data-l="    fn into_iter(self) -&gt; IntoIter&lt;T&gt; {"></div><div data-l="#        // Can't destructure Vec since it's Drop"></div><div data-l="        // ">Can't destructure Vec since it's Drop</div><div data-l="        let ptr = self.ptr;"></div><div data-l="        let cap = self.cap;"></div><div data-l="        let len = self.len;"></div><div data-l=""></div><div data-l="#        // Make sure not to drop Vec since that will free the buffer"></div><div data-l="        // ">Make sure not to drop Vec since that will free the buffer</div><div data-l="        mem::forget(self);"></div><div data-l=""></div><div data-l="        unsafe {"></div><div data-l="            IntoIter {"></div><div data-l="                buf: ptr,"></div><div data-l="                cap: cap,"></div><div data-l="                start: *ptr,"></div><div data-l="                end: if cap == 0 {"></div><div data-l="#                    // can't offset off this pointer, it's not allocated!"></div><div data-l="                    // ">can't offset off this pointer, it's not allocated!</div><div data-l="                    *ptr"></div><div data-l="                } else {"></div><div data-l="                    ptr.offset(len as isize)"></div><div data-l="                }"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Here's iterating forward:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Iterator for IntoIter&lt;T&gt; {"></div><div data-l="    type Item = T;"></div><div data-l="    fn next(&amp;mut self) -&gt; Option&lt;T&gt; {"></div><div data-l="        if self.start == self.end {"></div><div data-l="            None"></div><div data-l="        } else {"></div><div data-l="            unsafe {"></div><div data-l="                let result = ptr::read(self.start);"></div><div data-l="                self.start = self.start.offset(1);"></div><div data-l="                Some(result)"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn size_hint(&amp;self) -&gt; (usize, Option&lt;usize&gt;) {"></div><div data-l="        let len = (self.end as usize - self.start as usize)"></div><div data-l="                  / mem::size_of::&lt;T&gt;();"></div><div data-l="        (len, Some(len))"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And here's iterating backwards.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; DoubleEndedIterator for IntoIter&lt;T&gt; {"></div><div data-l="    fn next_back(&amp;mut self) -&gt; Option&lt;T&gt; {"></div><div data-l="        if self.start == self.end {"></div><div data-l="            None"></div><div data-l="        } else {"></div><div data-l="            unsafe {"></div><div data-l="                self.end = self.end.offset(-1);"></div><div data-l="                Some(ptr::read(self.end))"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Because IntoIter takes ownership of its allocation, it needs to implement Drop
+to free it. However it also wants to implement Drop to drop any elements it
+contains that weren't yielded.</p>
+<br>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Drop for IntoIter&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        if self.cap != 0 {"></div><div data-l="#            // drop any remaining elements"></div><div data-l="            // ">drop any remaining elements</div><div data-l="            for _ in &amp;mut *self {}"></div><div data-l=""></div><div data-l="            let align = mem::align_of::&lt;T&gt;();"></div><div data-l="            let elem_size = mem::size_of::&lt;T&gt;();"></div><div data-l="            let num_bytes = elem_size * self.cap;"></div><div data-l="            unsafe {"></div><div data-l="                heap::deallocate(self.buf.as_ptr() as *mut _, num_bytes, align);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>

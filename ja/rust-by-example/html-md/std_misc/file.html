@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h1>File I/O</h1>
+<br>
+<p>The <code>File</code> struct represents a file that has been opened (it wraps a file
+descriptor), and gives read and/or write access to the underlying file.</p>
+<br>
+<p>Since many things can go wrong when doing file I/O, all the <code>File</code> methods
+return the <code>io::Result&lt;T&gt;</code> type, which is an alias for <code>Result&lt;T, io::Error&gt;</code>.</p>
+<br>
+<p>This makes the failure of all I/O operations <i>explicit</i>. Thanks to this, the
+programmer can see all the failure paths, and is encouraged to handle them in
+a proactive manner.</p>

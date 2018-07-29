@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>Extract all links from a webpage HTML</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3select">!<a class="notranslate" href="#4select-badge">select-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>Use <a class="notranslate" href="#4`reqwest::get`">`reqwest::get`</a> to perform a HTTP GET request and then use
+<a class="notranslate" href="#4`Document::from_read`">`Document::from_read`</a> to parse the response into a HTML document.
+<a class="notranslate" href="#4`find`">`find`</a> with the criteria of <a class="notranslate" href="#4`Name`">`Name`</a> is &quot;a&quot; retrieves all links.
+Call <a class="notranslate" href="#4`filter_map`">`filter_map`</a> on the <a class="notranslate" href="#4`Selection`">`Selection`</a> retrieves URLs
+from links that have the &quot;href&quot; <a class="notranslate" href="#4`attr`">`attr`</a> (attribute).</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l="extern crate select;"></div><div data-l=""></div><div data-l="use select::document::Document;"></div><div data-l="use select::predicate::Name;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#    foreign_links {"></div><div data-l="#        ReqError(reqwest::Error);"></div><div data-l="#        IoError(std::io::Error);"></div><div data-l="#    }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let res = reqwest::get(&quot;https://www.rust-lang.org/en-US/&quot;)?;"></div><div data-l=""></div><div data-l="    Document::from_read(res)?"></div><div data-l="        .find(Name(&quot;a&quot;))"></div><div data-l="        .filter_map(|n| n.attr(&quot;href&quot;))"></div><div data-l="        .for_each(|x| println!(&quot;{}&quot;, x));"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/select/*/select/node/struct.Node.html#method.attr">`attr`</a>
+<a class="notranslate" href="#1https://docs.rs/select/*/select/document/struct.Document.html#method.from_read">`Document::from_read`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/iter/trait.Iterator.html#method.filter_map">`filter_map`</a>
+<a class="notranslate" href="#1https://docs.rs/select/*/select/document/struct.Document.html#method.find">`find`</a>
+<a class="notranslate" href="#1https://docs.rs/select/*/select/predicate/struct.Name.html">`Name`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/fn.get.html">`reqwest::get`</a>
+<a class="notranslate" href="#1https://docs.rs/select/*/select/selection/struct.Selection.html">`Selection`</a>

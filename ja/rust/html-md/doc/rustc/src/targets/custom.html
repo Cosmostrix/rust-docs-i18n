@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h1>Custom Targets</h1>
+<br>
+<p>If you'd like to build for a target that is not yet supported by <code>rustc</code>, you can use a
+&quot;custom target specification&quot; to define a target. These target specification files
+are JSON. To see the JSON for the host target, you can run:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc +nightly -Z unstable-options --print target-spec-json"></div></div>
+<br>
+<p>To see it for a different target, add the <code>--target</code> flag:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc +nightly -Z unstable-options --target=wasm32-unknown-unknown --print target-spec-json"></div></div>
+<br>
+<p>To use a custom target, see <a class="notranslate" href="#2https://github.com/japaric/xargo"><code>xargo</code></a>.</p>

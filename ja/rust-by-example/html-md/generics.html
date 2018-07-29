@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<h1>Generics</h1>
+<br>
+<p><i>Generics</i> is the topic of generalizing types and functionalities to broader
+cases. This is extremely useful for reducing code duplication in many ways,
+but can call for rather involving syntax. Namely, being generic requires 
+taking great care to specify over which types a generic type 
+is actually considered valid. The simplest and most common use of generics 
+is for type parameters.</p>
+<br>
+<p>A type parameter is specified as generic by the use of angle brackets and upper
+<a href="#3camelcase">camel case</a>: <code>&lt;Aaa, Bbb, ...&gt;</code>. &quot;Generic type parameters&quot; are
+typically represented as <code>&lt;T&gt;</code>. In Rust, &quot;generic&quot; also describes anything that
+accepts one or more generic type parameters <code>&lt;T&gt;</code>. Any type specified as a 
+generic type parameter is generic, and everything else is concrete (non-generic).</p>
+<br>
+<p>For example, defining a <i>generic function</i> named <code>foo</code> that takes an argument
+<code>T</code> of any type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;T&gt;(arg: T) { ... }"></div></div>
+<br>
+<p>Because <code>T</code> has been specified as a generic type parameter using <code>&lt;T&gt;</code>, it 
+is considered generic when used here as <code>(arg: T)</code>. This is the case even if <code>T</code> 
+has previously been defined as a <code>struct</code>.</p>
+<br>
+<p>This example shows some of the syntax in action:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// A concrete type `A`."></div><div data-l="// ">A concrete type <code>A</code>.</div><div data-l="struct A;"></div><div data-l=""></div><div data-l="#// In defining the type `Single`, the first use of `A` is not preceded by `&lt;A&gt;`."></div><div data-l="#// Therefore, `Single` is a concrete type, and `A` is defined as above."></div><div data-l="// ">In defining the type <code>Single</code>, the first use of <code>A</code> is not preceded by <code>&lt;A&gt;</code>. Therefore, <code>Single</code> is a concrete type, and <code>A</code> is defined as above.</div><div data-l="struct Single(A);"></div><div data-l="#//            ^ Here is `Single`s first use of the type `A`."></div><div data-l="// ">           ^ Here is <code>Single</code>s first use of the type <code>A</code>.</div><div data-l=""></div><div data-l="#// Here, `&lt;T&gt;` precedes the first use of `T`, so `SingleGen` is a generic type."></div><div data-l="#// Because the type parameter `T` is generic, it could be anything, including"></div><div data-l="#// the concrete type `A` defined at the top."></div><div data-l="// ">Here, <code>&lt;T&gt;</code> precedes the first use of <code>T</code>, so <code>SingleGen</code> is a generic type. Because the type parameter <code>T</code> is generic, it could be anything, including the concrete type <code>A</code> defined at the top.</div><div data-l="struct SingleGen&lt;T&gt;(T);"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // `Single` is concrete and explicitly takes `A`."></div><div data-l="    // "><code>Single</code> is concrete and explicitly takes <code>A</code>.</div><div data-l="    let _s = Single(A);"></div><div data-l="    "></div><div data-l="#    // Create a variable `_char` of type `SingleGen&lt;char&gt;`"></div><div data-l="#    // and give it the value `SingleGen('a')`."></div><div data-l="#    // Here, `SingleGen` has a type parameter explicitly specified."></div><div data-l="    // ">Create a variable <code>_char</code> of type <code>SingleGen&lt;char&gt;</code> and give it the value <code>SingleGen('a')</code>. Here, <code>SingleGen</code> has a type parameter explicitly specified.</div><div data-l="    let _char: SingleGen&lt;char&gt; = SingleGen('a');"></div><div data-l=""></div><div data-l="#    // `SingleGen` can also have a type parameter implicitly specified:"></div><div data-l="    // "><code>SingleGen</code> can also have a type parameter implicitly specified:</div><div data-l="#//    let _t    = SingleGen(A); // Uses `A` defined at the top."></div><div data-l="    let _t    = SingleGen(A); // ">Uses <code>A</code> defined at the top.</div><div data-l="#//    let _i32  = SingleGen(6); // Uses `i32`."></div><div data-l="    let _i32  = SingleGen(6); // ">Uses <code>i32</code>.</div><div data-l="#//    let _char = SingleGen('a'); // Uses `char`."></div><div data-l="    let _char = SingleGen('a'); // ">Uses <code>char</code>.</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3structs"><code>struct</code>s</a></p>
+<br>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/CamelCase">camelcase</a>

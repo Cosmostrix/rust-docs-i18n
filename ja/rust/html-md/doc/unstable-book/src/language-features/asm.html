@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<h1><code>asm</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29722">#29722</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29722">#29722</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>For extremely low-level manipulations and performance reasons, one
+might wish to control the CPU directly. Rust supports using inline
+assembly to do this via the <code>asm€</code> macro.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="asm!(assembly template"></div><div data-l="   : output operands"></div><div data-l="   : input operands"></div><div data-l="   : clobbers"></div><div data-l="   : options"></div><div data-l="   );"></div></div>
+<br>
+<p>Any use of <code>asm</code> is feature gated (requires <code>#€[feature(asm)]</code> on the
+crate to allow) and of course requires an <code>unsafe</code> block.</p>
+<br>
+<blockquote><p><b>Note</b>: the examples here are given in x86/x86-64 assembly, but
+all platforms are supported.</p></blockquote>
+<br>
+<h2>Assembly template</h2>
+<br>
+<p>The <code>assembly template</code> is the only required parameter and must be a
+literal string (i.e. <code>&quot;&quot;</code>)</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(asm)]"></div><div data-l=""></div><div data-l="#[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="fn foo() {"></div><div data-l="    unsafe {"></div><div data-l="        asm!(&quot;NOP&quot;);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Other platforms:"></div><div data-l="// ">Other platforms:</div><div data-l="#[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="fn foo() { /* ... */ }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="    foo();"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div></div>
+<br>
+<p>(The <code>feature(asm)</code> and <code>#[cfg]</code>s are omitted from now on.)</p>
+<br>
+<p>Output operands, input operands, clobbers and options are all optional
+but you must add the right number of <code>:</code> if you skip them:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="# fn main() { unsafe {"></div><div data-l="asm!(&quot;xor %eax, %eax&quot;"></div><div data-l="    :"></div><div data-l="    :"></div><div data-l="    : &quot;eax&quot;"></div><div data-l="   );"></div><div data-l="# } }"></div><div data-l="# #[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>Whitespace also doesn't matter:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="# fn main() { unsafe {"></div><div data-l="asm!(&quot;xor %eax, %eax&quot; ::: &quot;eax&quot;);"></div><div data-l="# } }"></div><div data-l="# #[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<h2>Operands</h2>
+<br>
+<p>Input and output operands follow the same format: <code>:
+&quot;constraints1&quot;(expr1), &quot;constraints2&quot;(expr2), ...&quot;</code>. Output operand
+expressions must be mutable lvalues, or not yet assigned:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="fn add(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    let c: i32;"></div><div data-l="    unsafe {"></div><div data-l="        asm!(&quot;add $2, $0&quot;"></div><div data-l="             : &quot;=r&quot;(c)"></div><div data-l="             : &quot;0&quot;(a), &quot;r&quot;(b)"></div><div data-l="             );"></div><div data-l="    }"></div><div data-l="    c"></div><div data-l="}"></div><div data-l="# #[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="# fn add(a: i32, b: i32) -&gt; i32 { a + b }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(add(3, 14159), 14162)"></div><div data-l="}"></div></div>
+<br>
+<p>If you would like to use real operands in this position, however,
+you are required to put curly braces <code>{}</code> around the register that
+you want, and you are required to put the specific size of the
+operand. This is useful for very low level programming, where
+which register you use is important:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="# unsafe fn read_byte_in(port: u16) -&gt; u8 {"></div><div data-l="let result: u8;"></div><div data-l="asm!(&quot;in %dx, %al&quot; : &quot;={al}&quot;(result) : &quot;{dx}&quot;(port));"></div><div data-l="result"></div><div data-l="# }"></div></div>
+<br>
+<h2>Clobbers</h2>
+<br>
+<p>Some instructions modify registers which might otherwise have held
+different values so we use the clobbers list to indicate to the
+compiler not to assume any values loaded into those registers will
+stay valid.</p>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="# fn main() { unsafe {"></div><div data-l="#// Put the value 0x200 in eax:"></div><div data-l="// ">Put the value 0x200 in eax:</div><div data-l="asm!(&quot;mov $$0x200, %eax&quot; : /* no outputs */ : /* no inputs */ : &quot;eax&quot;);"></div><div data-l="# } }"></div><div data-l="# #[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<p>Input and output registers need not be listed since that information
+is already communicated by the given constraints. Otherwise, any other
+registers used either implicitly or explicitly should be listed.</p>
+<br>
+<p>If the assembly changes the condition code register <code>cc</code> should be
+specified as one of the clobbers. Similarly, if the assembly modifies
+memory, <code>memory</code> should also be specified.</p>
+<br>
+<h2>Options</h2>
+<br>
+<p>The last section, <code>options</code> is specific to Rust. The format is comma
+separated literal strings (i.e. <code>:&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;</code>). It's used to
+specify some extra info about the inline assembly:</p>
+<br>
+<p>Current valid options are:</p>
+<br>
+<div data-b="1."><i>volatile</i> - specifying this is analogous to
+ <code>__asm__ __volatile__ (...)</code> in gcc/clang.</div>
+<div data-b="2."><i>alignstack</i> - certain instructions expect the stack to be
+ aligned a certain way (i.e. SSE) and specifying this indicates to
+ the compiler to insert its usual stack alignment code</div>
+<div data-b="3."><i>intel</i> - use intel syntax instead of the default AT&amp;T.</div>
+<br>
+<div data-lang="rust"><div data-l="# #![feature(asm)]"></div><div data-l="# #[cfg(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;))]"></div><div data-l="# fn main() {"></div><div data-l="let result: i32;"></div><div data-l="unsafe {"></div><div data-l="   asm!(&quot;mov eax, 2&quot; : &quot;={eax}&quot;(result) : : : &quot;intel&quot;)"></div><div data-l="}"></div><div data-l="println!(&quot;eax is currently {}&quot;, result);"></div><div data-l="# }"></div><div data-l="# #[cfg(not(any(target_arch = &quot;x86&quot;, target_arch = &quot;x86_64&quot;)))]"></div><div data-l="# fn main() {}"></div></div>
+<br>
+<h2>More Information</h2>
+<br>
+<p>The current implementation of the <code>asm€</code> macro is a direct binding to <a href="#3llvm-docs">LLVM's
+inline assembler expressions</a>, so be sure to check out <a href="#3llvm-docs">their
+documentation as well</a> for more information about clobbers,
+constraints, etc.</p>
+<br>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#inline-assembler-expressions">llvm-docs</a>
+<br>
+<p>If you need more power and don't mind losing some of the niceties of
+<code>asm€</code>, check out <a class="notranslate" href="#2language-features/global-asm.html">global_asm</a>.</p>

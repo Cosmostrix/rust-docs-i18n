@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h1>aliases for <code>Result</code></h1>
+<br>
+<p>How about when we want to reuse a specific <code>Result</code> type many times?
+Recall that Rust allows us to create <a class="notranslate" href="#3typealias">aliases</a>. Conveniently,
+we can define one for the specific <code>Result</code> in question.</p>
+<br>
+<p>At a module level, creating aliases can be particularly helpful. Errors
+found in a specific module often have the same <code>Err</code> type, so a single alias
+can succinctly define <i>all</i> associated <code>Results</code>. This is so useful that the
+<code>std</code> library even supplies one: <a class="notranslate" href="#3io_result"><code>io::Result</code></a>!</p>
+<br>
+<p>Here's a quick example to show off the syntax:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="#// Define a generic alias for a `Result` with the error type `ParseIntError`."></div><div data-l="// ">Define a generic alias for a <code>Result</code> with the error type <code>ParseIntError</code>.</div><div data-l="type AliasedResult&lt;T&gt; = Result&lt;T, ParseIntError&gt;;"></div><div data-l=""></div><div data-l="#// Use the above alias to refer to our specific `Result` type."></div><div data-l="// ">Use the above alias to refer to our specific <code>Result</code> type.</div><div data-l="fn multiply(first_number_str: &amp;str, second_number_str: &amp;str) -&gt; AliasedResult&lt;i32&gt; {"></div><div data-l="    first_number_str.parse::&lt;i32&gt;().and_then(|first_number| {"></div><div data-l="        second_number_str.parse::&lt;i32&gt;().map(|second_number| first_number * second_number)"></div><div data-l="    })"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Here, the alias again allows us to save some space."></div><div data-l="// ">Here, the alias again allows us to save some space.</div><div data-l="fn print(result: AliasedResult&lt;i32&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;n is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    print(multiply(&quot;10&quot;, &quot;2&quot;));"></div><div data-l="    print(multiply(&quot;t&quot;, &quot;2&quot;));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3io_result"><code>io::Result</code></a></p>
+<br>
+<a class="notranslate" href="#1types/alias.html">typealias</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/type.Result.html">io_result</a>

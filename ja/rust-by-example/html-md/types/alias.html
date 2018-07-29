@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1>Aliasing</h1>
+<br>
+<p>The <code>type</code> statement can be used to give a new name to an existing type. Types
+must have <code>CamelCase</code> names, or the compiler will raise a warning. The
+exception to this rule are the primitive types: <code>usize</code>, <code>f32</code>, etc.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// `NanoSecond` is a new name for `u64`."></div><div data-l="// "><code>NanoSecond</code> is a new name for <code>u64</code>.</div><div data-l="type NanoSecond = u64;"></div><div data-l="type Inch = u64;"></div><div data-l=""></div><div data-l="#// Use an attribute to silence warning."></div><div data-l="// ">Use an attribute to silence warning.</div><div data-l="#[allow(non_camel_case_types)]"></div><div data-l="type u64_t = u64;"></div><div data-l="#// TODO ^ Try removing the attribute"></div><div data-l="// ">TODO ^ Try removing the attribute</div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // `NanoSecond` = `Inch` = `u64_t` = `u64`."></div><div data-l="    // "><code>NanoSecond</code> = <code>Inch</code> = <code>u64_t</code> = <code>u64</code>.</div><div data-l="    let nanoseconds: NanoSecond = 5 as u64_t;"></div><div data-l="    let inches: Inch = 2 as u64_t;"></div><div data-l=""></div><div data-l="#    // Note that type aliases *don't* provide any extra type safety, because"></div><div data-l="#    // aliases are *not* new types"></div><div data-l="    // ">Note that type aliases <i>don't</i> provide any extra type safety, because aliases are <i>not</i> new types</div><div data-l="    println!(&quot;{} nanoseconds + {} inches = {} unit?&quot;,"></div><div data-l="             nanoseconds,"></div><div data-l="             inches,"></div><div data-l="             nanoseconds + inches);"></div><div data-l="}"></div></div>
+<br>
+<p>The main use of aliases is to reduce boilerplate; for example the <code>IoResult&lt;T&gt;</code> type
+is an alias for the <code>Result&lt;T, IoError&gt;</code> type.</p>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#2attribute.html">Attributes</a></p>

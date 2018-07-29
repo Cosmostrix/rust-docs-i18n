@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<h1>The lowering module in rustc</h1>
+<br>
+<p>The program clauses described in the
+<a href="#2./traits/lowering-rules.html">lowering rules</a> section are actually
+created in the <a class="notranslate" href="#3lowering"><code>rustc_traits::lowering</code></a> module.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/nightly/nightly-rustc/rustc_traits/lowering/">lowering</a>
+<br>
+<h2>The <code>program_clauses_for</code> query</h2>
+<br>
+<p>The main entry point is the <code>program_clauses_for</code> <a class="notranslate" href="#4query">query</a>, which –
+given a def-id – produces a set of Chalk program clauses. These
+queries are tested using a
+<a href="#2#unit-tests">dedicated unit-testing mechanism, described below</a>.  The
+query is invoked on a <code>DefId</code> that identifies something like a trait,
+an impl, or an associated item definition. It then produces and
+returns a vector of program clauses.</p>
+<br>
+<a class="notranslate" href="#1./query.html">query</a>
+<br>
+<p><a name="unit-tests"></a></p>
+<br>
+<h2>Unit tests</h2>
+<br>
+<p>Unit tests are located in <a class="notranslate" href="#3chalkify"><code>src/test/ui/chalkify</code></a>. A good
+example test is <a href="#3lower_impl">the <code>lower_impl</code> test</a>. At the time of
+this writing, it looked like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(rustc_attrs)]"></div><div data-l=""></div><div data-l="trait Foo { }"></div><div data-l=""></div><div data-l="#[rustc_dump_program_clauses] //~ ERROR Implemented(T: Foo) :-"></div><div data-l="impl&lt;T: 'static&gt; Foo for T where T: Iterator&lt;Item = i32&gt; { }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;hello&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>#[rustc_dump_program_clauses]</code> annotation can be attached to
+anything with a def-id.  (It requires the <code>rustc_attrs</code> feature.) The
+compiler will then invoke the <code>program_clauses_for</code> query on that
+item, and emit compiler errors that dump the clauses produced. These
+errors just exist for unit-testing, as we can then leverage the
+standard <a class="notranslate" href="#4ui test">ui test</a> mechanisms to check them. In this case, there is a
+<code>//~ ERROR Implemented</code> annotation which is intentionally minimal (it
+need only be a prefix of the error), but <a class="notranslate" href="#4the stderr file">the stderr file</a> contains
+the full details:</p>
+<br>
+<div data-lang="text"><div data-l="error: Implemented(T: Foo) :- ProjectionEq(&lt;T as std::iter::Iterator&gt;::Item == i32), TypeOutlives(T \"></div><div data-l=": 'static), Implemented(T: std::iter::Iterator), Implemented(T: std::marker::Sized)."></div><div data-l="  --&gt; $DIR/lower_impl.rs:15:1"></div><div data-l="   |"></div><div data-l="LL | #[rustc_dump_program_clauses] //~ ERROR Implemented(T: Foo) :-"></div><div data-l="   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div></div>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test/ui/chalkify">chalkify</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test/ui/chalkify/lower_impl.rs">lower_impl</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/test/ui/chalkify/lower_impl.stderr">the stderr file</a>
+<a class="notranslate" href="#1https://rust-lang-nursery.github.io/rustc-guide/tests/adding.html#guide-to-the-ui-tests">ui test</a>

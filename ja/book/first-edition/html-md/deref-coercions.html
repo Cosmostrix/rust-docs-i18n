@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<h1><code>Deref</code> coercions</h1>
+<br>
+<p>The standard library provides a special trait, <a class="notranslate" href="#3deref"><code>Deref</code></a>. It’s normally
+used to overload <code>*</code>, the dereference operator:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::ops::Deref;"></div><div data-l=""></div><div data-l="struct DerefExample&lt;T&gt; {"></div><div data-l="    value: T,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Deref for DerefExample&lt;T&gt; {"></div><div data-l="    type Target = T;"></div><div data-l=""></div><div data-l="    fn deref(&amp;self) -&gt; &amp;T {"></div><div data-l="        &amp;self.value"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = DerefExample { value: 'a' };"></div><div data-l="    assert_eq!('a', *x);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/ops/trait.Deref.html">deref</a>
+<br>
+<p>This is useful for writing custom pointer types. However, there’s a language
+feature related to <code>Deref</code>: ‘deref coercions’. Here’s the rule: If you have a
+type <code>U</code>, and it implements <code>Deref&lt;Target=T&gt;</code>, values of <code>&amp;U</code> will
+automatically coerce to a <code>&amp;T</code>. Here’s an example:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(s: &amp;str) {"></div><div data-l="#    // Borrow a string for a second."></div><div data-l="    // ">Borrow a string for a second.</div><div data-l="}"></div><div data-l=""></div><div data-l="#// String implements Deref&lt;Target=str&gt;."></div><div data-l="// ">String implements Deref<Target=str>.</div><div data-l="let owned = &quot;Hello&quot;.to_string();"></div><div data-l=""></div><div data-l="#// Therefore, this works:"></div><div data-l="// ">Therefore, this works:</div><div data-l="foo(&amp;owned);"></div></div>
+<br>
+<p>Using an ampersand in front of a value takes a reference to it. So <code>owned</code> is a
+<code>String</code>, <code>&amp;owned</code> is an <code>&amp;String</code>, and since <code>impl Deref&lt;Target=str&gt; for
+String</code>, <code>&amp;String</code> will deref to <code>&amp;str</code>, which <code>foo()</code> takes.</p>
+<br>
+<p>That’s it. This rule is one of the only places in which Rust does an automatic
+conversion for you, but it adds a lot of flexibility. For example, the <code>Rc&lt;T&gt;</code>
+type implements <code>Deref&lt;Target=T&gt;</code>, so this works:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::rc::Rc;"></div><div data-l=""></div><div data-l="fn foo(s: &amp;str) {"></div><div data-l="#    // Borrow a string for a second."></div><div data-l="    // ">Borrow a string for a second.</div><div data-l="}"></div><div data-l=""></div><div data-l="#// String implements Deref&lt;Target=str&gt;."></div><div data-l="// ">String implements Deref<Target=str>.</div><div data-l="let owned = &quot;Hello&quot;.to_string();"></div><div data-l="let counted = Rc::new(owned);"></div><div data-l=""></div><div data-l="#// Therefore, this works:"></div><div data-l="// ">Therefore, this works:</div><div data-l="foo(&amp;counted);"></div></div>
+<br>
+<p>All we’ve done is wrap our <code>String</code> in an <code>Rc&lt;T&gt;</code>. But we can now pass the
+<code>Rc&lt;String&gt;</code> around anywhere we’d have a <code>String</code>. The signature of <code>foo</code>
+didn’t change, but works just as well with either type. This example has two
+conversions: <code>&amp;Rc&lt;String&gt;</code> to <code>&amp;String</code> and then <code>&amp;String</code> to <code>&amp;str</code>. Rust will do
+this as many times as possible until the types match.</p>
+<br>
+<p>Another very common implementation provided by the standard library is:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(s: &amp;[i32]) {"></div><div data-l="#    // Borrow a slice for a second."></div><div data-l="    // ">Borrow a slice for a second.</div><div data-l="}"></div><div data-l=""></div><div data-l="#// Vec&lt;T&gt; implements Deref&lt;Target=[T]&gt;."></div><div data-l="// ">Vec<T> implements Deref<Target=[T]>.</div><div data-l="let owned = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="foo(&amp;owned);"></div></div>
+<br>
+<p>Vectors can <code>Deref</code> to a slice.</p>
+<br>
+<h2>Deref and method calls</h2>
+<br>
+<p><code>Deref</code> will also kick in when calling a method. Consider the following
+example.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Foo;"></div><div data-l=""></div><div data-l="impl Foo {"></div><div data-l="    fn foo(&amp;self) { println!(&quot;Foo&quot;); }"></div><div data-l="}"></div><div data-l=""></div><div data-l="let f = &amp;&amp;Foo;"></div><div data-l=""></div><div data-l="f.foo();"></div></div>
+<br>
+<p>Even though <code>f</code> is a <code>&amp;&amp;Foo</code> and <code>foo</code> takes <code>&amp;self</code>, this works. That’s
+because these things are the same:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="f.foo();"></div><div data-l="(&amp;f).foo();"></div><div data-l="(&amp;&amp;f).foo();"></div><div data-l="(&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;f).foo();"></div></div>
+<br>
+<p>A value of type <code>&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;Foo</code> can still have methods defined on <code>Foo</code>
+called, because the compiler will insert as many * operations as necessary to
+get it right. And since it’s inserting <code>*</code>s, that uses <code>Deref</code>.</p>

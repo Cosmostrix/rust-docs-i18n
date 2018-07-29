@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<h1>Functions</h1>
+<br>
+<p>A <s>function</s> consists of a <a class="notranslate" href="#4block">block</a>, along with a name and a set of parameters.
+Other than a name, all these are optional. Functions are declared with the
+keyword <code>fn</code>. Functions may declare a set of <i>input</i> <a class="notranslate" href="#3variables"><i>variables</i></a>
+as parameters, through which the caller passes arguments into the function, and
+the <i>output</i> <a class="notranslate" href="#3type"><i>type</i></a> of the value the function will return to its caller
+on completion.</p>
+<br>
+<p>When referred to, a <s>function</s> yields a first-class <i>value</i> of the
+corresponding zero-sized <a class="notranslate" href="#4*function item type*">*function item type*</a>, which
+when called evaluates to a direct call to the function.</p>
+<br>
+<p>For example, this is a simple function:
+`<code class=2>rust
+fn answer_to_life_the_universe_and_everything() -&gt; i32 {
+    return 42;
+}
+</code>`</p>
+<br>
+<p>As with <code>let</code> bindings, function arguments are irrefutable patterns, so any
+pattern that is valid in a let binding is also valid as an argument:</p>
+<br>
+<div data-lang="rust"><div data-l="fn first((value, _): (i32, i32)) -&gt; i32 { value }"></div></div>
+<br>
+<p>The block of a function is conceptually wrapped in a block that binds the
+argument patterns and then <code>return</code>s the value of the function's block. This
+means that the tail expression of the block, if evaluated, ends up being
+returned to the caller. As usual, an explicit return expression within
+the body of the function will short-cut that implicit return, if reached.</p>
+<br>
+<p>For example, the function above behaves as if it was written as:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// argument_0 is the actual first argument passed from the caller"></div><div data-l="// ">argument_0 is the actual first argument passed from the caller</div><div data-l="let (value, _) = argument_0;"></div><div data-l="return {"></div><div data-l="    value"></div><div data-l="};"></div></div>
+<br>
+<h2>Generic functions</h2>
+<br>
+<p>A <s>generic function</s> allows one or more <s>parameterized types</s> to appear in its
+signature. Each type parameter must be explicitly declared in an
+angle-bracket-enclosed and comma-separated list, following the function name.</p>
+<br>
+<div data-lang="rust"><div data-l="#// foo is generic over A and B"></div><div data-l="// ">foo is generic over A and B</div><div data-l=""></div><div data-l="fn foo&lt;A, B&gt;(x: A, y: B) {"></div><div data-l="# }"></div></div>
+<br>
+<p>Inside the function signature and body, the name of the type parameter can be
+used as a type name. <a class="notranslate" href="#4Trait">Trait</a> bounds can be specified for type
+parameters to allow methods with that trait to be called on values of that
+type. This is specified using the <code>where</code> syntax:</p>
+<br>
+<div data-lang="rust"><div data-l="# use std::fmt::Debug;"></div><div data-l="fn foo&lt;T&gt;(x: T) where T: Debug {"></div><div data-l="# }"></div></div>
+<br>
+<p>When a generic function is referenced, its type is instantiated based on the
+context of the reference. For example, calling the <code>foo</code> function here:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Debug;"></div><div data-l=""></div><div data-l="fn foo&lt;T&gt;(x: &amp;[T]) where T: Debug {"></div><div data-l="#    // details elided"></div><div data-l="    // ">details elided</div><div data-l="}"></div><div data-l=""></div><div data-l="foo(&amp;[1, 2]);"></div></div>
+<br>
+<p>will instantiate type parameter <code>T</code> with <code>i32</code>.</p>
+<br>
+<p>The type parameters can also be explicitly supplied in a trailing <a class="notranslate" href="#4path">path</a>
+component after the function name. This might be necessary if there is not
+sufficient context to determine the type parameters. For example,
+<code>mem::size_of::&lt;u32&gt;() == 4</code>.</p>
+<br>
+<h2>Extern functions</h2>
+<br>
+<p>Extern functions are part of Rust's foreign function interface, providing the
+opposite functionality to <a class="notranslate" href="#4external blocks">external blocks</a>. Whereas external
+blocks allow Rust code to call foreign code, extern functions with bodies
+defined in Rust code <s>can be called by foreign code</s>. They are defined in the
+same way as any other Rust function, except that they have the <code>extern</code>
+modifier.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Declares an extern fn, the ABI defaults to &quot;C&quot;"></div><div data-l="// ">Declares an extern fn, the ABI defaults to &quot;C&quot;</div><div data-l="extern fn new_i32() -&gt; i32 { 0 }"></div><div data-l=""></div><div data-l="#// Declares an extern fn with &quot;stdcall&quot; ABI"></div><div data-l="// ">Declares an extern fn with &quot;stdcall&quot; ABI</div><div data-l="# #[cfg(target_arch = &quot;x86_64&quot;)]"></div><div data-l="extern &quot;stdcall&quot; fn new_i32_stdcall() -&gt; i32 { 0 }"></div></div>
+<br>
+<p>Unlike normal functions, extern fns have type <code>extern &quot;ABI&quot; fn()</code>. This is the
+same type as the functions declared in an extern block.</p>
+<br>
+<div data-lang="rust"><div data-l="# extern fn new_i32() -&gt; i32 { 0 }"></div><div data-l="let fptr: extern &quot;C&quot; fn() -&gt; i32 = new_i32;"></div></div>
+<br>
+<p>As non-Rust calling conventions do not support unwinding, unwinding past the end
+of an extern function will cause the process to abort. In LLVM, this is
+implemented by executing an illegal instruction.</p>
+<br>
+<h2>Function attributes</h2>
+<br>
+<p>Inner <a class="notranslate" href="#4attributes">attributes</a> on the function's block apply to the function item as a whole.</p>
+<br>
+<p>For example, this function will only be available while running tests.</p>
+<br>
+<div data-lang=""><div data-l="fn test_only() {"></div><div data-l="    #![test]"></div><div data-l="}"></div></div>
+<br>
+<blockquote><p>Note: Except for lints, it is idiomatic to only use outer attributes on
+function items.</p></blockquote>
+<br>
+<a class="notranslate" href="#1items/external-blocks.html">external blocks</a>
+<a class="notranslate" href="#1paths.html">path</a>
+<a class="notranslate" href="#1expressions/block-expr.html">block</a>
+<a class="notranslate" href="#1variables.html">variables</a>
+<a class="notranslate" href="#1types.html">type</a>
+<a class="notranslate" href="#1types.html#function-item-types">*function item type*</a>
+<a class="notranslate" href="#1items/traits.html">Trait</a>
+<a class="notranslate" href="#1attributes.html">attributes</a>

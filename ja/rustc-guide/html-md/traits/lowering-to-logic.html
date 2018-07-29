@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<h1>Lowering to logic</h1>
+<br>
+<p>The key observation here is that the Rust trait system is basically a
+kind of logic, and it can be mapped onto standard logical inference
+rules. We can then look for solutions to those inference rules in a
+very similar fashion to how e.g. a <a class="notranslate" href="#4Prolog">Prolog</a> solver works. It turns out
+that we can't <i>quite</i> use Prolog rules (also called Horn clauses) but
+rather need a somewhat more expressive variant.</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Prolog">Prolog</a>
+<br>
+<h2>Rust traits and logic</h2>
+<br>
+<p>One of the first observations is that the Rust trait system is
+basically a kind of logic. As such, we can map our struct, trait, and
+impl declarations into logical inference rules. For the most part,
+these are basically Horn clauses, though we'll see that to capture the
+full richness of Rust – and in particular to support generic
+programming – we have to go a bit further than standard Horn clauses.</p>
+<br>
+<p>To see how this mapping works, let's start with an example. Imagine
+we declare a trait and a few impls, like so:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Clone { }"></div><div data-l="impl Clone for usize { }"></div><div data-l="impl&lt;T&gt; Clone for Vec&lt;T&gt; where T: Clone { }"></div></div>
+<br>
+<p>We could map these declarations to some Horn clauses, written in a
+Prolog-like notation, as follows:</p>
+<br>
+<div data-lang="text"><div data-l="Clone(usize)."></div><div data-l="Clone(Vec&lt;?T&gt;) :- Clone(?T)."></div><div data-l=""></div><div data-l="#// The notation `A :- B` means &quot;A is true if B is true&quot;."></div><div data-l="#// Or, put another way, B implies A."></div><div data-l="// ">The notation <code>A :- B</code> means &quot;A is true if B is true&quot;. Or, put another way, B implies A.</div></div>
+<br>
+<p>In Prolog terms, we might say that <code>Clone(Foo)</code> – where <code>Foo</code> is some
+Rust type – is a <i>predicate</i> that represents the idea that the type
+<code>Foo</code> implements <code>Clone</code>. These rules are <b>program clauses</b>; they
+state the conditions under which that predicate can be proven (i.e.,
+considered true). So the first rule just says &quot;Clone is implemented
+for <code>usize</code>&quot;. The next rule says &quot;for any type <code>?T</code>, Clone is
+implemented for <code>Vec&lt;?T&gt;</code> if clone is implemented for <code>?T</code>&quot;. So
+e.g. if we wanted to prove that <code>Clone(Vec&lt;Vec&lt;usize&gt;&gt;)</code>, we would do
+so by applying the rules recursively:</p>
+<br>
+<div data-b="-"><code>Clone(Vec&lt;Vec&lt;usize&gt;&gt;)</code> is provable if:</div>
+<div data-b="  -"><code>Clone(Vec&lt;usize&gt;)</code> is provable if:</div>
+<div data-b="    -"><code>Clone(usize)</code> is provable. (Which is is, so we're all good.)</div>
+<br>
+<p>But now suppose we tried to prove that <code>Clone(Vec&lt;Bar&gt;)</code>. This would
+fail (after all, I didn't give an impl of <code>Clone</code> for <code>Bar</code>):</p>
+<br>
+<div data-b="-"><code>Clone(Vec&lt;Bar&gt;)</code> is provable if:</div>
+<div data-b="  -"><code>Clone(Bar)</code> is provable. (But it is not, as there are no applicable rules.)</div>
+<br>
+<p>We can easily extend the example above to cover generic traits with
+more than one input type. So imagine the <code>Eq&lt;T&gt;</code> trait, which declares
+that <code>Self</code> is equatable with a value of type <code>T</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="trait Eq&lt;T&gt; { ... }"></div><div data-l="impl Eq&lt;usize&gt; for usize { }"></div><div data-l="impl&lt;T: Eq&lt;U&gt;&gt; Eq&lt;Vec&lt;U&gt;&gt; for Vec&lt;T&gt; { }"></div></div>
+<br>
+<p>That could be mapped as follows:</p>
+<br>
+<div data-lang="text"><div data-l="Eq(usize, usize)."></div><div data-l="Eq(Vec&lt;?T&gt;, Vec&lt;?U&gt;) :- Eq(?T, ?U)."></div></div>
+<br>
+<p>So far so good.</p>
+<br>
+<h2>Type-checking normal functions</h2>
+<br>
+<p>OK, now that we have defined some logical rules that are able to
+express when traits are implemented and to handle associated types,
+let's turn our focus a bit towards <b>type-checking</b>. Type-checking is
+interesting because it is what gives us the goals that we need to
+prove. That is, everything we've seen so far has been about how we
+derive the rules by which we can prove goals from the traits and impls
+in the program; but we are also interested in how to derive the goals
+that we need to prove, and those come from type-checking.</p>
+<br>
+<p>Consider type-checking the function <code>foo()</code> here:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo() { bar::&lt;usize&gt;() }"></div><div data-l="fn bar&lt;U: Eq&lt;U&gt;&gt;() { }"></div></div>
+<br>
+<p>This function is very simple, of course: all it does is to call
+<code>bar::&lt;usize&gt;()</code>. Now, looking at the definition of <code>bar()</code>, we can see
+that it has one where-clause <code>U: Eq&lt;U&gt;</code>. So, that means that <code>foo()</code> will
+have to prove that <code>usize: Eq&lt;usize&gt;</code> in order to show that it can call <code>bar()</code>
+with <code>usize</code> as the type argument.</p>
+<br>
+<p>If we wanted, we could write a Prolog predicate that defines the
+conditions under which <code>bar()</code> can be called. We'll say that those
+conditions are called being &quot;well-formed&quot;:</p>
+<br>
+<div data-lang="text"><div data-l="barWellFormed(?U) :- Eq(?U, ?U)."></div></div>
+<br>
+<p>Then we can say that <code>foo()</code> type-checks if the reference to
+<code>bar::&lt;usize&gt;</code> (that is, <code>bar()</code> applied to the type <code>usize</code>) is
+well-formed:</p>
+<br>
+<div data-lang="text"><div data-l="fooTypeChecks :- barWellFormed(usize)."></div></div>
+<br>
+<p>If we try to prove the goal <code>fooTypeChecks</code>, it will succeed:</p>
+<br>
+<div data-b="-"><code>fooTypeChecks</code> is provable if:</div>
+<div data-b="  -"><code>barWellFormed(usize)</code>, which is provable if:</div>
+<div data-b="    -"><code>Eq(usize, usize)</code>, which is provable because of an impl.</div>
+<br>
+<p>Ok, so far so good. Let's move on to type-checking a more complex function.</p>
+<br>
+<h2>Type-checking generic functions: beyond Horn clauses</h2>
+<br>
+<p>In the last section, we used standard Prolog horn-clauses (augmented with Rust's
+notion of type equality) to type-check some simple Rust functions. But that only
+works when we are type-checking non-generic functions. If we want to type-check
+a generic function, it turns out we need a stronger notion of goal than Prolog
+can be provide. To see what I'm talking about, let's revamp our previous
+example to make <code>foo</code> generic:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn foo&lt;T: Eq&lt;T&gt;&gt;() { bar::&lt;T&gt;() }"></div><div data-l="fn bar&lt;U: Eq&lt;U&gt;&gt;() { }"></div></div>
+<br>
+<p>To type-check the body of <code>foo</code>, we need to be able to hold the type
+<code>T</code> &quot;abstract&quot;.  That is, we need to check that the body of <code>foo</code> is
+type-safe <i>for all types `T`</i>, not just for some specific type. We might express
+this like so:</p>
+<br>
+<div data-lang="text"><div data-l="fooTypeChecks :-"></div><div data-l="#  // for all types T..."></div><div data-l="  // ">for all types T...</div><div data-l="  forall&lt;T&gt; {"></div><div data-l="#    // ...if we assume that Eq(T, T) is provable..."></div><div data-l="    // ">...if we assume that Eq(T, T) is provable...</div><div data-l="    if (Eq(T, T)) {"></div><div data-l="#      // ...then we can prove that `barWellFormed(T)` holds."></div><div data-l="      // ">...then we can prove that <code>barWellFormed(T)</code> holds.</div><div data-l="      barWellFormed(T)"></div><div data-l="    }"></div><div data-l="  }."></div></div>
+<br>
+<p>This notation I'm using here is the notation I've been using in my
+prototype implementation; it's similar to standard mathematical
+notation but a bit Rustified. Anyway, the problem is that standard
+Horn clauses don't allow universal quantification (<code>forall</code>) or
+implication (<code>if</code>) in goals (though many Prolog engines do support
+them, as an extension). For this reason, we need to accept something
+called &quot;first-order hereditary harrop&quot; (FOHH) clauses – this long
+name basically means &quot;standard Horn clauses with <code>forall</code> and <code>if</code> in
+the body&quot;. But it's nice to know the proper name, because there is a
+lot of work describing how to efficiently handle FOHH clauses; see for
+example Gopalan Nadathur's excellent
+<a href="#3pphhf">&quot;A Proof Procedure for the Logic of Hereditary Harrop Formulas&quot;</a>
+in <a class="notranslate" href="#4the bibliography">the bibliography</a>.</p>
+<br>
+<a class="notranslate" href="#1./traits/bibliography.html">the bibliography</a>
+<a class="notranslate" href="#1./traits/bibliography.html#pphhf">pphhf</a>
+<br>
+<p>It turns out that supporting FOHH is not really all that hard. And
+once we are able to do that, we can easily describe the type-checking
+rule for generic functions like <code>foo</code> in our logic.</p>
+<br>
+<h2>Source</h2>
+<br>
+<p>This page is a lightly adapted version of a
+<a href="#3lrtl">blog post by Nicholas Matsakis</a>.</p>
+<br>
+<a class="notranslate" href="#1http://smallcultfollowing.com/babysteps/blog/2017/01/26/lowering-rust-traits-to-logic/">lrtl</a>

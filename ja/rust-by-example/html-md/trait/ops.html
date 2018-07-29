@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h1>Operator Overloading</h1>
+<br>
+<p>In Rust, many of the operators can be overloaded via traits. That is, some operators can
+be used to accomplish different tasks based on their input arguments. This is possible
+because operators are syntactic sugar for method calls. For example, the <code>+</code> operator in
+<code>a + b</code> calls the <code>add</code> method (as in <code>a.add(b)</code>). This <code>add</code> method is part of the <code>Add</code>
+trait. Hence, the <code>+</code> operator can be used by any implementor of the <code>Add</code> trait.</p>
+<br>
+<p>A list of the traits, such as <code>Add</code>, that overload operators can be found in <a class="notranslate" href="#3ops"><code>core::ops</code></a>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::ops;"></div><div data-l=""></div><div data-l="struct Foo;"></div><div data-l="struct Bar;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct FooBar;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct BarFoo;"></div><div data-l=""></div><div data-l="#// The `std::ops::Add` trait is used to specify the functionality of `+`."></div><div data-l="#// Here, we make `Add&lt;Bar&gt;` - the trait for addition with a RHS of type `Bar`."></div><div data-l="#// The following block implements the operation: Foo + Bar = FooBar"></div><div data-l="// ">The <code>std::ops::Add</code> trait is used to specify the functionality of <code>+</code>. Here, we make <code>Add&lt;Bar&gt;</code> - the trait for addition with a RHS of type <code>Bar</code>. The following block implements the operation: Foo + Bar = FooBar</div><div data-l="impl ops::Add&lt;Bar&gt; for Foo {"></div><div data-l="    type Output = FooBar;"></div><div data-l=""></div><div data-l="    fn add(self, _rhs: Bar) -&gt; FooBar {"></div><div data-l="        println!(&quot;&gt; Foo.add(Bar) was called&quot;);"></div><div data-l=""></div><div data-l="        FooBar"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// By reversing the types, we end up implementing non-commutative addition."></div><div data-l="#// Here, we make `Add&lt;Foo&gt;` - the trait for addition with a RHS of type `Foo`."></div><div data-l="#// This block implements the operation: Bar + Foo = BarFoo"></div><div data-l="// ">By reversing the types, we end up implementing non-commutative addition. Here, we make <code>Add&lt;Foo&gt;</code> - the trait for addition with a RHS of type <code>Foo</code>. This block implements the operation: Bar + Foo = BarFoo</div><div data-l="impl ops::Add&lt;Foo&gt; for Bar {"></div><div data-l="    type Output = BarFoo;"></div><div data-l=""></div><div data-l="    fn add(self, _rhs: Foo) -&gt; BarFoo {"></div><div data-l="        println!(&quot;&gt; Bar.add(Foo) was called&quot;);"></div><div data-l=""></div><div data-l="        BarFoo"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Foo + Bar = {:?}&quot;, Foo + Bar);"></div><div data-l="    println!(&quot;Bar + Foo = {:?}&quot;, Bar + Foo);"></div><div data-l="}"></div></div>
+<br>
+<h3>See Also</h3>
+<br>
+<p><a class="notranslate" href="#3add">Add</a>, <a href="#3syntax">Syntax Index</a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/ops/trait.Add.html">add</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/core/ops/">ops</a>
+<p><a class="notranslate" href="#4syntax">syntax</a>:https://doc.rust-lang.org/book/second-edition/appendix-02-operators.html</p>

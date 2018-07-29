@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<h1>Drop Check</h1>
+<br>
+<p>We have seen how lifetimes provide us some fairly simple rules for ensuring
+that we never read dangling references. However up to this point we have only ever
+interacted with the <i>outlives</i> relationship in an inclusive manner. That is,
+when we talked about <code>'a: 'b</code>, it was ok for <code>'a</code> to live <i>exactly</i> as long as
+<code>'b</code>. At first glance, this seems to be a meaningless distinction. Nothing ever
+gets dropped at the same time as another, right? This is why we used the
+following desugaring of <code>let</code> statements:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let x;"></div><div data-l="let y;"></div></div>
+<br>
+<div data-lang="rust,ignore"><div data-l="{"></div><div data-l="    let x;"></div><div data-l="    {"></div><div data-l="        let y;"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Each creates its own scope, clearly establishing that one drops before the
+other. However, what if we do the following?</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let (x, y) = (vec![], vec![]);"></div></div>
+<br>
+<p>Does either value strictly outlive the other? The answer is in fact <i>no</i>,
+neither value strictly outlives the other. Of course, one of x or y will be
+dropped before the other, but the actual order is not specified. Tuples aren't
+special in this regard; composite structures just don't guarantee their
+destruction order as of Rust 1.0.</p>
+<br>
+<p>We <i>could</i> specify this for the fields of built-in composites like tuples and
+structs. However, what about something like Vec? Vec has to manually drop its
+elements via pure-library code. In general, anything that implements Drop has
+a chance to fiddle with its innards during its final death knell. Therefore
+the compiler can't sufficiently reason about the actual destruction order
+of the contents of any type that implements Drop.</p>
+<br>
+<p>So why do we care? We care because if the type system isn't careful, it could
+accidentally make dangling pointers. Consider the following simple program:</p>
+<br>
+<div data-lang="rust"><div data-l="struct Inspector&lt;'a&gt;(&amp;'a u8);"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let (inspector, days);"></div><div data-l="    days = Box::new(1);"></div><div data-l="    inspector = Inspector(&amp;days);"></div><div data-l="}"></div></div>
+<br>
+<p>This program is totally sound and compiles today. The fact that <code>days</code> does
+not <i>strictly</i> outlive <code>inspector</code> doesn't matter. As long as the <code>inspector</code>
+is alive, so is days.</p>
+<br>
+<p>However if we add a destructor, the program will no longer compile!</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Inspector&lt;'a&gt;(&amp;'a u8);"></div><div data-l=""></div><div data-l="impl&lt;'a&gt; Drop for Inspector&lt;'a&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;I was only {} days from retirement!&quot;, self.0);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let (inspector, days);"></div><div data-l="    days = Box::new(1);"></div><div data-l="    inspector = Inspector(&amp;days);"></div><div data-l="#    // Let's say `days` happens to get dropped first."></div><div data-l="#    // Then when Inspector is dropped, it will try to read free'd memory!"></div><div data-l="    // ">Let's say <code>days</code> happens to get dropped first. Then when Inspector is dropped, it will try to read free'd memory!</div><div data-l="}"></div></div>
+<br>
+<div data-lang="text"><div data-l="error: `days` does not live long enough"></div><div data-l="  --&gt; &lt;anon&gt;:15:1"></div><div data-l="   |"></div><div data-l="12 |     inspector = Inspector(&amp;days);"></div><div data-l="   |                            ---- borrow occurs here"></div><div data-l="..."></div><div data-l="15 | }"></div><div data-l="   | ^ `days` dropped here while still borrowed"></div><div data-l="   |"></div><div data-l="   = note: values in a scope are dropped in the opposite order they are created"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div></div>
+<br>
+<p>Implementing <code>Drop</code> lets the <code>Inspector</code> execute some arbitrary code during its
+death. This means it can potentially observe that types that are supposed to
+live as long as it does actually were destroyed first.</p>
+<br>
+<p>Interestingly, only generic types need to worry about this. If they aren't
+generic, then the only lifetimes they can harbor are <code>'static</code>, which will truly
+live <i>forever</i>. This is why this problem is referred to as <i>sound generic drop</i>.
+Sound generic drop is enforced by the <i>drop checker</i>. As of this writing, some
+of the finer details of how the drop checker validates types is totally up in
+the air. However The Big Rule is the subtlety that we have focused on this whole
+section:</p>
+<br>
+<p><b>For a generic type to soundly implement drop, its generics arguments must
+strictly outlive it.</b></p>
+<br>
+<p>Obeying this rule is (usually) necessary to satisfy the borrow
+checker; obeying it is sufficient but not necessary to be
+sound. That is, if your type obeys this rule then it's definitely
+sound to drop.</p>
+<br>
+<p>The reason that it is not always necessary to satisfy the above rule
+is that some Drop implementations will not access borrowed data even
+though their type gives them the capability for such access.</p>
+<br>
+<p>For example, this variant of the above <code>Inspector</code> example will never
+access borrowed data:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Inspector&lt;'a&gt;(&amp;'a u8, &amp;'static str);"></div><div data-l=""></div><div data-l="impl&lt;'a&gt; Drop for Inspector&lt;'a&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Inspector(_, {}) knows when *not* to inspect.&quot;, self.1);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let (inspector, days);"></div><div data-l="    days = Box::new(1);"></div><div data-l="    inspector = Inspector(&amp;days, &quot;gadget&quot;);"></div><div data-l="#    // Let's say `days` happens to get dropped first."></div><div data-l="#    // Even when Inspector is dropped, its destructor will not access the"></div><div data-l="#    // borrowed `days`."></div><div data-l="    // ">Let's say <code>days</code> happens to get dropped first. Even when Inspector is dropped, its destructor will not access the borrowed <code>days</code>.</div><div data-l="}"></div></div>
+<br>
+<p>Likewise, this variant will also never access borrowed data:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="struct Inspector&lt;T: fmt::Display&gt;(T, &amp;'static str);"></div><div data-l=""></div><div data-l="impl&lt;T: fmt::Display&gt; Drop for Inspector&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Inspector(_, {}) knows when *not* to inspect.&quot;, self.1);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let (inspector, days): (Inspector&lt;&amp;u8&gt;, Box&lt;u8&gt;);"></div><div data-l="    days = Box::new(1);"></div><div data-l="    inspector = Inspector(&amp;days, &quot;gadget&quot;);"></div><div data-l="#    // Let's say `days` happens to get dropped first."></div><div data-l="#    // Even when Inspector is dropped, its destructor will not access the"></div><div data-l="#    // borrowed `days`."></div><div data-l="    // ">Let's say <code>days</code> happens to get dropped first. Even when Inspector is dropped, its destructor will not access the borrowed <code>days</code>.</div><div data-l="}"></div></div>
+<br>
+<p>However, <i>both</i> of the above variants are rejected by the borrow
+checker during the analysis of <code>fn main</code>, saying that <code>days</code> does not
+live long enough.</p>
+<br>
+<p>The reason is that the borrow checking analysis of <code>main</code> does not
+know about the internals of each <code>Inspector</code>'s <code>Drop</code> implementation.  As
+far as the borrow checker knows while it is analyzing <code>main</code>, the body
+of an inspector's destructor might access that borrowed data.</p>
+<br>
+<p>Therefore, the drop checker forces all borrowed data in a value to
+strictly outlive that value.</p>
+<br>
+<h1>An Escape Hatch</h1>
+<br>
+<p>The precise rules that govern drop checking may be less restrictive in
+the future.</p>
+<br>
+<p>The current analysis is deliberately conservative and trivial; it forces all
+borrowed data in a value to outlive that value, which is certainly sound.</p>
+<br>
+<p>Future versions of the language may make the analysis more precise, to
+reduce the number of cases where sound code is rejected as unsafe.
+This would help address cases such as the two <code>Inspector</code>s above that
+know not to inspect during destruction.</p>
+<br>
+<p>In the meantime, there is an unstable attribute that one can use to
+assert (unsafely) that a generic type's destructor is <i>guaranteed</i> to
+not access any expired data, even if its type gives it the capability
+to do so.</p>
+<br>
+<p>That attribute is called <code>may_dangle</code> and was introduced in <a href="#3rfc1327">RFC 1327</a>.
+To deploy it on the <code>Inspector</code> example from above, we would write:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Inspector&lt;'a&gt;(&amp;'a u8, &amp;'static str);"></div><div data-l=""></div><div data-l="unsafe impl&lt;#[may_dangle] 'a&gt; Drop for Inspector&lt;'a&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Inspector(_, {}) knows when *not* to inspect.&quot;, self.1);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Use of this attribute requires the <code>Drop</code> impl to be marked <code>unsafe</code> because the
+compiler is not checking the implicit assertion that no potentially expired data
+(e.g. <code>self.0</code> above) is accessed.</p>
+<br>
+<p>The attribute can be applied to any number of lifetime and type parameters. In
+the following example, we assert that we access no data behind a reference of
+lifetime <code>'b</code> and that the only uses of <code>T</code> will be moves or drops, but omit
+the attribute from <code>'a</code> and <code>U</code>, because we do access data with that lifetime
+and that type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fmt::Display;"></div><div data-l=""></div><div data-l="struct Inspector&lt;'a, 'b, T, U: Display&gt;(&amp;'a u8, &amp;'b u8, T, U);"></div><div data-l=""></div><div data-l="unsafe impl&lt;'a, #[may_dangle] 'b, #[may_dangle] T, U: Display&gt; Drop for Inspector&lt;'a, 'b, T, U&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Inspector({}, _, _, {})&quot;, self.0, self.3);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>It is sometimes obvious that no such access can occur, like the case above.
+However, when dealing with a generic type parameter, such access can
+occur indirectly. Examples of such indirect access are:</p>
+<br>
+<div data-b=" *">invoking a callback,</div>
+<div data-b=" *">via a trait method call.</div>
+<br>
+<p>(Future changes to the language, such as impl specialization, may add
+other avenues for such indirect access.)</p>
+<br>
+<p>Here is an example of invoking a callback:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Inspector&lt;T&gt;(T, &amp;'static str, Box&lt;for &lt;'r&gt; fn(&amp;'r T) -&gt; String&gt;);"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for Inspector&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="#        // The `self.2` call could access a borrow e.g. if `T` is `&amp;'a _`."></div><div data-l="        // ">The <code>self.2</code> call could access a borrow e.g. if <code>T</code> is <code>&amp;'a _</code>.</div><div data-l="        println!(&quot;Inspector({}, {}) unwittingly inspects expired data.&quot;,"></div><div data-l="                 (self.2)(&amp;self.0), self.1);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Here is an example of a trait method call:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="struct Inspector&lt;T: fmt::Display&gt;(T, &amp;'static str);"></div><div data-l=""></div><div data-l="impl&lt;T: fmt::Display&gt; Drop for Inspector&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="#        // There is a hidden call to `&lt;T as Display&gt;::fmt` below, which"></div><div data-l="#        // could access a borrow e.g. if `T` is `&amp;'a _`"></div><div data-l="        // ">There is a hidden call to <code>&lt;T as Display&gt;::fmt</code> below, which could access a borrow e.g. if <code>T</code> is <code>&amp;'a _</code></div><div data-l="        println!(&quot;Inspector({}, {}) unwittingly inspects expired data.&quot;,"></div><div data-l="                 self.0, self.1);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And of course, all of these accesses could be further hidden within
+some other method invoked by the destructor, rather than being written
+directly within it.</p>
+<br>
+<p>In all of the above cases where the <code>&amp;'a u8</code> is accessed in the
+destructor, adding the <code>#[may_dangle]</code>
+attribute makes the type vulnerable to misuse that the borrower
+checker will not catch, inviting havoc. It is better to avoid adding
+the attribute.</p>
+<br>
+<h1>Is that all about drop checker?</h1>
+<br>
+<p>It turns out that when writing unsafe code, we generally don't need to
+worry at all about doing the right thing for the drop checker. However there
+is one special case that you need to worry about, which we will look at in
+the next section.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1327-dropck-param-eyepatch.md">rfc1327</a>

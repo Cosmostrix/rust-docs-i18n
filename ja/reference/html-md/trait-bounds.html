@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<h1>Trait and lifetime bounds</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>TypeParamBounds</s> :\
+&amp;nbsp;&amp;nbsp; <s>TypeParamBound</s> ( <code>+</code> <s>TypeParamBound</s> )<sup>\<i>&lt;/sup&gt; `+`&lt;sup&gt;?&lt;/sup&gt;
+
+_TypeParamBound_ :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; _Lifetime_ | _TraitBound_
+
+_TraitBound_ :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; `?`&lt;sup&gt;?&lt;/sup&gt;
+[_ForLifetimes_](#higher-ranked-trait-bounds)&lt;sup&gt;?&lt;/sup&gt; [_TraitPath_]\
+&amp;nbsp;&amp;nbsp; | `(` `?`&lt;sup&gt;?&lt;/sup&gt;
+[_ForLifetimes_](#higher-ranked-trait-bounds)&lt;sup&gt;?&lt;/sup&gt; [_TraitPath_] `)`
+
+_LifetimeBounds_ :\
+&amp;nbsp;&amp;nbsp; ( _Lifetime_ `+` )&lt;sup&gt;\</i></sup> <s>Lifetime</s><sup>?</sup></p>
+<br>
+<p><s>Lifetime</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4LIFETIME_OR_LABEL">LIFETIME_OR_LABEL</a>\
+&amp;nbsp;&amp;nbsp; | <code>'static</code>\
+&amp;nbsp;&amp;nbsp; | <code>'_</code></p></blockquote>
+<br>
+<p><a class="notranslate" href="#4Trait">Trait</a> and lifetime bounds provide a way for <a href="#3generic">generic items</a> to
+restrict which types and lifetimes are used as their parameters. Bounds can be
+provided on any type in a <a class="notranslate" href="#4where clause">where clause</a>. There are also shorter forms for
+certain common cases:</p>
+<br>
+<div data-b="*">Bounds written after declaring a <a href="#3generic">generic parameter</a>:
+<code>fn f&lt;A: Copy&gt;() {}</code> is the same as <code>fn f&lt;A&gt; where A: Copy () {}</code>.</div>
+<div data-b="*">In trait declarations as <a class="notranslate" href="#4supertraits">supertraits</a>: <code>trait Circle : Shape {}</code> is
+equivalent to <code>trait Circle where Self : Shape {}</code>.</div>
+<div data-b="*">In trait declarations as bounds on <a class="notranslate" href="#4associated types">associated types</a>:
+<code>trait A { type B: Copy; }</code> is equivalent to
+<code>trait A where Self::B: Copy { type B; }</code>.</div>
+<br>
+<p>Bounds on an item must be satisfied when using the item. When type checking and
+borrow checking a generic item, the bounds can be used to determine that a
+trait is implemented for a type. For example, given <code>Ty: Trait</code></p>
+<br>
+<div data-b="*">In the body of a generic function, methods from <code>Trait</code> can be called on <code>Ty</code>
+values. Likewise associated constants on the <code>Trait</code> can be used.</div>
+<div data-b="*">Associated types from <code>Trait</code> can be used.</div>
+<div data-b="*">Generic functions and types with a <code>T: Trait</code> bounds can be used with <code>Ty</code>
+being used for <code>T</code>.</div>
+<br>
+<div data-lang="rust"><div data-l="# type Surface = i32;"></div><div data-l="trait Shape {"></div><div data-l="    fn draw(&amp;self, Surface);"></div><div data-l="    fn name() -&gt; &amp;'static str;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn draw_twice&lt;T: Shape&gt;(surface: Surface, sh: T) {"></div><div data-l="#//    sh.draw(surface);           // Can call method because T: Shape"></div><div data-l="    sh.draw(surface);           // ">Can call method because T: Shape</div><div data-l="    sh.draw(surface);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn copy_and_draw_twice&lt;T: Copy&gt;(surface: Surface, sh: T) where T: Shape {"></div><div data-l="#//    let shape_copy = sh;        // doesn't move sh because T: Copy"></div><div data-l="    let shape_copy = sh;        // ">doesn't move sh because T: Copy</div><div data-l="#//    draw_twice(surface, sh);    // Can use generic function because T: Shape"></div><div data-l="    draw_twice(surface, sh);    // ">Can use generic function because T: Shape</div><div data-l="}"></div><div data-l=""></div><div data-l="struct Figure&lt;S: Shape&gt;(S, S);"></div><div data-l=""></div><div data-l="fn name_figure&lt;U: Shape&gt;("></div><div data-l="#//    figure: Figure&lt;U&gt;,          // Type Figure&lt;U&gt; is well-formed because U: Shape"></div><div data-l="    figure: Figure&lt;U&gt;,          // ">Type Figure<U> is well-formed because U: Shape</div><div data-l=") {"></div><div data-l="    println!("></div><div data-l="        &quot;Figure of two {}&quot;,"></div><div data-l="#//        U::name(),              // Can use associated function"></div><div data-l="        U::name(),              // ">Can use associated function</div><div data-l="    );"></div><div data-l="}"></div></div>
+<br>
+<p>Trait and lifetime bounds are also used to name <a class="notranslate" href="#4trait objects">trait objects</a>.</p>
+<br>
+<h2><code>?Sized</code></h2>
+<br>
+<p><code>?</code> is only used to declare that the <a class="notranslate" href="#4`Sized`">`Sized`</a> trait may not be
+implemented for a type parameter or associated type. <code>?Sized</code> may
+not be used as a bound for other types.</p>
+<br>
+<h2>Lifetime bounds</h2>
+<br>
+<p>Lifetime bounds can be applied to types or other lifetimes. The bound <code>'a: 'b</code>
+is usually read as <code>'a</code> <i>outlives</i> <code>'b</code>. <code>'a: 'b</code> means that <code>'a</code> lasts longer
+than <code>'b</code>, so a reference <code>&amp;'a ()</code> is valid whenever <code>&amp;'b ()</code> is valid.</p>
+<br>
+<div data-lang="rust"><div data-l="fn f&lt;'a, 'b&gt;(x: &amp;'a i32, mut y: &amp;'b i32) where 'a: 'b {"></div><div data-l="#//    y = x;                      // &amp;'a i32 is a subtype of &amp;'b i32 because 'a: 'b"></div><div data-l="    y = x;                      // ">&amp;'a i32 is a subtype of &amp;'b i32 because 'a: 'b</div><div data-l="#//    let r: &amp;'b &amp;'a i32 = &amp;&amp;0;   // &amp;'b &amp;'a i32 is well formed because 'a: 'b"></div><div data-l="    let r: &amp;'b &amp;'a i32 = &amp;&amp;0;   // ">&amp;'b &amp;'a i32 is well formed because 'a: 'b</div><div data-l="}"></div></div>
+<br>
+<p><code>T: 'a</code> means that all lifetime parameters of <code>T</code> outlive <code>'a</code>. For example if
+<code>'a</code> is an unconstrained lifetime parameter then <code>i32: 'static</code> and
+<code>&amp;'static str: 'a</code> are satisfied but <code>Vec&lt;&amp;'a ()&gt;: 'static</code> is not.</p>
+<br>
+<h2>Higher-ranked trait bounds</h2>
+<br>
+<p>Type bounds may be <i>higher ranked</i> over lifetimes. These bounds specify a bound
+is true <i>for all</i> lifetimes. For example, a bound such as <code>for&lt;'a&gt; &amp;'a T:
+PartialEq&lt;i32&gt;</code> would require an implementation like</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;'a&gt; PartialEq&lt;i32&gt; for &amp;'a T {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div></div>
+<br>
+<p>and could then be used to compare a <code>&amp;'a T</code> with any lifetime to an <code>i32</code>.</p>
+<br>
+<p>Only a higher-ranked bound can be used here as the lifetime of the reference is
+shorter than a lifetime parameter on the function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn call_on_ref_zero&lt;F&gt;(f: F) where for&lt;'a&gt; F: Fn(&amp;'a i32) {"></div><div data-l="    let zero = 0;"></div><div data-l="    f(&amp;zero);"></div><div data-l="}"></div></div>
+<br>
+<p>Higher-ranked lifetimes may also be specified just before the trait, the only
+end of the following trait instead of the whole bound. This function is
+difference is the scope of the lifetime parameter, which extends only to the
+equivalent to the last one.</p>
+<br>
+<div data-lang="rust"><div data-l="fn call_on_ref_zero&lt;F&gt;(f: F) where F: for&lt;'a&gt; Fn(&amp;'a i32) {"></div><div data-l="    let zero = 0;"></div><div data-l="    f(&amp;zero);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1tokens.html#lifetimes-and-loop-labels">LIFETIME_OR_LABEL</a>
+<a class="notranslate" href="#1paths.html">_TraitPath_</a>
+<a class="notranslate" href="#1special-types-and-traits.html#sized">`Sized`</a>
+<br>
+<a class="notranslate" href="#1items/associated-items.html#associated-types">associated types</a>
+<a class="notranslate" href="#1items/traits.html#supertraits">supertraits</a>
+<a class="notranslate" href="#1items/generics.html">generic</a>
+<a class="notranslate" href="#1items/traits.html#trait-bounds">Trait</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait objects</a>
+<a class="notranslate" href="#1items/generics.html#where-clauses">where clause</a>

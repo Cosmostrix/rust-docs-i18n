@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<h1>Other uses of <code>?</code></h1>
+<br>
+<p>Notice in the previous example that our immediate reaction to calling
+<code>parse</code> is to <code>map</code> the error from a library error into a boxed
+error:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l=".and_then(|s| s.parse::&lt;i32&gt;()"></div><div data-l="    .map_err(|e| e.into())"></div></div>
+<br>
+<p>Since this is a simple and common operation, it would be convenient if it
+could be elided. Alas, because <code>and_then</code> is not sufficiently flexible, it
+cannot. However, we can instead use <code>?</code>.</p>
+<br>
+<p><code>?</code> was previously explained as either <code>unwrap</code> or <code>return Err(err)</code>.
+This is only mostly true. It actually means <code>unwrap</code> or
+<code>return Err(From::from(err))</code>. Since <code>From::from</code> is a conversion utility
+between different types, this means that if you <code>?</code> where the error is
+convertible to the return type, it will convert automatically.</p>
+<br>
+<p>Here, we rewrite the previous example using <code>?</code>. As a result, the
+<code>map_err</code> will go away when <code>From::from</code> is implemented for our error type:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::error;"></div><div data-l="use std::fmt;"></div><div data-l="use std::num::ParseIntError;"></div><div data-l=""></div><div data-l="#// Change the alias to `Box&lt;error::Error&gt;`."></div><div data-l="// ">Change the alias to <code>Box&lt;error::Error&gt;</code>.</div><div data-l="type Result&lt;T&gt; = std::result::Result&lt;T, Box&lt;error::Error&gt;&gt;;"></div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct EmptyVec;"></div><div data-l=""></div><div data-l="impl fmt::Display for EmptyVec {"></div><div data-l="    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        write!(f, &quot;invalid first item to double&quot;)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl error::Error for EmptyVec {"></div><div data-l="    fn description(&amp;self) -&gt; &amp;str {"></div><div data-l="        &quot;invalid first item to double&quot;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn cause(&amp;self) -&gt; Option&lt;&amp;error::Error&gt; {"></div><div data-l="#        // Generic error, underlying cause isn't tracked."></div><div data-l="        // ">Generic error, underlying cause isn't tracked.</div><div data-l="        None"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// The same structure as before but rather than chain all `Results`"></div><div data-l="#// and `Options` along, we `?` to get the inner value out immediately."></div><div data-l="// ">The same structure as before but rather than chain all <code>Results</code> and <code>Options</code> along, we <code>?</code> to get the inner value out immediately.</div><div data-l="fn double_first(vec: Vec&lt;&amp;str&gt;) -&gt; Result&lt;i32&gt; {"></div><div data-l="    let first = vec.first().ok_or(EmptyVec)?;"></div><div data-l="    let parsed = first.parse::&lt;i32&gt;()?;"></div><div data-l="    Ok(2 * parsed)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print(result: Result&lt;i32&gt;) {"></div><div data-l="    match result {"></div><div data-l="        Ok(n)  =&gt; println!(&quot;The first doubled is {}&quot;, n),"></div><div data-l="        Err(e) =&gt; println!(&quot;Error: {}&quot;, e),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let numbers = vec![&quot;42&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l="    let empty = vec![];"></div><div data-l="    let strings = vec![&quot;tofu&quot;, &quot;93&quot;, &quot;18&quot;];"></div><div data-l=""></div><div data-l="    print(double_first(numbers));"></div><div data-l="    print(double_first(empty));"></div><div data-l="    print(double_first(strings));"></div><div data-l="}"></div></div>
+<br>
+<p>This is actually fairly clean now. Compared with the original <code>panic</code>, it
+is very similar to replacing the <code>unwrap</code> calls with <code>?</code> except that the
+return types are <code>Result</code>. As a result, they must be destructured at the
+top level.</p>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3from"><code>From::from</code></a> and <a class="notranslate" href="#3q_mark"><code>?</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/convert/trait.From.html">from</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator">q_mark</a>

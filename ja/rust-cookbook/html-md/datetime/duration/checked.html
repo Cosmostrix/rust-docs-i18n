@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Perform checked date and time calculations</h2>
+<br>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Calculates and displays the date and time two weeks from now using
+<a class="notranslate" href="#4`DateTime::checked_add_signed`">`DateTime::checked_add_signed`</a> and the date of the day before that using
+<a class="notranslate" href="#4`DateTime::checked_sub_signed`">`DateTime::checked_sub_signed`</a>. The methods return None if the date and time
+cannot be calculated.</p>
+<br>
+<p>Escape sequences that are available for the
+<a class="notranslate" href="#4`DateTime::format`">`DateTime::format`</a> can be found at <a class="notranslate" href="#4`chrono::format::strftime`">`chrono::format::strftime`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l="use chrono::{DateTime, Duration, Utc};"></div><div data-l=""></div><div data-l="fn day_earlier(date_time: DateTime&lt;Utc&gt;) -&gt; Option&lt;DateTime&lt;Utc&gt;&gt; {"></div><div data-l="    date_time.checked_sub_signed(Duration::days(1))"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let now = Utc::now();"></div><div data-l="    println!(&quot;{}&quot;, now);"></div><div data-l=""></div><div data-l="    let almost_three_weeks_from_now = now.checked_add_signed(Duration::weeks(2))"></div><div data-l="            .and_then(|in_2weeks| in_2weeks.checked_add_signed(Duration::weeks(1)))"></div><div data-l="            .and_then(day_earlier);"></div><div data-l=""></div><div data-l="    match almost_three_weeks_from_now {"></div><div data-l="        Some(x) =&gt; println!(&quot;{}&quot;, x),"></div><div data-l="        None =&gt; eprintln!(&quot;Almost three weeks from now overflows!&quot;),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    match now.checked_add_signed(Duration::max_value()) {"></div><div data-l="        Some(x) =&gt; println!(&quot;{}&quot;, x),"></div><div data-l="        None =&gt; eprintln!(&quot;We can't use chrono to tell the time for the Solar System to complete more than one full orbit around the galactic center.&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/format/strftime/index.html">`chrono::format::strftime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.Date.html#method.checked_add_signed">`DateTime::checked_add_signed`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.Date.html#method.checked_sub_signed">`DateTime::checked_sub_signed`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.format">`DateTime::format`</a>

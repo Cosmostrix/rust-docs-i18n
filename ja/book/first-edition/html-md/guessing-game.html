@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<h1>Guessing Game</h1>
+<br>
+<p>Let’s learn some Rust! For our first project, we’ll implement a classic
+beginner programming problem: the guessing game. Here’s how it works: Our
+program will generate a random integer between one and a hundred. It will then
+prompt us to enter a guess. Upon entering our guess, it will tell us if we’re
+too low or too high. Once we guess correctly, it will congratulate us. Sounds
+good?</p>
+<br>
+<p>Along the way, we’ll learn a little bit about Rust. The next chapter, ‘Syntax
+and Semantics’, will dive deeper into each part.</p>
+<br>
+<h1>Set up</h1>
+<br>
+<p>Let’s set up a new project. Go to your projects directory. Remember how we had
+to create our directory structure and a <code>Cargo.toml</code> for <code>hello_world</code>? Cargo
+has a command that does that for us. Let’s give it a shot:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cd ~/projects"></div><div data-l="$ cargo new guessing_game --bin"></div><div data-l="     Created binary (application) `guessing_game` project"></div><div data-l="$ cd guessing_game"></div></div>
+<br>
+<p>We pass the name of our project to <code>cargo new</code>, and then the <code>--bin</code> flag,
+since we’re making a binary, rather than a library.</p>
+<br>
+<p>Check out the generated <code>Cargo.toml</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l=""></div><div data-l="name = &quot;guessing_game&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div></div>
+<br>
+<p>Cargo gets this information from your environment. If it’s not correct, go ahead
+and fix that.</p>
+<br>
+<p>Finally, Cargo generated a ‘Hello, world!’ for us. Check out <code>src/main.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello, world!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Let’s try compiling what Cargo gave us:</p>
+<br>
+<div data-lang="{bash}"><div data-l="$ cargo build"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.53 secs"></div></div>
+<br>
+<p>Excellent! Open up your <code>src/main.rs</code> again. We’ll be writing all of
+our code in this file.</p>
+<br>
+<p>Remember the <code>run</code> command from last chapter? Try it out again here:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running `target/debug/guessing_game`"></div><div data-l="Hello, world!"></div></div>
+<br>
+<p>Great! Our game is just the kind of project <code>run</code> is good for: we need
+to quickly test each iteration before moving on to the next one.</p>
+<br>
+<h1>Processing a Guess</h1>
+<br>
+<p>Let’s get to it! The first thing we need to do for our guessing game is
+allow our player to input a guess. Put this in your <code>src/main.rs</code>:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="use std::io;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="    let mut guess = String::new();"></div><div data-l=""></div><div data-l="    io::stdin().read_line(&amp;mut guess)"></div><div data-l="        .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l="}"></div></div>
+<br>
+<p>There’s a lot here! Let’s go over it, bit by bit.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="use std::io;"></div></div>
+<br>
+<p>We’ll need to take user input, and then print the result as output. As such, we
+need the <code>io</code> library from the standard library. Rust only imports a few things
+by default into every program, <a href="#3prelude">the ‘prelude’</a>. If it’s not in the
+prelude, you’ll have to <code>use</code> it directly. There is also a second ‘prelude’, the
+<a href="#3ioprelude"><code>io</code> prelude</a>, which serves a similar function: you import it, and it
+imports a number of useful, <code>io</code>-related things.</p>
+<br>
+<a class="notranslate" href="#1../../std/prelude/index.html">prelude</a>
+<a class="notranslate" href="#1../../std/io/prelude/index.html">ioprelude</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div></div>
+<br>
+<p>As you’ve seen before, the <code>main()</code> function is the entry point into your
+program. The <code>fn</code> syntax declares a new function, the <code>()</code>s indicate that
+there are no arguments, and <code>{</code> starts the body of the function. Because
+we didn’t include a return type, it’s assumed to be <code>()</code>, an empty
+<a class="notranslate" href="#3tuples">tuple</a>.</p>
+<br>
+<a class="notranslate" href="#1primitive-types.html#tuples">tuples</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;Please input your guess.&quot;);"></div></div>
+<br>
+<p>We previously learned that <code>println€()</code> is a <a class="notranslate" href="#3macros">macro</a> that
+prints a <a class="notranslate" href="#3strings">string</a> to the screen.</p>
+<br>
+<a class="notranslate" href="#1macros.html">macros</a>
+<a class="notranslate" href="#1strings.html">strings</a>
+<br>
+<div data-lang="rust,ignore"><div data-l="    let mut guess = String::new();"></div></div>
+<br>
+<p>Now we’re getting interesting! There’s a lot going on in this little line.
+The first thing to notice is that this is a <a href="#3let">let statement</a>, which is
+used to create ‘variable bindings’. They take this form:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let foo = bar;"></div></div>
+<br>
+<a class="notranslate" href="#1variable-bindings.html">let</a>
+<br>
+<p>This will create a new binding named <code>foo</code>, and bind it to the value <code>bar</code>. In
+many languages, this is called a ‘variable’, but Rust’s variable bindings have
+a few tricks up their sleeves.</p>
+<br>
+<p>For example, they’re <a class="notranslate" href="#3immutable">immutable</a> by default. That’s why our example
+uses <code>mut</code>: it makes a binding mutable, rather than immutable. <code>let</code> doesn’t
+take a name on the left hand side of the assignment, it actually accepts a
+‘<a class="notranslate" href="#3patterns">pattern</a>’. We’ll use patterns later. It’s easy enough
+to use for now:</p>
+<br>
+<div data-lang="rust"><div data-l="#//let foo = 5; // `foo` is immutable."></div><div data-l="let foo = 5; // "><code>foo</code> is immutable.</div><div data-l="#//let mut bar = 5; // `bar` is mutable."></div><div data-l="let mut bar = 5; // "><code>bar</code> is mutable.</div></div>
+<br>
+<a class="notranslate" href="#1mutability.html">immutable</a>
+<a class="notranslate" href="#1patterns.html">patterns</a>
+<br>
+<p>Oh, and <code>//</code> will start a comment, until the end of the line. Rust ignores
+everything in <a class="notranslate" href="#3comments">comments</a>.</p>
+<br>
+<a class="notranslate" href="#1comments.html">comments</a>
+<br>
+<p>So now we know that <code>let mut guess</code> will introduce a mutable binding named
+<code>guess</code>, but we have to look at the other side of the <code>=</code> for what it’s
+bound to: <code>String::new()</code>.</p>
+<br>
+<p><code>String</code> is a string type, provided by the standard library. A
+<a class="notranslate" href="#3string"><code>String</code></a> is a growable, UTF-8 encoded bit of text.</p>
+<br>
+<a class="notranslate" href="#1../../std/string/struct.String.html">string</a>
+<br>
+<p>The <code>::new()</code> syntax uses <code>::</code> because this is an ‘associated function’ of
+a particular type. That is to say, it’s associated with <code>String</code> itself,
+rather than a particular instance of a <code>String</code>. Some languages call this a
+‘static method’.</p>
+<br>
+<p>This function is named <code>new()</code>, because it creates a new, empty <code>String</code>.
+You’ll find a <code>new()</code> function on many types, as it’s a common name for making
+a new value of some kind.</p>
+<br>
+<p>Let’s move forward:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="    io::stdin().read_line(&amp;mut guess)"></div><div data-l="        .expect(&quot;Failed to read line&quot;);"></div></div>
+<br>
+<p>That’s a lot more! Let’s go bit-by-bit. The first line has two parts. Here’s
+the first:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="io::stdin()"></div></div>
+<br>
+<p>Remember how we <code>use</code>d <code>std::io</code> on the first line of the program? We’re now
+calling an associated function on it. If we didn’t <code>use std::io</code>, we could
+have written this line as <code>std::io::stdin()</code>.</p>
+<br>
+<p>This particular function returns a handle to the standard input for your
+terminal. More specifically, a <a class="notranslate" href="#3iostdin">std::io::Stdin</a>.</p>
+<br>
+<a class="notranslate" href="#1../../std/io/struct.Stdin.html">iostdin</a>
+<br>
+<p>The next part will use this handle to get input from the user:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l=".read_line(&amp;mut guess)"></div></div>
+<br>
+<p>Here, we call the <a class="notranslate" href="#4`read_line`">`read_line`</a> method on our handle.
+<a class="notranslate" href="#3method">Methods</a> are like associated functions, but are only available on a
+particular instance of a type, rather than the type itself. We’re also passing
+one argument to <code>read_line()</code>: <code>&amp;mut guess</code>.</p>
+<br>
+<a class="notranslate" href="#1../../std/io/struct.Stdin.html#method.read_line">`read_line`</a>
+<a class="notranslate" href="#1method-syntax.html">method</a>
+<br>
+<p>Remember how we bound <code>guess</code> above? We said it was mutable. However,
+<code>read_line</code> doesn’t take a <code>String</code> as an argument: it takes a <code>&amp;mut String</code>.
+Rust has a feature called ‘<a class="notranslate" href="#3references">references</a>’, which allows you to have
+multiple references to one piece of data, which can reduce copying. References
+are a complex feature, as one of Rust’s major selling points is how safe and
+easy it is to use references. We don’t need to know a lot of those details to
+finish our program right now, though. For now, all we need to know is that
+like <code>let</code> bindings, references are immutable by default. Hence, we need to
+write <code>&amp;mut guess</code>, rather than <code>&amp;guess</code>.</p>
+<br>
+<p>Why does <code>read_line()</code> take a mutable reference to a string? Its job is
+to take what the user types into standard input, and place that into a
+string. So it takes that string as an argument, and in order to add
+the input, it needs to be mutable.</p>
+<br>
+<a class="notranslate" href="#1references-and-borrowing.html">references</a>
+<br>
+<p>But we’re not quite done with this line of code, though. While it’s
+a single line of text, it’s only the first part of the single logical line of
+code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="        .expect(&quot;Failed to read line&quot;);"></div></div>
+<br>
+<p>When you call a method with the <code>.foo()</code> syntax, you may introduce a newline
+and other whitespace. This helps you split up long lines. We <s>could</s> have
+done:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="    io::stdin().read_line(&amp;mut guess).expect(&quot;Failed to read line&quot;);"></div></div>
+<br>
+<p>But that gets hard to read. So we’ve split it up, two lines for two method
+calls. We already talked about <code>read_line()</code>, but what about <code>expect()</code>? Well,
+we already mentioned that <code>read_line()</code> puts what the user types into the <code>&amp;mut
+String</code> we pass it. But it also returns a value: in this case, an
+<a class="notranslate" href="#3ioresult"><code>io::Result</code></a>. Rust has a number of types named <code>Result</code> in its
+standard library: a generic <a class="notranslate" href="#3result"><code>Result</code></a>, and then specific versions for
+sub-libraries, like <code>io::Result</code>.</p>
+<br>
+<a class="notranslate" href="#1../../std/io/type.Result.html">ioresult</a>
+<a class="notranslate" href="#1../../std/result/enum.Result.html">result</a>
+<br>
+<p>The purpose of these <code>Result</code> types is to encode error handling information.
+Values of the <code>Result</code> type, like any type, have methods defined on them. In
+this case, <code>io::Result</code> has an <a href="#3expect"><code>expect()</code> method</a> that takes a value
+it’s called on, and if it isn’t a successful one, <a class="notranslate" href="#3panic"><code>panic€</code></a>s with a
+message you passed it. A <code>panic€</code> like this will cause our program to crash,
+displaying the message.</p>
+<br>
+<a class="notranslate" href="#1../../std/result/enum.Result.html#method.expect">expect</a>
+<a class="notranslate" href="#1error-handling.html">panic</a>
+<br>
+<p>If we do not call <code>expect()</code>, our program will compile, but
+we’ll get a warning:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="warning: unused result which must be used, #[warn(unused_must_use)] on by default"></div><div data-l="  --&gt; src/main.rs:10:5"></div><div data-l="   |"></div><div data-l="10 |     io::stdin().read_line(&amp;mut guess);"></div><div data-l="   |     ^"></div><div data-l=""></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.42 secs"></div></div>
+<br>
+<p>Rust warns us that we haven’t used the <code>Result</code> value. This warning comes from
+a special annotation that <code>io::Result</code> has. Rust is trying to tell you that
+you haven’t handled a possible error. The right way to suppress the error is
+to actually write error handling. Luckily, if we want to crash if there’s
+a problem, we can use <code>expect()</code>. If we can recover from the
+error somehow, we’d do something else, but we’ll save that for a future
+project.</p>
+<br>
+<p>There’s only one line of this first example left:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="    println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l="}"></div></div>
+<br>
+<p>This prints out the string we saved our input in. The <code>{}</code>s are a placeholder,
+and so we pass it <code>guess</code> as an argument. If we had multiple <code>{}</code>s, we would
+pass multiple arguments:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l="let y = 10;"></div><div data-l=""></div><div data-l="println!(&quot;x and y: {} and {}&quot;, x, y);"></div></div>
+<br>
+<p>Easy.</p>
+<br>
+<p>Anyway, that’s the tour. We can run what we have with <code>cargo run</code>:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.44 secs"></div><div data-l="     Running `target/debug/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="Please input your guess."></div><div data-l="6"></div><div data-l="You guessed: 6"></div></div>
+<br>
+<p>All right! Our first part is done: we can get input from the keyboard,
+and then print it back out.</p>
+<br>
+<h1>Generating a secret number</h1>
+<br>
+<p>Next, we need to generate a secret number. Rust does not yet include random
+number functionality in its standard library. The Rust team does, however,
+provide a <a href="#3randcrate"><code>rand</code> crate</a>. A ‘crate’ is a package of Rust code.
+We’ve been building a ‘binary crate’, which is an executable. <code>rand</code> is a
+‘library crate’, which contains code that’s intended to be used with other
+programs.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/rand">randcrate</a>
+<br>
+<p>Using external crates is where Cargo really shines. Before we can write
+the code using <code>rand</code>, we need to modify our <code>Cargo.toml</code>. Open it up, and
+add these few lines at the bottom:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l=""></div><div data-l="rand = &quot;0.3.0&quot;"></div></div>
+<br>
+<p>The <code>[dependencies]</code> section of <code>Cargo.toml</code> is like the <code>[package]</code> section:
+everything that follows it is part of it, until the next section starts.
+Cargo uses the dependencies section to know what dependencies on external
+crates you have, and what versions you require. In this case, we’ve specified version <code>0.3.0</code>,
+which Cargo understands to be any release that’s compatible with this specific version.
+Cargo understands <a href="#3semver">Semantic Versioning</a>, which is a standard for writing version
+numbers. A bare number like above is actually shorthand for <code>^0.3.0</code>,
+meaning &quot;anything compatible with 0.3.0&quot;.
+If we wanted to use only <code>0.3.0</code> exactly, we could say <code>rand = &quot;=0.3.0&quot;</code>
+(note the two equal signs).
+We could also use a range of versions.
+<a href="#3cargodoc">Cargo’s documentation</a> contains more details.</p>
+<br>
+<a class="notranslate" href="#1http://semver.org">semver</a>
+<a class="notranslate" href="#1http://doc.crates.io/specifying-dependencies.html">cargodoc</a>
+<br>
+<p>Now, without changing any of our code, let’s build our project:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="    Updating registry `https://github.com/rust-lang/crates.io-index`"></div><div data-l=" Downloading rand v0.3.14"></div><div data-l=" Downloading libc v0.2.17"></div><div data-l="   Compiling libc v0.2.17"></div><div data-l="   Compiling rand v0.3.14"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 5.88 secs"></div></div>
+<br>
+<p>(You may see different versions, of course.)</p>
+<br>
+<p>Lots of new output! Now that we have an external dependency, Cargo fetches the
+latest versions of everything from the registry, which is a copy of data from
+<a class="notranslate" href="#3cratesio">Crates.io</a>. Crates.io is where people in the Rust ecosystem
+post their open source Rust projects for others to use.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io">cratesio</a>
+<br>
+<p>After updating the registry, Cargo checks our <code>[dependencies]</code> and downloads
+any we don’t have yet. In this case, while we only said we wanted to depend on
+<code>rand</code>, we’ve also grabbed a copy of <code>libc</code>. This is because <code>rand</code> depends on
+<code>libc</code> to work. After downloading them, it compiles them, and then compiles
+our project.</p>
+<br>
+<p>If we run <code>cargo build</code> again, we’ll get different output:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.0 secs"></div></div>
+<br>
+<p>That’s right, nothing was done! Cargo knows that our project has been built, and that
+all of its dependencies are built, and so there’s no reason to do all that
+stuff. With nothing to do, it simply exits. If we open up <code>src/main.rs</code> again,
+make a trivial change, and then save it again, we’ll only see two lines:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.45 secs"></div></div>
+<br>
+<p>So, we told Cargo we wanted any <code>0.3.x</code> version of <code>rand</code>, and so it fetched the latest
+version at the time this was written, <code>v0.3.14</code>. But what happens when next
+week, version <code>v0.3.15</code> comes out, with an important bugfix? While getting
+bugfixes is important, what if <code>0.3.15</code> contains a regression that breaks our
+code?</p>
+<br>
+<p>The answer to this problem is the <code>Cargo.lock</code> file you’ll now find in your
+project directory. When you build your project for the first time, Cargo
+figures out all of the versions that fit your criteria, and then writes them
+to the <code>Cargo.lock</code> file. When you build your project in the future, Cargo
+will see that the <code>Cargo.lock</code> file exists, and then use that specific version
+rather than do all the work of figuring out versions again. This lets you
+have a repeatable build automatically. In other words, we’ll stay at <code>0.3.14</code>
+until we explicitly upgrade, and so will anyone who we share our code with,
+thanks to the lock file.</p>
+<br>
+<p>What about when we <s>do</s> want to use <code>v0.3.15</code>? Cargo has another command,
+<code>update</code>, which says ‘ignore the lock, figure out all the latest versions that
+fit what we’ve specified. If that works, write those versions out to the lock
+file’. But, by default, Cargo will only look for versions larger than <code>0.3.0</code>
+and smaller than <code>0.4.0</code>. If we want to move to <code>0.4.x</code>, we’d have to update
+the <code>Cargo.toml</code> directly. When we do, the next time we <code>cargo build</code>, Cargo
+will update the index and re-evaluate our <code>rand</code> requirements.</p>
+<br>
+<p>There’s a lot more to say about <a class="notranslate" href="#3doccargo">Cargo</a> and <a class="notranslate" href="#3doccratesio">its
+ecosystem</a>, but for now, that’s all we need to know. Cargo makes
+it really easy to re-use libraries, and so Rustaceans tend to write smaller
+projects which are assembled out of a number of sub-packages.</p>
+<br>
+<a class="notranslate" href="#1http://doc.crates.io">doccargo</a>
+<a class="notranslate" href="#1http://doc.crates.io/crates-io.html">doccratesio</a>
+<br>
+<p>Let’s get on to actually <s>using</s> <code>rand</code>. Here’s our next step:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="    let mut guess = String::new();"></div><div data-l=""></div><div data-l="    io::stdin().read_line(&amp;mut guess)"></div><div data-l="        .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l="}"></div></div>
+<br>
+<p>The first thing we’ve done is change the first line. It now says
+<code>extern crate rand</code>. Because we declared <code>rand</code> in our <code>[dependencies]</code>, we
+can use <code>extern crate</code> to let Rust know we’ll be making use of it. This also
+does the equivalent of a <code>use rand;</code> as well, so we can make use of anything
+in the <code>rand</code> crate by prefixing it with <code>rand::</code>.</p>
+<br>
+<p>Next, we added another <code>use</code> line: <code>use rand::Rng</code>. We’re going to use a
+method in a moment, and it requires that <code>Rng</code> be in scope to work. The basic
+idea is this: methods are defined on something called ‘traits’, and for the
+method to work, it needs the trait to be in scope. For more about the
+details, read the <a class="notranslate" href="#3traits">traits</a> section.</p>
+<br>
+<a class="notranslate" href="#1traits.html">traits</a>
+<br>
+<p>There are two other lines we added, in the middle:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div></div>
+<br>
+<p>We use the <code>rand::thread_rng()</code> function to get a copy of the random number
+generator, which is local to the particular <a class="notranslate" href="#3concurrency">thread</a> of execution
+we’re in. Because we <code>use rand::Rng</code>’d above, it has a <code>gen_range()</code> method
+available. This method takes two arguments, and generates a number between
+them. It’s inclusive on the lower bound, but exclusive on the upper bound,
+so we need <code>1</code> and <code>101</code> to get a number ranging from one to a hundred.</p>
+<br>
+<a class="notranslate" href="#1concurrency.html">concurrency</a>
+<br>
+<p>The second line prints out the secret number. This is useful while
+we’re developing our program, so we can easily test it out. But we’ll be
+deleting it for the final version. It’s not much of a game if it prints out
+the answer when you start it up!</p>
+<br>
+<p>Try running our new program a few times:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.55 secs"></div><div data-l="     Running `target/debug/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="The secret number is: 7"></div><div data-l="Please input your guess."></div><div data-l="4"></div><div data-l="You guessed: 4"></div><div data-l="$ cargo run"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.0 secs"></div><div data-l="     Running `target/debug/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="The secret number is: 83"></div><div data-l="Please input your guess."></div><div data-l="5"></div><div data-l="You guessed: 5"></div></div>
+<br>
+<p>Great! Next up: comparing our guess to the secret number.</p>
+<br>
+<h1>Comparing guesses</h1>
+<br>
+<p>Now that we’ve got user input, let’s compare our guess to the secret number.
+Here’s our next step, though it doesn’t quite compile yet:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="    let mut guess = String::new();"></div><div data-l=""></div><div data-l="    io::stdin().read_line(&amp;mut guess)"></div><div data-l="        .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="    match guess.cmp(&amp;secret_number) {"></div><div data-l="        Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="        Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="        Ordering::Equal   =&gt; println!(&quot;You win!&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>A few new bits here. The first is another <code>use</code>. We bring a type called
+<code>std::cmp::Ordering</code> into scope. Then, five new lines at the bottom that use
+it:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="match guess.cmp(&amp;secret_number) {"></div><div data-l="    Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="    Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="    Ordering::Equal   =&gt; println!(&quot;You win!&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>cmp()</code> method can be called on anything that can be compared, and it
+takes a reference to the thing you want to compare it to. It returns the
+<code>Ordering</code> type we <code>use</code>d earlier. We use a <a class="notranslate" href="#3match"><code>match</code></a> statement to
+determine exactly what kind of <code>Ordering</code> it is. <code>Ordering</code> is an
+<a class="notranslate" href="#3enum"><code>enum</code></a>, short for ‘enumeration’, which looks like this:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Foo {"></div><div data-l="    Bar,"></div><div data-l="    Baz,"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1match.html">match</a>
+<a class="notranslate" href="#1enums.html">enum</a>
+<br>
+<p>With this definition, anything of type <code>Foo</code> can be either a
+<code>Foo::Bar</code> or a <code>Foo::Baz</code>. We use the <code>::</code> to indicate the
+namespace for a particular <code>enum</code> variant.</p>
+<br>
+<p>The <a class="notranslate" href="#3ordering"><code>Ordering</code></a> <code>enum</code> has three possible variants: <code>Less</code>, <code>Equal</code>,
+and <code>Greater</code>. The <code>match</code> statement takes a value of a type, and lets you
+create an ‘arm’ for each possible value. Since we have three types of
+<code>Ordering</code>, we have three arms:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="match guess.cmp(&amp;secret_number) {"></div><div data-l="    Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="    Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="    Ordering::Equal   =&gt; println!(&quot;You win!&quot;),"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/cmp/enum.Ordering.html">ordering</a>
+<br>
+<p>If it’s <code>Less</code>, we print <code>Too small€</code>, if it’s <code>Greater</code>, <code>Too big€</code>, and if
+<code>Equal</code>, <code>You win€</code>. <code>match</code> is really useful, and is used often in Rust.</p>
+<br>
+<p>I did mention that this won’t quite compile yet, though. Let’s try it:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo build"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="error[E0308]: mismatched types"></div><div data-l="  --&gt; src/main.rs:23:21"></div><div data-l="   |"></div><div data-l="23 |     match guess.cmp(&amp;secret_number) {"></div><div data-l="   |                     ^^^^^^^^^^^^^^ expected struct `std::string::String`, found integral variable"></div><div data-l="   |"></div><div data-l="   = note: expected type `&amp;std::string::String`"></div><div data-l="   = note:    found type `&amp;{integer}`"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div><div data-l=""></div><div data-l="error: Could not compile `guessing_game`."></div><div data-l=""></div><div data-l="To learn more, run the command again with --verbose."></div></div>
+<br>
+<p>Whew! This is a big error. The core of it is that we have ‘mismatched types’.
+Rust has a strong, static type system. However, it also has type inference.
+When we wrote <code>let guess = String::new()</code>, Rust was able to infer that <code>guess</code>
+should be a <code>String</code>, and so it doesn’t make us write out the type. And with
+our <code>secret_number</code>, there are a number of types which can have a value
+between one and a hundred: <code>i32</code>, a thirty-two-bit number, or <code>u32</code>, an
+unsigned thirty-two-bit number, or <code>i64</code>, a sixty-four-bit number or others.
+So far, that hasn’t mattered, and so Rust defaults to an <code>i32</code>. However, here,
+Rust doesn’t know how to compare the <code>guess</code> and the <code>secret_number</code>. They
+need to be the same type. Ultimately, we want to convert the <code>String</code> we
+read as input into a real number type, for comparison. We can do that
+with two more lines. Here’s our new program:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="    let mut guess = String::new();"></div><div data-l=""></div><div data-l="    io::stdin().read_line(&amp;mut guess)"></div><div data-l="        .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="    let guess: u32 = guess.trim().parse()"></div><div data-l="        .expect(&quot;Please type a number!&quot;);"></div><div data-l=""></div><div data-l="    println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="    match guess.cmp(&amp;secret_number) {"></div><div data-l="        Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="        Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="        Ordering::Equal   =&gt; println!(&quot;You win!&quot;),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The new two lines:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="    let guess: u32 = guess.trim().parse()"></div><div data-l="        .expect(&quot;Please type a number!&quot;);"></div></div>
+<br>
+<p>Wait a minute, I thought we already had a <code>guess</code>? We do, but Rust allows us
+to ‘shadow’ the previous <code>guess</code> with a new one. This is often used in this
+exact situation, where <code>guess</code> starts as a <code>String</code>, but we want to convert it
+to an <code>u32</code>. Shadowing lets us re-use the <code>guess</code> name, rather than forcing us
+to come up with two unique names like <code>guess_str</code> and <code>guess</code>, or something
+else.</p>
+<br>
+<p>We bind <code>guess</code> to an expression that looks like something we wrote earlier:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="guess.trim().parse()"></div></div>
+<br>
+<p>Here, <code>guess</code> refers to the old <code>guess</code>, the one that was a <code>String</code> with our
+input in it. The <code>trim()</code> method on <code>String</code>s will eliminate any white space at
+the beginning and end of our string. This is important, as we had to press the
+‘return’ key to satisfy <code>read_line()</code>. This means that if we type <code>5</code> and hit
+return, <code>guess</code> looks like this: <code>5\n</code>. The <code>\n</code> represents ‘newline’, the
+enter key. <code>trim()</code> gets rid of this, leaving our string with only the <code>5</code>. The
+<a href="#3parse"><code>parse()</code> method on strings</a> parses a string into some kind of number.
+Since it can parse a variety of numbers, we need to give Rust a hint as to the
+exact type of number we want. Hence, <code>let guess: u32</code>. The colon (<code>:</code>) after
+<code>guess</code> tells Rust we’re going to annotate its type. <code>u32</code> is an unsigned,
+thirty-two bit integer. Rust has <a href="#3number">a number of built-in number types</a>,
+but we’ve chosen <code>u32</code>. It’s a good default choice for a small positive number.</p>
+<br>
+<a class="notranslate" href="#1../../std/primitive.str.html#method.parse">parse</a>
+<a class="notranslate" href="#1primitive-types.html#numeric-types">number</a>
+<br>
+<p>Just like <code>read_line()</code>, our call to <code>parse()</code> could cause an error. What if
+our string contained <code>A👍%</code>? There’d be no way to convert that to a number. As
+such, we’ll do the same thing we did with <code>read_line()</code>: use the <code>expect()</code>
+method to crash if there’s an error.</p>
+<br>
+<p>Let’s try our program out!</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.57 secs"></div><div data-l="     Running `target/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="The secret number is: 58"></div><div data-l="Please input your guess."></div><div data-l="  76"></div><div data-l="You guessed: 76"></div><div data-l="Too big!"></div></div>
+<br>
+<p>Nice! You can see I even added spaces before my guess, and it still figured
+out that I guessed 76. Run the program a few times, and verify that guessing
+the number works, as well as guessing a number too small.</p>
+<br>
+<p>Now we’ve got most of the game working, but we can only make one guess. Let’s
+change that by adding loops!</p>
+<br>
+<h1>Looping</h1>
+<br>
+<p>The <code>loop</code> keyword gives us an infinite loop. Let’s add that in:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    loop {"></div><div data-l="        println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="        let mut guess = String::new();"></div><div data-l=""></div><div data-l="        io::stdin().read_line(&amp;mut guess)"></div><div data-l="            .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="        let guess: u32 = guess.trim().parse()"></div><div data-l="            .expect(&quot;Please type a number!&quot;);"></div><div data-l=""></div><div data-l="        println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="        match guess.cmp(&amp;secret_number) {"></div><div data-l="            Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="            Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="            Ordering::Equal   =&gt; println!(&quot;You win!&quot;),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And try it out. But wait, didn’t we just add an infinite loop? Yup. Remember
+our discussion about <code>parse()</code>? If we give a non-number answer, we’ll <code>panic€</code>
+and quit. Observe:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.58 secs"></div><div data-l="     Running `target/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="The secret number is: 59"></div><div data-l="Please input your guess."></div><div data-l="45"></div><div data-l="You guessed: 45"></div><div data-l="Too small!"></div><div data-l="Please input your guess."></div><div data-l="60"></div><div data-l="You guessed: 60"></div><div data-l="Too big!"></div><div data-l="Please input your guess."></div><div data-l="59"></div><div data-l="You guessed: 59"></div><div data-l="You win!"></div><div data-l="Please input your guess."></div><div data-l="quit"></div><div data-l="thread 'main' panicked at 'Please type a number!'"></div></div>
+<br>
+<p>Ha! <code>quit</code> actually quits. As does any other non-number input. Well, this is
+suboptimal to say the least. First, let’s actually quit when you win the game:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    loop {"></div><div data-l="        println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="        let mut guess = String::new();"></div><div data-l=""></div><div data-l="        io::stdin().read_line(&amp;mut guess)"></div><div data-l="            .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="        let guess: u32 = guess.trim().parse()"></div><div data-l="            .expect(&quot;Please type a number!&quot;);"></div><div data-l=""></div><div data-l="        println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="        match guess.cmp(&amp;secret_number) {"></div><div data-l="            Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="            Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="            Ordering::Equal   =&gt; {"></div><div data-l="                println!(&quot;You win!&quot;);"></div><div data-l="                break;"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>By adding the <code>break</code> line after the <code>You win€</code>, we’ll exit the loop when we
+win. Exiting the loop also means exiting the program, since it’s the last
+thing in <code>main()</code>. We have only one more tweak to make: when someone inputs a
+non-number, we don’t want to quit, we want to ignore it. We can do that
+like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    println!(&quot;The secret number is: {}&quot;, secret_number);"></div><div data-l=""></div><div data-l="    loop {"></div><div data-l="        println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="        let mut guess = String::new();"></div><div data-l=""></div><div data-l="        io::stdin().read_line(&amp;mut guess)"></div><div data-l="            .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="        let guess: u32 = match guess.trim().parse() {"></div><div data-l="            Ok(num) =&gt; num,"></div><div data-l="            Err(_) =&gt; continue,"></div><div data-l="        };"></div><div data-l=""></div><div data-l="        println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="        match guess.cmp(&amp;secret_number) {"></div><div data-l="            Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="            Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="            Ordering::Equal   =&gt; {"></div><div data-l="                println!(&quot;You win!&quot;);"></div><div data-l="                break;"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>These are the lines that changed:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let guess: u32 = match guess.trim().parse() {"></div><div data-l="    Ok(num) =&gt; num,"></div><div data-l="    Err(_) =&gt; continue,"></div><div data-l="};"></div></div>
+<p>This is how you generally move from ‘crash on error’ to ‘actually handle the
+error’, by switching from <code>expect()</code> to a <code>match</code> statement. A <code>Result</code> is
+returned by <code>parse()</code>, this is an <code>enum</code>  like <code>Ordering</code>, but in this case,
+each variant has some data associated with it: <code>Ok</code> is a success, and <code>Err</code> is a
+failure. Each contains more information: the successfully parsed integer, or an
+error type. In this case, we <code>match</code> on <code>Ok(num)</code>, which sets the name <code>num</code> to
+the unwrapped <code>Ok</code> value (the integer), and then we  return it on the
+right-hand side. In the <code>Err</code> case, we don’t care what kind of error it is, so
+we just use the catch all <code>_</code> instead of a name. This catches everything that
+isn't <code>Ok</code>, and <code>continue</code> lets us move to the next iteration of the loop; in
+effect, this enables us to ignore all errors and continue with our program.</p>
+<br>
+<p>Now we should be good! Let’s try:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo run"></div><div data-l="   Compiling guessing_game v0.1.0 (file:///home/you/projects/guessing_game)"></div><div data-l="    Finished debug [unoptimized + debuginfo] target(s) in 0.57 secs"></div><div data-l="     Running `target/guessing_game`"></div><div data-l="Guess the number!"></div><div data-l="The secret number is: 61"></div><div data-l="Please input your guess."></div><div data-l="10"></div><div data-l="You guessed: 10"></div><div data-l="Too small!"></div><div data-l="Please input your guess."></div><div data-l="99"></div><div data-l="You guessed: 99"></div><div data-l="Too big!"></div><div data-l="Please input your guess."></div><div data-l="foo"></div><div data-l="Please input your guess."></div><div data-l="61"></div><div data-l="You guessed: 61"></div><div data-l="You win!"></div></div>
+<br>
+<p>Awesome! With one tiny last tweak, we have finished the guessing game. Can you
+think of what it is? That’s right, we don’t want to print out the secret
+number. It was good for testing, but it kind of ruins the game. Here’s our
+final source:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use std::io;"></div><div data-l="use std::cmp::Ordering;"></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;Guess the number!&quot;);"></div><div data-l=""></div><div data-l="    let secret_number = rand::thread_rng().gen_range(1, 101);"></div><div data-l=""></div><div data-l="    loop {"></div><div data-l="        println!(&quot;Please input your guess.&quot;);"></div><div data-l=""></div><div data-l="        let mut guess = String::new();"></div><div data-l=""></div><div data-l="        io::stdin().read_line(&amp;mut guess)"></div><div data-l="            .expect(&quot;Failed to read line&quot;);"></div><div data-l=""></div><div data-l="        let guess: u32 = match guess.trim().parse() {"></div><div data-l="            Ok(num) =&gt; num,"></div><div data-l="            Err(_) =&gt; continue,"></div><div data-l="        };"></div><div data-l=""></div><div data-l="        println!(&quot;You guessed: {}&quot;, guess);"></div><div data-l=""></div><div data-l="        match guess.cmp(&amp;secret_number) {"></div><div data-l="            Ordering::Less    =&gt; println!(&quot;Too small!&quot;),"></div><div data-l="            Ordering::Greater =&gt; println!(&quot;Too big!&quot;),"></div><div data-l="            Ordering::Equal   =&gt; {"></div><div data-l="                println!(&quot;You win!&quot;);"></div><div data-l="                break;"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h1>Complete!</h1>
+<br>
+<p>This project showed you a lot: <code>let</code>, <code>match</code>, methods, associated
+functions, using external crates, and more.</p>
+<br>
+<p>At this point, you have successfully built the Guessing Game! Congratulations!</p>

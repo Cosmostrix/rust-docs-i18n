@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<h1>macro_rules!</h1>
+<br>
+<p>Rust provides a powerful macro system that allows metaprogramming. As you've
+seen in previous chapters, macros look like functions, except that their name
+ends with a bang <code>€</code>, but instead of generating a function call, macros are
+expanded into source code that gets compiled with the rest of the program.
+However, unlike macros in C and other languages, Rust macros are expanded into
+abstract syntax trees, rather than string preprocessing, so you don't get
+unexpected precedence bugs.</p>
+<br>
+<p>Macros are created using the <code>macro_rules€</code> macro.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// This is a simple macro named `say_hello`."></div><div data-l="// ">This is a simple macro named <code>say_hello</code>.</div><div data-l="macro_rules! say_hello {"></div><div data-l="#    // `()` indicates that the macro takes no argument."></div><div data-l="    // "><code>()</code> indicates that the macro takes no argument.</div><div data-l="    () =&gt; ("></div><div data-l="#        // The macro will expand into the contents of this block."></div><div data-l="        // ">The macro will expand into the contents of this block.</div><div data-l="        println!(&quot;Hello!&quot;);"></div><div data-l="    )"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // This call will expand into `println!(&quot;Hello&quot;);`"></div><div data-l="    // ">This call will expand into <code>println€(&quot;Hello&quot;);</code></div><div data-l="    say_hello!()"></div><div data-l="}"></div></div>
+<br>
+<p>So why are macros useful?</p>
+<br>
+<div data-b="1.">Don't repeat yourself. There are many cases where you may need similar
+ functionality in multiple places but with different types. Often, writing a
+ macro is a useful way to avoid repeating code. (More on this later)</div>
+<br>
+<div data-b="2.">Domain-specific languages. Macros allow you to define special syntax for a
+ specific purpose. (More on this later)</div>
+<br>
+<div data-b="3.">Variadic interfaces. Sometime you want to define an interface that takes a
+ variable number of arguments. An example is <code>println€</code> which could take any
+ number of arguments, depending on the format string!. (More on this later)</div>

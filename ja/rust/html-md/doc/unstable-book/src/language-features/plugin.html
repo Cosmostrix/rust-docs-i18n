@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<h1><code>plugin</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#29597">#29597</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29597">#29597</a>
+<br>
+<br>
+<p>This feature is part of &quot;compiler plugins.&quot; It will often be used with the
+<a class="notranslate" href="#4`plugin_registrar`">`plugin_registrar`</a> and <code>rustc_private</code> features.</p>
+<br>
+<a class="notranslate" href="#1language-features/plugin-registrar.html">`plugin_registrar`</a>
+<br>
+<p>------------------------</p>
+<br>
+<p><code>rustc</code> can load compiler plugins, which are user-provided libraries that
+extend the compiler's behavior with new syntax extensions, lint checks, etc.</p>
+<br>
+<p>A plugin is a dynamic library crate with a designated <i>registrar</i> function that
+registers extensions with <code>rustc</code>. Other crates can load these extensions using
+the crate attribute <code>#€[plugin(...)]</code>.  See the
+<code>rustc_plugin</code> documentation for more about the
+mechanics of defining and loading a plugin.</p>
+<br>
+<p>If present, arguments passed as <code>#€[plugin(foo(... args ...))]</code> are not
+interpreted by rustc itself.  They are provided to the plugin through the
+<code>Registry</code>'s <code>args</code> method.</p>
+<br>
+<p>In the vast majority of cases, a plugin should <i>only</i> be used through
+<code>#€[plugin]</code> and not through an <code>extern crate</code> item.  Linking a plugin would
+pull in all of libsyntax and librustc as dependencies of your crate.  This is
+generally unwanted unless you are building another plugin.  The
+<code>plugin_as_library</code> lint checks these guidelines.</p>
+<br>
+<p>The usual practice is to put compiler plugins in their own crate, separate from
+any <code>macro_rules€</code> macros or ordinary Rust code meant to be used by consumers
+of a library.</p>
+<br>
+<h1>Syntax extensions</h1>
+<br>
+<p>Plugins can extend Rust's syntax in various ways. One kind of syntax extension
+is the procedural macro. These are invoked the same way as <a class="notranslate" href="#2../book/macros.html">ordinary
+macros</a>, but the expansion is performed by arbitrary Rust
+code that manipulates syntax trees at
+compile time.</p>
+<br>
+<p>Let's write a plugin
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/test/run-pass-fulldeps/auxiliary/roman_numerals.rs"><code>roman_numerals.rs</code></a>
+that implements Roman numeral integer literals.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![crate_type=&quot;dylib&quot;]"></div><div data-l="#![feature(plugin_registrar, rustc_private)]"></div><div data-l=""></div><div data-l="extern crate syntax;"></div><div data-l="extern crate rustc;"></div><div data-l="extern crate rustc_plugin;"></div><div data-l=""></div><div data-l="use syntax::parse::token;"></div><div data-l="use syntax::tokenstream::TokenTree;"></div><div data-l="use syntax::ext::base::{ExtCtxt, MacResult, DummyResult, MacEager};"></div><div data-l="#//use syntax::ext::build::AstBuilder;  // A trait for expr_usize."></div><div data-l="use syntax::ext::build::AstBuilder;  // ">A trait for expr_usize.</div><div data-l="use syntax::ext::quote::rt::Span;"></div><div data-l="use rustc_plugin::Registry;"></div><div data-l=""></div><div data-l="fn expand_rn(cx: &amp;mut ExtCtxt, sp: Span, args: &amp;[TokenTree])"></div><div data-l="        -&gt; Box&lt;MacResult + 'static&gt; {"></div><div data-l=""></div><div data-l="    static NUMERALS: &amp;'static [(&amp;'static str, usize)] = &amp;["></div><div data-l="        (&quot;M&quot;, 1000), (&quot;CM&quot;, 900), (&quot;D&quot;, 500), (&quot;CD&quot;, 400),"></div><div data-l="        (&quot;C&quot;,  100), (&quot;XC&quot;,  90), (&quot;L&quot;,  50), (&quot;XL&quot;,  40),"></div><div data-l="        (&quot;X&quot;,   10), (&quot;IX&quot;,   9), (&quot;V&quot;,   5), (&quot;IV&quot;,   4),"></div><div data-l="        (&quot;I&quot;,    1)];"></div><div data-l=""></div><div data-l="    if args.len() != 1 {"></div><div data-l="        cx.span_err("></div><div data-l="            sp,"></div><div data-l="            &amp;format!(&quot;argument should be a single identifier, but got {} arguments&quot;, args.len()));"></div><div data-l="        return DummyResult::any(sp);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    let text = match args[0] {"></div><div data-l="        TokenTree::Token(_, token::Ident(s)) =&gt; s.to_string(),"></div><div data-l="        _ =&gt; {"></div><div data-l="            cx.span_err(sp, &quot;argument should be a single identifier&quot;);"></div><div data-l="            return DummyResult::any(sp);"></div><div data-l="        }"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let mut text = &amp;*text;"></div><div data-l="    let mut total = 0;"></div><div data-l="    while !text.is_empty() {"></div><div data-l="        match NUMERALS.iter().find(|&amp;&amp;(rn, _)| text.starts_with(rn)) {"></div><div data-l="            Some(&amp;(rn, val)) =&gt; {"></div><div data-l="                total += val;"></div><div data-l="                text = &amp;text[rn.len()..];"></div><div data-l="            }"></div><div data-l="            None =&gt; {"></div><div data-l="                cx.span_err(sp, &quot;invalid Roman numeral&quot;);"></div><div data-l="                return DummyResult::any(sp);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    MacEager::expr(cx.expr_usize(sp, total))"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[plugin_registrar]"></div><div data-l="pub fn plugin_registrar(reg: &amp;mut Registry) {"></div><div data-l="    reg.register_macro(&quot;rn&quot;, expand_rn);"></div><div data-l="}"></div></div>
+<br>
+<p>Then we can use <code>rn€()</code> like any other macro:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(plugin)]"></div><div data-l="#![plugin(roman_numerals)]"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(rn!(MMXV), 2015);"></div><div data-l="}"></div></div>
+<br>
+<p>The advantages over a simple <code>fn(&amp;str) -&gt; u32</code> are:</p>
+<br>
+<div data-b="*">The (arbitrarily complex) conversion is done at compile time.</div>
+<div data-b="*">Input validation is also performed at compile time.</div>
+<div data-b="*">It can be extended to allow use in patterns, which effectively gives
+a way to define new literal syntax for any data type.</div>
+<br>
+<p>In addition to procedural macros, you can define new
+<a class="notranslate" href="#2../reference/attributes.html#derive"><code>derive</code></a>-like attributes and other kinds
+of extensions.  See <code>Registry::register_syntax_extension</code> and the
+<code>SyntaxExtension</code> enum.  For a more involved macro example, see
+<a class="notranslate" href="#2https://github.com/rust-lang/regex/blob/master/regex_macros/src/lib.rs"><code>regex_macros</code></a>.</p>
+<br>
+<br>
+<h2>Tips and tricks</h2>
+<br>
+<p>Some of the <a href="#2../book/first-edition/macros.html#debugging-macro-code">macro debugging tips</a> are applicable.</p>
+<br>
+<p>You can use <code>syntax::parse</code> to turn token trees into
+higher-level syntax elements like expressions:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn expand_foo(cx: &amp;mut ExtCtxt, sp: Span, args: &amp;[TokenTree])"></div><div data-l="        -&gt; Box&lt;MacResult+'static&gt; {"></div><div data-l=""></div><div data-l="    let mut parser = cx.new_parser_from_tts(args);"></div><div data-l=""></div><div data-l="    let expr: P&lt;Expr&gt; = parser.parse_expr();"></div></div>
+<br>
+<p>Looking through <a href="#2https://github.com/rust-lang/rust/blob/master/src/libsyntax/parse/parser.rs"><code>libsyntax</code> parser
+code</a>
+will give you a feel for how the parsing infrastructure works.</p>
+<br>
+<p>Keep the <code>Span</code>s of everything you parse, for better error reporting. You can
+wrap <code>Spanned</code> around your custom data structures.</p>
+<br>
+<p>Calling <code>ExtCtxt::span_fatal</code> will immediately abort compilation. It's better to
+instead call <code>ExtCtxt::span_err</code> and return <code>DummyResult</code> so that the compiler
+can continue and find further errors.</p>
+<br>
+<p>To print syntax fragments for debugging, you can use <code>span_note</code> together with
+<code>syntax::print::pprust::*_to_string</code>.</p>
+<br>
+<p>The example above produced an integer literal using <code>AstBuilder::expr_usize</code>.
+As an alternative to the <code>AstBuilder</code> trait, <code>libsyntax</code> provides a set of
+quasiquote macros. They are undocumented and very rough around the edges.
+However, the implementation may be a good starting point for an improved
+quasiquote as an ordinary plugin library.</p>
+<br>
+<br>
+<h1>Lint plugins</h1>
+<br>
+<p>Plugins can extend <a href="#2../reference/attributes.html#lint-check-attributes">Rust's lint
+infrastructure</a> with
+additional checks for code style, safety, etc. Now let's write a plugin
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/test/ui-fulldeps/auxiliary/lint_plugin_test.rs"><code>lint_plugin_test.rs</code></a>
+that warns about any item named <code>lintme</code>.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(plugin_registrar)]"></div><div data-l="#![feature(box_syntax, rustc_private)]"></div><div data-l="#![feature(macro_vis_matcher)]"></div><div data-l="#![feature(macro_at_most_once_rep)]"></div><div data-l=""></div><div data-l="extern crate syntax;"></div><div data-l=""></div><div data-l="#// Load rustc as a plugin to get macros"></div><div data-l="// ">Load rustc as a plugin to get macros</div><div data-l="#[macro_use]"></div><div data-l="extern crate rustc;"></div><div data-l="extern crate rustc_plugin;"></div><div data-l=""></div><div data-l="use rustc::lint::{EarlyContext, LintContext, LintPass, EarlyLintPass,"></div><div data-l="                  EarlyLintPassObject, LintArray};"></div><div data-l="use rustc_plugin::Registry;"></div><div data-l="use syntax::ast;"></div><div data-l=""></div><div data-l="declare_lint!(TEST_LINT, Warn, &quot;Warn about items named 'lintme'&quot;);"></div><div data-l=""></div><div data-l="struct Pass;"></div><div data-l=""></div><div data-l="impl LintPass for Pass {"></div><div data-l="    fn get_lints(&amp;self) -&gt; LintArray {"></div><div data-l="        lint_array!(TEST_LINT)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl EarlyLintPass for Pass {"></div><div data-l="    fn check_item(&amp;mut self, cx: &amp;EarlyContext, it: &amp;ast::Item) {"></div><div data-l="        if it.ident.as_str() == &quot;lintme&quot; {"></div><div data-l="            cx.span_lint(TEST_LINT, it.span, &quot;item is named 'lintme'&quot;);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#[plugin_registrar]"></div><div data-l="pub fn plugin_registrar(reg: &amp;mut Registry) {"></div><div data-l="    reg.register_early_lint_pass(box Pass as EarlyLintPassObject);"></div><div data-l="}"></div></div>
+<br>
+<p>Then code like</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![plugin(lint_plugin_test)]"></div><div data-l=""></div><div data-l="fn lintme() { }"></div></div>
+<br>
+<p>will produce a compiler warning:</p>
+<br>
+<div data-lang="txt"><div data-l="foo.rs:4:1: 4:16 warning: item is named 'lintme', #[warn(test_lint)] on by default"></div><div data-l="foo.rs:4 fn lintme() { }"></div><div data-l="         ^~~~~~~~~~~~~~~"></div></div>
+<br>
+<p>The components of a lint plugin are:</p>
+<br>
+<div data-b="*">one or more <code>declare_lint€</code> invocations, which define static <code>Lint</code> structs;</div>
+<br>
+<div data-b="*">a struct holding any state needed by the lint pass (here, none);</div>
+<br>
+<div data-b="*">a <code>LintPass</code>
+implementation defining how to check each syntax element. A single
+<code>LintPass</code> may call <code>span_lint</code> for several different <code>Lint</code>s, but should
+register them all through the <code>get_lints</code> method.</div>
+<br>
+<p>Lint passes are syntax traversals, but they run at a late stage of compilation
+where type information is available. <code>rustc</code>'s <a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/librustc/lint/builtin.rs">built-in
+lints</a>
+mostly use the same infrastructure as lint plugins, and provide examples of how
+to access type information.</p>
+<br>
+<p>Lints defined by plugins are controlled by the usual <a href="#2../reference/attributes.html#lint-check-attributes">attributes and compiler
+flags</a>, e.g.
+<code>#[allow(test_lint)]</code> or <code>-A test-lint</code>. These identifiers are derived from the
+first argument to <code>declare_lint€</code>, with appropriate case and punctuation
+conversion.</p>
+<br>
+<p>You can run <code>rustc -W help foo.rs</code> to see a list of lints known to <code>rustc</code>,
+including those provided by plugins loaded by <code>foo.rs</code>.</p>

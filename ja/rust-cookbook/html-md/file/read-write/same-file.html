@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h2>Avoid writing and reading from a same file</h2>
+<br>
+<p><a href="#3same_file">!<a class="notranslate" href="#4same_file-badge">same_file-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Use <a class="notranslate" href="#4`same_file::Handle`">`same_file::Handle`</a> to a file that can be tested for equality with
+other handles. In this example, the handles of file to be read from and
+to be written to are tested for equality.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate same_file;"></div><div data-l=""></div><div data-l="use same_file::Handle;"></div><div data-l="use std::path::Path;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::{BufRead, BufReader};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#          IOError(::std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let path_to_read = Path::new(&quot;new.txt&quot;);"></div><div data-l=""></div><div data-l="    let stdout_handle = Handle::stdout()?;"></div><div data-l="    let handle = Handle::from_path(path_to_read)?;"></div><div data-l=""></div><div data-l="    if stdout_handle == handle {"></div><div data-l="        bail!(&quot;You are reading and writing to the same file&quot;);"></div><div data-l="    } else {"></div><div data-l="        let file = File::open(&amp;path_to_read)?;"></div><div data-l="        let file = BufReader::new(file);"></div><div data-l="        for (num, line) in file.lines().enumerate() {"></div><div data-l="            println!(&quot;{} : {}&quot;, num, line?.to_uppercase());"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<div data-lang="bash"><div data-l="cargo run"></div></div>
+<p>displays the contents of the file new.txt.</p>
+<br>
+<div data-lang="bash"><div data-l="cargo run &gt;&gt; ./new.txt"></div></div>
+<p>errors because the two files are same.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/same-file/*/same_file/struct.Handle.html">`same_file::Handle`</a>

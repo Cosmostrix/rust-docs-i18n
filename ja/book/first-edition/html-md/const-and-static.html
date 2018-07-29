@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<h1>const and static</h1>
+<br>
+<p>Rust has a way of defining constants with the <code>const</code> keyword:</p>
+<br>
+<div data-lang="rust"><div data-l="const N: i32 = 5;"></div></div>
+<br>
+<p>Unlike <a class="notranslate" href="#3let"><code>let</code></a> bindings, you must annotate the type of a <code>const</code>.</p>
+<br>
+<a class="notranslate" href="#1variable-bindings.html">let</a>
+<br>
+<p>Constants live for the entire lifetime of a program. More specifically,
+constants in Rust have no fixed address in memory. This is because they’re
+effectively inlined to each place that they’re used. References to the same
+constant are not necessarily guaranteed to refer to the same memory address for
+this reason.</p>
+<br>
+<h1><code>static</code></h1>
+<br>
+<p>Rust provides a ‘global variable’ sort of facility in static items. They’re
+similar to constants, but static items aren’t inlined upon use. This means that
+there is only one instance for each value, and it’s at a fixed location in
+memory.</p>
+<br>
+<p>Here’s an example:</p>
+<br>
+<div data-lang="rust"><div data-l="static N: i32 = 5;"></div></div>
+<br>
+<p>Unlike <a class="notranslate" href="#3let"><code>let</code></a> bindings, you must annotate the type of a <code>static</code>.</p>
+<br>
+<p>Statics live for the entire lifetime of a program, and therefore any
+reference stored in a static has a <a href="#3lifetimes"><code>'static</code> lifetime</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="static NAME: &amp;'static str = &quot;Steve&quot;;"></div></div>
+<br>
+<p>The type of a <code>static</code> value must be <code>Sync</code> unless the <code>static</code> value is
+mutable.</p>
+<br>
+<a class="notranslate" href="#1lifetimes.html">lifetimes</a>
+<br>
+<h2>Mutability</h2>
+<br>
+<p>You can introduce mutability with the <code>mut</code> keyword:</p>
+<br>
+<div data-lang="rust"><div data-l="static mut N: i32 = 5;"></div></div>
+<br>
+<p>Because this is mutable, one thread could be updating <code>N</code> while another is
+reading it, causing memory unsafety. As such both accessing and mutating a
+<code>static mut</code> is <a class="notranslate" href="#3unsafe"><code>unsafe</code></a>, and so must be done in an <code>unsafe</code> block:</p>
+<br>
+<div data-lang="rust"><div data-l="# static mut N: i32 = 5;"></div><div data-l=""></div><div data-l="unsafe {"></div><div data-l="    N += 1;"></div><div data-l=""></div><div data-l="    println!(&quot;N: {}&quot;, N);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1unsafe.html">unsafe</a>
+<br>
+<h1>Initializing</h1>
+<br>
+<p>Both <code>const</code> and <code>static</code> have requirements for giving them a value. They must
+be given a value that’s a constant expression. In other words, you cannot use
+the result of a function call or anything similarly complex or at runtime.</p>
+<br>
+<h1>Dropping</h1>
+<br>
+<p>Types implementing <a class="notranslate" href="#3drop"><code>Drop</code></a> are allowed in <code>const</code> and <code>static</code>
+definitions. Constants are inlined where they are used and are dropped
+accordingly. <code>static</code> values are not dropped.</p>
+<br>
+<a class="notranslate" href="#1drop.html">drop</a>
+<br>
+<h1>Which construct should I use?</h1>
+<br>
+<p>Almost always, if you can choose between the two, choose <code>const</code>. It’s pretty
+rare that you actually want a memory location associated with your constant,
+and using a <code>const</code> allows for optimizations like constant propagation not only
+in your crate but downstream crates.</p>

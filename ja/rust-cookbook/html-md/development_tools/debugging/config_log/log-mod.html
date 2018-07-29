@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h2>Enable log levels per module</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Creates two modules <code>foo</code> and nested <code>foo::bar</code> with logging directives
+controlled separately with <a class="notranslate" href="#4`RUST_LOG`">`RUST_LOG`</a> environmental variable.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="mod foo {"></div><div data-l="    mod bar {"></div><div data-l="        pub fn run() {"></div><div data-l="            warn!(&quot;[bar] warn&quot;);"></div><div data-l="            info!(&quot;[bar] info&quot;);"></div><div data-l="            debug!(&quot;[bar] debug&quot;);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    pub fn run() {"></div><div data-l="        warn!(&quot;[foo] warn&quot;);"></div><div data-l="        info!(&quot;[foo] info&quot;);"></div><div data-l="        debug!(&quot;[foo] debug&quot;);"></div><div data-l="        bar::run();"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    env_logger::init();"></div><div data-l="    warn!(&quot;[root] warn&quot;);"></div><div data-l="    info!(&quot;[root] info&quot;);"></div><div data-l="    debug!(&quot;[root] debug&quot;);"></div><div data-l="    foo::run();"></div><div data-l="}"></div></div>
+<br>
+<p><a class="notranslate" href="#4`RUST_LOG`">`RUST_LOG`</a> environment variable controls <a class="notranslate" href="#3env_logger"><code>env_logger</code></a> output.
+Module declarations take comma separated entries formatted like
+<code>path::to::module=log_level</code>. Run the <code>test</code> application as follows:</p>
+<br>
+<div data-lang="bash"><div data-l="RUST_LOG=&quot;warn,test::foo=info,test::foo::bar=debug&quot; ./test"></div></div>
+<br>
+<p>Sets the default <a class="notranslate" href="#4`log::Level`">`log::Level`</a> to <code>warn</code>, module <code>foo</code> and module <code>foo::bar</code>
+to <code>info</code> and <code>debug</code>.</p>
+<br>
+<div data-lang="bash"><div data-l="WARN:test: [root] warn"></div><div data-l="WARN:test::foo: [foo] warn"></div><div data-l="INFO:test::foo: [foo] info"></div><div data-l="WARN:test::foo::bar: [bar] warn"></div><div data-l="INFO:test::foo::bar: [bar] info"></div><div data-l="DEBUG:test::foo::bar: [bar] debug"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/enum.Level.html">`log::Level`</a>
+<a class="notranslate" href="#1https://docs.rs/env_logger/*/env_logger/#enabling-logging">`RUST_LOG`</a>

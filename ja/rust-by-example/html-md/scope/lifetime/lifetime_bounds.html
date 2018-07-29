@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1>Bounds</h1>
+<br>
+<p>Just like generic types can be bounded, lifetimes (themselves generic)
+use bounds as well. The <code>:</code> character has a slightly different meaning here, 
+but <code>+</code> is the same. Note how the following read:</p>
+<br>
+<div data-b="1."><code>T: 'a</code>: <i>All</i> references in <code>T</code> must outlive lifetime <code>'a</code>.</div>
+<div data-b="2."><code>T: Trait + 'a</code>: Type <code>T</code> must implement trait <code>Trait</code> and <i>all</i> references</div>
+<p>in <code>T</code> must outlive <code>'a</code>.</p>
+<br>
+<p>The example below shows the above syntax in action:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#//use std::fmt::Debug; // Trait to bound with."></div><div data-l="use std::fmt::Debug; // ">Trait to bound with.</div><div data-l=""></div><div data-l="#[derive(Debug)]"></div><div data-l="struct Ref&lt;'a, T: 'a&gt;(&amp;'a T);"></div><div data-l="#// `Ref` contains a reference to a generic type `T` that has"></div><div data-l="#// an unknown lifetime `'a`. `T` is bounded such that any"></div><div data-l="#// *references* in `T` must outlive `'a`. Additionally, the lifetime"></div><div data-l="#// of `Ref` may not exceed `'a`."></div><div data-l="// "><code>Ref</code> contains a reference to a generic type <code>T</code> that has an unknown lifetime <code>'a</code>. <code>T</code> is bounded such that any <i>references</i> in <code>T</code> must outlive <code>'a</code>. Additionally, the lifetime of <code>Ref</code> may not exceed <code>'a</code>.</div><div data-l=""></div><div data-l="#// A generic function which prints using the `Debug` trait."></div><div data-l="// ">A generic function which prints using the <code>Debug</code> trait.</div><div data-l="fn print&lt;T&gt;(t: T) where"></div><div data-l="    T: Debug {"></div><div data-l="    println!(&quot;`print`: t is {:?}&quot;, t);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Here a reference to `T` is taken where `T` implements"></div><div data-l="#// `Debug` and all *references* in `T` outlive `'a`. In"></div><div data-l="#// addition, `'a` must outlive the function."></div><div data-l="// ">Here a reference to <code>T</code> is taken where <code>T</code> implements <code>Debug</code> and all <i>references</i> in <code>T</code> outlive <code>'a</code>. In addition, <code>'a</code> must outlive the function.</div><div data-l="fn print_ref&lt;'a, T&gt;(t: &amp;'a T) where"></div><div data-l="    T: Debug + 'a {"></div><div data-l="    println!(&quot;`print_ref`: t is {:?}&quot;, t);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 7;"></div><div data-l="    let ref_x = Ref(&amp;x);"></div><div data-l=""></div><div data-l="    print_ref(&amp;ref_x);"></div><div data-l="    print(ref_x);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3generics">generics</a>, <a href="#3bounds">bounds in generics</a>, and 
+<a href="#3multibounds">multiple bounds in generics</a></p>
+<br>
+<a class="notranslate" href="#1generics.html">generics</a>
+<a class="notranslate" href="#1generics/bounds.html">bounds</a>
+<a class="notranslate" href="#1generics/multi_bounds.html">multibounds</a>

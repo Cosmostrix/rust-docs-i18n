@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<h1>Expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Expression</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_LiteralExpression_">_LiteralExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_PathExpression_">_PathExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_OperatorExpression_">_OperatorExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_GroupedExpression_">_GroupedExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_ArrayExpression_">_ArrayExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_IndexExpression_">_IndexExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_TupleExpression_">_TupleExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_TupleIndexingExpression_">_TupleIndexingExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_StructExpression_">_StructExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_EnumerationVariantExpression_">_EnumerationVariantExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_CallExpression_">_CallExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_MethodCallExpression_">_MethodCallExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_FieldExpression_">_FieldExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_ClosureExpression_">_ClosureExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_LoopExpression_">_LoopExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_ContinueExpression_">_ContinueExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_BreakExpression_">_BreakExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_RangeExpression_">_RangeExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_IfExpression_">_IfExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_IfLetExpression_">_IfLetExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_MatchExpression_">_MatchExpression_</a>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_ReturnExpression_">_ReturnExpression_</a></p></blockquote>
+<br>
+<p>An expression may have two roles: it always produces a <i>value</i>, and it may have
+<i>effects</i> (otherwise known as &quot;side effects&quot;). An expression <i>evaluates to</i> a
+value, and has effects during <i>evaluation</i>. Many expressions contain
+sub-expressions (operands). The meaning of each kind of expression dictates
+several things:</p>
+<br>
+<div data-b="*">Whether or not to evaluate the sub-expressions when evaluating the expression</div>
+<div data-b="*">The order in which to evaluate the sub-expressions</div>
+<div data-b="*">How to combine the sub-expressions' values to obtain the value of the
+expression</div>
+<br>
+<p>In this way, the structure of expressions dictates the structure of execution.
+Blocks are just another kind of expression, so blocks, statements, expressions,
+and blocks again can recursively nest inside each other to an arbitrary depth.</p>
+<br>
+<h2>Expression precedence</h2>
+<br>
+<p>The precedence of Rust operators and expressions is ordered as follows, going
+from strong to weak. Binary Operators at the same precedence level are grouped
+in the order given by their associativity.</p>
+<br>
+<div data-tbl><div> Operator/Expression         </div><div> Associativity       </div></div>
+<div data-tbl><div>-----------------------------</div><div>---------------------</div></div>
+<div data-tbl><div> Paths                       </div><div>                     </div></div>
+<div data-tbl><div> Method calls                </div><div>                     </div></div>
+<div data-tbl><div> Field expressions           </div><div> left to right       </div></div>
+<div data-tbl><div> Function calls, array indexing </div><div>                  </div></div>
+<div data-tbl><div> <code>?</code>                         </div><div>                     </div></div>
+<div data-tbl><div> Unary <code>-</code> <code>*</code> <code>€</code> <code>&amp;</code> <code>&amp;mut</code> </div><div>                    </div></div>
+<div data-tbl><div> <code>as</code>                        </div><div> left to right       </div></div>
+<div data-tbl><div> <code>*</code> <code>/</code> <code>%</code>                 </div><div> left to right       </div></div>
+<div data-tbl><div> <code>+</code> <code>-</code>                     </div><div> left to right       </div></div>
+<div data-tbl><div> <code>&lt;&lt;</code> <code>&gt;&gt;</code>                   </div><div> left to right       </div></div>
+<div data-tbl><div> <code>&amp;</code>                         </div><div> left to right       </div></div>
+<div data-tbl><div> <code>^</code>                         </div><div> left to right       </div></div>
+<div data-tbl><div> <code>&amp;#124;</code>         </div><div> left to right       </div></div>
+<div data-tbl><div> <code>==</code> <code>€=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> </div><div> Require parentheses </div></div>
+<div data-tbl><div> <code>&amp;&amp;</code>                        </div><div> left to right       </div></div>
+<div data-tbl><div> <code>&amp;#124;&amp;#124;</code>   </div><div> left to right       </div></div>
+<div data-tbl><div> <code>..</code> <code>..=</code>                  </div><div> Require parentheses </div></div>
+<div data-tbl><div> <code>=</code> <code>+=</code> <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code> <br> <code>&amp;=</code> <code>&amp;#124;=</code> <code>^=</code> <code>&lt;&lt;=</code> <code>&gt;&gt;=</code> </div><div> right to left </div></div>
+<div data-tbl><div> <code>return</code> <code>break</code> closures   </div><div>                     </div></div>
+<br>
+<h2>Place Expressions and Value Expressions</h2>
+<br>
+<p>Expressions are divided into two main categories: place expressions and
+value expressions. Likewise within each expression, sub-expressions may occur
+in either place context or value context. The evaluation of an expression
+depends both on its own category and the context it occurs within.</p>
+<br>
+<p>A <i>place expression</i> is an expression that represents a memory location. These
+expressions are <a class="notranslate" href="#4paths">paths</a> which refer to local variables, <a class="notranslate" href="#4static variables">static variables</a>,
+<a class="notranslate" href="#4dereferences">dereferences</a>&amp;nbsp;(<code>*expr</code>), <a class="notranslate" href="#4array indexing">array indexing</a> expressions (<code>expr[expr]</code>),
+<a class="notranslate" href="#4field">field</a> references (<code>expr.f</code>) and parenthesized place expressions. All other
+expressions are value expressions.</p>
+<br>
+<p>A <i>value expression</i> is an expression that represents an actual value.</p>
+<br>
+<p>The left operand of an <a class="notranslate" href="#3assign">assignment</a> or <a class="notranslate" href="#4compound assignment">compound assignment</a> expression
+is a place expression context, as is the single operand of a unary <a class="notranslate" href="#4borrow">borrow</a>, and
+the operand of any <a class="notranslate" href="#4implicit borrow">implicit borrow</a>. The discriminant or subject of a
+<a href="#3match">match expression</a> and right side of a <a class="notranslate" href="#4let statement">let statement</a> is also a place
+expression context. All other expression contexts are value expression contexts.</p>
+<br>
+<blockquote><p>Note: Historically, place expressions were called <i>lvalues</i> and value
+expressions were called <i>rvalues</i>.</p></blockquote>
+<br>
+<h3>Moved and copied types</h3>
+<br>
+<p>When a place expression is evaluated in a value expression context, or is bound
+by value in a pattern, it denotes the value held <s>in</s> that memory location. If
+the type of that value implements <a class="notranslate" href="#4`Copy`">`Copy`</a>, then the value will be copied. In
+the remaining situations if that type is <a class="notranslate" href="#4`Sized`">`Sized`</a>, then it may be possible to
+move the value. Only the following place expressions may be moved out of:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Variables">Variables</a> which are not currently borrowed.</div>
+<div data-b="*"><a href="#2#temporary-lifetimes">Temporary values</a>.</div>
+<div data-b="*"><a class="notranslate" href="#3field">Fields</a> of a place expression which can be moved out of and
+doesn't implement <a class="notranslate" href="#4`Drop`">`Drop`</a>.</div>
+<div data-b="*">The result of <a class="notranslate" href="#4dereferencing">dereferencing</a> an expression with type <a class="notranslate" href="#4`Box<T>`">`Box<T>`</a> and that can
+also be moved out of.</div>
+<br>
+<p>Moving out of a place expression that evaluates to a local variable, the
+location is deinitialized and cannot be read from again until it is
+reinitialized. In all other cases, trying to use a place expression in a value
+expression context is an error.</p>
+<br>
+<h3>Mutability</h3>
+<br>
+<p>For a place expression to be <a class="notranslate" href="#3assign">assigned</a> to, mutably <a class="notranslate" href="#3borrow">borrowed</a>,
+<a class="notranslate" href="#4implicitly mutably borrowed">implicitly mutably borrowed</a>, or bound to a pattern containing <code>ref mut</code> it
+must be <s>mutable</s>. We call these <i>mutable place expressions</i>. In contrast,
+other place expressions are called <i>immutable place expressions</i>.</p>
+<br>
+<p>The following expressions can be mutable place expression contexts:</p>
+<br>
+<div data-b="*">Mutable <a class="notranslate" href="#4variables">variables</a>, which are not currently borrowed.</div>
+<div data-b="*"><a class="notranslate" href="#4Mutable `static` items">Mutable `static` items</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Temporary values">Temporary values</a>.</div>
+<div data-b="*"><a class="notranslate" href="#3field">Fields</a>, this evaluates the subexpression in a mutable place
+expression context.</div>
+<div data-b="*"><a class="notranslate" href="#4Dereferences">Dereferences</a> of a <code>*mut T</code> pointer.</div>
+<div data-b="*">Dereference of a variable, or field of a variable, with type <code>&amp;mut T</code>. Note:
+This is an exception to the requirement of the next rule.</div>
+<div data-b="*">Dereferences of a type that implements <code>DerefMut</code>, this then requires that
+the value being dereferenced is evaluated is a mutable place expression context.</div>
+<div data-b="*"><a class="notranslate" href="#4Array indexing">Array indexing</a> of a type that implements <code>DerefMut</code>, this
+then evaluates the value being indexed, but not the index, in mutable place
+expression context.</div>
+<br>
+<h3>Temporary lifetimes</h3>
+<br>
+<p>When using a value expression in most place expression contexts, a temporary
+unnamed memory location is created initialized to that value and the expression
+evaluates to that location instead, except if promoted to <code>'static</code>. Promotion
+of a value expression to a <code>'static</code> slot occurs when the expression could be
+written in a constant, borrowed, and dereferencing that borrow where the
+expression was the originally written, without changing the runtime behavior.
+That is, the promoted expression can be evaluated at compile-time and the
+resulting value does not contain <a class="notranslate" href="#4interior mutability">interior mutability</a> or <a class="notranslate" href="#4destructors">destructors</a> (these
+properties are determined based on the value where possible, e.g. <code>&amp;None</code>
+always has the type <code>&amp;'static Option&lt;_&gt;</code>, as it contains nothing disallowed).
+Otherwise, the lifetime of temporary values is typically</p>
+<br>
+<div data-b="-">the innermost enclosing statement; the tail expression of a block is
+considered part of the statement that encloses the block, or</div>
+<div data-b="-">the condition expression or the loop conditional expression if the
+temporary is created in the condition expression of an <code>if</code> or in the loop
+conditional expression of a <code>while</code> expression.</div>
+<br>
+<p>When a temporary value expression is being created that is assigned into a
+<a href="#3let"><code>let</code> declaration</a>, however, the temporary is created with the lifetime of
+the enclosing block instead, as using the enclosing <a href="#3let"><code>let</code> declaration</a>
+would be a guaranteed error (since a pointer to the temporary
+would be stored into a variable, but the temporary would be freed before the
+variable could be used). The compiler uses simple syntactic rules to decide
+which values are being assigned into a <code>let</code> binding, and therefore deserve a
+longer temporary lifetime.</p>
+<br>
+<p>Here are some examples:</p>
+<br>
+<div data-b="-"><code>let x = foo(&amp;temp())</code>. The expression <code>temp()</code> is a value expression. As it
+is being borrowed, a temporary is created which will be freed after
+the innermost enclosing statement; in this case, the <code>let</code> declaration.</div>
+<div data-b="-"><code>let x = temp().foo()</code>. This is the same as the previous example,
+except that the value of <code>temp()</code> is being borrowed via autoref on a
+method-call. Here we are assuming that <code>foo()</code> is an <code>&amp;self</code> method
+defined in some trait, say <code>Foo</code>. In other words, the expression
+<code>temp().foo()</code> is equivalent to <code>Foo::foo(&amp;temp())</code>.</div>
+<div data-b="-"><code>let x = if foo(&amp;temp()) {bar()} else {baz()};</code>. The expression <code>temp()</code> is
+a value expression. As the temporary is created in the condition expression
+of an <code>if</code>, it will be freed at the end of the condition expression;
+in this example before the call to <code>bar</code> or <code>baz</code> is made.</div>
+<div data-b="-"><code>let x = if temp().must_run_bar {bar()} else {baz()};</code>.
+Here we assume the type of <code>temp()</code> is a struct with a boolean field
+<code>must_run_bar</code>. As the previous example, the temporary corresponding to
+<code>temp()</code> will be freed at the end of the condition expression.</div>
+<div data-b="-"><code>while foo(&amp;temp()) {bar();}</code>. The temporary containing the return value from
+the call to <code>temp()</code> is created in the loop conditional expression. Hence it
+will be freed at the end of the loop conditional expression; in this example
+before the call to <code>bar</code> if the loop body is executed.</div>
+<div data-b="-"><code>let x = &amp;temp()</code>. Here, the same temporary is being assigned into
+<code>x</code>, rather than being passed as a parameter, and hence the
+temporary's lifetime is considered to be the enclosing block.</div>
+<div data-b="-"><code>let x = SomeStruct { foo: &amp;temp() }</code>. As in the previous case, the
+temporary is assigned into a struct which is then assigned into a
+binding, and hence it is given the lifetime of the enclosing block.</div>
+<div data-b="-"><code>let x = [ &amp;temp() ]</code>. As in the previous case, the
+temporary is assigned into an array which is then assigned into a
+binding, and hence it is given the lifetime of the enclosing block.</div>
+<div data-b="-"><code>let ref x = temp()</code>. In this case, the temporary is created using a ref
+binding, but the result is the same: the lifetime is extended to the enclosing
+block.</div>
+<br>
+<h3>Implicit Borrows</h3>
+<br>
+<p>Certain expressions will treat an expression as a place expression by implicitly
+borrowing it. For example, it is possible to compare two unsized <a class="notranslate" href="#4slices">slices</a> for
+equality directly, because the <code>==</code> operator implicitly borrows it's operands:</p>
+<br>
+<div data-lang="rust"><div data-l="# let c = [1, 2, 3];"></div><div data-l="# let d = vec![1, 2, 3];"></div><div data-l="let a: &amp;[i32];"></div><div data-l="let b: &amp;[i32];"></div><div data-l="# a = &amp;c;"></div><div data-l="# b = &amp;d;"></div><div data-l="#// ..."></div><div data-l="// ">...</div><div data-l="*a == *b;"></div><div data-l="#// Equivalent form:"></div><div data-l="// ">Equivalent form:</div><div data-l="::std::cmp::PartialEq::eq(&amp;*a, &amp;*b);"></div></div>
+<br>
+<p>Implicit borrows may be taken in the following expressions:</p>
+<br>
+<div data-b="*">Left operand in <a class="notranslate" href="#4method-call">method-call</a> expressions.</div>
+<div data-b="*">Left operand in <a class="notranslate" href="#4field">field</a> expressions.</div>
+<div data-b="*">Left operand in <a class="notranslate" href="#4call expressions">call expressions</a>.</div>
+<div data-b="*">Left operand in <a class="notranslate" href="#4array indexing">array indexing</a> expressions.</div>
+<div data-b="*">Operand of the <a class="notranslate" href="#4dereference operator">dereference operator</a> \(<code>*</code>).</div>
+<div data-b="*">Operands of <a class="notranslate" href="#4comparison">comparison</a>.</div>
+<div data-b="*">Left operands of the <a class="notranslate" href="#4compound assignment">compound assignment</a>.</div>
+<br>
+<h2>Constant expressions</h2>
+<br>
+<p>Certain types of expressions can be evaluated at compile time. These are called
+<s>constant expressions</s>. Certain places, such as in
+<a class="notranslate" href="#2items/constant-items.html">constants</a> and <a class="notranslate" href="#2items/static-items.html">statics</a>,
+require a constant expression, and are always evaluated at compile time. In
+other places, such as in <a href="#2statements.html#let-statements"><code>let</code> statements</a>,
+constant expressions may be evaluated at compile time. If errors, such as out
+of bounds <a class="notranslate" href="#4array indexing">array indexing</a> or <a class="notranslate" href="#4overflow">overflow</a> occurs,
+then it is a compiler error if the value must be evaluated at compile time,
+otherwise it is just a warning, but the code will most likely panic when run.</p>
+<br>
+<p>The following expressions are constant expressions, so long as any operands are
+also constant expressions and do not cause any <a class="notranslate" href="#3destructors"><code>Drop::drop</code></a> calls
+to be ran.</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Literals">Literals</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Paths">Paths</a> to <a class="notranslate" href="#2items/functions.html">functions</a> and constants.
+Recursively defining constants is not allowed.</div>
+<div data-b="*"><a class="notranslate" href="#4Tuple expressions">Tuple expressions</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Array expressions">Array expressions</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Struct">Struct</a> expressions.</div>
+<div data-b="*"><a class="notranslate" href="#4Enum variant">Enum variant</a> expressions.</div>
+<div data-b="*"><a class="notranslate" href="#4Block expressions">Block expressions</a>, including <code>unsafe</code> blocks, which only contain items and
+possibly a constant tail expression.</div>
+<div data-b="*"><a class="notranslate" href="#4Field">Field</a> expressions.</div>
+<div data-b="*">Index expressions, <a class="notranslate" href="#4array indexing">array indexing</a> or <a class="notranslate" href="#4slice">slice</a> with a <code>usize</code>.</div>
+<div data-b="*"><a class="notranslate" href="#4Range expressions">Range expressions</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Closure expressions">Closure expressions</a> which don't capture variables from the environment.</div>
+<div data-b="*">Built in <a class="notranslate" href="#4negation">negation</a>, <a class="notranslate" href="#4arithmetic, logical">arithmetic, logical</a>, <a class="notranslate" href="#4comparison">comparison</a> or <a class="notranslate" href="#4lazy boolean">lazy boolean</a>
+operators used on integer and floating point types, <code>bool</code> and <code>char</code>.</div>
+<div data-b="*">Shared <a class="notranslate" href="#4borrow">borrow</a>s, except if applied to a type with <a class="notranslate" href="#4interior mutability">interior mutability</a>.</div>
+<div data-b="*">The <a class="notranslate" href="#4dereference operator">dereference operator</a>.</div>
+<div data-b="*"><a class="notranslate" href="#4Grouped">Grouped</a> expressions.</div>
+<div data-b="*"><a class="notranslate" href="#4Cast">Cast</a> expressions, except pointer to address and
+function pointer to address casts.</div>
+<br>
+<h2>Overloading Traits</h2>
+<br>
+<p>Many of the following operators and expressions can also be overloaded for
+other types using traits in <code>std::ops</code> or <code>std::cmp</code>. These traits also
+exist in <code>core::ops</code> and <code>core::cmp</code> with the same names.</p>
+<br>
+<a class="notranslate" href="#1   expressions/block-expr.html">block expressions</a>
+<a class="notranslate" href="#1    expressions/call-expr.html">call expressions</a>
+<a class="notranslate" href="#1 expressions/closure-expr.html">closure expressions</a>
+<a class="notranslate" href="#1        expressions/enum-variant-expr.html">enum variant</a>
+<a class="notranslate" href="#1               expressions/field-expr.html">field</a>
+<a class="notranslate" href="#1             expressions/grouped-expr.html">grouped</a>
+<a class="notranslate" href="#1            expressions/literal-expr.html">literals</a>
+<a class="notranslate" href="#1               expressions/match-expr.html">match</a>
+<a class="notranslate" href="#1         expressions/method-call-expr.html">method-call</a>
+<a class="notranslate" href="#1               expressions/path-expr.html">paths</a>
+<a class="notranslate" href="#1   expressions/range-expr.html">range expressions</a>
+<a class="notranslate" href="#1              expressions/struct-expr.html">struct</a>
+<a class="notranslate" href="#1   expressions/tuple-expr.html">tuple expressions</a>
+<br>
+<a class="notranslate" href="#1   expressions/array-expr.html">array expressions</a>
+<a class="notranslate" href="#1      expressions/array-expr.html#array-and-slice-indexing-expressions">array indexing</a>
+<br>
+<a class="notranslate" href="#1 expressions/operator-expr.html#arithmetic-and-logical-binary-operators">arithmetic, logical</a>
+<a class="notranslate" href="#1              expressions/operator-expr.html#assignment-expressions">assign</a>
+<a class="notranslate" href="#1              expressions/operator-expr.html#borrow-operators">borrow</a>
+<a class="notranslate" href="#1                expressions/operator-expr.html#type-cast-expressions">cast</a>
+<a class="notranslate" href="#1          expressions/operator-expr.html#comparison-operators">comparison</a>
+<a class="notranslate" href="#1 expressions/operator-expr.html#compound-assignment-expressions">compound assignment</a>
+<a class="notranslate" href="#1        expressions/operator-expr.html#the-dereference-operator">dereferences</a>
+<a class="notranslate" href="#1       expressions/operator-expr.html#the-dereference-operator">dereferencing</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#the-dereference-operator">dereference operator</a>
+<a class="notranslate" href="#1        expressions/operator-expr.html#lazy-boolean-operators">lazy boolean</a>
+<a class="notranslate" href="#1            expressions/operator-expr.html#negation-operators">negation</a>
+<a class="notranslate" href="#1            expressions/operator-expr.html#overflow">overflow</a>
+<br>
+<a class="notranslate" href="#1         destructors.html">destructors</a>
+<a class="notranslate" href="#1 interior-mutability.html">interior mutability</a>
+<a class="notranslate" href="#1            ../std/boxed/struct.Box.html">`Box&lt;T&gt;`</a>
+<a class="notranslate" href="#1              special-types-and-traits.html#copy">`Copy`</a>
+<a class="notranslate" href="#1              special-types-and-traits.html#drop">`Drop`</a>
+<a class="notranslate" href="#1             special-types-and-traits.html#sized">`Sized`</a>
+<a class="notranslate" href="#1     #implicit-borrows">implicit borrow</a>
+<a class="notranslate" href="#1#implicit-borrows">implicitly mutably borrowed</a>
+<a class="notranslate" href="#1                 statements.html#let-statements">let</a>
+<a class="notranslate" href="#1       statements.html#let-statements">let statement</a>
+<a class="notranslate" href="#1items/static-items.html#mutable-statics">Mutable `static` items</a>
+<a class="notranslate" href="#1               types.html#array-and-slice-types">slice</a>
+<a class="notranslate" href="#1    items/static-items.html">static variables</a>
+<a class="notranslate" href="#1    #temporary-lifetimes">Temporary values</a>
+<a class="notranslate" href="#1           variables.html">Variables</a>
+<br>
+<a class="notranslate" href="#1             expressions/array-expr.html">_ArrayExpression_</a>
+<a class="notranslate" href="#1             expressions/block-expr.html">_BlockExpression_</a>
+<a class="notranslate" href="#1             expressions/loop-expr.html#break-expressions">_BreakExpression_</a>
+<a class="notranslate" href="#1              expressions/call-expr.html">_CallExpression_</a>
+<a class="notranslate" href="#1           expressions/closure-expr.html">_ClosureExpression_</a>
+<a class="notranslate" href="#1          expressions/loop-expr.html#continue-expressions">_ContinueExpression_</a>
+<a class="notranslate" href="#1expressions/enum-variant-expr.html">_EnumerationVariantExpression_</a>
+<a class="notranslate" href="#1             expressions/field-expr.html">_FieldExpression_</a>
+<a class="notranslate" href="#1           expressions/grouped-expr.html">_GroupedExpression_</a>
+<a class="notranslate" href="#1                expressions/if-expr.html#if-expressions">_IfExpression_</a>
+<a class="notranslate" href="#1             expressions/if-expr.html#if-let-expressions">_IfLetExpression_</a>
+<a class="notranslate" href="#1             expressions/array-expr.html#array-and-slice-indexing-expressions">_IndexExpression_</a>
+<a class="notranslate" href="#1           expressions/literal-expr.html">_LiteralExpression_</a>
+<a class="notranslate" href="#1              expressions/loop-expr.html">_LoopExpression_</a>
+<a class="notranslate" href="#1             expressions/match-expr.html">_MatchExpression_</a>
+<a class="notranslate" href="#1        expressions/method-call-expr.html">_MethodCallExpression_</a>
+<a class="notranslate" href="#1          expressions/operator-expr.html">_OperatorExpression_</a>
+<a class="notranslate" href="#1              expressions/path-expr.html">_PathExpression_</a>
+<a class="notranslate" href="#1             expressions/range-expr.html">_RangeExpression_</a>
+<a class="notranslate" href="#1            expressions/return-expr.html">_ReturnExpression_</a>
+<a class="notranslate" href="#1            expressions/struct-expr.html">_StructExpression_</a>
+<a class="notranslate" href="#1             expressions/tuple-expr.html">_TupleExpression_</a>
+<a class="notranslate" href="#1     expressions/tuple-expr.html#tuple-indexing-expressions">_TupleIndexingExpression_</a>

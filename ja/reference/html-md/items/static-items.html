@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<h1>Static items</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>StaticItem</s> :\
+&amp;nbsp;&amp;nbsp; <code>static</code> <code>mut</code><sup>?</sup> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> <code>:</code> <a class="notranslate" href="#4_Type_">_Type_</a>
+             <code>=</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>;</code></p></blockquote>
+<br>
+<p>A <i>static item</i> is similar to a <a class="notranslate" href="#4constant">constant</a>, except that it represents a precise
+memory location in the program. All references to the static refer to the same
+memory location. Static items have the <code>static</code> lifetime, which outlives all
+other lifetimes in a Rust program. Non-<code>mut</code> static items that contain a type
+that is not <a class="notranslate" href="#4interior mutable">interior mutable</a> may be placed in read-only memory. Static items
+do not call <a class="notranslate" href="#4`drop`">`drop`</a> at the end of the program.</p>
+<br>
+<p>All access to a static is safe, but there are a number of restrictions on
+statics:</p>
+<br>
+<div data-b="*">The type must have the <code>Sync</code> trait bound to allow thread-safe access.</div>
+<div data-b="*">Statics allow using paths to statics in the <a class="notranslate" href="#4constant-expression">constant-expression</a> used to
+initialize them, but statics may not refer to other statics by value, only
+through a reference.</div>
+<div data-b="*">Constants cannot refer to statics.</div>
+<br>
+<h2>Mutable statics</h2>
+<br>
+<p>If a static item is declared with the <code>mut</code> keyword, then it is allowed to be
+modified by the program. One of Rust's goals is to make concurrency bugs hard
+to run into, and this is obviously a very large source of race conditions or
+other bugs. For this reason, an <code>unsafe</code> block is required when either reading
+or writing a mutable static variable. Care should be taken to ensure that
+modifications to a mutable static are safe with respect to other threads
+running in the same process.</p>
+<br>
+<p>Mutable statics are still very useful, however. They can be used with C
+libraries and can also be bound from C libraries in an <code>extern</code> block.</p>
+<br>
+<div data-lang="rust"><div data-l="# fn atomic_add(_: &amp;mut u32, _: u32) -&gt; u32 { 2 }"></div><div data-l=""></div><div data-l="static mut LEVELS: u32 = 0;"></div><div data-l=""></div><div data-l="#// This violates the idea of no shared state, and this doesn't internally"></div><div data-l="#// protect against races, so this function is `unsafe`"></div><div data-l="// ">This violates the idea of no shared state, and this doesn't internally protect against races, so this function is <code>unsafe</code></div><div data-l="unsafe fn bump_levels_unsafe1() -&gt; u32 {"></div><div data-l="    let ret = LEVELS;"></div><div data-l="    LEVELS += 1;"></div><div data-l="    return ret;"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Assuming that we have an atomic_add function which returns the old value,"></div><div data-l="#// this function is &quot;safe&quot; but the meaning of the return value may not be what"></div><div data-l="#// callers expect, so it's still marked as `unsafe`"></div><div data-l="// ">Assuming that we have an atomic_add function which returns the old value, this function is &quot;safe&quot; but the meaning of the return value may not be what callers expect, so it's still marked as <code>unsafe</code></div><div data-l="unsafe fn bump_levels_unsafe2() -&gt; u32 {"></div><div data-l="    return atomic_add(&amp;mut LEVELS, 1);"></div><div data-l="}"></div></div>
+<br>
+<p>Mutable statics have the same restrictions as normal statics, except that the
+type does not have to implement the <code>Sync</code> trait.</p>
+<br>
+<h2>Using Statics or Consts</h2>
+<br>
+<p>It can be confusing whether or not you should use a constant item or a static
+item. Constants should, in general, be preferred over statics unless one of the
+following are true:</p>
+<br>
+<div data-b="*">Large amounts of data are being stored</div>
+<div data-b="*">The single-address property of statics is required.</div>
+<div data-b="*">Interior mutability is required.</div>
+<br>
+<a class="notranslate" href="#1items/constant-items.html">constant</a>
+<a class="notranslate" href="#1destructors.html">`drop`</a>
+<a class="notranslate" href="#1expressions.html#constant-expressions">constant expression</a>
+<a class="notranslate" href="#1interior-mutability.html">interior mutable</a>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1types.html">_Type_</a>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

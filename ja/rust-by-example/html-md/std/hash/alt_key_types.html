@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Alternate/custom key types</h1>
+<br>
+<p>Any type that implements the <code>Eq</code> and <code>Hash</code> traits can be a key in <code>HashMap</code>. 
+This includes:</p>
+<br>
+<div data-b="*"><code>bool</code> (though not very useful since there is only two possible keys)</div>
+<div data-b="*"><code>int</code>, <code>uint</code>, and all variations thereof</div>
+<div data-b="*"><code>String</code> and <code>&amp;str</code> (protip: you can have a <code>HashMap</code> keyed by <code>String</code></div>
+<p>and call <code>.get()</code> with an <code>&amp;str</code>)</p>
+<br>
+<p>Note that <code>f32</code> and <code>f64</code> do <i>not</i> implement <code>Hash</code>,
+likely because <a href="#3floating">floating-point precision errors</a>
+would make using them as hashmap keys horribly error-prone.</p>
+<br>
+<p>All collection classes implement <code>Eq</code> and <code>Hash</code> 
+if their contained type also respectively implements <code>Eq</code> and <code>Hash</code>. 
+For example, <code>Vec&lt;T&gt;</code> will implement <code>Hash</code> if <code>T</code> implements <code>Hash</code>.</p>
+<br>
+<p>You can easily implement <code>Eq</code> and <code>Hash</code> for a custom type with just one line: 
+<code>#[derive(PartialEq, Eq, Hash)]</code></p>
+<br>
+<p>The compiler will do the rest. If you want more control over the details, 
+you can implement <code>Eq</code> and/or <code>Hash</code> yourself. 
+This guide will not cover the specifics of implementing <code>Hash</code>. </p>
+<br>
+<p>To play around with using a <code>struct</code> in <code>HashMap</code>, 
+let's try making a very simple user logon system:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::collections::HashMap;"></div><div data-l=""></div><div data-l="#// Eq requires that you derive PartialEq on the type."></div><div data-l="// ">Eq requires that you derive PartialEq on the type.</div><div data-l="#[derive(PartialEq, Eq, Hash)]"></div><div data-l="struct Account&lt;'a&gt;{"></div><div data-l="    username: &amp;'a str,"></div><div data-l="    password: &amp;'a str,"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct AccountInfo&lt;'a&gt;{"></div><div data-l="    name: &amp;'a str,"></div><div data-l="    email: &amp;'a str,"></div><div data-l="}"></div><div data-l=""></div><div data-l="type Accounts&lt;'a&gt; = HashMap&lt;Account&lt;'a&gt;, AccountInfo&lt;'a&gt;&gt;;"></div><div data-l=""></div><div data-l="fn try_logon&lt;'a&gt;(accounts: &amp;Accounts&lt;'a&gt;,"></div><div data-l="        username: &amp;'a str, password: &amp;'a str){"></div><div data-l="    println!(&quot;Username: {}&quot;, username);"></div><div data-l="    println!(&quot;Password: {}&quot;, password);"></div><div data-l="    println!(&quot;Attempting logon...&quot;);"></div><div data-l=""></div><div data-l="    let logon = Account {"></div><div data-l="        username: username,"></div><div data-l="        password: password,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    match accounts.get(&amp;logon) {"></div><div data-l="        Some(account_info) =&gt; {"></div><div data-l="            println!(&quot;Successful logon!&quot;);"></div><div data-l="            println!(&quot;Name: {}&quot;, account_info.name);"></div><div data-l="            println!(&quot;Email: {}&quot;, account_info.email);"></div><div data-l="        },"></div><div data-l="        _ =&gt; println!(&quot;Login failed!&quot;),"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main(){"></div><div data-l="    let mut accounts: Accounts = HashMap::new();"></div><div data-l=""></div><div data-l="    let account = Account {"></div><div data-l="        username: &quot;j.everyman&quot;,"></div><div data-l="        password: &quot;password123&quot;,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    let account_info = AccountInfo {"></div><div data-l="        name: &quot;John Everyman&quot;,"></div><div data-l="        email: &quot;j.everyman@email.com&quot;,"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    accounts.insert(account, account_info);"></div><div data-l=""></div><div data-l="    try_logon(&amp;accounts, &quot;j.everyman&quot;, &quot;psasword123&quot;);"></div><div data-l=""></div><div data-l="    try_logon(&amp;accounts, &quot;j.everyman&quot;, &quot;password123&quot;);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Hash_function">hash</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems">floating</a>

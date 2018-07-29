@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<h1>Contributing to Rust</h1>
+<a class="notranslate" href="#1#contributing-to-rust">contributing-to-rust</a>
+<br>
+<p>Thank you for your interest in contributing to Rust! There are many ways to
+contribute, and we appreciate all of them. This document is a bit long, so here's
+links to the major sections:</p>
+<br>
+<div data-b="*"><a href="#2#feature-requests">Feature Requests</a></div>
+<div data-b="*"><a href="#2#bug-reports">Bug Reports</a></div>
+<div data-b="*"><a href="#2#the-build-system">The Build System</a></div>
+<div data-b="*"><a href="#2#pull-requests">Pull Requests</a></div>
+<div data-b="*"><a href="#2#writing-documentation">Writing Documentation</a></div>
+<div data-b="*"><a href="#2#issue-triage">Issue Triage</a></div>
+<div data-b="*"><a href="#2#out-of-tree-contributions">Out-of-tree Contributions</a></div>
+<div data-b="*"><a href="#2#helpful-links-and-information">Helpful Links and Information</a></div>
+<br>
+<p>If you have questions, please make a post on <a class="notranslate" href="#3internals">internals.rust-lang.org</a> or
+hop on <a class="notranslate" href="#3pound-rust-internals">#rust-internals</a>.</p>
+<br>
+<p>As a reminder, all contributors are expected to follow our <a href="#3coc">Code of Conduct</a>.</p>
+<br>
+<a class="notranslate" href="#1https://chat.mibbit.com/?server=irc.mozilla.org&channel=%23rust-internals">pound-rust-internals</a>
+<a class="notranslate" href="#1https://internals.rust-lang.org">internals</a>
+<a class="notranslate" href="#1https://www.rust-lang.org/conduct.html">coc</a>
+<br>
+<h2>Feature Requests</h2>
+<a class="notranslate" href="#1#feature-requests">feature-requests</a>
+<br>
+<p>To request a change to the way the Rust language works, please head over
+to the <a href="#2https://github.com/rust-lang/rfcs">RFCs repository</a> and view the 
+<a class="notranslate" href="#2https://github.com/rust-lang/rfcs/blob/master/README.md">README</a>
+for instructions.</p>
+<br>
+<h2>Bug Reports</h2>
+<a class="notranslate" href="#1#bug-reports">bug-reports</a>
+<br>
+<p>While bugs are unfortunate, they're a reality in software. We can't fix what we
+don't know about, so please report liberally. If you're not sure if something
+is a bug or not, feel free to file a bug anyway.</p>
+<br>
+<p><b>If you believe reporting your bug publicly represents a security risk to Rust users,
+please follow our [instructions for reporting security vulnerabilities](https://www.rust-lang.org/security.html)</b>.</p>
+<br>
+<p>If you have the chance, before reporting a bug, please <a href="#2https://github.com/rust-lang/rust/search?q=&type=Issues&utf8=%E2%9C%93">search existing
+issues</a>,
+as it's possible that someone else has already reported your error. This doesn't
+always work, and sometimes it's hard to know what to search for, so consider this
+extra credit. We won't mind if you accidentally file a duplicate report.</p>
+<br>
+<p>Similarly, to help others who encountered the bug find your issue,
+consider filing an issue with a descriptive title, which contains information that might be unique to it.
+This can be the language or compiler feature used, the conditions that trigger the bug,
+or part of the error message if there is any.
+An example could be: <b>&quot;impossible case reached&quot; on lifetime inference for impl Trait in return position</b>.</p>
+<br>
+<p>Opening an issue is as easy as following <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/new">this
+link</a> and filling out the fields.
+Here's a template that you can use to file a bug, though it's not necessary to
+use it exactly:</p>
+<br>
+<p>    <short summary of the bug></p>
+<br>
+<p>    I tried this code:</p>
+<br>
+<p>    <code sample that causes the bug></p>
+<br>
+<p>    I expected to see this happen: <explanation></p>
+<br>
+<p>    Instead, this happened: <explanation></p>
+<br>
+<p>    ## Meta</p>
+<br>
+<p>    <code>rustc --version --verbose</code>:</p>
+<br>
+<p>    Backtrace:</p>
+<br>
+<p>All three components are important: what you did, what you expected, what
+happened instead. Please include the output of <code>rustc --version --verbose</code>,
+which includes important information about what platform you're on, what
+version of Rust you're using, etc.</p>
+<br>
+<p>Sometimes, a backtrace is helpful, and so including that is nice. To get
+a backtrace, set the <code>RUST_BACKTRACE</code> environment variable to a value
+other than <code>0</code>. The easiest way
+to do this is to invoke <code>rustc</code> like this:</p>
+<br>
+<div data-lang="bash"><div data-l="$ RUST_BACKTRACE=1 rustc ..."></div></div>
+<br>
+<h2>The Build System</h2>
+<a class="notranslate" href="#1#the-build-system">the-build-system</a>
+<br>
+<p>Rust's build system allows you to bootstrap the compiler, run tests &amp;
+benchmarks, generate documentation, install a fresh build of Rust, and more.
+It's your best friend when working on Rust, allowing you to compile &amp; test
+your contributions before submission.</p>
+<br>
+<p>The build system lives in <a href="#3bootstrap">the <code>src/bootstrap</code> directory</a> in the
+project root. Our build system is itself written in Rust and is based on Cargo
+to actually build all the compiler's crates. If you have questions on the build
+system internals, try asking in <a class="notranslate" href="#3pound-rust-internals"><code>#rust-internals</code></a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/bootstrap/">bootstrap</a>
+<br>
+<h3>Configuration</h3>
+<a class="notranslate" href="#1#configuration">configuration</a>
+<br>
+<p>Before you can start building the compiler you need to configure the build for
+your system. In most cases, that will just mean using the defaults provided
+for Rust.</p>
+<br>
+<p>To change configuration, you must copy the file <code>config.toml.example</code>
+to <code>config.toml</code> in the directory from which you will be running the build, and
+change the settings provided.</p>
+<br>
+<p>There are large number of options provided in this config file that will alter the
+configuration used in the build process. Some options to note:</p>
+<br>
+<h4><code>[llvm]</code>:</h4>
+<div data-b="-"><code>assertions = true</code> = This enables LLVM assertions, which makes LLVM misuse cause an assertion failure instead of weird misbehavior. This also slows down the compiler's runtime by ~20%.</div>
+<div data-b="-"><code>ccache = true</code> - Use ccache when building llvm</div>
+<br>
+<h4><code>[build]</code>:</h4>
+<div data-b="-"><code>compiler-docs = true</code> - Build compiler documentation</div>
+<br>
+<h4><code>[rust]</code>:</h4>
+<div data-b="-"><code>debuginfo = true</code> - Build a compiler with debuginfo. Makes building rustc slower, but then you can use a debugger to debug <code>rustc</code>.</div>
+<div data-b="-"><code>debuginfo-lines = true</code> - An alternative to <code>debuginfo = true</code> that doesn't let you use a debugger, but doesn't make building rustc slower and still gives you line numbers in backtraces.</div>
+<div data-b="-"><code>debuginfo-tools = true</code> - Build the extended tools with debuginfo.</div>
+<div data-b="-"><code>debug-assertions = true</code> - Makes the log output of <code>debug€</code> work.</div>
+<div data-b="-"><code>optimize = false</code> - Disable optimizations to speed up compilation of stage1 rust, but makes the stage1 compiler x100 slower.</div>
+<br>
+<p>For more options, the <code>config.toml</code> file contains commented out defaults, with
+descriptions of what each option will do.</p>
+<br>
+<p>Note: Previously the <code>./configure</code> script was used to configure this
+project. It can still be used, but it's recommended to use a <code>config.toml</code>
+file. If you still have a <code>config.mk</code> file in your directory - from
+<code>./configure</code> - you may need to delete it for <code>config.toml</code> to work.</p>
+<br>
+<h3>Building</h3>
+<a class="notranslate" href="#1#building">building</a>
+<br>
+<p>A default configuration requires around 3.5 GB of disk space, whereas building a debug configuration may require more than 30 GB.</p>
+<br>
+<p>Dependencies
+- <a href="#2README.md#building-from-source">build dependencies</a>
+- <code>gdb</code> 6.2.0 minimum, 7.1 or later recommended for test builds</p>
+<br>
+<p>The build system uses the <code>x.py</code> script to control the build process. This script
+is used to build, test, and document various parts of the compiler. You can
+execute it as:</p>
+<br>
+<div data-lang="sh"><div data-l="python x.py build"></div></div>
+<br>
+<p>On some systems you can also use the shorter version:</p>
+<br>
+<div data-lang="sh"><div data-l="./x.py build"></div></div>
+<br>
+<p>To learn more about the driver and top-level targets, you can execute:</p>
+<br>
+<div data-lang="sh"><div data-l="python x.py --help"></div></div>
+<br>
+<p>The general format for the driver script is:</p>
+<br>
+<div data-lang="sh"><div data-l="python x.py &lt;command&gt; [&lt;directory&gt;]"></div></div>
+<br>
+<p>Some example commands are <code>build</code>, <code>test</code>, and <code>doc</code>. These will build, test,
+and document the specified directory. The second argument, <code>&lt;directory&gt;</code>, is
+optional and defaults to working over the entire compiler. If specified,
+however, only that specific directory will be built. For example:</p>
+<br>
+<div data-lang="sh"><div data-l="# build the entire compiler"></div><div data-l="python x.py build"></div><div data-l=""></div><div data-l="# build all documentation"></div><div data-l="python x.py doc"></div><div data-l=""></div><div data-l="# run all test suites"></div><div data-l="python x.py test"></div><div data-l=""></div><div data-l="# build only the standard library"></div><div data-l="python x.py build src/libstd"></div><div data-l=""></div><div data-l="# test only one particular test suite"></div><div data-l="python x.py test src/test/rustdoc"></div><div data-l=""></div><div data-l="# build only the stage0 libcore library"></div><div data-l="python x.py build src/libcore --stage 0"></div></div>
+<br>
+<p>You can explore the build system through the various <code>--help</code> pages for each
+subcommand. For example to learn more about a command you can run:</p>
+<br>
+<div data-lang=""><div data-l="python x.py build --help"></div></div>
+<br>
+<p>To learn about all possible rules you can execute, run:</p>
+<br>
+<div data-lang=""><div data-l="python x.py build --help --verbose"></div></div>
+<br>
+<p>Note: Previously <code>./configure</code> and <code>make</code> were used to build this project.
+They are still available, but <code>x.py</code> is the recommended build system.</p>
+<br>
+<h3>Useful commands</h3>
+<a class="notranslate" href="#1#useful-commands">useful-commands</a>
+<br>
+<p>Some common invocations of <code>x.py</code> are:</p>
+<br>
+<div data-b="-"><code>x.py build --help</code> - show the help message and explain the subcommand</div>
+<div data-b="-"><code>x.py build src/libtest --stage 1</code> - build up to (and including) the first
+stage. For most cases we don't need to build the stage2 compiler, so we can
+save time by not building it. The stage1 compiler is a fully functioning
+compiler and (probably) will be enough to determine if your change works as
+expected.</div>
+<div data-b="-"><code>x.py build src/rustc --stage 1</code> - This will build just rustc, without libstd.
+This is the fastest way to recompile after you changed only rustc source code.
+Note however that the resulting rustc binary won't have a stdlib to link
+against by default. You can build libstd once with <code>x.py build src/libstd</code>,
+but it is only guaranteed to work if recompiled, so if there are any issues
+recompile it.</div>
+<div data-b="-"><code>x.py test</code> - build the full compiler &amp; run all tests (takes a while). This
+is what gets run by the continuous integration system against your pull
+request. You should run this before submitting to make sure your tests pass
+&amp; everything builds in the correct manner.</div>
+<div data-b="-"><code>x.py test src/libstd --stage 1</code> - test the standard library without
+recompiling stage 2.</div>
+<div data-b="-"><code>x.py test src/test/run-pass --test-args TESTNAME</code> - Run a matching set of
+tests.</div>
+<div data-b="  -"><code>TESTNAME</code> should be a substring of the tests to match against e.g. it could
+be the fully qualified test name, or just a part of it.
+<code>TESTNAME=collections::hash::map::test_map::test_capacity_not_less_than_len</code>
+or <code>TESTNAME=test_capacity_not_less_than_len</code>.</div>
+<div data-b="-"><code>x.py test src/test/run-pass --stage 1 --test-args &lt;substring-of-test-name&gt;</code> -
+Run a single rpass test with the stage1 compiler (this will be quicker than
+running the command above as we only build the stage1 compiler, not the entire
+thing).  You can also leave off the directory argument to run all stage1 test
+types.</div>
+<div data-b="-"><code>x.py test src/libcore --stage 1</code> - Run stage1 tests in <code>libcore</code>.</div>
+<div data-b="-"><code>x.py test src/tools/tidy</code> - Check that the source code is in compliance with
+Rust's style guidelines. There is no official document describing Rust's full
+guidelines as of yet, but basic rules like 4 spaces for indentation and no
+more than 99 characters in a single line should be kept in mind when writing
+code.</div>
+<br>
+<h3>Using your local build</h3>
+<a class="notranslate" href="#1#using-local-build">using-local-build</a>
+<br>
+<p>If you use Rustup to manage your rust install, it has a feature called <a class="notranslate" href="#3toolchain-link">&quot;custom
+toolchains&quot;</a> that you can use to access your newly-built compiler
+without having to install it to your system or user PATH. If you've run <code>python
+x.py build</code>, then you can add your custom rustc to a new toolchain like this:</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rustup.rs#working-with-custom-toolchains-and-local-builds">toolchain-link</a>
+<br>
+<div data-lang=""><div data-l="rustup toolchain link &lt;name&gt; build/&lt;host-triple&gt;/stage2"></div></div>
+<br>
+<p>Where <code>&lt;host-triple&gt;</code> is the build triple for the host (the triple of your
+computer, by default), and <code>&lt;name&gt;</code> is the name for your custom toolchain. (If you
+added <code>--stage 1</code> to your build command, the compiler will be in the <code>stage1</code>
+folder instead.) You'll only need to do this once - it will automatically point
+to the latest build you've done.</p>
+<br>
+<p>Once this is set up, you can use your custom toolchain just like any other. For
+example, if you've named your toolchain <code>local</code>, running <code>cargo +local build</code> will
+compile a project with your custom rustc, setting <code>rustup override set local</code> will
+override the toolchain for your current directory, and <code>cargo +local doc</code> will use
+your custom rustc and rustdoc to generate docs. (If you do this with a <code>--stage 1</code>
+build, you'll need to build rustdoc specially, since it's not normally built in
+stage 1. <code>python x.py build --stage 1 src/libstd src/tools/rustdoc</code> will build
+rustdoc and libstd, which will allow rustdoc to be run with that toolchain.)</p>
+<br>
+<h3>Out-of-tree builds</h3>
+<a class="notranslate" href="#1#out-of-tree-builds">out-of-tree-builds</a>
+<br>
+<p>Rust's <code>x.py</code> script fully supports out-of-tree builds - it looks for
+the Rust source code from the directory <code>x.py</code> was found in, but it
+reads the <code>config.toml</code> configuration file from the directory it's
+run in, and places all build artifacts within a subdirectory named <code>build</code>.</p>
+<br>
+<p>This means that if you want to do an out-of-tree build, you can just do it:
+`<code class=2>
+$ cd my/build/dir
+$ cp ~/my-config.toml config.toml # Or fill in config.toml otherwise
+$ path/to/rust/x.py build
+...
+$ # This will use the Rust source code in `path/to/rust`, but build
+$ # artifacts will now be in ./build
+</code>`</p>
+<br>
+<p>It's absolutely fine to have multiple build directories with different
+<code>config.toml</code> configurations using the same code.</p>
+<br>
+<h2>Pull Requests</h2>
+<a class="notranslate" href="#1#pull-requests">pull-requests</a>
+<br>
+<p>Pull requests are the primary mechanism we use to change Rust. GitHub itself
+has some <a href="#3about-pull-requests">great documentation</a> on using the Pull Request feature.
+We use the &quot;fork and pull&quot; model <a href="#3development-models">described here</a>, where
+contributors push changes to their personal fork and create pull requests to
+bring those changes into the source repository.</p>
+<br>
+<a class="notranslate" href="#1https://help.github.com/articles/about-pull-requests/">about-pull-requests</a>
+<a class="notranslate" href="#1https://help.github.com/articles/about-collaborative-development-models/">development-models</a>
+<br>
+<p>Please make pull requests against the <code>master</code> branch.</p>
+<br>
+<p>Compiling all of <code>./x.py test</code> can take a while. When testing your pull request,
+consider using one of the more specialized <code>./x.py</code> targets to cut down on the
+amount of time you have to wait. You need to have built the compiler at least
+once before running these will work, but that’s only one full build rather than
+one each time.</p>
+<br>
+<p>    $ python x.py test --stage 1</p>
+<br>
+<p>is one such example, which builds just <code>rustc</code>, and then runs the tests. If
+you’re adding something to the standard library, try</p>
+<br>
+<p>    $ python x.py test src/libstd --stage 1</p>
+<br>
+<p>Please make sure your pull request is in compliance with Rust's style
+guidelines by running</p>
+<br>
+<p>    $ python x.py test src/tools/tidy</p>
+<br>
+<p>Make this check before every pull request (and every new commit in a pull
+request) ; you can add <a href="#2https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks">git hooks</a>
+before every push to make sure you never forget to make this check.</p>
+<br>
+<p>All pull requests are reviewed by another person. We have a bot,
+@rust-highfive, that will automatically assign a random person to review your
+request.</p>
+<br>
+<p>If you want to request that a specific person reviews your pull request,
+you can add an <code>r?</code> to the message. For example, Steve usually reviews
+documentation changes. So if you were to make a documentation change, add</p>
+<br>
+<p>    r? @steveklabnik</p>
+<br>
+<p>to the end of the message, and @rust-highfive will assign @steveklabnik instead
+of a random person. This is entirely optional.</p>
+<br>
+<p>After someone has reviewed your pull request, they will leave an annotation
+on the pull request with an <code>r+</code>. It will look something like this:</p>
+<br>
+<p>    @bors: r+ 38fe8d2</p>
+<br>
+<p>This tells @bors, our lovable integration bot, that your pull request has
+been approved. The PR then enters the <a href="#3merge-queue">merge queue</a>, where @bors
+will run all the tests on every platform we support. If it all works out,
+@bors will merge your code into <code>master</code> and close the pull request.</p>
+<br>
+<a class="notranslate" href="#1https://buildbot2.rust-lang.org/homu/queue/rust">merge-queue</a>
+<br>
+<p>Speaking of tests, Rust has a comprehensive test suite. More information about
+it can be found
+<a class="notranslate" href="#2https://github.com/rust-lang/rust/blob/master/src/test/COMPILER_TESTS.md">here</a>.</p>
+<br>
+<h3>External Dependencies</h3>
+<a class="notranslate" href="#1#external-dependencies">external-dependencies</a>
+<br>
+<p>Currently building Rust will also build the following external projects:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#2https://github.com/rust-lang-nursery/rust-clippy">clippy</a></div>
+<div data-b="*"><a class="notranslate" href="#2https://github.com/solson/miri">miri</a></div>
+<div data-b="*"><a class="notranslate" href="#2https://github.com/rust-lang-nursery/rustfmt">rustfmt</a></div>
+<div data-b="*"><a class="notranslate" href="#2https://github.com/rust-lang-nursery/rls/">rls</a></div>
+<br>
+<p>We allow breakage of these tools in the nightly channel. Maintainers of these
+projects will be notified of the breakages and should fix them as soon as
+possible.</p>
+<br>
+<p>After the external is fixed, one could add the changes with</p>
+<br>
+<div data-lang="sh"><div data-l="git add path/to/submodule"></div></div>
+<br>
+<p>outside the submodule.</p>
+<br>
+<p>In order to prepare your tool-fixing PR, you can run the build locally by doing
+<code>./x.py build src/tools/TOOL</code>. If you will be editing the sources
+there, you may wish to set <code>submodules = false</code> in the <code>config.toml</code>
+to prevent <code>x.py</code> from resetting to the original branch.</p>
+<br>
+<p>Breakage is not allowed in the beta and stable channels, and must be addressed
+before the PR is merged.</p>
+<br>
+<h4>Breaking Tools Built With The Compiler</h4>
+<a class="notranslate" href="#1#breaking-tools-built-with-the-compiler">breaking-tools-built-with-the-compiler</a>
+<br>
+<p>Rust's build system builds a number of tools that make use of the
+internals of the compiler. This includes clippy,
+<a class="notranslate" href="#2https://github.com/rust-lang-nursery/rls">RLS</a> and
+<a class="notranslate" href="#2https://github.com/rust-lang-nursery/rustfmt">rustfmt</a>. If these tools
+break because of your changes, you may run into a sort of &quot;chicken and egg&quot;
+problem. These tools rely on the latest compiler to be built so you can't update
+them to reflect your changes to the compiler until those changes are merged into
+the compiler. At the same time, you can't get your changes merged into the compiler
+because the rust-lang/rust build won't pass until those tools build and pass their
+tests.</p>
+<br>
+<p>That means that, in the default state, you can't update the compiler without first
+fixing rustfmt, rls and the other tools that the compiler builds.</p>
+<br>
+<p>Luckily, a feature was <a href="#2https://github.com/rust-lang/rust/issues/45861">added to Rust's build</a>
+to make all of this easy to handle. The idea is that we allow these tools to be &quot;broken&quot;,
+so that the rust-lang/rust build passes without trying to build them, then land the change
+in the compiler, wait for a nightly, and go update the tools that you broke. Once you're done
+and the tools are working again, you go back in the compiler and update the tools
+so they can be distributed again.</p>
+<br>
+<p>This should avoid a bunch of synchronization dances and is also much easier on contributors as
+there's no need to block on rls/rustfmt/other tools changes going upstream.</p>
+<br>
+<p>Here are those same steps in detail:</p>
+<br>
+<div data-b="1.">(optional) First, if it doesn't exist already, create a <code>config.toml</code> by copying
+ <code>config.toml.example</code> in the root directory of the Rust repository.
+ Set <code>submodules = false</code> in the <code>[build]</code> section. This will prevent <code>x.py</code>
+ from resetting to the original branch after you make your changes. If you
+ need to <a href="#3updating-submodules">update any submodules to their latest versions</a>,
+ see the section of this file about that for more information.</div>
+<div data-b="2.">(optional) Run <code>./x.py test src/tools/rustfmt</code> (substituting the submodule
+ that broke for <code>rustfmt</code>). Fix any errors in the submodule (and possibly others).</div>
+<div data-b="3.">(optional) Make commits for your changes and send them to upstream repositories as a PR.</div>
+<div data-b="4.">(optional) Maintainers of these submodules will <b>not</b> merge the PR. The PR can't be
+ merged because CI will be broken. You'll want to write a message on the PR referencing
+ your change, and how the PR should be merged once your change makes it into a nightly.</div>
+<div data-b="5.">Wait for your PR to merge.</div>
+<div data-b="6.">Wait for a nightly</div>
+<div data-b="7.">(optional) Help land your PR on the upstream repository now that your changes are in nightly.</div>
+<div data-b="8.">(optional) Send a PR to rust-lang/rust updating the submodule.</div>
+<br>
+<h4>Updating submodules</h4>
+<a class="notranslate" href="#1#updating-submodules">updating-submodules</a>
+<br>
+<p>These instructions are specific to updating <code>rustfmt</code>, however they may apply
+to the other submodules as well. Please help by improving these instructions
+if you find any discrepancies or special cases that need to be addressed.</p>
+<br>
+<p>To update the <code>rustfmt</code> submodule, start by running the appropriate
+<a href="#2https://git-scm.com/book/en/v2/Git-Tools-Submodules"><code>git submodule</code> command</a>.
+For example, to update to the latest commit on the remote master branch,
+you may want to run:
+`<code class=2>
+git submodule update --remote src/tools/rustfmt
+</code><code>
+If you run </code>./x.py build` now, and you are lucky, it may just work. If you see
+an error message about patches that did not resolve to any crates, you will need
+to complete a few more steps which are outlined with their rationale below.</p>
+<br>
+<p><i>(This error may change in the future to include more information.)</i>
+`<code class=2>
+error: failed to resolve patches for `https://github.com/rust-lang-nursery/rustfmt`
+
+Caused by:
+  patch for `rustfmt-nightly` in `https://github.com/rust-lang-nursery/rustfmt` did not resolve to any crates
+failed to run: ~/rust/build/x86_64-unknown-linux-gnu/stage0/bin/cargo build --manifest-path ~/rust/src/bootstrap/Cargo.toml
+</code>`</p>
+<br>
+<p>If you haven't used the <code>[patch]</code>
+section of <code>Cargo.toml</code> before, there is <a href="#2http://doc.crates.io/manifest.html#the-patch-section">some relevant documentation about it
+in the cargo docs</a>. In
+addition to that, you should read the
+<a href="#2http://doc.crates.io/specifying-dependencies.html#overriding-dependencies">Overriding dependencies</a>
+section of the documentation as well.</p>
+<br>
+<p>Specifically, the following <a href="#2http://doc.crates.io/specifying-dependencies.html#testing-a-bugfix">section in Overriding dependencies</a> reveals what the problem is:</p>
+<br>
+<blockquote><p>Next up we need to ensure that our lock file is updated to use this new version of uuid so our project uses the locally checked out copy instead of one from crates.io. The way <a class="notranslate" href="#4patch">patch</a> works is that it'll load the dependency at ../path/to/uuid and then whenever crates.io is queried for versions of uuid it'll also return the local version.</p>
+<br>
+<p>This means that the version number of the local checkout is significant and will affect whether the patch is used. Our manifest declared uuid = &quot;1.0&quot; which means we'll only resolve to &gt;= 1.0.0, &lt; 2.0.0, and Cargo's greedy resolution algorithm also means that we'll resolve to the maximum version within that range. Typically this doesn't matter as the version of the git repository will already be greater or match the maximum version published on crates.io, but it's important to keep this in mind!</p></blockquote>
+<br>
+<p>This says that when we updated the submodule, the version number in our
+<code>src/tools/rustfmt/Cargo.toml</code> changed. The new version is different from
+the version in <code>Cargo.lock</code>, so the build can no longer continue.</p>
+<br>
+<p>To resolve this, we need to update <code>Cargo.lock</code>. Luckily, cargo provides a
+command to do this easily.</p>
+<br>
+<p>First, go into the <code>src/</code> directory since that is where <code>Cargo.toml</code> is in
+the rust repository. Then run, <code>cargo update -p rustfmt-nightly</code> to solve
+the problem.</p>
+<br>
+<div data-lang=""><div data-l="$ cd src"></div><div data-l="$ cargo update -p rustfmt-nightly"></div></div>
+<br>
+<p>This should change the version listed in <code>src/Cargo.lock</code> to the new version you updated
+the submodule to. Running <code>./x.py build</code> should work now.</p>
+<br>
+<h2>Writing Documentation</h2>
+<a class="notranslate" href="#1#writing-documentation">writing-documentation</a>
+<br>
+<p>Documentation improvements are very welcome. The source of <code>doc.rust-lang.org</code>
+is located in <code>src/doc</code> in the tree, and standard API documentation is generated
+from the source code itself.</p>
+<br>
+<p>Documentation pull requests function in the same way as other pull requests,
+though you may see a slightly different form of <code>r+</code>:</p>
+<br>
+<p>    @bors: r+ 38fe8d2 rollup</p>
+<br>
+<p>That additional <code>rollup</code> tells @bors that this change is eligible for a 'rollup'.
+To save @bors some work, and to get small changes through more quickly, when
+@bors attempts to merge a commit that's rollup-eligible, it will also merge
+the other rollup-eligible patches too, and they'll get tested and merged at
+the same time.</p>
+<br>
+<p>To find documentation-related issues, sort by the <a href="#3tdoc">T-doc label</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues?q=is%3Aopen%20is%3Aissue%20label%3AT-doc">tdoc</a>
+<br>
+<p>You can find documentation style guidelines in <a href="#3rfc1574">RFC 1574</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1574-more-api-documentation-conventions.md#appendix-a-full-conventions-text">rfc1574</a>
+<br>
+<p>In many cases, you don't need a full <code>./x.py doc</code>. You can use <code>rustdoc</code> directly
+to check small fixes. For example, <code>rustdoc src/doc/reference.md</code> will render
+reference to <code>doc/reference.html</code>. The CSS might be messed up, but you can
+verify that the HTML is right.</p>
+<br>
+<h2>Issue Triage</h2>
+<a class="notranslate" href="#1#issue-triage">issue-triage</a>
+<br>
+<p>Sometimes, an issue will stay open, even though the bug has been fixed. And
+sometimes, the original bug may go stale because something has changed in the
+meantime.</p>
+<br>
+<p>It can be helpful to go through older bug reports and make sure that they are
+still valid. Load up an older issue, double check that it's still true, and
+leave a comment letting us know if it is or is not. The <a href="#3lru">least recently
+updated sort</a> is good for finding issues like this.</p>
+<br>
+<p>Contributors with sufficient permissions on the Rust repo can help by adding
+labels to triage issues:</p>
+<br>
+<div data-b="*">Yellow, <b>A</b>-prefixed labels state which <b>area</b> of the project an issue
+relates to.</div>
+<br>
+<div data-b="*">Magenta, <b>B</b>-prefixed labels identify bugs which are <b>blockers</b>.</div>
+<br>
+<div data-b="*">Dark blue, <b>beta-</b> labels track changes which need to be backported into
+the beta branches.</div>
+<br>
+<div data-b="*">Light purple, <b>C</b>-prefixed labels represent the <b>category</b> of an issue.</div>
+<br>
+<div data-b="*">Green, <b>E</b>-prefixed labels explain the level of <b>experience</b> necessary
+to fix the issue.</div>
+<br>
+<div data-b="*">The dark blue <b>final-comment-period</b> label marks bugs that are using the
+RFC signoff functionality of <a class="notranslate" href="#3rfcbot">rfcbot</a> and are currenty in the final
+comment period.</div>
+<br>
+<div data-b="*">Red, <b>I</b>-prefixed labels indicate the <b>importance</b> of the issue. The
+<a class="notranslate" href="#3inom">I-nominated</a> label indicates that an issue has been nominated for
+prioritizing at the next triage meeting.</div>
+<br>
+<div data-b="*">The purple <b>metabug</b> label marks lists of bugs collected by other
+categories.</div>
+<br>
+<div data-b="*">Purple gray, <b>O</b>-prefixed labels are the <b>operating system</b> or platform
+that this issue is specific to.</div>
+<br>
+<div data-b="*">Orange, <b>P</b>-prefixed labels indicate a bug's <b>priority</b>. These labels
+are only assigned during triage meetings, and replace the <a class="notranslate" href="#3inom">I-nominated</a>
+label.</div>
+<br>
+<div data-b="*">The gray <b>proposed-final-comment-period</b> label marks bugs that are using
+the RFC signoff functionality of <a class="notranslate" href="#3rfcbot">rfcbot</a> and are currently awaiting
+signoff of all team members in order to enter the final comment period.</div>
+<br>
+<div data-b="*">Pink, <b>regression</b>-prefixed labels track regressions from stable to the
+release channels.</div>
+<br>
+<div data-b="*">The light orange <b>relnotes</b> label marks issues that should be documented in
+the release notes of the next release.</div>
+<br>
+<div data-b="*">Gray, <b>S</b>-prefixed labels are used for tracking the <b>status</b> of pull
+requests.</div>
+<br>
+<div data-b="*">Blue, <b>T</b>-prefixed bugs denote which <b>team</b> the issue belongs to.</div>
+<br>
+<p>If you're looking for somewhere to start, check out the <a class="notranslate" href="#3eeasy">E-easy</a> tag.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues?q=is%3Aopen+is%3Aissue+label%3AI-nominated">inom</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues?q=is%3Aopen+is%3Aissue+label%3AE-easy">eeasy</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-asc">lru</a>
+<a class="notranslate" href="#1https://github.com/anp/rfcbot-rs/">rfcbot</a>
+<br>
+<h2>Out-of-tree Contributions</h2>
+<a class="notranslate" href="#1#out-of-tree-contributions">out-of-tree-contributions</a>
+<br>
+<p>There are a number of other ways to contribute to Rust that don't deal with
+this repository.</p>
+<br>
+<p>Answer questions in <a class="notranslate" href="#3pound-rust">#rust</a>, or on <a class="notranslate" href="#3users">users.rust-lang.org</a>,
+or on <a class="notranslate" href="#3so">StackOverflow</a>.</p>
+<br>
+<p>Participate in the <a href="#2https://github.com/rust-lang/rfcs">RFC process</a>.</p>
+<br>
+<p>Find a <a href="#3community-library">requested community library</a>, build it, and publish
+it to <a class="notranslate" href="#2http://crates.io">Crates.io</a>. Easier said than done, but very, very
+valuable!</p>
+<br>
+<a class="notranslate" href="#1http://chat.mibbit.com/?server=irc.mozilla.org&channel=%23rust">pound-rust</a>
+<a class="notranslate" href="#1https://users.rust-lang.org/">users</a>
+<a class="notranslate" href="#1http://stackoverflow.com/questions/tagged/rust">so</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/labels/A-community-library">community-library</a>
+<br>
+<h2>Helpful Links and Information</h2>
+<a class="notranslate" href="#1#helpful-info">helpful-info</a>
+<br>
+<p>For people new to Rust, and just starting to contribute, or even for
+more seasoned developers, some useful places to look for information
+are:</p>
+<br>
+<div data-b="*">The <a class="notranslate" href="#4rustc guide">rustc guide</a> contains information about how various parts of the compiler work</div>
+<div data-b="*"><a href="#3rustforge">Rust Forge</a> contains additional documentation, including write-ups of how to achieve common tasks</div>
+<div data-b="*">The <a href="#3rif">Rust Internals forum</a>, a place to ask questions and
+discuss Rust's internals</div>
+<div data-b="*">The <a href="#3gdfrustc">generated documentation for rust's compiler</a></div>
+<div data-b="*">The <a href="#3rr">rust reference</a>, even though it doesn't specifically talk about Rust's internals, it's a great resource nonetheless</div>
+<div data-b="*">Although out of date, <a href="#3tlgba">Tom Lee's great blog article</a> is very helpful</div>
+<div data-b="*"><a class="notranslate" href="#3ro">rustaceans.org</a> is helpful, but mostly dedicated to IRC</div>
+<div data-b="*">The <a href="#3rctd">Rust Compiler Testing Docs</a></div>
+<div data-b="*">For @bors, <a href="#3cheatsheet">this cheat sheet</a> is helpful (Remember to replace <code>@homu</code> with <code>@bors</code> in the commands that you use.)</div>
+<div data-b="*"><b>Google!</b> (<a href="#3gsearchdocs">search only in Rust Documentation</a> to find types, traits, etc. quickly)</div>
+<div data-b="*">Don't be afraid to ask! The Rust community is friendly and helpful.</div>
+<br>
+<a class="notranslate" href="#1https://rust-lang-nursery.github.io/rustc-guide/about-this-guide.html">rustc guide</a>
+<a class="notranslate" href="#1http://manishearth.github.io/rust-internals-docs/rustc/">gdfrustc</a>
+<a class="notranslate" href="#1https://www.google.com/search?q=site:doc.rust-lang.org+your+query+here">gsearchdocs</a>
+<a class="notranslate" href="#1http://internals.rust-lang.org">rif</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/README.html">rr</a>
+<a class="notranslate" href="#1https://forge.rust-lang.org/">rustforge</a>
+<a class="notranslate" href="#1http://tomlee.co/2014/04/a-more-detailed-tour-of-the-rust-compiler/">tlgba</a>
+<a class="notranslate" href="#1http://www.rustaceans.org/">ro</a>
+<a class="notranslate" href="#1./src/test/COMPILER_TESTS.md">rctd</a>
+<a class="notranslate" href="#1https://buildbot2.rust-lang.org/homu/">cheatsheet</a>

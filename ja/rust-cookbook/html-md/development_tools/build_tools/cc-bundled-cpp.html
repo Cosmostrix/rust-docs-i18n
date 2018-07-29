@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h2>Compile and link statically to a bundled C++ library</h2>
+<br>
+<p><a href="#3cc">!<a class="notranslate" href="#4cc-badge">cc-badge</a></a> <a href="#3cat-development-tools">!<a class="notranslate" href="#4cat-development-tools-badge">cat-development-tools-badge</a></a></p>
+<br>
+<p>Linking a bundled C++ library is very similar to linking a bundled C library. The two core differences when compiling and statically linking a bundled C++ library are specifying a C++ compiler via the builder method <a class="notranslate" href="#3cc-build-cpp"><code>cpp(true)</code></a> and preventing name mangling by the C++ compiler by adding the <code>extern &quot;C&quot;</code> section at the top of our C++ source file.</p>
+<br>
+<br>
+<h3><code>Cargo.toml</code></h3>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="..."></div><div data-l="build = &quot;build.rs&quot;"></div><div data-l=""></div><div data-l="[build-dependencies]"></div><div data-l="cc = &quot;1&quot;"></div></div>
+<br>
+<h3><code>build.rs</code></h3>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate cc;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    cc::Build::new()"></div><div data-l="        .cpp(true)"></div><div data-l="        .file(&quot;src/foo.cpp&quot;)"></div><div data-l="        .compile(&quot;foo&quot;);   "></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/foo.cpp</code></h3>
+<br>
+<div data-lang="cpp"><div data-l="extern &quot;C&quot; {"></div><div data-l="    int multiply(int x, int y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="int multiply(int x, int y) {"></div><div data-l="    return x*y;"></div><div data-l="}"></div></div>
+<br>
+<h3><code>src/main.rs</code></h3>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern {"></div><div data-l="    fn multiply(x : i32, y : i32) -&gt; i32;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main(){"></div><div data-l="    unsafe {"></div><div data-l="        println!(&quot;{}&quot;, multiply(5,7));"></div><div data-l="    }   "></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/cc/*/cc/struct.Build.html#method.cpp">cc-build-cpp</a>

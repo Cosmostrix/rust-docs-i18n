@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h2>Generate random numbers</h2>
+<br>
+<p><a href="#3rand">!<a class="notranslate" href="#4rand-badge">rand-badge</a></a> <a href="#3cat-science">!<a class="notranslate" href="#4cat-science-badge">cat-science-badge</a></a></p>
+<br>
+<p>Generates random numbers with help of random-number
+generator <a class="notranslate" href="#4`rand::Rng`">`rand::Rng`</a> obtained via <a class="notranslate" href="#4`rand::thread_rng`">`rand::thread_rng`</a>. Each thread has an
+intialized generator. Integers are uniformly distributed over the range of the
+type, and floating point numbers are uniformly distributed from 0 up to but not
+including 1.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rand;"></div><div data-l=""></div><div data-l="use rand::Rng;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut rng = rand::thread_rng();"></div><div data-l=""></div><div data-l="    let n1: u8 = rng.gen();"></div><div data-l="    let n2: u16 = rng.gen();"></div><div data-l="    println!(&quot;Random u8: {}&quot;, n1);"></div><div data-l="    println!(&quot;Random u16: {}&quot;, n2);"></div><div data-l="    println!(&quot;Random u32: {}&quot;, rng.gen::&lt;u32&gt;());"></div><div data-l="    println!(&quot;Random i32: {}&quot;, rng.gen::&lt;i32&gt;());"></div><div data-l="    println!(&quot;Random float: {}&quot;, rng.gen::&lt;f64&gt;());"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/trait.Rng.html">`rand::Rng`</a>
+<a class="notranslate" href="#1https://docs.rs/rand/*/rand/fn.thread_rng.html">`rand::thread_rng`</a>

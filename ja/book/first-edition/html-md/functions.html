@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<h1>Functions</h1>
+<br>
+<p>Every Rust program has at least one function, the <code>main</code> function:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="}"></div></div>
+<br>
+<p>This is the simplest possible function declaration. As we mentioned before,
+<code>fn</code> says ‘this is a function’, followed by the name, some parentheses because
+this function takes no arguments, and then some curly braces to indicate the
+body. Here’s a function named <code>foo</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo() {"></div><div data-l="}"></div></div>
+<br>
+<p>So, what about taking arguments? Here’s a function that prints a number:</p>
+<br>
+<div data-lang="rust"><div data-l="fn print_number(x: i32) {"></div><div data-l="    println!(&quot;x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>Here’s a complete program that uses <code>print_number</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    print_number(5);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print_number(x: i32) {"></div><div data-l="    println!(&quot;x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>As you can see, function arguments work very similar to <code>let</code> declarations:
+you add a type to the argument name, after a colon.</p>
+<br>
+<p>Here’s a complete program that adds two numbers together and prints them:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    print_sum(5, 6);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn print_sum(x: i32, y: i32) {"></div><div data-l="    println!(&quot;sum is: {}&quot;, x + y);"></div><div data-l="}"></div></div>
+<br>
+<p>You separate arguments with a comma, both when you call the function, as well
+as when you declare it.</p>
+<br>
+<p>Unlike <code>let</code>, you <s>must</s> declare the types of function arguments. This does
+not work:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn print_sum(x, y) {"></div><div data-l="    println!(&quot;sum is: {}&quot;, x + y);"></div><div data-l="}"></div></div>
+<br>
+<p>You get this error:</p>
+<br>
+<div data-lang="text"><div data-l="expected one of `!`, `:`, or `@`, found `)`"></div><div data-l="fn print_sum(x, y) {"></div></div>
+<br>
+<p>This is a deliberate design decision. While full-program inference is possible,
+languages which have it, like Haskell, often suggest that documenting your
+types explicitly is a best-practice. We agree that forcing functions to declare
+types while allowing for inference inside of function bodies is a wonderful
+sweet spot between full inference and no inference.</p>
+<br>
+<p>What about returning a value? Here’s a function that adds one to an integer:</p>
+<br>
+<div data-lang="rust"><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>Rust functions return exactly one value, and you declare the type after an
+‘arrow’, which is a dash (<code>-</code>) followed by a greater-than sign (<code>&gt;</code>). The last
+line of a function determines what it returns. You’ll note the lack of a
+semicolon here. If we added it in:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1;"></div><div data-l="}"></div></div>
+<br>
+<p>We would get an error:</p>
+<br>
+<div data-lang="text"><div data-l="error: not all control paths return a value"></div><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="     x + 1;"></div><div data-l="}"></div><div data-l=""></div><div data-l="help: consider removing this semicolon:"></div><div data-l="     x + 1;"></div><div data-l="          ^"></div></div>
+<br>
+<p>This reveals two interesting things about Rust: it is an expression-based
+language, and semicolons are different from semicolons in other ‘curly brace
+and semicolon’-based languages. These two things are related.</p>
+<br>
+<h2>Expressions vs. Statements</h2>
+<br>
+<p>Rust is primarily an expression-based language. There are only two kinds of
+statements, and everything else is an expression.</p>
+<br>
+<p>So what's the difference? Expressions return a value, and statements do not.
+That’s why we end up with ‘not all control paths return a value’ here: the
+statement <code>x + 1;</code> doesn’t return a value. There are two kinds of statements in
+Rust: ‘declaration statements’ and ‘expression statements’. Everything else is
+an expression. Let’s talk about declaration statements first.</p>
+<br>
+<p>In some languages, variable bindings can be written as expressions, not
+statements. Like Ruby:</p>
+<br>
+<div data-lang="ruby"><div data-l="x = y = 5"></div></div>
+<br>
+<p>In Rust, however, using <code>let</code> to introduce a binding is <s>not</s> an expression. The
+following will produce a compile-time error:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//let x = (let y = 5); // Expected identifier, found keyword `let`."></div><div data-l="let x = (let y = 5); // ">Expected identifier, found keyword <code>let</code>.</div></div>
+<br>
+<p>The compiler is telling us here that it was expecting to see the beginning of
+an expression, and a <code>let</code> can only begin a statement, not an expression.</p>
+<br>
+<p>Note that assigning to an already-bound variable (e.g. <code>y = 5</code>) is still an
+expression, although its value is not particularly useful. Unlike other
+languages where an assignment evaluates to the assigned value (e.g. <code>5</code> in the
+previous example), in Rust the value of an assignment is an empty tuple <code>()</code>
+because the assigned value can have <a href="#2ownership.html">only one owner</a>, and any
+other returned value would be too surprising:</p>
+<br>
+<div data-lang="rust"><div data-l="let mut y = 5;"></div><div data-l=""></div><div data-l="#//let x = (y = 6);  // `x` has the value `()`, not `6`."></div><div data-l="let x = (y = 6);  // "><code>x</code> has the value <code>()</code>, not <code>6</code>.</div></div>
+<br>
+<p>The second kind of statement in Rust is the <i>expression statement</i>. Its
+purpose is to turn any expression into a statement. In practical terms, Rust's
+grammar expects statements to follow other statements. This means that you use
+semicolons to separate expressions from each other. This means that Rust
+looks a lot like most other languages that require you to use semicolons
+at the end of every line, and you will see semicolons at the end of almost
+every line of Rust code you see.</p>
+<br>
+<p>What is this exception that makes us say &quot;almost&quot;? You saw it already, in this
+code:</p>
+<br>
+<div data-lang="rust"><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>Our function claims to return an <code>i32</code>, but with a semicolon, it would return
+<code>()</code> instead. Rust realizes this probably isn’t what we want, and suggests
+removing the semicolon in the error we saw before.</p>
+<br>
+<h2>Early returns</h2>
+<br>
+<p>But what about early returns? Rust does have a keyword for that, <code>return</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(x: i32) -&gt; i32 {"></div><div data-l="    return x;"></div><div data-l=""></div><div data-l="#    // We never run this code!"></div><div data-l="    // ">We never run this code!</div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>Using a <code>return</code> as the last line of a function works, but is considered poor
+style:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(x: i32) -&gt; i32 {"></div><div data-l="    return x + 1;"></div><div data-l="}"></div></div>
+<br>
+<p>The previous definition without <code>return</code> may look a bit strange if you haven’t
+worked in an expression-based language before, but it becomes intuitive over
+time.</p>
+<br>
+<h2>Diverging functions</h2>
+<br>
+<p>Rust has some special syntax for ‘diverging functions’, which are functions that
+do not return:</p>
+<br>
+<div data-lang="rust"><div data-l="fn diverges() -&gt; ! {"></div><div data-l="    panic!(&quot;This function never returns!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><code>panic€</code> is a macro, similar to <code>println€()</code> that we’ve already seen. Unlike
+<code>println€()</code>, <code>panic€()</code> causes the current thread of execution to crash with
+the given message. Because this function will cause a crash, it will never
+return, and so it has the type ‘<code>€</code>’, which is read ‘diverges’.</p>
+<br>
+<p>If you add a main function that calls <code>diverges()</code> and run it, you’ll get
+some output that looks like this:</p>
+<br>
+<div data-lang="text"><div data-l="thread ‘main’ panicked at ‘This function never returns!’, hello.rs:2"></div></div>
+<br>
+<p>If you want more information, you can get a backtrace by setting the
+<code>RUST_BACKTRACE</code> environment variable:</p>
+<br>
+<div data-lang="text"><div data-l="$ RUST_BACKTRACE=1 ./diverges"></div><div data-l="thread 'main' panicked at 'This function never returns!', hello.rs:2"></div><div data-l="Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace."></div><div data-l="stack backtrace:"></div><div data-l="  hello::diverges"></div><div data-l="        at ./hello.rs:2"></div><div data-l="  hello::main"></div><div data-l="        at ./hello.rs:6"></div></div>
+<br>
+<p>If you want the complete backtrace and filenames:</p>
+<br>
+<div data-lang="text"><div data-l="$ RUST_BACKTRACE=full ./diverges"></div><div data-l="thread 'main' panicked at 'This function never returns!', hello.rs:2"></div><div data-l="stack backtrace:"></div><div data-l="   1:     0x7f402773a829 - sys::backtrace::write::h0942de78b6c02817K8r"></div><div data-l="   2:     0x7f402773d7fc - panicking::on_panic::h3f23f9d0b5f4c91bu9w"></div><div data-l="   3:     0x7f402773960e - rt::unwind::begin_unwind_inner::h2844b8c5e81e79558Bw"></div><div data-l="   4:     0x7f4027738893 - rt::unwind::begin_unwind::h4375279447423903650"></div><div data-l="   5:     0x7f4027738809 - diverges::h2266b4c4b850236beaa"></div><div data-l="   6:     0x7f40277389e5 - main::h19bb1149c2f00ecfBaa"></div><div data-l="   7:     0x7f402773f514 - rt::unwind::try::try_fn::h13186883479104382231"></div><div data-l="   8:     0x7f402773d1d8 - __rust_try"></div><div data-l="   9:     0x7f402773f201 - rt::lang_start::ha172a3ce74bb453aK5w"></div><div data-l="  10:     0x7f4027738a19 - main"></div><div data-l="  11:     0x7f402694ab44 - __libc_start_main"></div><div data-l="  12:     0x7f40277386c8 - &lt;unknown&gt;"></div><div data-l="  13:                0x0 - &lt;unknown&gt;"></div></div>
+<br>
+<p>If you need to override an already set <code>RUST_BACKTRACE</code>, 
+in cases when you cannot just unset the variable, 
+then set it to <code>0</code> to avoid getting a backtrace. 
+Any other value (even no value at all) turns on backtrace.</p>
+<br>
+<div data-lang="text"><div data-l="$ export RUST_BACKTRACE=1"></div><div data-l="..."></div><div data-l="$ RUST_BACKTRACE=0 ./diverges "></div><div data-l="thread 'main' panicked at 'This function never returns!', hello.rs:2"></div><div data-l="note: Run with `RUST_BACKTRACE=1` for a backtrace."></div></div>
+<br>
+<p><code>RUST_BACKTRACE</code> also works with Cargo’s <code>run</code> command:</p>
+<br>
+<div data-lang="text"><div data-l="$ RUST_BACKTRACE=full cargo run"></div><div data-l="     Running `target/debug/diverges`"></div><div data-l="thread 'main' panicked at 'This function never returns!', hello.rs:2"></div><div data-l="stack backtrace:"></div><div data-l="   1:     0x7f402773a829 - sys::backtrace::write::h0942de78b6c02817K8r"></div><div data-l="   2:     0x7f402773d7fc - panicking::on_panic::h3f23f9d0b5f4c91bu9w"></div><div data-l="   3:     0x7f402773960e - rt::unwind::begin_unwind_inner::h2844b8c5e81e79558Bw"></div><div data-l="   4:     0x7f4027738893 - rt::unwind::begin_unwind::h4375279447423903650"></div><div data-l="   5:     0x7f4027738809 - diverges::h2266b4c4b850236beaa"></div><div data-l="   6:     0x7f40277389e5 - main::h19bb1149c2f00ecfBaa"></div><div data-l="   7:     0x7f402773f514 - rt::unwind::try::try_fn::h13186883479104382231"></div><div data-l="   8:     0x7f402773d1d8 - __rust_try"></div><div data-l="   9:     0x7f402773f201 - rt::lang_start::ha172a3ce74bb453aK5w"></div><div data-l="  10:     0x7f4027738a19 - main"></div><div data-l="  11:     0x7f402694ab44 - __libc_start_main"></div><div data-l="  12:     0x7f40277386c8 - &lt;unknown&gt;"></div><div data-l="  13:                0x0 - &lt;unknown&gt;"></div></div>
+<br>
+<p>A diverging function can be used as any type:</p>
+<br>
+<div data-lang="rust,should_panic"><div data-l="# fn diverges() -&gt; ! {"></div><div data-l="#    panic!(&quot;This function never returns!&quot;);"></div><div data-l="# }"></div><div data-l="let x: i32 = diverges();"></div><div data-l="let x: String = diverges();"></div></div>
+<br>
+<h2>Function pointers</h2>
+<br>
+<p>We can also create variable bindings which point to functions:</p>
+<br>
+<div data-lang="rust"><div data-l="let f: fn(i32) -&gt; i32;"></div></div>
+<br>
+<p><code>f</code> is a variable binding which points to a function that takes an <code>i32</code> as
+an argument and returns an <code>i32</code>. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="fn plus_one(i: i32) -&gt; i32 {"></div><div data-l="    i + 1"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Without type inference:"></div><div data-l="// ">Without type inference:</div><div data-l="let f: fn(i32) -&gt; i32 = plus_one;"></div><div data-l=""></div><div data-l="#// With type inference:"></div><div data-l="// ">With type inference:</div><div data-l="let f = plus_one;"></div></div>
+<br>
+<p>We can then use <code>f</code> to call the function:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn plus_one(i: i32) -&gt; i32 { i + 1 }"></div><div data-l="# let f = plus_one;"></div><div data-l="let six = f(5);"></div></div>

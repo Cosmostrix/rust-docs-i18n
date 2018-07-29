@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<h1><code>match</code> expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>MatchExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>match</code> <a class="notranslate" href="#4_Expression_">_Expression_</a><sub><s>except struct expression</s></sub> <code>{</code>\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_InnerAttribute_">_InnerAttribute_</a><sup>\<i>&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; _MatchArms_&lt;sup&gt;?&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; `}`
+
+_MatchArms_ :\
+&amp;nbsp;&amp;nbsp; ( _MatchArm_ `=&gt;`
+                            ( [_BlockExpression_] `,`&lt;sup&gt;?&lt;/sup&gt;
+                            | [_Expression_] `,` )
+                          )&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; <s>MatchArm</s> <code>=&gt;</code> ( <a class="notranslate" href="#4_BlockExpression_">_BlockExpression_</a> | <a class="notranslate" href="#4_Expression_">_Expression_</a> ) <code>,</code><sup>?</sup></p>
+<br>
+<p><s>MatchArm</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_OuterAttribute_">_OuterAttribute_</a><sup>\<i>&lt;/sup&gt; _MatchArmPatterns_ _MatchArmGuard_&lt;sup&gt;?&lt;/sup&gt;
+
+_MatchArmPatterns_ :\
+&amp;nbsp;&amp;nbsp; `|`&lt;sup&gt;?&lt;/sup&gt; _Pattern_ ( `|` _Pattern_ )&lt;sup&gt;\</i></sup></p>
+<br>
+<p><s>MatchArmGuard</s> :\
+&amp;nbsp;&amp;nbsp; <code>if</code> <a class="notranslate" href="#4_Expression_">_Expression_</a></p></blockquote>
+<br>
+<p>A <code>match</code> expression branches on a <i>pattern</i>. The exact form of matching that
+occurs depends on the pattern. Patterns consist of some combination of
+literals, destructured arrays or enum constructors, structs and tuples,
+variable binding specifications, wildcards (<code>..</code>), and placeholders (<code>_</code>). A
+<code>match</code> expression has a <i>head expression</i>, which is the value to compare to
+the patterns. The type of the patterns must equal the type of the head
+expression.</p>
+<br>
+<p>A <code>match</code> behaves differently depending on whether or not the head expression
+is a <a href="#3place expression">place expression or value expression</a>.
+If the head expression is a <a class="notranslate" href="#4value expression">value expression</a>, it is first evaluated into a
+temporary location, and the resulting value is sequentially compared to the
+patterns in the arms until a match is found. The first arm with a matching
+pattern is chosen as the branch target of the <code>match</code>, any variables bound by
+the pattern are assigned to local variables in the arm's block, and control
+enters the block.</p>
+<br>
+<p>When the head expression is a <a class="notranslate" href="#4place expression">place expression</a>, the match does not allocate a
+temporary location; however, a by-value binding may copy or move from the
+memory location.
+When possible, it is preferable to match on place expressions, as the lifetime
+of these matches inherits the lifetime of the place expression rather than being
+restricted to the inside of the match.</p>
+<br>
+<p>An example of a <code>match</code> expression:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 =&gt; println!(&quot;one&quot;),"></div><div data-l="    2 =&gt; println!(&quot;two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    4 =&gt; println!(&quot;four&quot;),"></div><div data-l="    5 =&gt; println!(&quot;five&quot;),"></div><div data-l="    _ =&gt; println!(&quot;something else&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>Patterns that bind variables default to binding to a copy or move of the
+matched value (depending on the matched value's type). This can be changed to
+bind to a reference by using the <code>ref</code> keyword, or to a mutable reference using
+<code>ref mut</code>.</p>
+<br>
+<p>Patterns can be used to <i>destructure</i> structs, enums, and tuples. Destructuring
+breaks a value up into its component pieces. The syntax used is the same as
+when creating such values. When destructing a data structure with named (but
+not numbered) fields, it is allowed to write <code>fieldname</code> as a shorthand for
+<code>fieldname: fieldname</code>. In a pattern whose head expression has a <code>struct</code>,
+<code>enum</code> or <code>tupl</code> type, a placeholder (<code>_</code>) stands for a <i>single</i> data field,
+whereas a wildcard <code>..</code> stands for <i>all</i> the fields of a particular variant.</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="#     Quit,"></div><div data-l="#     WriteString(String),"></div><div data-l="#     Move { x: i32, y: i32 },"></div><div data-l="#     ChangeColor(u8, u8, u8),"></div><div data-l="# }"></div><div data-l="# let message = Message::Quit;"></div><div data-l="match message {"></div><div data-l="    Message::Quit =&gt; println!(&quot;Quit&quot;),"></div><div data-l="    Message::WriteString(write) =&gt; println!(&quot;{}&quot;, &amp;write),"></div><div data-l="    Message::Move{ x, y: 0 } =&gt; println!(&quot;move {} horizontally&quot;, x),"></div><div data-l="    Message::Move{ .. } =&gt; println!(&quot;other move&quot;),"></div><div data-l="    Message::ChangeColor { 0: red, 1: green, 2: _ } =&gt; {"></div><div data-l="        println!(&quot;color change, red: {}, green: {}&quot;, red, green);"></div><div data-l="    }"></div><div data-l="};"></div></div>
+<br>
+<p>Patterns can also dereference pointers by using the <code>&amp;</code>, <code>&amp;mut</code> and <code>box</code>
+symbols, as appropriate. For example, these two matches on <code>x: &amp;i32</code> are
+equivalent:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = &amp;3;"></div><div data-l="let y = match *x { 0 =&gt; &quot;zero&quot;, _ =&gt; &quot;some&quot; };"></div><div data-l="let z = match x { &amp;0 =&gt; &quot;zero&quot;, _ =&gt; &quot;some&quot; };"></div><div data-l=""></div><div data-l="assert_eq!(y, z);"></div></div>
+<br>
+<p>Subpatterns can also be bound to variables by the use of the syntax <code>variable @
+subpattern</code>. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    e @ 1 ... 5 =&gt; println!(&quot;got a range element {}&quot;, e),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>Multiple match patterns may be joined with the <code>|</code> operator. An inclusive range
+of values may be specified with <code>..=</code>. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="# let x = 9;"></div><div data-l="let message = match x {"></div><div data-l="    0 | 1  =&gt; &quot;not many&quot;,"></div><div data-l="    2 ..= 9 =&gt; &quot;a few&quot;,"></div><div data-l="    _      =&gt; &quot;lots&quot;"></div><div data-l="};"></div><div data-l=""></div><div data-l="assert_eq!(message, &quot;a few&quot;);"></div></div>
+<br>
+<p>Other forms of <a class="notranslate" href="#4range">range</a> \(<code>..</code> for an exclusive range, or any range with one or
+both endpoints left unspecified) are not supported in matches. The
+syntax <code>...</code> is also accepted for inclusive ranges in patterns only, for
+backwards compatibility.</p>
+<br>
+<p>Range patterns only work <a class="notranslate" href="#4`char`">`char`</a> and <a class="notranslate" href="#4numeric types">numeric types</a>. A range pattern may not
+be a sub-range of another range pattern inside the same <code>match</code>.</p>
+<br>
+<p>Slice patterns can match both arrays of fixed size and slices of dynamic size.
+`<code class=2>rust
+// Fixed size
+let arr = [1, 2, 3];
+match arr {
+    [1, _, _] =&gt; &quot;starts with one&quot;,
+    [a, b, c] =&gt; &quot;starts with something else&quot;,
+};
+</code>`
+`<code class=2>rust
+// Dynamic size
+let v = vec![1, 2, 3];
+match v[..] {
+    [a, b] =&gt; { /* this arm will not apply because the length doesn't match */ }
+    [a, b, c] =&gt; { /* this arm will apply */ }
+    _ =&gt; { /* this wildcard is required, since we don't know length statically */ }
+}
+</code>`</p>
+<br>
+<p>Finally, match patterns can accept <i>pattern guards</i> to further refine the
+criteria for matching a case. Pattern guards appear after the pattern and
+consist of a bool-typed expression following the <code>if</code> keyword. A pattern guard
+may refer to the variables bound within the pattern they follow.</p>
+<br>
+<div data-lang="rust"><div data-l="# let maybe_digit = Some(0);"></div><div data-l="# fn process_digit(i: i32) { }"></div><div data-l="# fn process_other(i: i32) { }"></div><div data-l="let message = match maybe_digit {"></div><div data-l="    Some(x) if x &lt; 10 =&gt; process_digit(x),"></div><div data-l="    Some(x) =&gt; process_other(x),"></div><div data-l="    None =&gt; panic!(),"></div><div data-l="};"></div></div>
+<br>
+<h2>Attributes on match arms</h2>
+<br>
+<p>Outer attributes are allowed on match arms. The only attributes that have
+meaning on match arms are <a class="notranslate" href="#4`cfg`">`cfg`</a>, <code>cold</code>, and the <a class="notranslate" href="#4lint check attributes">lint check attributes</a>.</p>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1expressions/block-expr.html#block-expressions">_BlockExpression_</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">place expression</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">value expression</a>
+<a class="notranslate" href="#1types.html#textual-types">`char`</a>
+<a class="notranslate" href="#1types.html#numeric-types">numeric types</a>
+<a class="notranslate" href="#1attributes.html">_InnerAttribute_</a>
+<a class="notranslate" href="#1attributes.html">_OuterAttribute_</a>
+<a class="notranslate" href="#1attributes.html#conditional-compilation">`cfg`</a>
+<a class="notranslate" href="#1attributes.html#lint-check-attributes">lint check attributes</a>

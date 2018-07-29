@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<h1>dyn Trait</h1>
+<br>
+<p>The <code>dyn Trait</code> feature is the new syntax for using trait objects. In short:</p>
+<br>
+<div data-b="*"><code>Box&lt;Trait&gt;</code> becomes <code>Box&lt;dyn Trait&gt;</code></div>
+<div data-b="*"><code>&amp;Trait</code> and <code>&amp;mut Trait</code> become <code>&amp;dyn Trait</code> and <code>&amp;mut dyn Trait</code></div>
+<br>
+<p>And so on. In code:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Trait {}"></div><div data-l=""></div><div data-l="impl Trait for i32 {}"></div><div data-l=""></div><div data-l="#// old"></div><div data-l="// ">old</div><div data-l="fn function1() -&gt; Box&lt;Trait&gt; {"></div><div data-l="# unimplemented!()"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// new"></div><div data-l="// ">new</div><div data-l="fn function2() -&gt; Box&lt;dyn Trait&gt; {"></div><div data-l="# unimplemented!()"></div><div data-l="}"></div></div>
+<br>
+<p>That's it!</p>
+<br>
+<h2>More details</h2>
+<br>
+<p>Using just the trait name for trait objects turned out to be a bad decision.
+The current syntax is often ambiguous and confusing, even to veterans,
+and favors a feature that is not more frequently used than its alternatives,
+is sometimes slower, and often cannot be used at all when its alternatives can.</p>
+<br>
+<p>Furthermore, with <code>impl Trait</code> arriving, &quot;<code>impl Trait</code> vs <code>dyn Trait</code>&quot; is much
+more symmetric, and therefore a bit nicer, than &quot;<code>impl Trait</code> vs <code>Trait</code>&quot;.
+<code>impl Trait</code> is explained further in the next section.</p>
+<br>
+<p>In the new edition, you should therefore prefer <code>dyn Trait</code> to just <code>Trait</code>
+where you need a trait object.</p>

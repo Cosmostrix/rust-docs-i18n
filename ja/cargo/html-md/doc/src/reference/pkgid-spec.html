@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h2>Package ID Specifications</h2>
+<br>
+<h3>Package ID specifications</h3>
+<br>
+<p>Subcommands of Cargo frequently need to refer to a particular package within a
+dependency graph for various operations like updating, cleaning, building, etc.
+To solve this problem, Cargo supports Package ID Specifications. A specification
+is a string which is used to uniquely refer to one package within a graph of
+packages.</p>
+<br>
+<h4>Specification grammar</h4>
+<br>
+<p>The formal grammar for a Package Id Specification is:</p>
+<br>
+<div data-lang="notrust"><div data-l="pkgid := pkgname"></div><div data-l="       | [ proto &quot;://&quot; ] hostname-and-path [ &quot;#&quot; ( pkgname | semver ) ]"></div><div data-l="pkgname := name [ &quot;:&quot; semver ]"></div><div data-l=""></div><div data-l="proto := &quot;http&quot; | &quot;git&quot; | ..."></div></div>
+<br>
+<p>Here, brackets indicate that the contents are optional.</p>
+<br>
+<h4>Example specifications</h4>
+<br>
+<p>These could all be references to a package <code>foo</code> version <code>1.2.3</code> from the
+registry at <code>crates.io</code></p>
+<br>
+<div data-tbl><div> pkgid                        </div><div> name  </div><div> version </div><div> url                    </div></div>
+<div data-tbl><div>:-----------------------------</div><div>:-----:</div><div>:-------:</div><div>:----------------------:</div></div>
+<div data-tbl><div> <code>foo</code>                        </div><div> <code>foo</code> </div><div> <code>*</code>     </div><div> <code>*</code>                    </div></div>
+<div data-tbl><div> <code>foo:1.2.3</code>                  </div><div> <code>foo</code> </div><div> <code>1.2.3</code> </div><div> <code>*</code>                    </div></div>
+<div data-tbl><div> <code>crates.io/foo</code>              </div><div> <code>foo</code> </div><div> <code>*</code>     </div><div> <code>*://crates.io/foo</code>    </div></div>
+<div data-tbl><div> <code>crates.io/foo#1.2.3</code>        </div><div> <code>foo</code> </div><div> <code>1.2.3</code> </div><div> <code>*://crates.io/foo</code>    </div></div>
+<div data-tbl><div> <code>crates.io/bar#foo:1.2.3</code>    </div><div> <code>foo</code> </div><div> <code>1.2.3</code> </div><div> <code>*://crates.io/bar</code>    </div></div>
+<div data-tbl><div> <code>http://crates.io/foo#1.2.3</code> </div><div> <code>foo</code> </div><div> <code>1.2.3</code> </div><div> <code>http://crates.io/foo</code> </div></div>
+<br>
+<h4>Brevity of specifications</h4>
+<br>
+<p>The goal of this is to enable both succinct and exhaustive syntaxes for
+referring to packages in a dependency graph. Ambiguous references may refer to
+one or more packages. Most commands generate an error if more than one package
+could be referred to with the same specification.</p>

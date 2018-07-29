@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h2>Log messages with a custom logger</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Implements a custom logger <code>ConsoleLogger</code> which prints to stdout.
+In order to use the logging macros, <code>ConsoleLogger</code> implements
+the <a class="notranslate" href="#4`log::Log`">`log::Log`</a> trait and <a class="notranslate" href="#4`log::set_logger`">`log::set_logger`</a> installs it.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l=""></div><div data-l="use log::{Record, Level, Metadata, LevelFilter};"></div><div data-l=""></div><div data-l="static CONSOLE_LOGGER: ConsoleLogger = ConsoleLogger;"></div><div data-l=""></div><div data-l="struct ConsoleLogger;"></div><div data-l=""></div><div data-l="impl log::Log for ConsoleLogger {"></div><div data-l="  fn enabled(&amp;self, metadata: &amp;Metadata) -&gt; bool {"></div><div data-l="     metadata.level() &lt;= Level::Info"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn log(&amp;self, record: &amp;Record) {"></div><div data-l="        if self.enabled(record.metadata()) {"></div><div data-l="            println!(&quot;Rust says: {} - {}&quot;, record.level(), record.args());"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn flush(&amp;self) {}"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         SetLogger(log::SetLoggerError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    log::set_logger(&amp;CONSOLE_LOGGER)?;"></div><div data-l="    log::set_max_level(LevelFilter::Info);"></div><div data-l=""></div><div data-l="    info!(&quot;hello log&quot;);"></div><div data-l="    warn!(&quot;warning&quot;);"></div><div data-l="    error!(&quot;oops&quot;);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/trait.Log.html">`log::Log`</a>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/fn.set_logger.html">`log::set_logger`</a>

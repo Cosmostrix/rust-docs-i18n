@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h1>loop</h1>
+<br>
+<p>Rust provides a <code>loop</code> keyword to indicate an infinite loop.</p>
+<br>
+<p>The <code>break</code> statement can be used to exit a loop at anytime, whereas the
+<code>continue</code> statement can be used to skip the rest of the iteration and start a
+new one.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="    let mut count = 0u32;"></div><div data-l=""></div><div data-l="    println!(&quot;Let's count until infinity!&quot;);"></div><div data-l=""></div><div data-l="#    // Infinite loop"></div><div data-l="    // ">Infinite loop</div><div data-l="    loop {"></div><div data-l="        count += 1;"></div><div data-l=""></div><div data-l="        if count == 3 {"></div><div data-l="            println!(&quot;three&quot;);"></div><div data-l=""></div><div data-l="#            // Skip the rest of this iteration"></div><div data-l="            // ">Skip the rest of this iteration</div><div data-l="            continue;"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        println!(&quot;{}&quot;, count);"></div><div data-l=""></div><div data-l="        if count == 5 {"></div><div data-l="            println!(&quot;OK, that's enough&quot;);"></div><div data-l=""></div><div data-l="#            // Exit this loop"></div><div data-l="            // ">Exit this loop</div><div data-l="            break;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>

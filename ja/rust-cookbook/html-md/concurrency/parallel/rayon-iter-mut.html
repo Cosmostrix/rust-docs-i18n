@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Mutate the elements of an array in parallel</h2>
+<br>
+<p><a href="#3rayon">!<a class="notranslate" href="#4rayon-badge">rayon-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>The example uses the <code>rayon</code> crate, which is a data parallelism library for Rust.
+<code>rayon</code> provides the <a class="notranslate" href="#4`par_iter_mut`">`par_iter_mut`</a> method for any parallel iterable data type.
+This is an iterator-like chain that potentially executes in parallel.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rayon;"></div><div data-l=""></div><div data-l="use rayon::prelude::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut arr = [0, 7, 9, 11];"></div><div data-l="    arr.par_iter_mut().for_each(|p| *p -= 1);"></div><div data-l="    println!(&quot;{:?}&quot;, arr);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.IntoParallelRefMutIterator.html#tymethod.par_iter_mut">`par_iter_mut`</a>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Remove fragment identifiers and query pairs from a URL</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>Parses <a class="notranslate" href="#4`Url`">`Url`</a> and slices it with <a class="notranslate" href="#4`url::Position`">`url::Position`</a> to strip unneeded URL parts.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::{Url, Position};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let parsed = Url::parse(&quot;https://github.com/rust-lang/rust/issues?labels=E-easy&amp;state=open&quot;)?;"></div><div data-l="    let cleaned: &amp;str = &amp;parsed[..Position::AfterPath];"></div><div data-l="    println!(&quot;cleaned: {}&quot;, cleaned);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/enum.Position.html">`url::Position`</a>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html">`Url`</a>

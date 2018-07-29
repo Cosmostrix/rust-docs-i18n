@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<h1>Unsafe</h1>
+<br>
+<p>Rust’s main draw is its powerful static guarantees about behavior. But safety
+checks are conservative by nature: there are some programs that are actually
+safe, but the compiler is not able to verify this is true. To write these kinds
+of programs, we need to tell the compiler to relax its restrictions a bit. For
+this, Rust has a keyword, <code>unsafe</code>. Code using <code>unsafe</code> has fewer restrictions
+than normal code does.</p>
+<br>
+<p>Let’s go over the syntax, and then we’ll talk semantics. <code>unsafe</code> is used in
+four contexts. The first one is to mark a function as unsafe:</p>
+<br>
+<div data-lang="rust"><div data-l="unsafe fn danger_will_robinson() {"></div><div data-l="#    // Scary stuff..."></div><div data-l="    // ">Scary stuff...</div><div data-l="}"></div></div>
+<br>
+<p>All functions called from <a class="notranslate" href="#3ffi">FFI</a> must be marked as <code>unsafe</code>, for example.
+The second use of <code>unsafe</code> is an unsafe block:</p>
+<br>
+<a class="notranslate" href="#1ffi.html">ffi</a>
+<br>
+<div data-lang="rust"><div data-l="unsafe {"></div><div data-l="#    // Scary stuff..."></div><div data-l="    // ">Scary stuff...</div><div data-l="}"></div></div>
+<br>
+<p>The third is for unsafe traits:</p>
+<br>
+<div data-lang="rust"><div data-l="unsafe trait Scary { }"></div></div>
+<br>
+<p>And the fourth is for <code>impl</code>ementing one of those traits:</p>
+<br>
+<div data-lang="rust"><div data-l="# unsafe trait Scary { }"></div><div data-l="unsafe impl Scary for i32 {}"></div></div>
+<br>
+<p>It’s important to be able to explicitly delineate code that may have bugs that
+cause big problems. If a Rust program segfaults, you can be sure the cause is
+related to something marked <code>unsafe</code>.</p>
+<br>
+<h1>What does ‘safe’ mean?</h1>
+<br>
+<p>Safe, in the context of Rust, means ‘doesn’t do anything unsafe’. It’s also
+important to know that there are certain behaviors that are probably not
+desirable in your code, but are expressly <s>not</s> unsafe:</p>
+<br>
+<div data-b="*">Deadlocks</div>
+<div data-b="*">Leaks of memory or other resources</div>
+<div data-b="*">Exiting without calling destructors</div>
+<div data-b="*">Integer overflow</div>
+<br>
+<p>Rust cannot prevent all kinds of software problems. Buggy code can and will be
+written in Rust. These things aren’t great, but they don’t qualify as <code>unsafe</code>
+specifically.</p>
+<br>
+<p>In addition, the following are all undefined behaviors in Rust, and must be
+avoided, even when writing <code>unsafe</code> code:</p>
+<br>
+<div data-b="*">Data races</div>
+<div data-b="*">Dereferencing a NULL/dangling raw pointer</div>
+<div data-b="*">Reads of <a class="notranslate" href="#3undef">undef</a> (uninitialized) memory</div>
+<div data-b="*">Breaking the <a href="#3aliasing">pointer aliasing rules</a> with raw pointers.</div>
+<div data-b="*"><code>&amp;mut T</code> and <code>&amp;T</code> follow LLVM’s scoped <a class="notranslate" href="#3noalias">noalias</a> model, except if
+the <code>&amp;T</code> contains an <code>UnsafeCell&lt;U&gt;</code>. Unsafe code must not violate these
+aliasing guarantees.</div>
+<div data-b="*">Mutating an immutable value/reference without <code>UnsafeCell&lt;U&gt;</code></div>
+<div data-b="*">Invoking undefined behavior via compiler intrinsics:</div>
+<div data-b="  *">Indexing outside of the bounds of an object with <code>std::ptr::offset</code>
+(<code>offset</code> intrinsic), with
+the exception of one byte past the end which is permitted.</div>
+<div data-b="  *">Using <code>std::ptr::copy_nonoverlapping_memory</code> (<code>memcpy32</code>/<code>memcpy64</code>
+intrinsics) on overlapping buffers</div>
+<div data-b="*">Invalid values in primitive types, even in private fields/locals:</div>
+<div data-b="  *">NULL/dangling references or boxes</div>
+<div data-b="  *">A value other than <code>false</code> (0) or <code>true</code> (1) in a <code>bool</code></div>
+<div data-b="  *">A discriminant in an <code>enum</code> not included in its type definition</div>
+<div data-b="  *">A value in a <code>char</code> which is a surrogate or above <code>char::MAX</code></div>
+<div data-b="  *">Non-UTF-8 byte sequences in a <code>str</code></div>
+<div data-b="*">Unwinding into Rust from foreign code or unwinding from Rust into foreign
+code.</div>
+<br>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#noalias">noalias</a>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#undefined-values">undef</a>
+<a class="notranslate" href="#1http://llvm.org/docs/LangRef.html#pointer-aliasing-rules">aliasing</a>
+<br>
+<h1>Unsafe Superpowers</h1>
+<br>
+<p>In both unsafe functions and unsafe blocks, Rust will let you do three things
+that you normally can not do. Just three. Here they are:</p>
+<br>
+<div data-b="1.">Access or update a <a href="#3static">static mutable variable</a>.</div>
+<div data-b="2.">Dereference a raw pointer.</div>
+<div data-b="3.">Call unsafe functions. This is the most powerful ability.</div>
+<br>
+<p>That’s it. It’s important that <code>unsafe</code> does not, for example, ‘turn off the
+borrow checker’. Adding <code>unsafe</code> to some random Rust code doesn’t change its
+semantics, it won’t start accepting anything. But it will let you write
+things that <s>do</s> break some of the rules.</p>
+<br>
+<p>You will also encounter the <code>unsafe</code> keyword when writing bindings to foreign
+(non-Rust) interfaces. You're encouraged to write a safe, native Rust interface
+around the methods provided by the library.</p>
+<br>
+<p>Let’s go over the basic three abilities listed, in order.</p>
+<br>
+<h2>Access or update a <code>static mut</code></h2>
+<br>
+<p>Rust has a feature called ‘<code>static mut</code>’ which allows for mutable global state.
+Doing so can cause a data race, and as such is inherently not safe. For more
+details, see the <a class="notranslate" href="#3static">static</a> section of the book.</p>
+<br>
+<a class="notranslate" href="#1const-and-static.html#static">static</a>
+<br>
+<h2>Dereference a raw pointer</h2>
+<br>
+<p>Raw pointers let you do arbitrary pointer arithmetic, and can cause a number of
+different memory safety and security issues. In some senses, the ability to
+dereference an arbitrary pointer is one of the most dangerous things you can
+do. For more on raw pointers, see <a href="#3rawpointers">their section of the book</a>.</p>
+<br>
+<a class="notranslate" href="#1raw-pointers.html">rawpointers</a>
+<br>
+<h2>Call unsafe functions</h2>
+<br>
+<p>This last ability works with both aspects of <code>unsafe</code>: you can only call
+functions marked <code>unsafe</code> from inside an unsafe block.</p>
+<br>
+<p>This ability is powerful and varied. Rust exposes some <a class="notranslate" href="#3intrinsics">compiler
+intrinsics</a> as unsafe functions, and some unsafe functions bypass
+safety checks, trading safety for speed.</p>
+<br>
+<p>I’ll repeat again: even though you <s>can</s> do arbitrary things in unsafe blocks
+and functions doesn’t mean you should. The compiler will act as though you’re
+upholding its invariants, so be careful!</p>
+<br>
+<a class="notranslate" href="#1../../unstable-book/language-features/intrinsics.html">intrinsics</a>

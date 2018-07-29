@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Static</h1>
+<br>
+<p>A <code>'static</code> lifetime is the longest possible lifetime, and lasts for 
+the lifetime of the running program. A <code>'static</code> lifetime may also be 
+coerced to a shorter lifetime. There are two ways to make a variable 
+with <code>'static</code> lifetime, and both are stored in the read-only memory
+of the binary:</p>
+<br>
+<div data-b="*">Make a constant with the <code>static</code> declaration.</div>
+<div data-b="*">Make a <code>string</code> literal which has type: <code>&amp;'static str</code>.</div>
+<br>
+<p>See the following example for a display of each method:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// Make a constant with `'static` lifetime."></div><div data-l="// ">Make a constant with <code>'static</code> lifetime.</div><div data-l="static NUM: i32 = 18;"></div><div data-l=""></div><div data-l="#// Returns a reference to `NUM` where its `'static` "></div><div data-l="#// lifetime is coerced to that of the input argument."></div><div data-l="// ">Returns a reference to <code>NUM</code> where its <code>'static</code>  lifetime is coerced to that of the input argument.</div><div data-l="fn coerce_static&lt;'a&gt;(_: &amp;'a i32) -&gt; &amp;'a i32 {"></div><div data-l="    &amp;NUM"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    {"></div><div data-l="#        // Make a `string` literal and print it:"></div><div data-l="        // ">Make a <code>string</code> literal and print it:</div><div data-l="        let static_string = &quot;I'm in read-only memory&quot;;"></div><div data-l="        println!(&quot;static_string: {}&quot;, static_string);"></div><div data-l=""></div><div data-l="#        // When `static_string` goes out of scope, the reference"></div><div data-l="#        // can no longer be used, but the data remains in the binary."></div><div data-l="        // ">When <code>static_string</code> goes out of scope, the reference can no longer be used, but the data remains in the binary.</div><div data-l="    }"></div><div data-l="    "></div><div data-l="    {"></div><div data-l="#        // Make an integer to use for `coerce_static`:"></div><div data-l="        // ">Make an integer to use for <code>coerce_static</code>:</div><div data-l="        let lifetime_num = 9;"></div><div data-l=""></div><div data-l="#        // Coerce `NUM` to lifetime of `lifetime_num`:"></div><div data-l="        // ">Coerce <code>NUM</code> to lifetime of <code>lifetime_num</code>:</div><div data-l="        let coerced_static = coerce_static(&amp;lifetime_num);"></div><div data-l=""></div><div data-l="        println!(&quot;coerced_static: {}&quot;, coerced_static);"></div><div data-l="    }"></div><div data-l="    "></div><div data-l="    println!(&quot;NUM: {} stays accessible!&quot;, NUM);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#3static_const"><code>'static</code> constants</a></p>
+<br>
+<a class="notranslate" href="#1custom_types/constants.html">static_const</a>

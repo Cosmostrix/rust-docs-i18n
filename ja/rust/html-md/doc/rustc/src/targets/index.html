@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h1>Targets</h1>
+<br>
+<p><code>rustc</code> is a cross-compiler by default. This means that you can use any compiler to build for any
+architecture. The list of <i>targets</i> are the possible architectures that you can build for.</p>
+<br>
+<p>To see all the options that you can set with a target, see the docs
+<a class="notranslate" href="#2https://doc.rust-lang.org/nightly/nightly-rustc/rustc_back/target/struct.Target.html">here</a>.</p>
+<br>
+<p>To compile to a particular target, use the <code>--target</code> flag:</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc src/main.rs --target=wasm32-unknown-unknown"></div></div>

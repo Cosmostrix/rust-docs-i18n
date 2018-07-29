@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1><code>linker-flavor</code></h1>
+<br>
+<p>The tracking issue for this feature is: None</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>Every <code>rustc</code> target defaults to some linker. For example, Linux targets default
+to gcc. In some cases, you may want to override the default; you can do that
+with the unstable CLI argument: <code>-Z linker-flavor</code>.</p>
+<br>
+<p>Here how you would use this flag to link a Rust binary for the
+<code>thumbv7m-none-eabi</code> using LLD instead of GCC.</p>
+<br>
+<div data-lang=" text"><div data-l="$ xargo rustc --target thumbv7m-none-eabi -- \"></div><div data-l="    -C linker=ld.lld \"></div><div data-l="    -Z linker-flavor=ld \"></div><div data-l="    -Z print-link-args | tr ' ' '\n'"></div><div data-l="&quot;ld.lld&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps/app-512e9dbf385f233c.0.o&quot;"></div><div data-l="&quot;-o&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps/app-512e9dbf385f233c&quot;"></div><div data-l="&quot;--gc-sections&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$PWD/target/debug/deps&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib&quot;"></div><div data-l="&quot;-Bstatic&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib/libcore-e1ccb7dfb1cb9ebb.rlib&quot;"></div><div data-l="&quot;-Bdynamic&quot;"></div></div>
+<br>
+<p>Whereas the default is:</p>
+<br>
+<div data-lang=" text"><div data-l="$ xargo rustc --target thumbv7m-none-eabi -- \"></div><div data-l="    -C link-arg=-nostartfiles \"></div><div data-l="    -Z print-link-args | tr ' ' '\n'"></div><div data-l="&quot;arm-none-eabi-gcc&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps/app-961e39416baa38d9.0.o&quot;"></div><div data-l="&quot;-o&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps/app-961e39416baa38d9&quot;"></div><div data-l="&quot;-Wl,--gc-sections&quot;"></div><div data-l="&quot;-nodefaultlibs&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$PWD/target/thumbv7m-none-eabi/debug/deps&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$PWD/target/debug/deps&quot;"></div><div data-l="&quot;-L&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib&quot;"></div><div data-l="&quot;-Wl,-Bstatic&quot;"></div><div data-l="&quot;$SYSROOT/lib/rustlib/thumbv7m-none-eabi/lib/libcore-e1ccb7dfb1cb9ebb.rlib&quot;"></div><div data-l="&quot;-nostartfiles&quot;"></div><div data-l="&quot;-Wl,-Bdynamic&quot;"></div></div>

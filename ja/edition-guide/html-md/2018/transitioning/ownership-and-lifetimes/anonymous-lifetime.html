@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<h1><code>'_</code>, the anonymous lifetime</h1>
+<br>
+<p>Rust 2018 allows you to explicitly mark where a lifetime is elided, for types
+where this elision might otherwise be unclear. To do this, you can use the
+special lifetime <code>'_</code> much like you can explicitly mark that a type is inferred
+with the syntax <code>let x: _ = ..;</code>.</p>
+<br>
+<p>Let's say, for whatever reason, that we have a simple wrapper around <code>&amp;'a str</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="struct StrWrap&lt;'a&gt;(&amp;'a str);"></div></div>
+<br>
+<p>In Rust 2015, you might have written:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="use std::fmt;"></div><div data-l=""></div><div data-l="# struct StrWrap&lt;'a&gt;(&amp;'a str);"></div><div data-l=""></div><div data-l="fn make_wrapper(string: &amp;str) -&gt; StrWrap {"></div><div data-l="    StrWrap(string)"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;'a&gt; fmt::Debug for StrWrap&lt;'a&gt; {"></div><div data-l="    fn fmt(&amp;self, fmt: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        fmt.write_str(self.0)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In Rust 2018, you can instead write:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(rust_2018_preview)]"></div><div data-l=""></div><div data-l="# use std::fmt;"></div><div data-l="# struct StrWrap&lt;'a&gt;(&amp;'a str);"></div><div data-l=""></div><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="fn make_wrapper(string: &amp;str) -&gt; StrWrap&lt;'_&gt; {"></div><div data-l="    StrWrap(string)"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl fmt::Debug for StrWrap&lt;'_&gt; {"></div><div data-l="    fn fmt(&amp;self, fmt: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="        fmt.write_str(self.0)"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h2>More details</h2>
+<br>
+<p>In the Rust 2015 snippet above, we've used <code>-&gt; StrWrap</code>. However, unless you take
+a look at the definition of <code>StrWrap</code>, it is not clear that the returned value
+is actually borrowing something. Therefore, starting with Rust 2018, it is
+deprecated to leave off the lifetime parameters for non-reference-types (types
+other than <code>&amp;</code> and <code>&amp;mut</code>). Instead, where you previously wrote <code>-&gt; StrWrap</code>,
+you should now write <code>-&gt; StrWrap&lt;'_&gt;</code>, making clear that borrowing is occurring.</p>
+<br>
+<p>What exactly does <code>'_</code> mean? It depends on the context!
+In output contexts, as in the return type of <code>make_wrapper</code>,
+it refers to a single lifetime for  all &quot;output&quot; locations.
+In input contexts, a fresh lifetime is generated for each &quot;input location&quot;.
+More concretely, to understand input contexts, consider the following example:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Rust 2015"></div><div data-l="// ">Rust 2015</div><div data-l=""></div><div data-l="struct Foo&lt;'a, 'b: 'a&gt; {"></div><div data-l="    field: &amp;'a &amp;'b str,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;'a, 'b: 'a&gt; Foo&lt;'a, 'b&gt; {"></div><div data-l="#    // some methods..."></div><div data-l="    // ">some methods...</div><div data-l="}"></div></div>
+<br>
+<p>We can rewrite this as:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(rust_2018_preview)]"></div><div data-l=""></div><div data-l="# struct Foo&lt;'a, 'b: 'a&gt; {"></div><div data-l="#     field: &amp;'a &amp;'b str,"></div><div data-l="# }"></div><div data-l=""></div><div data-l="#// Rust 2018"></div><div data-l="// ">Rust 2018</div><div data-l=""></div><div data-l="impl Foo&lt;'_, '_&gt; {"></div><div data-l="#    // some methods..."></div><div data-l="    // ">some methods...</div><div data-l="}"></div></div>
+<br>
+<p>This is the same, because for each <code>'_</code>, a fresh lifetime is generated.
+Finally, the relationship <code>'a: 'b</code> which the struct requires must be upheld.</p>
+<br>
+<p>For more details, see the <a href="#2https://github.com/rust-lang/rust/issues/44524">tracking issue on In-band lifetime bindings</a>.</p>

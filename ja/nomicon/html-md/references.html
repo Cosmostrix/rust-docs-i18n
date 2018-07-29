@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<h1>References</h1>
+<br>
+<p>There are two kinds of reference:</p>
+<br>
+<div data-b="*">Shared reference: <code>&amp;</code></div>
+<div data-b="*">Mutable reference: <code>&amp;mut</code></div>
+<br>
+<p>Which obey the following rules:</p>
+<br>
+<div data-b="*">A reference cannot outlive its referent</div>
+<div data-b="*">A mutable reference cannot be aliased</div>
+<br>
+<p>That's it. That's the whole model references follow.</p>
+<br>
+<p>Of course, we should probably define what <i>aliased</i> means.</p>
+<br>
+<div data-lang="text"><div data-l="error[E0425]: cannot find value `aliased` in this scope"></div><div data-l=" --&gt; &lt;rust.rs&gt;:2:20"></div><div data-l="  |"></div><div data-l="2 |     println!(&quot;{}&quot;, aliased);"></div><div data-l="  |                    ^^^^^^^ not found in this scope"></div><div data-l=""></div><div data-l="error: aborting due to previous error"></div></div>
+<br>
+<p>Unfortunately, Rust hasn't actually defined its aliasing model. 🙀</p>
+<br>
+<p>While we wait for the Rust devs to specify the semantics of their language,
+let's use the next section to discuss what aliasing is in general, and why it
+matters.</p>

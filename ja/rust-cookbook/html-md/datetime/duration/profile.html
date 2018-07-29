@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Measure the elapsed time between two code sections</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-time">!<a class="notranslate" href="#4cat-time-badge">cat-time-badge</a></a></p>
+<br>
+<p>Measures <a class="notranslate" href="#4`time::Instant::elapsed`">`time::Instant::elapsed`</a> since <a class="notranslate" href="#4`time::Instant::now`">`time::Instant::now`</a>.</p>
+<br>
+<p>Calling <a class="notranslate" href="#4`time::Instant::elapsed`">`time::Instant::elapsed`</a> returns a <a class="notranslate" href="#4`time::Duration`">`time::Duration`</a> that we print at the end of the example.
+This method will not mutate or reset the <a class="notranslate" href="#4`time::Instant`">`time::Instant`</a> object.</p>
+<br>
+<div data-lang="rust"><div data-l="use std::time::{Duration, Instant};"></div><div data-l="# use std::thread;"></div><div data-l="#"></div><div data-l="# fn expensive_function() {"></div><div data-l="#     thread::sleep(Duration::from_secs(1));"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let start = Instant::now();"></div><div data-l="    expensive_function();"></div><div data-l="    let duration = start.elapsed();"></div><div data-l=""></div><div data-l="    println!(&quot;Time elapsed in expensive_function() is: {:?}&quot;, duration);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/time/struct.Duration.html">`time::Duration`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/time/struct.Instant.html#method.elapsed">`time::Instant::elapsed`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/time/struct.Instant.html#method.now">`time::Instant::now`</a>
+<p><a class="notranslate" href="#4`time::Instant`">`time::Instant`</a>:https://doc.rust-lang.org/std/time/struct.Instant.html</p>

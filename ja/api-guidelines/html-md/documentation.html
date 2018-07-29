@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<h1>Documentation</h1>
+<br>
+<br>
+<p><a id="c-crate-doc"></a>
+## Crate level docs are thorough and include examples (C-CRATE-DOC)</p>
+<br>
+<p>See <a class="notranslate" href="#4RFC 1687">RFC 1687</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/1687">RFC 1687</a>
+<br>
+<br>
+<p><a id="c-example"></a>
+## All items have a rustdoc example (C-EXAMPLE)</p>
+<br>
+<p>Every public module, trait, struct, enum, function, method, macro, and type
+definition should have an example that exercises the functionality.</p>
+<br>
+<p>This guideline should be applied within reason.</p>
+<br>
+<p>A link to an applicable example on another item may be sufficient. For example
+if exactly one function uses a particular type, it may be appropriate to write a
+single example on either the function or the type and link to it from the other.</p>
+<br>
+<p>The purpose of an example is not always to show <i>how to use</i> the item. Readers
+can be expected to understand how to invoke functions, match on enums, and other
+fundamental tasks. Rather, an example is often intended to show <i>why someone
+would want to use</i> the item.</p>
+<br>
+<div data-lang="rust"><div data-l="#// This would be a poor example of using clone(). It mechanically shows *how* to"></div><div data-l="#// call clone(), but does nothing to show *why* somebody would want this."></div><div data-l="// ">This would be a poor example of using clone(). It mechanically shows <i>how</i> to call clone(), but does nothing to show <i>why</i> somebody would want this.</div><div data-l="fn main() {"></div><div data-l="    let hello = &quot;hello&quot;;"></div><div data-l=""></div><div data-l="    hello.clone();"></div><div data-l="}"></div></div>
+<br>
+<br>
+<p><a id="c-question-mark"></a>
+## Examples use <code>?</code>, not <code>try€</code>, not <code>unwrap</code> (C-QUESTION-MARK)</p>
+<br>
+<p>Like it or not, example code is often copied verbatim by users. Unwrapping an
+error should be a conscious decision that the user needs to make.</p>
+<br>
+<p>A common way of structuring fallible example code is the following. The lines
+beginning with <code>#</code> are compiled by <code>cargo test</code> when building the example but
+will not appear in user-visible rustdoc.</p>
+<br>
+<div data-lang=""><div data-l="#///// ```rust"></div><div data-l="/// ">```rust</div><div data-l="#///// # use std::error::Error;"></div><div data-l="/// "># use std::error::Error;</div><div data-l="#///// #"></div><div data-l="/// ">#</div><div data-l="#///// # fn try_main() -&gt; Result&lt;(), Box&lt;Error&gt;&gt; {"></div><div data-l="/// "># fn try_main() -&gt; Result<(), Box<Error>&gt; {</div><div data-l="#///// your;"></div><div data-l="/// ">your;</div><div data-l="#///// example?;"></div><div data-l="/// ">example?;</div><div data-l="#///// code;"></div><div data-l="/// ">code;</div><div data-l="#///// #"></div><div data-l="/// ">#</div><div data-l="#///// #     Ok(())"></div><div data-l="/// ">#     Ok(())</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// #"></div><div data-l="/// ">#</div><div data-l="#///// # fn main() {"></div><div data-l="/// "># fn main() {</div><div data-l="#///// #     try_main().unwrap();"></div><div data-l="/// ">#     try_main().unwrap();</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div></div>
+<br>
+<br>
+<p><a id="c-failure"></a>
+## Function docs include error, panic, and safety considerations (C-FAILURE)</p>
+<br>
+<p>Error conditions should be documented in an &quot;Errors&quot; section. This applies to
+trait methods as well -- trait methods for which the implementation is allowed
+or expected to return an error should be documented with an &quot;Errors&quot; section.</p>
+<br>
+<p>For example in the standard library, Some implementations of the
+<a class="notranslate" href="#4`std::io::Read::read`">`std::io::Read::read`</a> trait method may return an error.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Read.html#tymethod.read">`std::io::Read::read`</a>
+<br>
+<div data-lang=""><div data-l="#///// Pull some bytes from this source into the specified buffer, returning"></div><div data-l="/// ">Pull some bytes from this source into the specified buffer, returning</div><div data-l="#///// how many bytes were read."></div><div data-l="/// ">how many bytes were read.</div><div data-l="///"></div><div data-l="#///// ... lots more info ..."></div><div data-l="/// ">... lots more info ...</div><div data-l="///"></div><div data-l="#///// # Errors"></div><div data-l="/// "># Errors</div><div data-l="///"></div><div data-l="#///// If this function encounters any form of I/O or other error, an error"></div><div data-l="/// ">If this function encounters any form of I/O or other error, an error</div><div data-l="#///// variant will be returned. If an error is returned then it must be"></div><div data-l="/// ">variant will be returned. If an error is returned then it must be</div><div data-l="#///// guaranteed that no bytes were read."></div><div data-l="/// ">guaranteed that no bytes were read.</div></div>
+<br>
+<p>Panic conditions should be documented in a &quot;Panics&quot; section. This applies to
+trait methods as well -- traits methods for which the implementation is allowed
+or expected to panic should be documented with a &quot;Panics&quot; section.</p>
+<br>
+<p>In the standard library the <a class="notranslate" href="#4`Vec::insert`">`Vec::insert`</a> method may panic.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.insert">`Vec::insert`</a>
+<br>
+<div data-lang=""><div data-l="#///// Inserts an element at position `index` within the vector, shifting all"></div><div data-l="/// ">Inserts an element at position <code>index</code> within the vector, shifting all</div><div data-l="#///// elements after it to the right."></div><div data-l="/// ">elements after it to the right.</div><div data-l="///"></div><div data-l="#///// # Panics"></div><div data-l="/// "># Panics</div><div data-l="///"></div><div data-l="#///// Panics if `index` is out of bounds."></div><div data-l="/// ">Panics if <code>index</code> is out of bounds.</div></div>
+<br>
+<p>It is not necessary to document all conceivable panic cases, especially if the
+panic occurs in logic provided by the caller. For example documenting the
+<code>Display</code> panic in the following code seems excessive. But when in doubt, err on
+the side of documenting more panic cases.</p>
+<br>
+<div data-lang="rust"><div data-l="#///// # Panics"></div><div data-l="/// "># Panics</div><div data-l="///"></div><div data-l="#///// This function panics if `T`'s implementation of `Display` panics."></div><div data-l="/// ">This function panics if <code>T</code>'s implementation of <code>Display</code> panics.</div><div data-l="pub fn print&lt;T: Display&gt;(t: T) {"></div><div data-l="    println!(&quot;{}&quot;, t.to_string());"></div><div data-l="}"></div></div>
+<br>
+<p>Unsafe functions should be documented with a &quot;Safety&quot; section that explains all
+invariants that the caller is responsible for upholding to use the function
+correctly.</p>
+<br>
+<p>The unsafe <a class="notranslate" href="#4`std::ptr::read`">`std::ptr::read`</a> requires the following of the caller.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ptr/fn.read.html">`std::ptr::read`</a>
+<br>
+<div data-lang=""><div data-l="#///// Reads the value from `src` without moving it. This leaves the"></div><div data-l="/// ">Reads the value from <code>src</code> without moving it. This leaves the</div><div data-l="#///// memory in `src` unchanged."></div><div data-l="/// ">memory in <code>src</code> unchanged.</div><div data-l="///"></div><div data-l="#///// # Safety"></div><div data-l="/// "># Safety</div><div data-l="///"></div><div data-l="#///// Beyond accepting a raw pointer, this is unsafe because it semantically"></div><div data-l="/// ">Beyond accepting a raw pointer, this is unsafe because it semantically</div><div data-l="#///// moves the value out of `src` without preventing further usage of `src`."></div><div data-l="/// ">moves the value out of <code>src</code> without preventing further usage of <code>src</code>.</div><div data-l="#///// If `T` is not `Copy`, then care must be taken to ensure that the value at"></div><div data-l="/// ">If <code>T</code> is not <code>Copy</code>, then care must be taken to ensure that the value at</div><div data-l="#///// `src` is not used before the data is overwritten again (e.g. with `write`,"></div><div data-l="/// "><code>src</code> is not used before the data is overwritten again (e.g. with <code>write</code>,</div><div data-l="#///// `zero_memory`, or `copy_memory`). Note that `*src = foo` counts as a use"></div><div data-l="/// "><code>zero_memory</code>, or <code>copy_memory</code>). Note that <code>*src = foo</code> counts as a use</div><div data-l="#///// because it will attempt to drop the value previously at `*src`."></div><div data-l="/// ">because it will attempt to drop the value previously at <code>*src</code>.</div><div data-l="///"></div><div data-l="#///// The pointer must be aligned; use `read_unaligned` if that is not the case."></div><div data-l="/// ">The pointer must be aligned; use <code>read_unaligned</code> if that is not the case.</div></div>
+<br>
+<br>
+<p><a id="c-link"></a>
+## Prose contains hyperlinks to relevant things (C-LINK)</p>
+<br>
+<p>Links to methods within the same type usually look like this:</p>
+<br>
+<div data-lang="md"><div data-l="[`serialize_struct`]: #method.serialize_struct"></div></div>
+<br>
+<p>Links to other types usually look like this:</p>
+<br>
+<div data-lang="md"><div data-l="[`Deserialize`]: trait.Deserialize.html"></div></div>
+<br>
+<p>Links may also point to a parent or child module:</p>
+<br>
+<div data-lang="md"><div data-l="[`Value`]: ../enum.Value.html"></div><div data-l="[`DeserializeOwned`]: de/trait.DeserializeOwned.html"></div></div>
+<br>
+<p>This guideline is officially recommended by RFC 1574 under the heading <a class="notranslate" href="#4"Link
+all the things"">"Link
+all the things"</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1574-more-api-documentation-conventions.md#link-all-the-things">&quot;Link all the things&quot;</a>
+<br>
+<br>
+<p><a id="c-metadata"></a>
+## Cargo.toml includes all common metadata (C-METADATA)</p>
+<br>
+<p>The <code>[package]</code> section of <code>Cargo.toml</code> should include the following
+values:</p>
+<br>
+<div data-b="-"><code>authors</code></div>
+<div data-b="-"><code>description</code></div>
+<div data-b="-"><code>license</code></div>
+<div data-b="-"><code>repository</code></div>
+<div data-b="-"><code>readme</code></div>
+<div data-b="-"><code>keywords</code></div>
+<div data-b="-"><code>categories</code></div>
+<br>
+<p>In addition, there are two optional metadata fields:</p>
+<br>
+<div data-b="-"><code>documentation</code></div>
+<div data-b="-"><code>homepage</code></div>
+<br>
+<p>By default, <i>crates.io</i> links to documentation for the crate on <a class="notranslate" href="#4*docs.rs*">*docs.rs*</a>. The
+<code>documentation</code> metadata only needs to be set if the documentation is hosted
+somewhere other than <i>docs.rs</i>, for example because the crate links against a
+shared library that is not available in the build environment of <i>docs.rs</i>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs">*docs.rs*</a>
+<br>
+<p>The <code>homepage</code> metadata should only be set if there is a unique website for the
+crate other than the source repository or API documentation. Do not make
+<code>homepage</code> redundant with either the <code>documentation</code> or <code>repository</code> values. For
+example, serde sets <code>homepage</code> to <i>https://serde.rs</i>, a dedicated website.</p>
+<br>
+<a class="notranslate" href="#1#c-html-root">C-HTML-ROOT</a>
+<p><a id="c-html-root"></a>
+### Crate sets html_root_url attribute (C-HTML-ROOT)</p>
+<br>
+<p><!--
+Remove this guideline once rustdoc links no-deps documentation with no
+html_root_url to docs.rs by default.
+https://github.com/rust-lang/rust/issues/42301
+--></p>
+<br>
+<p>It should point to <code>&quot;https://docs.rs/CRATE/MAJOR.MINOR.PATCH&quot;</code>,
+assuming the crate uses docs.rs for its primary API documentation.</p>
+<br>
+<p>The <code>html_root_url</code> attribute tells rustdoc how to create URLs to
+items in the crate when compiling downstream crates. Without it, links
+in the documentation of crates that depend on your crate will be
+incorrect.</p>
+<br>
+<div data-lang="rust"><div data-l="#![doc(html_root_url = &quot;https://docs.rs/log/0.3.8&quot;)]"></div></div>
+<br>
+<p>Because this URL contains an exact version number, it must be kept in
+sync with the version number in <code>Cargo.toml</code>. The <a class="notranslate" href="#4`version-sync`">`version-sync`</a>
+crate can help with this by letting you add an integration test that
+fails if the <code>html_root_url</code> version number is out of sync with the
+crate version.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/version-sync">`version-sync`</a>
+<br>
+<p>If you do not like that mechanism, it is recommended to add a comment
+to the <code>Cargo.toml</code> version key reminding yourself to keep the two
+updated together, like:</p>
+<br>
+<div data-lang="toml"><div data-l="version = &quot;0.3.8&quot; # remember to update html_root_url"></div></div>
+<br>
+<p>For documentation hosted outside of docs.rs, the value for <code>html_root_url</code> is
+correct if appending the crate name + index.html takes you to the documentation
+of the crate's root module. For example if the documentation of the root module
+is located at <code>&quot;https://api.rocket.rs/rocket/index.html&quot;</code> then the
+<code>html_root_url</code> would be <code>&quot;https://api.rocket.rs&quot;</code>.</p>
+<br>
+<br>
+<p><a id="c-relnotes"></a>
+## Release notes document all significant changes (C-RELNOTES)</p>
+<br>
+<p>Users of the crate can read the release notes to find a summary of what
+changed in each published release of the crate. A link to the release notes,
+or the notes themselves, should be included in the crate-level documentation
+and/or the repository linked in Cargo.toml.</p>
+<br>
+<p>Breaking changes (as defined in <a class="notranslate" href="#4RFC 1105">RFC 1105</a>) should be clearly identified in the
+release notes.</p>
+<br>
+<p>If using Git to track the source of a crate, every release published to
+<i>crates.io</i> should have a corresponding tag identifying the commit that was
+published. A similar process should be used for non-Git VCS tools as well.</p>
+<br>
+<div data-lang="bash"><div data-l="# Tag the current commit"></div><div data-l="GIT_COMMITTER_DATE=$(git log -n1 --pretty=%aD) git tag -a -m &quot;Release 0.3.0&quot; 0.3.0"></div><div data-l="git push --tags"></div></div>
+<br>
+<p>Annotated tags are preferred because some Git commands ignore unannotated tags
+if any annotated tags exist.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md">RFC 1105</a>
+<br>
+<h3>Examples</h3>
+<br>
+<div data-b="-"><a href="#2https://github.com/serde-rs/serde/releases/tag/v1.0.0">Serde 1.0.0 release notes</a></div>
+<div data-b="-"><a href="#2https://github.com/serde-rs/serde/releases/tag/v0.9.8">Serde 0.9.8 release notes</a></div>
+<div data-b="-"><a href="#2https://github.com/serde-rs/serde/releases/tag/v0.9.0">Serde 0.9.0 release notes</a></div>
+<div data-b="-"><a href="#2https://github.com/diesel-rs/diesel/blob/master/CHANGELOG.md">Diesel change log</a></div>
+<br>
+<br>
+<p><a id="c-hidden"></a>
+## Rustdoc does not show unhelpful implementation details (C-HIDDEN)</p>
+<br>
+<p>Rustdoc is supposed to include everything users need to use the crate fully and
+nothing more. It is fine to explain relevant implementation details in prose but
+they should not be real entries in the documentation.</p>
+<br>
+<p>Especially be selective about which impls are visible in rustdoc -- all the ones
+that users would need for using the crate fully, but no others. In the following
+code the rustdoc of <code>PublicError</code> by default would show the <code>From&lt;PrivateError&gt;</code>
+impl. We choose to hide it with <code>#[doc(hidden)]</code> because users can never have a
+<code>PrivateError</code> in their code so this impl would never be relevant to them.</p>
+<br>
+<div data-lang="rust"><div data-l="#// This error type is returned to users."></div><div data-l="// ">This error type is returned to users.</div><div data-l="pub struct PublicError { /* ... */ }"></div><div data-l=""></div><div data-l="#// This error type is returned by some private helper functions."></div><div data-l="// ">This error type is returned by some private helper functions.</div><div data-l="struct PrivateError { /* ... */ }"></div><div data-l=""></div><div data-l="#// Enable use of `?` operator."></div><div data-l="// ">Enable use of <code>?</code> operator.</div><div data-l="#[doc(hidden)]"></div><div data-l="impl From&lt;PrivateError&gt; for PublicError {"></div><div data-l="    fn from(err: PrivateError) -&gt; PublicError {"></div><div data-l="        /* ... */"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><a class="notranslate" href="#4`pub(crate)`">`pub(crate)`</a> is another great tool for removing implementation details from
+the public API. It allows items to be used from outside of their own module but
+not outside of the same crate.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1422-pub-restricted.md">`pub(crate)`</a>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<h2>First Steps with Cargo</h2>
+<br>
+<p>To start a new project with Cargo, use <code>cargo new</code>:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo new hello_world"></div></div>
+<br>
+<p>Cargo defaults to <code>--bin</code> to make a binary program. To make a library, we'd
+pass <code>--lib</code>.</p>
+<br>
+<p>Let’s check out what Cargo has generated for us:</p>
+<br>
+<div data-lang="console"><div data-l="$ cd hello_world"></div><div data-l="$ tree ."></div><div data-l="."></div><div data-l="├── Cargo.toml"></div><div data-l="└── src"></div><div data-l="    └── main.rs"></div><div data-l=""></div><div data-l="1 directory, 2 files"></div></div>
+<br>
+<p>This is all we need to get started. First, let’s check out <code>Cargo.toml</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div></div>
+<br>
+<p>This is called a <b>manifest</b>, and it contains all of the metadata that Cargo
+needs to compile your project.</p>
+<br>
+<p>Here’s what’s in <code>src/main.rs</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    println!(&quot;Hello, world!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Cargo generated a “hello world” for us. Let’s compile it:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo build"></div><div data-l="   Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div></div>
+<br>
+<p>And then run it:</p>
+<br>
+<div data-lang="console"><div data-l="$ ./target/debug/hello_world"></div><div data-l="Hello, world!"></div></div>
+<br>
+<p>We can also use <code>cargo run</code> to compile and then run it, all in one step:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo run"></div><div data-l="     Fresh hello_world v0.1.0 (file:///path/to/project/hello_world)"></div><div data-l="   Running `target/hello_world`"></div><div data-l="Hello, world!"></div></div>
+<br>
+<h3>Going further</h3>
+<br>
+<p>For more details on using Cargo, check out the <a href="#2guide/index.html">Cargo Guide</a></p>

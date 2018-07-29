@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h2>Test in parallel if any or all elements of a collection match a given predicate</h2>
+<br>
+<p><a href="#3rayon">!<a class="notranslate" href="#4rayon-badge">rayon-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>This example demonstrates using the <a class="notranslate" href="#4`rayon::any`">`rayon::any`</a> and <a class="notranslate" href="#4`rayon::all`">`rayon::all`</a> methods, which are parallelized counterparts to <a class="notranslate" href="#4`std::any`">`std::any`</a> and <a class="notranslate" href="#4`std::all`">`std::all`</a>. <a class="notranslate" href="#4`rayon::any`">`rayon::any`</a> checks in parallel whether any element of the iterator matches the predicate, and returns as soon as one is found. <a class="notranslate" href="#4`rayon::all`">`rayon::all`</a> checks in parallel whether all elements of the iterator match the predicate, and returns as soon as a non-matching element is found.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rayon;"></div><div data-l=""></div><div data-l="use rayon::prelude::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut vec = vec![2, 4, 6, 8];"></div><div data-l=""></div><div data-l="    assert!(!vec.par_iter().any(|n| (*n % 2) != 0));"></div><div data-l="    assert!(vec.par_iter().all(|n| (*n % 2) == 0));"></div><div data-l="    assert!(!vec.par_iter().any(|n| *n &gt; 8 ));"></div><div data-l="    assert!(vec.par_iter().all(|n| *n &lt;= 8 ));"></div><div data-l=""></div><div data-l="    vec.push(9);"></div><div data-l=""></div><div data-l="    assert!(vec.par_iter().any(|n| (*n % 2) != 0));"></div><div data-l="    assert!(!vec.par_iter().all(|n| (*n % 2) == 0));"></div><div data-l="    assert!(vec.par_iter().any(|n| *n &gt; 8 ));"></div><div data-l="    assert!(!vec.par_iter().all(|n| *n &lt;= 8 )); "></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.all">`rayon::all`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.any">`rayon::any`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.all">`std::all`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.any">`std::any`</a>

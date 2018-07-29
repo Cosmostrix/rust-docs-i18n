@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<h1>Lowering</h1>
+<br>
+<p>The lowering step converts AST to <a class="notranslate" href="#2hir.html">HIR</a>.
+This means many structures are removed if they are irrelevant
+for type analysis or similar syntax agnostic analyses. Examples
+of such structures include but are not limited to</p>
+<br>
+<div data-b="*">Parenthesis</div>
+<div data-b="    *">Removed without replacement, the tree structure makes order explicit</div>
+<div data-b="*"><code>for</code> loops and <code>while (let)</code> loops</div>
+<div data-b="    *">Converted to <code>loop</code> + <code>match</code> and some <code>let</code> bindings</div>
+<div data-b="*"><code>if let</code></div>
+<div data-b="    *">Converted to <code>match</code></div>
+<div data-b="*">Universal <code>impl Trait</code></div>
+<div data-b="    *">Converted to generic arguments
+(but with some flags, to know that the user didn't write them)</div>
+<div data-b="*">Existential <code>impl Trait</code></div>
+<div data-b="    *">Converted to a virtual <code>existential type</code> declaration</div>
+<br>
+<p>Lowering needs to uphold several invariants in order to not trigger the
+sanity checks in <code>src/librustc/hir/map/hir_id_validator.rs</code>:</p>
+<br>
+<div data-b="1.">A <code>HirId</code> must be used if created. So if you use the <code>lower_node_id</code>,
+you <i>must</i> use the resulting <code>NodeId</code> or <code>HirId</code> (either is fine, since
+any <code>NodeId</code>s in the <code>HIR</code> are checked for existing <code>HirId</code>s)</div>
+<div data-b="2.">Lowering a <code>HirId</code> must be done in the scope of the <i>owning</i> item.
+This means you need to use <code>with_hir_id_owner</code> if you are creating parts
+of another item than the one being currently lowered. This happens for
+example during the lowering of existential <code>impl Trait</code></div>
+<div data-b="3.">A <code>NodeId</code> that will be placed into a HIR structure must be lowered,
+even if its <code>HirId</code> is unused. Calling
+<code>let _ = self.lower_node_id(node_id);</code> is perfectly legitimate.</div>
+<div data-b="4.">If you are creating new nodes that didn't exist in the <code>AST</code>, you <i>must</i>
+create new ids for them. This is done by calling the <code>next_id</code> method,
+which produces both a new <code>NodeId</code> as well as automatically lowering it
+for you so you also get the <code>HirId</code>.</div>
+<br>
+<p>If you are creating new <code>DefId</code>s, since each <code>DefId</code> needs to have a
+corresponding <code>NodeId</code>, it is adviseable to add these <code>NodeId</code>s to the
+<code>AST</code> so you don't have to generate new ones during lowering. This has
+the advantage of creating a way to find the <code>DefId</code> of something via its
+<code>NodeId</code>. If lowering needs this <code>DefId</code> in multiple places, you can't
+generate a new <code>NodeId</code> in all those places because you'd also get a new
+<code>DefId</code> then. With a <code>NodeId</code> from the <code>AST</code> this is not an issue.</p>
+<br>
+<p>Having the <code>NodeId</code> also allows the <code>DefCollector</code> to generate the <code>DefId</code>s
+instead of lowering having to do it on the fly. Centralizing the <code>DefId</code>
+generation in one place makes it easier to refactor and reason about.</p>

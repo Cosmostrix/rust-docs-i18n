@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h2>Read lines of strings from a file</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Writes a three-line message to a file, then reads it back a line at a
+time with the <a class="notranslate" href="#4`Lines`">`Lines`</a> iterator created by
+<a class="notranslate" href="#4`BufRead::lines`">`BufRead::lines`</a>. <a class="notranslate" href="#4`File`">`File`</a> implements <a class="notranslate" href="#4`Read`">`Read`</a> which provides <a class="notranslate" href="#4`BufReader`">`BufReader`</a>
+trait.  <a class="notranslate" href="#4`File::create`">`File::create`</a> opens a <a class="notranslate" href="#4`File`">`File`</a> for writing, <a class="notranslate" href="#4`File::open`">`File::open`</a> for
+reading.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::{Write, BufReader, BufRead};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let path = &quot;lines.txt&quot;;"></div><div data-l=""></div><div data-l="    let mut output = File::create(path)?;"></div><div data-l="    write!(output, &quot;Rust\n💖\nFun&quot;)?;"></div><div data-l=""></div><div data-l="    let input = File::open(path)?;"></div><div data-l="    let buffered = BufReader::new(input);"></div><div data-l=""></div><div data-l="    for line in buffered.lines() {"></div><div data-l="        println!(&quot;{}&quot;, line?);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.BufRead.html#method.lines">`BufRead::lines`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.BufRead.html">`BufRead`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufReader.html">`BufReader`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html#method.create">`File::create`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html#method.open">`File::open`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html">`File`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.Lines.html">`Lines`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Read.html">`Read`</a>

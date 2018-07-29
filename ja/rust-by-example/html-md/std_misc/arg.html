@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h1>Program arguments</h1>
+<br>
+<h2>Standard Library</h2>
+<br>
+<p>The command line arguments can be accessed using <code>std::env::args</code>, which
+returns an iterator that yields a <code>String</code> for each argument:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::env;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let args: Vec&lt;String&gt; = env::args().collect();"></div><div data-l=""></div><div data-l="#    // The first argument is the path that was used to call the program."></div><div data-l="    // ">The first argument is the path that was used to call the program.</div><div data-l="    println!(&quot;My path is {}.&quot;, args[0]);"></div><div data-l=""></div><div data-l="#    // The rest of the arguments are the passed command line parameters."></div><div data-l="#    // Call the program like this:"></div><div data-l="#    //   $ ./args arg1 arg2"></div><div data-l="    // ">The rest of the arguments are the passed command line parameters. Call the program like this:   $ ./args arg1 arg2</div><div data-l="    println!(&quot;I got {:?} arguments: {:?}.&quot;, args.len() - 1, &amp;args[1..]);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="$ ./args 1 2 3"></div><div data-l="My path is ./args."></div><div data-l="I got 3 arguments: [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]."></div></div>
+<br>
+<h2>Crates</h2>
+<br>
+<p>Alternatively, there are numerous crates that can provide extra functionality
+when creating command-line applications. The <a class="notranslate" href="#4Rust Cookbook">Rust Cookbook</a> exhibits best
+practices on how to use one of the more popular command line argument crates,
+<code>clap</code>.</p>
+<br>
+<a class="notranslate" href="#1https://rust-lang-nursery.github.io/rust-cookbook/cli/arguments.html">Rust Cookbook</a>

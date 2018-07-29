@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<h1>Subtyping and Variance</h1>
+<br>
+<p>Subtyping is implicit and can occur at any stage in type checking or
+inference. Subtyping in Rust is very restricted and occurs only due to
+variance with respect to lifetimes and between types with higher ranked
+lifetimes. If we were to erase lifetimes from types, then the only subtyping
+would be due to type equality.</p>
+<br>
+<p>Consider the following example: string literals always have <code>'static</code>
+lifetime. Nevertheless, we can assign <code>s</code> to <code>t</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="fn bar&lt;'a&gt;() {"></div><div data-l="    let s: &amp;'static str = &quot;hi&quot;;"></div><div data-l="    let t: &amp;'a str = s;"></div><div data-l="}"></div></div>
+<br>
+<p>Since <code>'static</code> outlives the lifetime parameter <code>'a</code>, <code>&amp;'static str</code> is a
+subtype of <code>&amp;'a str</code>.</p>
+<br>
+<p><a class="notranslate" href="#4Higher-ranked">Higher-ranked</a>&amp;#32;<a class="notranslate" href="#4function pointers">function pointers</a> and <a class="notranslate" href="#4trait objects">trait objects</a> have another
+subtype relation. They are subtypes of types that are given by substitutions of
+the higher-ranked lifetimes. Some examples:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Here 'a is substituted for 'static"></div><div data-l="// ">Here 'a is substituted for 'static</div><div data-l="let subtype: &amp;(for&lt;'a&gt; fn(&amp;'a i32) -&gt; &amp;'a i32) = &amp;((|x| x) as fn(&amp;_) -&gt; &amp;_);"></div><div data-l="let supertype: &amp;(fn(&amp;'static i32) -&gt; &amp;'static i32) = subtype;"></div><div data-l=""></div><div data-l="#// This works similarly for trait objects"></div><div data-l="// ">This works similarly for trait objects</div><div data-l="let subtype: &amp;(for&lt;'a&gt; Fn(&amp;'a i32) -&gt; &amp;'a i32) = &amp;|x| x;"></div><div data-l="let supertype: &amp;(Fn(&amp;'static i32) -&gt; &amp;'static i32) = subtype;"></div><div data-l=""></div><div data-l="#// We can also substitute one higher-ranked lifetime for another"></div><div data-l="// ">We can also substitute one higher-ranked lifetime for another</div><div data-l="let subtype: &amp;(for&lt;'a, 'b&gt; fn(&amp;'a i32, &amp;'b i32))= &amp;((|x, y| {}) as fn(&amp;_, &amp;_));"></div><div data-l="let supertype: &amp;for&lt;'c&gt; fn(&amp;'c i32, &amp;'c i32) = subtype;"></div></div>
+<br>
+<h2>Variance</h2>
+<br>
+<p>Variance is a property that generic types have with respect to their arguments.
+A generic type's <i>variance</i> in a parameter is how the subtyping of the
+parameter affects the subtyping of the type.</p>
+<br>
+<div data-b="*"><code>F&lt;T&gt;</code> is <i>covariant</i> over <code>T</code> if <code>T</code> being a subtype of <code>U</code> implies that
+<code>F&lt;T&gt;</code> is a subtype of <code>F&lt;U&gt;</code> (subtyping &quot;passes through&quot;)</div>
+<div data-b="*"><code>F&lt;T&gt;</code> is <i>contravariant</i> over <code>T</code> if <code>T</code> being a subtype of <code>U</code> implies that
+<code>F&lt;U&gt;</code> is a subtype of <code>F&lt;T&gt;</code></div>
+<div data-b="*"><code>F&lt;T&gt;</code> is <i>invariant</i> over <code>T</code> otherwise (no subtyping relation can be
+derived)</div>
+<br>
+<p>Variance of types is automatically determined as follows</p>
+<br>
+<div data-tbl><div> Type                          </div><div> Variance in <code>'a</code>  </div><div> Variance in <code>T</code>   </div></div>
+<div data-tbl><div>-------------------------------</div><div>-------------------</div><div>-------------------</div></div>
+<div data-tbl><div> <code>&amp;'a T</code>                       </div><div> covariant         </div><div> covariant         </div></div>
+<div data-tbl><div> <code>&amp;'a mut T</code>                   </div><div> covariant         </div><div> invariant         </div></div>
+<div data-tbl><div> <code>*const T</code>                    </div><div>                   </div><div> covariant         </div></div>
+<div data-tbl><div> <code>*mut T</code>                      </div><div>                   </div><div> invariant         </div></div>
+<div data-tbl><div> <code>[T]</code> and <code>[T; n]</code>            </div><div>                   </div><div> covariant         </div></div>
+<div data-tbl><div> <code>fn() -&gt; T</code>                   </div><div>                   </div><div> covariant         </div></div>
+<div data-tbl><div> <code>fn(T) -&gt; ()</code>                 </div><div>                   </div><div> contravariant     </div></div>
+<div data-tbl><div> <code>std::cell::UnsafeCell&lt;T&gt;</code>    </div><div>                   </div><div> invariant         </div></div>
+<div data-tbl><div> <code>std::marker::PhantomData&lt;T&gt;</code> </div><div>                   </div><div> covariant         </div></div>
+<div data-tbl><div> <code>Trait&lt;T&gt; + 'a</code>               </div><div> covariant         </div><div> invariant         </div></div>
+<br>
+<p>The variance of other <code>struct</code>, <code>enum</code>, <code>union</code> and tuple types is decided by
+looking at the variance of the types of their fields. If the parameter is used
+in positions with different variances then the parameter is invariant. For
+example the following struct is covariant in <code>'a</code> and <code>T</code> and invariant in <code>'b</code>
+and <code>U</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="use std::cell::UnsafeCell;"></div><div data-l="struct Variance&lt;'a, 'b, T, U: 'a&gt; {"></div><div data-l="#//    x: &amp;'a U,               // This makes `Variance` covariant in 'a, and would"></div><div data-l="#                            // make it covariant in U, but U is used later"></div><div data-l="    x: &amp;'a U,               // ">This makes <code>Variance</code> covariant in 'a, and would make it covariant in U, but U is used later</div><div data-l="#//    y: *const T,            // Covariant in T"></div><div data-l="    y: *const T,            // ">Covariant in T</div><div data-l="#//    z: UnsafeCell&lt;&amp;'b f64&gt;, // Invariant in 'b"></div><div data-l="    z: UnsafeCell&lt;&amp;'b f64&gt;, // ">Invariant in 'b</div><div data-l="#//    w: *mut U,              // Invariant in U, makes the whole struct invariant"></div><div data-l="    w: *mut U,              // ">Invariant in U, makes the whole struct invariant</div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1type-coercions.html">coercions</a>
+<a class="notranslate" href="#1types.html#function-pointer-types">function pointers</a>
+<a class="notranslate" href="#1../nomicon/hrtb.html">Higher-ranked</a>
+<a class="notranslate" href="#1types.html#trait-object-lifetime-bounds">lifetime bound</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait objects</a>

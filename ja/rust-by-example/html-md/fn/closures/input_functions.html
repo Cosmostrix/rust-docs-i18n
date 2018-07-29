@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h1>Input functions</h1>
+<br>
+<p>Since closures may be used as arguments, you might wonder if the same can be said
+about functions. And indeed they can! If you declare a function that takes a
+closure as parameter, then any function that satisfies the trait bound of that
+closure can be passed as a parameter.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// Define a function which takes a generic `F` argument"></div><div data-l="#// bounded by `Fn`, and calls it"></div><div data-l="// ">Define a function which takes a generic <code>F</code> argument bounded by <code>Fn</code>, and calls it</div><div data-l="fn call_me&lt;F: Fn()&gt;(f: F) {"></div><div data-l="    f();"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Define a wrapper function satisfying the `Fn` bound"></div><div data-l="// ">Define a wrapper function satisfying the <code>Fn</code> bound</div><div data-l="fn function() {"></div><div data-l="    println!(&quot;I'm a function!&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Define a closure satisfying the `Fn` bound"></div><div data-l="    // ">Define a closure satisfying the <code>Fn</code> bound</div><div data-l="    let closure = || println!(&quot;I'm a closure!&quot;);"></div><div data-l=""></div><div data-l="    call_me(closure);"></div><div data-l="    call_me(function);"></div><div data-l="}"></div></div>
+<br>
+<p>As an additional note, the <code>Fn</code>, <code>FnMut</code>, and <code>FnOnce</code> <code>traits</code> dictate how
+a closure captures variables from the enclosing scope.</p>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3fn"><code>Fn</code></a>, <a class="notranslate" href="#3fn_mut"><code>FnMut</code></a>, and <a class="notranslate" href="#3fn_once"><code>FnOnce</code></a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">fn</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnMut.html">fn_mut</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.FnOnce.html">fn_once</a>

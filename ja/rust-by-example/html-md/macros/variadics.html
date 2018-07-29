@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h1>Variadic Interfaces</h1>
+<br>
+<p>A <s>variadic</s> interface takes an arbitrary number of arguments. For example,
+<code>println€</code> can take an arbitrary number of arguments, as determined by the
+format string.</p>
+<br>
+<p>We can extend our <code>calculate€</code> macro from the previous section to be variadic:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="macro_rules! calculate {"></div><div data-l="#    // The pattern for a single `eval`"></div><div data-l="    // ">The pattern for a single <code>eval</code></div><div data-l="    (eval $e:expr) =&gt; {{"></div><div data-l="        {"></div><div data-l="#//            let val: usize = $e; // Force types to be integers"></div><div data-l="            let val: usize = $e; // ">Force types to be integers</div><div data-l="            println!(&quot;{} = {}&quot;, stringify!{$e}, val);"></div><div data-l="        }"></div><div data-l="    }};"></div><div data-l=""></div><div data-l="#    // Decompose multiple `eval`s recursively"></div><div data-l="    // ">Decompose multiple <code>eval</code>s recursively</div><div data-l="    (eval $e:expr, $(eval $es:expr),+) =&gt; {{"></div><div data-l="        calculate! { eval $e }"></div><div data-l="        calculate! { $(eval $es),+ }"></div><div data-l="    }};"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#//    calculate! { // Look ma! Variadic `calculate!`!"></div><div data-l="    calculate! { // ">Look ma! Variadic <code>calculate€</code>!</div><div data-l="        eval 1 + 2,"></div><div data-l="        eval 3 + 4,"></div><div data-l="        eval (2 * 3) + 1"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Output:</p>
+<br>
+<div data-lang="txt"><div data-l="1 + 2 = 3"></div><div data-l="3 + 4 = 7"></div><div data-l="(2 * 3) + 1 = 7"></div></div>

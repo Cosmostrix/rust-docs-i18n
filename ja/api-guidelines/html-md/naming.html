@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<h1>Naming</h1>
+<br>
+<br>
+<p><a id="c-case"></a>
+## Casing conforms to RFC 430 (C-CASE)</p>
+<br>
+<p>Basic Rust naming conventions are described in <a class="notranslate" href="#4RFC 430">RFC 430</a>.</p>
+<br>
+<p>In general, Rust tends to use <code>UpperCamelCase</code> for &quot;type-level&quot; constructs (types and
+traits) and <code>snake_case</code> for &quot;value-level&quot; constructs. More precisely:</p>
+<br>
+<div data-tbl><div> Item </div><div> Convention </div></div>
+<div data-tbl><div> ---- </div><div> ---------- </div></div>
+<div data-tbl><div> Crates </div><div> <a class="notranslate" href="#2https://github.com/rust-lang-nursery/api-guidelines/issues/29">unclear</a> </div></div>
+<div data-tbl><div> Modules </div><div> <code>snake_case</code> </div></div>
+<div data-tbl><div> Types </div><div> <code>UpperCamelCase</code> </div></div>
+<div data-tbl><div> Traits </div><div> <code>UpperCamelCase</code> </div></div>
+<div data-tbl><div> Enum variants </div><div> <code>UpperCamelCase</code> </div></div>
+<div data-tbl><div> Functions </div><div> <code>snake_case</code> </div></div>
+<div data-tbl><div> Methods </div><div> <code>snake_case</code> </div></div>
+<div data-tbl><div> General constructors </div><div> <code>new</code> or <code>with_more_details</code> </div></div>
+<div data-tbl><div> Conversion constructors </div><div> <code>from_some_other_type</code> </div></div>
+<div data-tbl><div> Macros </div><div> <code>snake_case€</code> </div></div>
+<div data-tbl><div> Local variables </div><div> <code>snake_case</code> </div></div>
+<div data-tbl><div> Statics </div><div> <code>SCREAMING_SNAKE_CASE</code> </div></div>
+<div data-tbl><div> Constants </div><div> <code>SCREAMING_SNAKE_CASE</code> </div></div>
+<div data-tbl><div> Type parameters </div><div> concise <code>UpperCamelCase</code>, usually single uppercase letter: <code>T</code> </div></div>
+<div data-tbl><div> Lifetimes </div><div> short <code>lowercase</code>, usually a single letter: <code>'a</code>, <code>'de</code>, <code>'src</code> </div></div>
+<div data-tbl><div> Features </div><div> <a class="notranslate" href="#2https://github.com/rust-lang-nursery/api-guidelines/issues/101">unclear</a> but see <a class="notranslate" href="#4C-FEATURE">C-FEATURE</a> </div></div>
+<br>
+<p>In <code>UpperCamelCase</code>, acronyms and contractions of compound words count as one word: use <code>Uuid</code> rather than <code>UUID</code>, <code>Usize</code> rather than <code>USize</code> or <code>Stdin</code> rather than <code>StdIn</code>. In <code>snake_case</code>, acronyms and contractions are lower-cased: <code>is_xid_start</code>.</p>
+<br>
+<p>In <code>snake_case</code> or <code>SCREAMING_SNAKE_CASE</code>, a &quot;word&quot; should never consist of a
+single letter unless it is the last &quot;word&quot;. So, we have <code>btree_map</code> rather than
+<code>b_tree_map</code>, but <code>PI_2</code> rather than <code>PI2</code>.</p>
+<br>
+<p>Crate names should not use <code>-rs</code> or <code>-rust</code> as a suffix or prefix. Every crate
+is Rust! It serves no purpose to remind users of this constantly.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0430-finalizing-naming-conventions.md">RFC 430</a>
+<a class="notranslate" href="#1#c-feature">C-FEATURE</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<p>The whole standard library. This guideline should be easy!</p>
+<br>
+<br>
+<p><a id="c-conv"></a>
+## Ad-hoc conversions follow <code>as_</code>, <code>to_</code>, <code>into_</code> conventions (C-CONV)</p>
+<br>
+<p>Conversions should be provided as methods, with names prefixed as follows:</p>
+<br>
+<div data-tbl><div> Prefix </div><div> Cost </div><div> Ownership </div></div>
+<div data-tbl><div> ------ </div><div> ---- </div><div> --------- </div></div>
+<div data-tbl><div> <code>as_</code> </div><div> Free </div><div> borrowed -\&gt; borrowed </div></div>
+<div data-tbl><div> <code>to_</code> </div><div> Expensive </div><div> borrowed -\&gt; borrowed<br>borrowed -\&gt; owned (non-Copy types)<br>owned -\&gt; owned (Copy types) </div></div>
+<div data-tbl><div> <code>into_</code> </div><div> Variable </div><div> owned -\&gt; owned (non-Copy types) </div></div>
+<br>
+<p>For example:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#4`str::as_bytes()`">`str::as_bytes()`</a> gives a view of a <code>str</code> as a slice of UTF-8 bytes, which
+is free. The input is a borrowed <code>&amp;str</code> and the output is a borrowed <code>&amp;[u8]</code>.</div>
+<div data-b="-"><a class="notranslate" href="#4`Path::to_str`">`Path::to_str`</a> performs an expensive UTF-8 check on the bytes of an
+operating system path. The input and output are both borrowed. It would not be
+correct to call this <code>as_str</code> because this method has nontrivial cost at
+runtime.</div>
+<div data-b="-"><a class="notranslate" href="#4`str::to_lowercase()`">`str::to_lowercase()`</a> produces the Unicode-correct lowercase equivalent of a
+<code>str</code>, which involves iterating through characters of the string and may
+require memory allocation. The input is a borrowed <code>&amp;str</code> and the output is an
+owned <code>String</code>.</div>
+<div data-b="-"><a class="notranslate" href="#4`f64::to_radians()`">`f64::to_radians()`</a> converts a floating point quantity from degrees to
+radians. The input is <code>f64</code>. Passing a reference <code>&amp;f64</code> is not warranted
+because <code>f64</code> is cheap to copy. Calling the function <code>into_radians</code> would be
+misleading because the input is not consumed.</div>
+<div data-b="-"><a class="notranslate" href="#4`String::into_bytes()`">`String::into_bytes()`</a> extracts the underlying <code>Vec&lt;u8&gt;</code> of a <code>String</code>,
+which is free. It takes ownership of a <code>String</code> and returns an owned
+<code>Vec&lt;u8&gt;</code>.</div>
+<div data-b="-"><a class="notranslate" href="#4`BufReader::into_inner()`">`BufReader::into_inner()`</a> takes ownership of a buffered reader and extracts
+out the underlying reader, which is free. Data in the buffer is discarded.</div>
+<div data-b="-"><a class="notranslate" href="#4`BufWriter::into_inner()`">`BufWriter::into_inner()`</a> takes ownership of a buffered writer and extracts
+out the underlying writer, which requires a potentially expensive flush of any
+buffered data.</div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.as_bytes">`str::as_bytes()`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/path/struct.Path.html#method.to_str">`Path::to_str`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.to_lowercase">`str::to_lowercase()`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.f64.html#method.to_radians">`f64::to_radians()`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/string/struct.String.html#method.into_bytes">`String::into_bytes()`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufReader.html#method.into_inner">`BufReader::into_inner()`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufWriter.html#method.into_inner">`BufWriter::into_inner()`</a>
+<br>
+<p>Conversions prefixed <code>as_</code> and <code>into_</code> typically <s>decrease abstraction</s>, either
+exposing a view into the underlying representation (<code>as</code>) or deconstructing data
+into its underlying representation (<code>into</code>). Conversions prefixed <code>to_</code>, on the
+other hand, typically stay at the same level of abstraction but do some work to
+change one representation into another.</p>
+<br>
+<p>When a type wraps a single value to associate it with higher-level semantics,
+access to the wrapped value should be provided by an <code>into_inner()</code> method. This
+applies to wrappers that provide buffering like <a class="notranslate" href="#4`BufReader`">`BufReader`</a>, encoding or
+decoding like <a class="notranslate" href="#4`GzDecoder`">`GzDecoder`</a>, atomic access like <a class="notranslate" href="#4`AtomicBool`">`AtomicBool`</a>, or any similar
+semantics.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.BufReader.html#method.into_inner">`BufReader`</a>
+<a class="notranslate" href="#1https://docs.rs/flate2/0.2.19/flate2/read/struct.GzDecoder.html#method.into_inner">`GzDecoder`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/sync/atomic/struct.AtomicBool.html#method.into_inner">`AtomicBool`</a>
+<br>
+<p>If the <code>mut</code> qualifier in the name of a conversion method constitutes part of
+the return type, it should appear as it would appear in the type. For example
+<a class="notranslate" href="#4`Vec::as_mut_slice`">`Vec::as_mut_slice`</a> returns a mut slice; it does what it says. This name is
+preferred over <code>as_slice_mut</code>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.as_mut_slice">`Vec::as_mut_slice`</a>
+<br>
+<div data-lang="rust"><div data-l="#// Return type is a mut slice."></div><div data-l="// ">Return type is a mut slice.</div><div data-l="fn as_mut_slice(&amp;mut self) -&gt; &amp;mut [T];"></div></div>
+<br>
+<h5>More examples from the standard library</h5>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/result/enum.Result.html#method.as_ref"><code>Result::as_ref</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/cell/struct.RefCell.html#method.as_ptr"><code>RefCell::as_ptr</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/primitive.slice.html#method.to_vec"><code>slice::to_vec</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/option/enum.Option.html#method.into_iter"><code>Option::into_iter</code></a></div>
+<br>
+<br>
+<p><a id="c-getter"></a>
+## Getter names follow Rust convention (C-GETTER)</p>
+<br>
+<p>With a few exceptions, the <code>get_</code> prefix is not used for getters in Rust code.</p>
+<br>
+<div data-lang="rust"><div data-l="pub struct S {"></div><div data-l="    first: First,"></div><div data-l="    second: Second,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl S {"></div><div data-l="#    // Not get_first."></div><div data-l="    // ">Not get_first.</div><div data-l="    pub fn first(&amp;self) -&gt; &amp;First {"></div><div data-l="        &amp;self.first"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // Not get_first_mut, get_mut_first, or mut_first."></div><div data-l="    // ">Not get_first_mut, get_mut_first, or mut_first.</div><div data-l="    pub fn first_mut(&amp;mut self) -&gt; &amp;mut First {"></div><div data-l="        &amp;mut self.first"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>get</code> naming is used only when there is a single and obvious thing that
+could reasonably be gotten by a getter. For example <a class="notranslate" href="#4`Cell::get`">`Cell::get`</a> accesses the
+content of a <code>Cell</code>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/cell/struct.Cell.html#method.get">`Cell::get`</a>
+<br>
+<p>For getters that do runtime validation such as bounds checking, consider adding
+unsafe <code>_unchecked</code> variants. Typically those will have the following
+signatures.</p>
+<br>
+<div data-lang="rust"><div data-l="fn get(&amp;self, index: K) -&gt; Option&lt;&amp;V&gt;;"></div><div data-l="fn get_mut(&amp;mut self, index: K) -&gt; Option&lt;&amp;mut V&gt;;"></div><div data-l="unsafe fn get_unchecked(&amp;self, index: K) -&gt; &amp;V;"></div><div data-l="unsafe fn get_unchecked_mut(&amp;mut self, index: K) -&gt; &amp;mut V;"></div></div>
+<br>
+<p>The difference between getters and conversions (<a class="notranslate" href="#2#c-conv">C-CONV</a>) can be subtle
+and is not always clear-cut. For example <a class="notranslate" href="#4`TempDir::path`">`TempDir::path`</a> can be understood as
+a getter for the filesystem path of the temporary directory, while
+<a class="notranslate" href="#4`TempDir::into_path`">`TempDir::into_path`</a> is a conversion that transfers responsibility for
+deleting the temporary directory to the caller. Since <code>path</code> is a getter, it
+would not be correct to call it <code>get_path</code> or <code>as_path</code>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/tempdir/0.3.5/tempdir/struct.TempDir.html#method.path">`TempDir::path`</a>
+<a class="notranslate" href="#1https://docs.rs/tempdir/0.3.5/tempdir/struct.TempDir.html#method.into_path">`TempDir::into_path`</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/io/struct.Cursor.html#method.get_mut"><code>std::io::Cursor::get_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/ptr/struct.Unique.html#method.get_mut"><code>std::ptr::Unique::get_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/sync/struct.PoisonError.html#method.get_mut"><code>std::sync::PoisonError::get_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/sync/atomic/struct.AtomicBool.html#method.get_mut"><code>std::sync::atomic::AtomicBool::get_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/collections/hash_map/struct.OccupiedEntry.html#method.get_mut"><code>std::collections::hash_map::OccupiedEntry::get_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/primitive.slice.html#method.get_unchecked"><code>&lt;[T]&gt;::get_unchecked</code></a></div>
+<br>
+<br>
+<p><a id="c-iter"></a>
+## Methods on collections that produce iterators follow <code>iter</code>, <code>iter_mut</code>, <code>into_iter</code> (C-ITER)</p>
+<br>
+<p>Per <a class="notranslate" href="#4RFC 199">RFC 199</a>.</p>
+<br>
+<p>For a container with elements of type <code>U</code>, iterator methods should be named:</p>
+<br>
+<div data-lang="rust"><div data-l="#//fn iter(&amp;self) -&gt; Iter             // Iter implements Iterator&lt;Item = &amp;U&gt;"></div><div data-l="fn iter(&amp;self) -&gt; Iter             // ">Iter implements Iterator<Item = &U></div><div data-l="#//fn iter_mut(&amp;mut self) -&gt; IterMut  // IterMut implements Iterator&lt;Item = &amp;mut U&gt;"></div><div data-l="fn iter_mut(&amp;mut self) -&gt; IterMut  // ">IterMut implements Iterator<Item = &mut U></div><div data-l="#//fn into_iter(self) -&gt; IntoIter     // IntoIter implements Iterator&lt;Item = U&gt;"></div><div data-l="fn into_iter(self) -&gt; IntoIter     // ">IntoIter implements Iterator<Item = U></div></div>
+<br>
+<p>This guideline applies to data structures that are conceptually homogeneous
+collections. As a counterexample, the <code>str</code> type is slice of bytes that are
+guaranteed to be valid UTF-8. This is conceptually more nuanced than a
+homogeneous collection so rather than providing the
+<code>iter</code>/<code>iter_mut</code>/<code>into_iter</code> group of iterator methods, it provides
+<a class="notranslate" href="#4`str::bytes`">`str::bytes`</a> to iterate as bytes and <a class="notranslate" href="#4`str::chars`">`str::chars`</a> to iterate as chars.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.bytes">`str::bytes`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.chars">`str::chars`</a>
+<br>
+<p>This guideline applies to methods only, not functions. For example
+<a class="notranslate" href="#4`percent_encode`">`percent_encode`</a> from the <code>url</code> crate returns an iterator over percent-encoded
+string fragments. There would be no clarity to be had by using an
+<code>iter</code>/<code>iter_mut</code>/<code>into_iter</code> convention.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/1.4.0/url/percent_encoding/fn.percent_encode.html">`percent_encode`</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0199-ownership-variants.md">RFC 199</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/vec/struct.Vec.html#method.iter"><code>Vec::iter</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/vec/struct.Vec.html#method.iter_mut"><code>Vec::iter_mut</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/vec/struct.Vec.html#method.into_iter"><code>Vec::into_iter</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/collections/struct.BTreeMap.html#method.iter"><code>BTreeMap::iter</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/collections/struct.BTreeMap.html#method.iter_mut"><code>BTreeMap::iter_mut</code></a></div>
+<br>
+<br>
+<p><a id="c-iter-ty"></a>
+## Iterator type names match the methods that produce them (C-ITER-TY)</p>
+<br>
+<p>A method called <code>into_iter()</code> should return a type called <code>IntoIter</code> and
+similarly for all other methods that return iterators.</p>
+<br>
+<p>This guideline applies chiefly to methods, but often makes sense for functions
+as well. For example the <a class="notranslate" href="#4`percent_encode`">`percent_encode`</a> function from the <code>url</code> crate
+returns an iterator type called <a class="notranslate" href="#3PercentEncode-type"><code>PercentEncode</code></a>.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/1.4.0/url/percent_encoding/struct.PercentEncode.html">PercentEncode-type</a>
+<br>
+<p>These type names make the most sense when prefixed with their owning module, for
+example <a class="notranslate" href="#4`vec::IntoIter`">`vec::IntoIter`</a>.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.IntoIter.html">`vec::IntoIter`</a>
+<br>
+<h3>Examples from the standard library</h3>
+<br>
+<div data-b="*"><a class="notranslate" href="#4`Vec::iter`">`Vec::iter`</a> returns <a class="notranslate" href="#3slice::Iter"><code>Iter</code></a></div>
+<div data-b="*"><a class="notranslate" href="#4`Vec::iter_mut`">`Vec::iter_mut`</a> returns <a class="notranslate" href="#3slice::IterMut"><code>IterMut</code></a></div>
+<div data-b="*"><a class="notranslate" href="#4`Vec::into_iter`">`Vec::into_iter`</a> returns <a class="notranslate" href="#3vec::IntoIter"><code>IntoIter</code></a></div>
+<div data-b="*"><a class="notranslate" href="#4`BTreeMap::keys`">`BTreeMap::keys`</a> returns <a class="notranslate" href="#3btree_map::Keys"><code>Keys</code></a></div>
+<div data-b="*"><a class="notranslate" href="#4`BTreeMap::values`">`BTreeMap::values`</a> returns <a class="notranslate" href="#3btree_map::Values"><code>Values</code></a></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.iter">`Vec::iter`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/slice/struct.Iter.html">slice::Iter</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.iter_mut">`Vec::iter_mut`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/slice/struct.IterMut.html">slice::IterMut</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.Vec.html#method.into_iter">`Vec::into_iter`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/vec/struct.IntoIter.html">vec::IntoIter</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/struct.BTreeMap.html#method.keys">`BTreeMap::keys`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/btree_map/struct.Keys.html">btree_map::Keys</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/struct.BTreeMap.html#method.values">`BTreeMap::values`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/collections/btree_map/struct.Values.html">btree_map::Values</a>
+<br>
+<br>
+<p><a id="c-feature"></a>
+## Feature names are free of placeholder words (C-FEATURE)</p>
+<br>
+<p>Do not include words in the name of a <a class="notranslate" href="#4Cargo feature">Cargo feature</a> that convey zero meaning,
+as in <code>use-abc</code> or <code>with-abc</code>. Name the feature <code>abc</code> directly.</p>
+<br>
+<a class="notranslate" href="#1http://doc.crates.io/manifest.html#the-features-section">Cargo feature</a>
+<br>
+<p>This arises most commonly for crates that have an optional dependency on the
+Rust standard library. The canonical way to do this correctly is:</p>
+<br>
+<div data-lang="toml"><div data-l="# In Cargo.toml"></div><div data-l=""></div><div data-l="[features]"></div><div data-l="default = [&quot;std&quot;]"></div><div data-l="std = []"></div></div>
+<br>
+<div data-lang="rust"><div data-l="#// In lib.rs"></div><div data-l="// ">In lib.rs</div><div data-l=""></div><div data-l="#![cfg_attr(not(feature = &quot;std&quot;), no_std)]"></div></div>
+<br>
+<p>Do not call the feature <code>use-std</code> or <code>with-std</code> or any creative name that is not
+<code>std</code>. This naming convention aligns with the naming of implicit features
+inferred by Cargo for optional dependencies. Consider crate <code>x</code> with optional
+dependencies on Serde and on the Rust standard library:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;x&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l=""></div><div data-l="[features]"></div><div data-l="std = [&quot;serde/std&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="serde = { version = &quot;1.0&quot;, optional = true }"></div></div>
+<br>
+<p>When we depend on <code>x</code>, we can enable the optional Serde dependency with
+<code>features = [&quot;serde&quot;]</code>. Similarly we can enable the optional standard library
+dependency with <code>features = [&quot;std&quot;]</code>. The implicit feature inferred by Cargo for
+the optional dependency is called <code>serde</code>, not <code>use-serde</code> or <code>with-serde</code>, so
+we like for explicit features to behave the same way.</p>
+<br>
+<p>As a related note, Cargo requires that features are additive so a feature named
+negatively like <code>no-abc</code> is practically never correct.</p>
+<br>
+<br>
+<p><a id="c-word-order"></a>
+## Names use a consistent word order (C-WORD-ORDER)</p>
+<br>
+<p>Here are some error types from the standard library:</p>
+<br>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/env/struct.JoinPathsError.html"><code>JoinPathsError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/str/struct.ParseBoolError.html"><code>ParseBoolError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/char/struct.ParseCharError.html"><code>ParseCharError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/num/struct.ParseFloatError.html"><code>ParseFloatError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/num/struct.ParseIntError.html"><code>ParseIntError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/sync/mpsc/enum.RecvTimeoutError.html"><code>RecvTimeoutError</code></a></div>
+<div data-b="-"><a class="notranslate" href="#2https://doc.rust-lang.org/std/path/struct.StripPrefixError.html"><code>StripPrefixError</code></a></div>
+<br>
+<p>All of these use verb-object-error word order. If we were adding an error to
+represent an address failing to parse, for consistency we would want to name it
+in verb-object-error order like <code>ParseAddrError</code> rather than <code>AddrParseError</code>.</p>
+<br>
+<p>The particular choice of word order is not important, but pay attention to
+consistency within the crate and consistency with similar functionality in the
+standard library.</p>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>Search items using given predicate in parallel</h2>
+<br>
+<p><a href="#3rayon">!<a class="notranslate" href="#4rayon-badge">rayon-badge</a></a> <a href="#3cat-concurrency">!<a class="notranslate" href="#4cat-concurrency-badge">cat-concurrency-badge</a></a></p>
+<br>
+<p>This example uses <a class="notranslate" href="#4`rayon::find_any`">`rayon::find_any`</a> and <a class="notranslate" href="#4`par_iter`">`par_iter`</a> to search a vector in
+parallel for an element satisfying the predicate in the given closure.</p>
+<br>
+<p>If there are multiple elements satisfying the predicate defined in the closure
+argument of <a class="notranslate" href="#4`rayon::find_any`">`rayon::find_any`</a>, <code>rayon</code> returns the first one found, not
+necessarily the first one.</p>
+<br>
+<p>Also note that the argument to the closure is a reference to a reference
+(<code>&amp;&amp;x</code>). See the discussion on <a class="notranslate" href="#4`std::find`">`std::find`</a> for additional details.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate rayon;"></div><div data-l=""></div><div data-l="use rayon::prelude::*;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let v = vec![6, 2, 1, 9, 3, 8, 11];"></div><div data-l=""></div><div data-l="    let f1 = v.par_iter().find_any(|&amp;&amp;x| x == 9);"></div><div data-l="    let f2 = v.par_iter().find_any(|&amp;&amp;x| x % 2 == 0 &amp;&amp; x &gt; 6);"></div><div data-l="    let f3 = v.par_iter().find_any(|&amp;&amp;x| x &gt; 8);"></div><div data-l=""></div><div data-l="    assert_eq!(f1, Some(&amp;9));"></div><div data-l="    assert_eq!(f2, Some(&amp;8));"></div><div data-l="    assert!(f3 &gt; Some(&amp;8));"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.IntoParallelRefIterator.html#tymethod.par_iter">`par_iter`</a>
+<a class="notranslate" href="#1https://docs.rs/rayon/*/rayon/iter/trait.ParallelIterator.html#method.find_any">`rayon::find_any`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find">`std::find`</a>

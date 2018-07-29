@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<h1>Struct expressions</h1>
+<br>
+<p>There are several forms of struct expressions. A <s>struct expression</s> consists
+of the <a class="notranslate" href="#4path">path</a> of a <a href="#2items/structs.html">struct item</a>, followed by a
+brace-enclosed list of zero or more comma-separated name-value pairs, providing
+the field values of a new instance of the struct. A field name can be any
+<a class="notranslate" href="#4identifier">identifier</a>, and is separated from its value expression by a
+colon. In the case of a tuple struct the field names are numbers corresponding
+to the position of the field. The numbers must be written in decimal,
+containing no underscores and with no leading zeros or integer suffix. A value
+of a <a class="notranslate" href="#2items/unions.html">union</a> type can also be created using this syntax,
+except that it must specify exactly one field.</p>
+<br>
+<p>Struct expressions can't be used directly in the head of a <a class="notranslate" href="#4loop">loop</a>
+or an <a class="notranslate" href="#4if">if</a>, <a class="notranslate" href="#4if let">if let</a> or <a class="notranslate" href="#4match">match</a> expression. But struct expressions can still be
+in used inside parentheses, for example.</p>
+<br>
+<p>A <s>tuple struct expression</s> consists of the path of a struct item, followed by
+a parenthesized list of one or more comma-separated expressions (in other
+words, the path of a struct item followed by a tuple expression). The struct
+item must be a tuple struct item.</p>
+<br>
+<p>A <s>unit-like struct expression</s> consists only of the path of a struct item.</p>
+<br>
+<p>The following are examples of struct expressions:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point { x: f64, y: f64 }"></div><div data-l="# struct NothingInMe { }"></div><div data-l="# struct TuplePoint(f64, f64);"></div><div data-l="# mod game { pub struct User&lt;'a&gt; { pub name: &amp;'a str, pub age: u32, pub score: usize } }"></div><div data-l="# struct Cookie; fn some_fn&lt;T&gt;(t: T) {}"></div><div data-l="Point {x: 10.0, y: 20.0};"></div><div data-l="NothingInMe {};"></div><div data-l="TuplePoint(10.0, 20.0);"></div><div data-l="#//TuplePoint { 0: 10.0, 1: 20.0 }; // Results in the same value as the above line"></div><div data-l="TuplePoint { 0: 10.0, 1: 20.0 }; // ">Results in the same value as the above line</div><div data-l="let u = game::User {name: &quot;Joe&quot;, age: 35, score: 100_000};"></div><div data-l="some_fn::&lt;Cookie&gt;(Cookie);"></div></div>
+<br>
+<p>A struct expression forms a new value of the named struct type. Note that for a
+given <i>unit-like</i> struct type, this will always be the same value.</p>
+<br>
+<p>A struct expression can terminate with the syntax <code>..</code> followed by an
+expression to denote a functional update. The expression following <code>..</code> (the
+base) must have the same struct type as the new struct type being formed. The
+entire expression denotes the result of constructing a new struct (with the
+same type as the base expression) with the given values for the fields that
+were explicitly specified and the values in the base expression for all other
+fields. Just as with all struct expressions, all of the fields of the struct
+must be <a class="notranslate" href="#2visibility-and-privacy.html">visible</a>, even those not explicitly
+named.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point3d { x: i32, y: i32, z: i32 }"></div><div data-l="let base = Point3d {x: 1, y: 2, z: 3};"></div><div data-l="Point3d {y: 0, z: 10, .. base};"></div></div>
+<br>
+<h2>Struct field init shorthand</h2>
+<br>
+<p>When initializing a data structure (struct, enum, union) with named (but not
+numbered) fields, it is allowed to write <code>fieldname</code> as a shorthand for
+<code>fieldname: fieldname</code>. This allows a compact syntax with less duplication.</p>
+<br>
+<p>Example:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point3d { x: i32, y: i32, z: i32 }"></div><div data-l="# let x = 0;"></div><div data-l="# let y_value = 0;"></div><div data-l="# let z = 0;"></div><div data-l="Point3d { x: x, y: y_value, z: z };"></div><div data-l="Point3d { x, y: y_value, z };"></div></div>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1paths.html">path</a>
+<a class="notranslate" href="#1expressions/loop-expr.html">loop</a>
+<a class="notranslate" href="#1expressions/if-expr.html#if-expressions">if</a>
+<a class="notranslate" href="#1expressions/if-expr.html#if-let-expressions">if let</a>
+<a class="notranslate" href="#1expressions/match-expr.html">match</a>

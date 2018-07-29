@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Get MIME type from filename</h2>
+<br>
+<p><a href="#3mime">!<a class="notranslate" href="#4mime-badge">mime-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>The following example shows how to return the correct MIME type from a given
+filename using the <a class="notranslate" href="#4mime">mime</a> crate.  The program will check for file extensions
+and match against a known list.  The return value is <a class="notranslate" href="#4`mime:Mime`">`mime:Mime`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate mime;"></div><div data-l="use mime::Mime;"></div><div data-l=""></div><div data-l="fn find_mimetype (filename : &amp;String) -&gt; Mime{"></div><div data-l=""></div><div data-l="    let parts : Vec&lt;&amp;str&gt; = filename.split('.').collect();"></div><div data-l=""></div><div data-l="    let res = match parts.last() {"></div><div data-l="            Some(v) =&gt;"></div><div data-l="                match *v {"></div><div data-l="                    &quot;png&quot; =&gt; mime::IMAGE_PNG,"></div><div data-l="                    &quot;jpg&quot; =&gt; mime::IMAGE_JPEG,"></div><div data-l="                    &quot;json&quot; =&gt; mime::APPLICATION_JSON,"></div><div data-l="                    &amp;_ =&gt; mime::TEXT_PLAIN,"></div><div data-l="                },"></div><div data-l="            None =&gt; mime::TEXT_PLAIN,"></div><div data-l="        };"></div><div data-l="    return res;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let filenames = vec!(&quot;foobar.jpg&quot;, &quot;foo.bar&quot;, &quot;foobar.png&quot;);"></div><div data-l="    for file in filenames {"></div><div data-l="	    let mime = find_mimetype(&amp;file.to_owned());"></div><div data-l="	 	println!(&quot;MIME for {}: {}&quot;, file, mime);"></div><div data-l="	 }"></div><div data-l=""></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/mime/*/mime/struct.Mime.html">`mime:Mime`</a>

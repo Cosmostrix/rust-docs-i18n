@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<h1>Attributes</h1>
+<br>
+<p>Declarations can be annotated with ‘attributes’ in Rust. They look like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#[test]"></div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>or like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# mod foo {"></div><div data-l="#![test]"></div><div data-l="# }"></div></div>
+<br>
+<p>The difference between the two is the <code>€</code>, which changes what the attribute
+applies to:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[foo]"></div><div data-l="struct Foo;"></div><div data-l=""></div><div data-l="mod bar {"></div><div data-l="    #![bar]"></div><div data-l="}"></div></div>
+<br>
+<p>The <code>#[foo]</code> attribute applies to the next item, which is the <code>struct</code>
+declaration. The <code>#€[bar]</code> attribute applies to the item enclosing it, which is
+the <code>mod</code> declaration. Otherwise, they’re the same. Both change the meaning of
+the item they’re attached to somehow.</p>
+<br>
+<p>For example, consider a function like this:</p>
+<br>
+<div data-lang="rust"><div data-l="#[test]"></div><div data-l="fn check() {"></div><div data-l="    assert_eq!(2, 1 + 1);"></div><div data-l="}"></div></div>
+<br>
+<p>It is marked with <code>#[test]</code>. This means it’s special: when you run
+<a class="notranslate" href="#3tests">tests</a>, this function will execute. When you compile as usual, it won’t
+even be included. This function is now a test function.</p>
+<br>
+<a class="notranslate" href="#1testing.html">tests</a>
+<br>
+<p>Attributes may also have additional data:</p>
+<br>
+<div data-lang="rust"><div data-l="#[inline(always)]"></div><div data-l="fn super_fast_fn() {"></div><div data-l="# }"></div></div>
+<br>
+<p>Or even keys and values:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(target_os = &quot;macos&quot;)]"></div><div data-l="mod macos_only {"></div><div data-l="# }"></div></div>
+<br>
+<p>Rust attributes are used for a number of different things. There is a full list
+of attributes <a href="#3reference">in the reference</a>. Currently, you are not allowed to
+create your own attributes, the Rust compiler defines them.</p>
+<br>
+<a class="notranslate" href="#1../../reference/attributes.html">reference</a>

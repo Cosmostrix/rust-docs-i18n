@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<h1>Associated Items</h1>
+<br>
+<p><i>Associated Items</i> are the items declared in <a class="notranslate" href="#4traits">traits</a> or defined in
+<a class="notranslate" href="#4implementations">implementations</a>. They are called this because they are defined on an associate
+type &amp;mdash; the type in the implementation. They are a subset of the kinds of
+items you can declare in a module. Specifically, there are <a class="notranslate" href="#4associated
+functions">associated
+functions</a> (including methods), <a class="notranslate" href="#4associated types">associated types</a>, and <a class="notranslate" href="#4associated constants">associated constants</a>.</p>
+<br>
+<a class="notranslate" href="#1#associated-functions-and-methods">associated functions</a>
+<a class="notranslate" href="#1#associated-types">associated types</a>
+<a class="notranslate" href="#1#associated-constants">associated constants</a>
+<br>
+<p>Associated items are useful when the associated item logically is related to the
+associating item. For example, the <code>is_some</code> method on <code>Option</code> is intrinsically
+related to Options, so should be associated.</p>
+<br>
+<p>Every associated item kind comes in two varieties: definitions that contain the
+actual implementation and declarations that declare signatures for
+definitions.</p>
+<br>
+<p>It is the declarations that make up the contract of traits and what it available
+on generic types.</p>
+<br>
+<h2>Associated functions and methods</h2>
+<br>
+<p><i>Associated functions</i> are <a class="notranslate" href="#4functions">functions</a> associated with a type.</p>
+<br>
+<p>An <i>associated function declaration</i> declares a signature for an associated
+function definition. It is written as a function item, except the
+function body is replaced with a <code>;</code>.</p>
+<br>
+<p>The identifier if the name of the function. The generics, parameter list,
+return type, and where clause of the associated function must be the same as the
+associated function declarations's.</p>
+<br>
+<p>An <i>associated function definition</i> defines a function associated with another
+type. It is written the same as a <a class="notranslate" href="#4function item">function item</a>.</p>
+<br>
+<p>An example of a common associated function is a <code>new</code> function that returns
+a value of the type the associated function is associated with.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Struct {"></div><div data-l="    field: i32"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Struct {"></div><div data-l="    fn new() -&gt; Struct {"></div><div data-l="        Struct {"></div><div data-l="            field: 0i32"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main () {"></div><div data-l="    let _struct = Struct::new();"></div><div data-l="}"></div></div>
+<br>
+<p>When the associated function is declared on a trait, the function can also be
+called with a <a class="notranslate" href="#4path">path</a> that is a path to the trait appended by the name of the
+trait. When this happens, it is substituted for <code>&lt;_ as Trait&gt;::function_name</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Num {"></div><div data-l="    fn from_i32(n: i32) -&gt; Self;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Num for f64 {"></div><div data-l="    fn from_i32(n: i32) -&gt; f64 { n as f64 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// These 4 are all equivalent in this case."></div><div data-l="// ">These 4 are all equivalent in this case.</div><div data-l="let _: f64 = Num::from_i32(42);"></div><div data-l="let _: f64 = &lt;_ as Num&gt;::from_i32(42);"></div><div data-l="let _: f64 = &lt;f64 as Num&gt;::from_i32(42);"></div><div data-l="let _: f64 = f64::from_i32(42);"></div></div>
+<br>
+<h3>Methods</h3>
+<br>
+<p>Associated functions whose first parameter is named <code>self</code> are called <i>methods</i>
+and may be invoked using the <a class="notranslate" href="#4method call operator">method call operator</a>, for example, <code>x.foo()</code>, as
+well as the usual function call notation.</p>
+<br>
+<p>The <code>self</code> parameter must have one of the following types. As a result, the
+following shorthands may be used to declare <code>self</code>:</p>
+<br>
+<div data-b="*"><code>self</code> -&gt; <code>self: Self</code></div>
+<div data-b="*"><code>&amp;'lifetime self</code> -&gt; <code>self: &amp;'lifetime Self</code></div>
+<div data-b="*"><code>&amp;'lifetime mut self</code> -&gt; <code>self: &amp;'lifetime mut Self</code></div>
+<div data-b="*"><code>self : Box&lt;Self&gt;</code> (no shorthand)</div>
+<br>
+<blockquote><p>Note: Lifetimes can be and usually are elided with this shorthand.</p></blockquote>
+<br>
+<p>Consider the following trait:</p>
+<br>
+<div data-lang="rust"><div data-l="# type Surface = i32;"></div><div data-l="# type BoundingBox = i32;"></div><div data-l="trait Shape {"></div><div data-l="    fn draw(&amp;self, Surface);"></div><div data-l="    fn bounding_box(&amp;self) -&gt; BoundingBox;"></div><div data-l="}"></div></div>
+<br>
+<p>This defines a trait with two methods. All values that have <a class="notranslate" href="#4implementations">implementations</a>
+of this trait while the trait is in scope can have their <code>draw</code> and
+<code>bounding_box</code> methods called.</p>
+<br>
+<div data-lang="rust"><div data-l="# type Surface = i32;"></div><div data-l="# type BoundingBox = i32;"></div><div data-l="# trait Shape {"></div><div data-l="#     fn draw(&amp;self, Surface);"></div><div data-l="#     fn bounding_box(&amp;self) -&gt; BoundingBox;"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="struct Circle {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div><div data-l=""></div><div data-l="impl Shape for Circle {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="#   fn draw(&amp;self, _: Surface) {}"></div><div data-l="#   fn bounding_box(&amp;self) -&gt; BoundingBox { 0i32 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="# impl Circle {"></div><div data-l="#     fn new() -&gt; Circle { Circle{} }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="let circle_shape = Circle::new();"></div><div data-l="let bounding_box = circle_shape.bounding_box();"></div></div>
+<br>
+<h2>Associated Types</h2>
+<br>
+<p><i>Associated types</i> are <a class="notranslate" href="#4type aliases">type aliases</a> associated with another type. Associated
+types cannot be defined in <a class="notranslate" href="#4inherent implementations">inherent implementations</a> nor can they be given a
+default implementation in traits.</p>
+<br>
+<p>An <i>associated type declaration</i> declares a signature for associated type
+definitions. It is written as <code>type</code>, then an <a class="notranslate" href="#4identifier">identifier</a>, and
+finally an optional list of trait bounds.</p>
+<br>
+<p>The identifier is the name of the declared type alias. The optional trait bounds
+must be fulfilled by the implementations of the type alias.</p>
+<br>
+<p>An <i>associated type definition</i> defines a type alias on another type. It is
+written as <code>type</code>, then an <a class="notranslate" href="#4identifier">identifier</a>, then an <code>=</code>, and finally a <a class="notranslate" href="#4type">type</a>.</p>
+<br>
+<p>If a type <code>Item</code> has an associated type <code>Assoc</code> from a trait <code>Trait</code>, then
+<code>&lt;Item as Trait&gt;::Assoc</code> is a type that is an alias of the type specified in the
+associated type definition. Furthermore, if <code>Item</code> is a type parameter, then
+<code>Item::Assoc</code> can be used in type parameters.</p>
+<br>
+<div data-lang="rust"><div data-l="trait AssociatedType {"></div><div data-l="#    // Associated type declaration"></div><div data-l="    // ">Associated type declaration</div><div data-l="    type Assoc;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Struct;"></div><div data-l=""></div><div data-l="struct OtherStruct;"></div><div data-l=""></div><div data-l="impl AssociatedType for Struct {"></div><div data-l="#    // Associated type definition"></div><div data-l="    // ">Associated type definition</div><div data-l="    type Assoc = OtherStruct;"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl OtherStruct {"></div><div data-l="    fn new() -&gt; OtherStruct {"></div><div data-l="        OtherStruct"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Usage of the associated type to refer to OtherStruct as &lt;Struct as AssociatedType&gt;::Assoc"></div><div data-l="    // ">Usage of the associated type to refer to OtherStruct as <Struct as AssociatedType>::Assoc</div><div data-l="    let _other_struct: OtherStruct = &lt;Struct as AssociatedType&gt;::Assoc::new();"></div><div data-l="}"></div></div>
+<br>
+<h3>Associated Types Container Example</h3>
+<br>
+<p>Consider the following example of a <code>Container</code> trait. Notice that the type is
+available for use in the method signatures:</p>
+<br>
+<div data-lang="rust"><div data-l="trait Container {"></div><div data-l="    type E;"></div><div data-l="    fn empty() -&gt; Self;"></div><div data-l="    fn insert(&amp;mut self, Self::E);"></div><div data-l="}"></div></div>
+<br>
+<p>In order for a type to implement this trait, it must not only provide
+implementations for every method, but it must specify the type <code>E</code>. Here's an
+implementation of <code>Container</code> for the standard library type <code>Vec</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Container {"></div><div data-l="#     type E;"></div><div data-l="#     fn empty() -&gt; Self;"></div><div data-l="#     fn insert(&amp;mut self, Self::E);"></div><div data-l="# }"></div><div data-l="impl&lt;T&gt; Container for Vec&lt;T&gt; {"></div><div data-l="    type E = T;"></div><div data-l="    fn empty() -&gt; Vec&lt;T&gt; { Vec::new() }"></div><div data-l="    fn insert(&amp;mut self, x: T) { self.push(x); }"></div><div data-l="}"></div></div>
+<br>
+<h2>Associated Constants</h2>
+<br>
+<p><i>Associated constants</i> are <a class="notranslate" href="#4constants">constants</a> associated with a type.</p>
+<br>
+<p>An <i>associated constant declaration</i> declares a signature for associated
+constant definitions. It is written as <code>const</code>, then an identifier,
+then <code>:</code>, then a type, finished by a <code>;</code>.</p>
+<br>
+<p>The identifier is the name of the constant used in the path. The type is the
+type that the definition has to implement.</p>
+<br>
+<p>An <i>associated constant definition</i> defines a constant associated with a
+type. It is written the same as a <a class="notranslate" href="#4constant item">constant item</a>.</p>
+<br>
+<h3>Associated Constants Examples</h3>
+<br>
+<p>A basic example:</p>
+<br>
+<div data-lang="rust"><div data-l="trait ConstantId {"></div><div data-l="    const ID: i32;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Struct;"></div><div data-l=""></div><div data-l="impl ConstantId for Struct {"></div><div data-l="    const ID: i32 = 1;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(1, Struct::ID);"></div><div data-l="}"></div></div>
+<br>
+<p>Using default values:</p>
+<br>
+<div data-lang="rust"><div data-l="trait ConstantIdDefault {"></div><div data-l="    const ID: i32 = 1;"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Struct;"></div><div data-l="struct OtherStruct;"></div><div data-l=""></div><div data-l="impl ConstantIdDefault for Struct {}"></div><div data-l=""></div><div data-l="impl ConstantIdDefault for OtherStruct {"></div><div data-l="    const ID: i32 = 5;"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert_eq!(1, Struct::ID);"></div><div data-l="    assert_eq!(5, OtherStruct::ID);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1items/traits.html">trait</a>
+<a class="notranslate" href="#1items/traits.html">traits</a>
+<a class="notranslate" href="#1items/type-aliases.html">type aliases</a>
+<a class="notranslate" href="#1items/implementations.html#inherent-implementations">inherent implementations</a>
+<a class="notranslate" href="#1identifiers.html">identifier</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait object</a>
+<a class="notranslate" href="#1items/implementations.html">implementations</a>
+<a class="notranslate" href="#1types.html">type</a>
+<a class="notranslate" href="#1items/constant-items.html">constants</a>
+<a class="notranslate" href="#1items/constant-items.html">constant item</a>
+<a class="notranslate" href="#1items/functions.html">functions</a>
+<a class="notranslate" href="#1expressions/method-call-expr.html">method call operator</a>
+<a class="notranslate" href="#1expressions/block-expr.html">block</a>
+<a class="notranslate" href="#1paths.html">path</a>

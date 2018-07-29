@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h2>Log an error message to the console</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3env_logger">!<a class="notranslate" href="#4env_logger-badge">env_logger-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p>Proper error handling considers exceptions exceptional.  Here, an error logs
+to stderr with <code>log</code>'s convenience macro <a class="notranslate" href="#4`error!`">`error!`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate env_logger;"></div><div data-l=""></div><div data-l="fn execute_query(_query: &amp;str) -&gt; Result&lt;(), &amp;'static str&gt; {"></div><div data-l="    Err(&quot;I'm afraid I can't do that&quot;)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    env_logger::init();"></div><div data-l=""></div><div data-l="    let response = execute_query(&quot;DROP TABLE students&quot;);"></div><div data-l="    if let Err(err) = response {"></div><div data-l="        error!(&quot;Failed to execute query: {}&quot;, err);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/macro.error.html">`error!`</a>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<h1>Limits of Lifetimes</h1>
+<br>
+<p>Given the following code:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Foo;"></div><div data-l=""></div><div data-l="impl Foo {"></div><div data-l="    fn mutate_and_share(&amp;mut self) -&gt; &amp;Self { &amp;*self }"></div><div data-l="    fn share(&amp;self) {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut foo = Foo;"></div><div data-l="    let loan = foo.mutate_and_share();"></div><div data-l="    foo.share();"></div><div data-l="}"></div></div>
+<br>
+<p>One might expect it to compile. We call <code>mutate_and_share</code>, which mutably borrows
+<code>foo</code> temporarily, but then returns only a shared reference. Therefore we
+would expect <code>foo.share()</code> to succeed as <code>foo</code> shouldn't be mutably borrowed.</p>
+<br>
+<p>However when we try to compile it:</p>
+<br>
+<div data-lang="text"><div data-l="&lt;anon&gt;:11:5: 11:8 error: cannot borrow `foo` as immutable because it is also borrowed as mutable"></div><div data-l="&lt;anon&gt;:11     foo.share();"></div><div data-l="              ^~~"></div><div data-l="&lt;anon&gt;:10:16: 10:19 note: previous borrow of `foo` occurs here; the mutable borrow prevents subsequent moves, borrows, or modification of `foo` until the borrow ends"></div><div data-l="&lt;anon&gt;:10     let loan = foo.mutate_and_share();"></div><div data-l="                         ^~~"></div><div data-l="&lt;anon&gt;:12:2: 12:2 note: previous borrow ends here"></div><div data-l="&lt;anon&gt;:8 fn main() {"></div><div data-l="&lt;anon&gt;:9     let mut foo = Foo;"></div><div data-l="&lt;anon&gt;:10     let loan = foo.mutate_and_share();"></div><div data-l="&lt;anon&gt;:11     foo.share();"></div><div data-l="&lt;anon&gt;:12 }"></div><div data-l="          ^"></div></div>
+<br>
+<p>What happened? Well, we got the exact same reasoning as we did for
+<a href="#3ex2">Example 2 in the previous section</a>. We desugar the program and we get
+the following:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Foo;"></div><div data-l=""></div><div data-l="impl Foo {"></div><div data-l="    fn mutate_and_share&lt;'a&gt;(&amp;'a mut self) -&gt; &amp;'a Self { &amp;'a *self }"></div><div data-l="    fn share&lt;'a&gt;(&amp;'a self) {}"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="	'b: {"></div><div data-l="    	let mut foo: Foo = Foo;"></div><div data-l="    	'c: {"></div><div data-l="    		let loan: &amp;'c Foo = Foo::mutate_and_share::&lt;'c&gt;(&amp;'c mut foo);"></div><div data-l="    		'd: {"></div><div data-l="    			Foo::share::&lt;'d&gt;(&amp;'d foo);"></div><div data-l="    		}"></div><div data-l="    	}"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The lifetime system is forced to extend the <code>&amp;mut foo</code> to have lifetime <code>'c</code>,
+due to the lifetime of <code>loan</code> and mutate_and_share's signature. Then when we
+try to call <code>share</code>, and it sees we're trying to alias that <code>&amp;'c mut foo</code> and
+blows up in our face!</p>
+<br>
+<p>This program is clearly correct according to the reference semantics we actually
+care about, but the lifetime system is too coarse-grained to handle that.</p>
+<br>
+<br>
+<p>TODO: other common problems? SEME regions stuff, mostly?</p>
+<br>
+<br>
+<br>
+<br>
+<a class="notranslate" href="#1lifetimes.html#example-aliasing-a-mutable-reference">ex2</a>

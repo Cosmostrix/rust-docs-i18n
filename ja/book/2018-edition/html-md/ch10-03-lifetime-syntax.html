@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<h2>Validating References with Lifetimes</h2>
+<br>
+<p>One detail we didn’t discuss in the “References and Borrowing” section in
+Chapter 4 is that every reference in Rust has a <i>lifetime</i>, which is the scope
+for which that reference is valid. Most of the time, lifetimes are implicit and
+inferred, just like most of the time, types are inferred. We must annotate types
+when multiple types are possible. In a similar way, we must annotate lifetimes
+when the lifetimes of references could be related in a few different ways. Rust
+requires us to annotate the relationships using generic lifetime parameters to
+ensure the actual references used at runtime will definitely be valid.</p>
+<br>
+<p>The concept of lifetimes is somewhat different from tools in other programming
+languages, arguably making lifetimes Rust’s most distinctive feature. Although
+we won’t cover lifetimes in their entirety in this chapter, we’ll discuss
+common ways you might encounter lifetime syntax so you can become familiar with
+the concepts. See the “Advanced Lifetimes” section in Chapter 19 for more
+detailed information.</p>
+<br>
+<h3>Preventing Dangling References with Lifetimes</h3>
+<br>
+<p>The main aim of lifetimes is to prevent dangling references, which cause a
+program to reference data other than the data it’s intended to reference.
+Consider the program in Listing 10-17, which has an outer scope and an inner
+scope.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="{"></div><div data-l="    let r;"></div><div data-l=""></div><div data-l="    {"></div><div data-l="        let x = 5;"></div><div data-l="        r = &amp;x;"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;r: {}&quot;, r);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-17: An attempt to use a reference whose value
+has gone out of scope</span></p>
+<br>
+<blockquote><p>Note: The examples in Listings 10-17, 10-18, and 10-24 declare variables
+without giving them an initial value, so the variable name exists in the
+outer scope. At first glance, this might appear to be in conflict with Rust’s
+having no null values. However, if we try to use a variable before giving it
+a value, we’ll get a compile-time error, which shows that Rust indeed does
+not allow null values.</p></blockquote>
+<br>
+<p>The outer scope declares a variable named <code>r</code> with no initial value, and the
+inner scope declares a variable named <code>x</code> with the initial value of 5. Inside
+the inner scope, we attempt to set the value of <code>r</code> as a reference to <code>x</code>. Then
+the inner scope ends, and we attempt to print the value in <code>r</code>. This code won’t
+compile because the value <code>r</code> is referring to has gone out of scope before we
+try to use it. Here is the error message:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0597]: `x` does not live long enough"></div><div data-l="  --&gt; src/main.rs:7:5"></div><div data-l="   |"></div><div data-l="6  |         r = &amp;x;"></div><div data-l="   |              - borrow occurs here"></div><div data-l="7  |     }"></div><div data-l="   |     ^ `x` dropped here while still borrowed"></div><div data-l="..."></div><div data-l="10 | }"></div><div data-l="   | - borrowed value needs to live until here"></div></div>
+<br>
+<p>The variable <code>x</code> doesn’t “live long enough.” The reason is that <code>x</code> will be out
+of scope when the inner scope ends on line 7. But <code>r</code> is still valid for the
+outer scope; because its scope is larger, we say that it “lives longer.” If
+Rust allowed this code to work, <code>r</code> would be referencing memory that was
+deallocated when <code>x</code> went out of scope, and anything we tried to do with <code>r</code>
+wouldn’t work correctly. So how does Rust determine that this code is invalid?
+It uses a borrow checker.</p>
+<br>
+<h3>The Borrow Checker</h3>
+<br>
+<p>The Rust compiler has a <i>borrow checker</i> that compares scopes to determine
+whether all borrows are valid. Listing 10-18 shows the same code as Listing
+10-17 but with annotations showing the lifetimes of the variables.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="{"></div><div data-l="#//    let r;                // ---------+-- 'a"></div><div data-l="#                          //          |"></div><div data-l="    let r;                // ">---------+-- 'a          |</div><div data-l="#//    {                     //          |"></div><div data-l="    {                     // ">         |</div><div data-l="#//        let x = 5;        // -+-- 'b  |"></div><div data-l="        let x = 5;        // ">-+-- 'b  |</div><div data-l="#//        r = &amp;x;           //  |       |"></div><div data-l="        r = &amp;x;           // "> |       |</div><div data-l="#//    }                     // -+       |"></div><div data-l="#                          //          |"></div><div data-l="    }                     // ">-+       |          |</div><div data-l="#//    println!(&quot;r: {}&quot;, r); //          |"></div><div data-l="    println!(&quot;r: {}&quot;, r); // ">         |</div><div data-l="#//}                         // ---------+"></div><div data-l="}                         // ">---------+</div></div>
+<br>
+<p><span class="caption">Listing 10-18: Annotations of the lifetimes of <code>r</code> and
+<code>x</code>, named <code>'a</code> and <code>'b</code>, respectively</span></p>
+<br>
+<p>Here, we’ve annotated the lifetime of <code>r</code> with <code>'a</code> and the lifetime of <code>x</code>
+with <code>'b</code>. As you can see, the inner <code>'b</code> block is much smaller than the outer
+<code>'a</code> lifetime block. At compile time, Rust compares the size of the two
+lifetimes and sees that <code>r</code> has a lifetime of <code>'a</code> but that it refers to memory
+with a lifetime of <code>'b</code>. The program is rejected because <code>'b</code> is shorter than
+<code>'a</code>: the subject of the reference doesn’t live as long as the reference.</p>
+<br>
+<p>Listing 10-19 fixes the code so it doesn’t have a dangling reference and
+compiles without any errors.</p>
+<br>
+<div data-lang="rust"><div data-l="{"></div><div data-l="#//    let x = 5;            // ----------+-- 'b"></div><div data-l="#                          //           |"></div><div data-l="    let x = 5;            // ">----------+-- 'b           |</div><div data-l="#//    let r = &amp;x;           // --+-- 'a  |"></div><div data-l="#                          //   |       |"></div><div data-l="    let r = &amp;x;           // ">--+-- 'a  |   |       |</div><div data-l="#//    println!(&quot;r: {}&quot;, r); //   |       |"></div><div data-l="#                          // --+       |"></div><div data-l="    println!(&quot;r: {}&quot;, r); // ">  |       | --+       |</div><div data-l="#//}                         // ----------+"></div><div data-l="}                         // ">----------+</div></div>
+<br>
+<p><span class="caption">Listing 10-19: A valid reference because the data has a
+longer lifetime than the reference</span></p>
+<br>
+<p>Here, <code>x</code> has the lifetime <code>'b</code>, which in this case is larger than <code>'a</code>. This
+means <code>r</code> can reference <code>x</code> because Rust knows that the reference in <code>r</code> will
+always be valid while <code>x</code> is valid.</p>
+<br>
+<p>Now that you know where the lifetimes of references are and how Rust analyzes
+lifetimes to ensure references will always be valid, let’s explore generic
+lifetimes of parameters and return values in the context of functions.</p>
+<br>
+<h3>Generic Lifetimes in Functions</h3>
+<br>
+<p>Let’s write a function that returns the longer of two string slices. This
+function will take two string slices and return a string slice. After we’ve
+implemented the <code>longest</code> function, the code in Listing 10-20 should print <code>The
+longest string is abcd</code>.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let string1 = String::from(&quot;abcd&quot;);"></div><div data-l="    let string2 = &quot;xyz&quot;;"></div><div data-l=""></div><div data-l="    let result = longest(string1.as_str(), string2);"></div><div data-l="    println!(&quot;The longest string is {}&quot;, result);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-20: A <code>main</code> function that calls the <code>longest</code>
+function to find the longer of two string slices</span></p>
+<br>
+<p>Note that we want the function to take string slices, which are references,
+because we don’t want the <code>longest</code> function to take ownership of its
+parameters. We want to allow the function to accept slices of a <code>String</code> (the
+type stored in the variable <code>string1</code>) as well as string literals (which is
+what variable <code>string2</code> contains).</p>
+<br>
+<p>Refer to the “String Slices as Parameters” section in Chapter 4 for more
+discussion about why the parameters we use in Listing 10-20 are the ones we
+want.</p>
+<br>
+<p>If we try to implement the <code>longest</code> function as shown in Listing 10-21, it
+won’t compile.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {"></div><div data-l="    if x.len() &gt; y.len() {"></div><div data-l="        x"></div><div data-l="    } else {"></div><div data-l="        y"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-21: An implementation of the <code>longest</code>
+function that returns the longer of two string slices but does not yet
+compile</span></p>
+<br>
+<p>Instead, we get the following error that talks about lifetimes:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0106]: missing lifetime specifier"></div><div data-l=" --&gt; src/main.rs:1:33"></div><div data-l="  |"></div><div data-l="1 | fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {"></div><div data-l="  |                                 ^ expected lifetime parameter"></div><div data-l="  |"></div><div data-l="  = help: this function's return type contains a borrowed value, but the"></div><div data-l="signature does not say whether it is borrowed from `x` or `y`"></div></div>
+<br>
+<p>The help text reveals that the return type needs a generic lifetime parameter
+on it because Rust can’t tell whether the reference being returned refers to
+<code>x</code> or <code>y</code>. Actually, we don’t know either, because the <code>if</code> block in the body
+of this function returns a reference to <code>x</code> and the <code>else</code> block returns a
+reference to <code>y</code>!</p>
+<br>
+<p>When we’re defining this function, we don’t know the concrete values that will
+be passed into this function, so we don’t know whether the <code>if</code> case or the
+<code>else</code> case will execute. We also don’t know the concrete lifetimes of the
+references that will be passed in, so we can’t look at the scopes as we did in
+Listings 10-18 and 10-19 to determine whether the reference we return will
+always be valid. The borrow checker can’t determine this either, because it
+doesn’t know how the lifetimes of <code>x</code> and <code>y</code> relate to the lifetime of the
+return value. To fix this error, we’ll add generic lifetime parameters that
+define the relationship between the references so the borrow checker can
+perform its analysis.</p>
+<br>
+<h3>Lifetime Annotation Syntax</h3>
+<br>
+<p>Lifetime annotations don’t change how long any of the references live. Just
+as functions can accept any type when the signature specifies a generic type
+parameter, functions can accept references with any lifetime by specifying a
+generic lifetime parameter. Lifetime annotations describe the relationships of
+the lifetimes of multiple references to each other without affecting the
+lifetimes.</p>
+<br>
+<p>Lifetime annotations have a slightly unusual syntax: the names of lifetime
+parameters must start with an apostrophe (<code>'</code>) and are usually all lowercase and
+very short, like generic types. Most people use the name <code>'a</code>. We place
+lifetime parameter annotations after the <code>&amp;</code> of a reference, using a space to
+separate the annotation from the reference’s type.</p>
+<br>
+<p>Here are some examples: a reference to an <code>i32</code> without a lifetime parameter, a
+reference to an <code>i32</code> that has a lifetime parameter named <code>'a</code>, and a mutable
+reference to an <code>i32</code> that also has the lifetime <code>'a</code>.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//&amp;i32        // a reference"></div><div data-l="&amp;i32        // ">a reference</div><div data-l="#//&amp;'a i32     // a reference with an explicit lifetime"></div><div data-l="&amp;'a i32     // ">a reference with an explicit lifetime</div><div data-l="#//&amp;'a mut i32 // a mutable reference with an explicit lifetime"></div><div data-l="&amp;'a mut i32 // ">a mutable reference with an explicit lifetime</div></div>
+<br>
+<p>One lifetime annotation by itself doesn’t have much meaning, because the
+annotations are meant to tell Rust how generic lifetime parameters of multiple
+references relate to each other. For example, let’s say we have a function with
+the parameter <code>first</code> that is a reference to an <code>i32</code> with lifetime <code>'a</code>. The
+function also has another parameter named <code>second</code> that is another reference to
+an <code>i32</code> that also has the lifetime <code>'a</code>. The lifetime annotations indicate
+that the references <code>first</code> and <code>second</code> must both live as long as that generic
+lifetime.</p>
+<br>
+<h3>Lifetime Annotations in Function Signatures</h3>
+<br>
+<p>Now let’s examine lifetime annotations in the context of the <code>longest</code>
+function. As with generic type parameters, we need to declare generic lifetime
+parameters inside angle brackets between the function name and the parameter
+list. The constraint we want to express in this signature is that all the
+references in the parameters and the return value must have the same lifetime.
+We’ll name the lifetime <code>'a</code> and then add it to each reference, as shown in
+Listing 10-22.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {"></div><div data-l="    if x.len() &gt; y.len() {"></div><div data-l="        x"></div><div data-l="    } else {"></div><div data-l="        y"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-22: The <code>longest</code> function definition
+specifying that all the references in the signature must have the same lifetime
+<code>'a</code></span></p>
+<br>
+<p>This code should compile and produce the result we want when we use it with the
+<code>main</code> function in Listing 10-20.</p>
+<br>
+<p>The function signature now tells Rust that for some lifetime <code>'a</code>, the function
+takes two parameters, both of which are string slices that live at least as
+long as lifetime <code>'a</code>. The function signature also tells Rust that the string
+slice returned from the function will live at least as long as lifetime <code>'a</code>.
+These constraints are what we want Rust to enforce. Remember, when we specify
+the lifetime parameters in this function signature, we’re not changing the
+lifetimes of any values passed in or returned. Rather, we’re specifying that
+the borrow checker should reject any values that don’t adhere to these
+constraints. Note that the <code>longest</code> function doesn’t need to know exactly how
+long <code>x</code> and <code>y</code> will live, only that some scope can be substituted for <code>'a</code>
+that will satisfy this signature.</p>
+<br>
+<p>When annotating lifetimes in functions, the annotations go in the function
+signature, not in the function body. Rust can analyze the code within the
+function without any help. However, when a function has references to or from
+code outside that function, it becomes almost impossible for Rust to figure out
+the lifetimes of the parameters or return values on its own. The lifetimes
+might be different each time the function is called. This is why we need to
+annotate the lifetimes manually.</p>
+<br>
+<p>When we pass concrete references to <code>longest</code>, the concrete lifetime that is
+substituted for <code>'a</code> is the part of the scope of <code>x</code> that overlaps with the
+scope of <code>y</code>. In other words, the generic lifetime <code>'a</code> will get the concrete
+lifetime that is equal to the smaller of the lifetimes of <code>x</code> and <code>y</code>. Because
+we’ve annotated the returned reference with the same lifetime parameter <code>'a</code>,
+the returned reference will also be valid for the length of the smaller of the
+lifetimes of <code>x</code> and <code>y</code>.</p>
+<br>
+<p>Let’s look at how the lifetime annotations restrict the <code>longest</code> function by
+passing in references that have different concrete lifetimes. Listing 10-23 is
+a straightforward example.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str {"></div><div data-l="#     if x.len() &gt; y.len() {"></div><div data-l="#         x"></div><div data-l="#     } else {"></div><div data-l="#         y"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="    let string1 = String::from(&quot;long string is long&quot;);"></div><div data-l=""></div><div data-l="    {"></div><div data-l="        let string2 = String::from(&quot;xyz&quot;);"></div><div data-l="        let result = longest(string1.as_str(), string2.as_str());"></div><div data-l="        println!(&quot;The longest string is {}&quot;, result);"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-23: Using the <code>longest</code> function with
+references to <code>String</code> values that have different concrete lifetimes</span></p>
+<br>
+<p>In this example, <code>string1</code> is valid until the end of the outer scope, <code>string2</code>
+is valid until the end of the inner scope, and <code>result</code> references something
+that is valid until the end of the inner scope. Run this code, and you’ll see
+that the borrow checker approves of this code; it will compile and print <code>The
+longest string is long string is long</code>.</p>
+<br>
+<p>Next, let’s try an example that shows that the lifetime of the reference in
+<code>result</code> must be the smaller lifetime of the two arguments. We’ll move the
+declaration of the <code>result</code> variable outside the inner scope but leave the
+assignment of the value to the <code>result</code> variable inside the scope with
+<code>string2</code>. Then we’ll move the <code>println€</code> that uses <code>result</code> outside the inner
+scope, after the inner scope has ended. The code in Listing 10-24 will not
+compile.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let string1 = String::from(&quot;long string is long&quot;);"></div><div data-l="    let result;"></div><div data-l="    {"></div><div data-l="        let string2 = String::from(&quot;xyz&quot;);"></div><div data-l="        result = longest(string1.as_str(), string2.as_str());"></div><div data-l="    }"></div><div data-l="    println!(&quot;The longest string is {}&quot;, result);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-24: Attempting to use <code>result</code> after <code>string2</code>
+has gone out of scope</span></p>
+<br>
+<p>When we try to compile this code, we’ll get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0597]: `string2` does not live long enough"></div><div data-l="  --&gt; src/main.rs:15:5"></div><div data-l="   |"></div><div data-l="14 |         result = longest(string1.as_str(), string2.as_str());"></div><div data-l="   |                                            ------- borrow occurs here"></div><div data-l="15 |     }"></div><div data-l="   |     ^ `string2` dropped here while still borrowed"></div><div data-l="16 |     println!(&quot;The longest string is {}&quot;, result);"></div><div data-l="17 | }"></div><div data-l="   | - borrowed value needs to live until here"></div></div>
+<br>
+<p>The error shows that for <code>result</code> to be valid for the <code>println€</code> statement,
+<code>string2</code> would need to be valid until the end of the outer scope. Rust knows
+this because we annotated the lifetimes of the function parameters and return
+values using the same lifetime parameter <code>'a</code>.</p>
+<br>
+<p>As humans, we can look at this code and see that <code>string1</code> is longer than
+<code>string2</code> and therefore <code>result</code> will contain a reference to <code>string1</code>.
+Because <code>string1</code> has not gone out of scope yet, a reference to <code>string1</code> will
+still be valid for the <code>println€</code> statement. However, the compiler can’t see
+that the reference is valid in this case. We’ve told Rust that the lifetime of
+the reference returned by the <code>longest</code> function is the same as the smaller of
+the lifetimes of the references passed in. Therefore, the borrow checker
+disallows the code in Listing 10-24 as possibly having an invalid reference.</p>
+<br>
+<p>Try designing more experiments that vary the values and lifetimes of the
+references passed in to the <code>longest</code> function and how the returned reference
+is used. Make hypotheses about whether or not your experiments will pass the
+borrow checker before you compile; then check to see if you’re right!</p>
+<br>
+<h3>Thinking in Terms of Lifetimes</h3>
+<br>
+<p>The way in which you need to specify lifetime parameters depends on what your
+function is doing. For example, if we changed the implementation of the
+<code>longest</code> function to always return the first parameter rather than the longest
+string slice, we wouldn’t need to specify a lifetime on the <code>y</code> parameter. The
+following code will compile:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn longest&lt;'a&gt;(x: &amp;'a str, y: &amp;str) -&gt; &amp;'a str {"></div><div data-l="    x"></div><div data-l="}"></div></div>
+<br>
+<p>In this example, we’ve specified a lifetime parameter <code>'a</code> for the parameter
+<code>x</code> and the return type, but not for the parameter <code>y</code>, because the lifetime of
+<code>y</code> does not have any relationship with the lifetime of <code>x</code> or the return value.</p>
+<br>
+<p>When returning a reference from a function, the lifetime parameter for the
+return type needs to match the lifetime parameter for one of the parameters. If
+the reference returned does <i>not</i> refer to one of the parameters, it must refer
+to a value created within this function, which would be a dangling reference
+because the value will go out of scope at the end of the function. Consider
+this attempted implementation of the <code>longest</code> function that won’t compile:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn longest&lt;'a&gt;(x: &amp;str, y: &amp;str) -&gt; &amp;'a str {"></div><div data-l="    let result = String::from(&quot;really long string&quot;);"></div><div data-l="    result.as_str()"></div><div data-l="}"></div></div>
+<br>
+<p>Here, even though we’ve specified a lifetime parameter <code>'a</code> for the return
+type, this implementation will fail to compile because the return value
+lifetime is not related to the lifetime of the parameters at all. Here is the
+error message we get:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0597]: `result` does not live long enough"></div><div data-l=" --&gt; src/main.rs:3:5"></div><div data-l="  |"></div><div data-l="3 |     result.as_str()"></div><div data-l="  |     ^^^^^^ does not live long enough"></div><div data-l="4 | }"></div><div data-l="  | - borrowed value only lives until here"></div><div data-l="  |"></div><div data-l="note: borrowed value must be valid for the lifetime 'a as defined on the"></div><div data-l="function body at 1:1..."></div><div data-l=" --&gt; src/main.rs:1:1"></div><div data-l="  |"></div><div data-l="1 | / fn longest&lt;'a&gt;(x: &amp;str, y: &amp;str) -&gt; &amp;'a str {"></div><div data-l="2 | |     let result = String::from(&quot;really long string&quot;);"></div><div data-l="3 | |     result.as_str()"></div><div data-l="4 | | }"></div><div data-l="  | |_^"></div></div>
+<br>
+<p>The problem is that <code>result</code> goes out of scope and gets cleaned up at the end
+of the <code>longest</code> function. We’re also trying to return a reference to <code>result</code>
+from the function. There is no way we can specify lifetime parameters that
+would change the dangling reference, and Rust won’t let us create a dangling
+reference. In this case, the best fix would be to return an owned data type
+rather than a reference so the calling function is then responsible for
+cleaning up the value.</p>
+<br>
+<p>Ultimately, lifetime syntax is about connecting the lifetimes of various
+parameters and return values of functions. Once they’re connected, Rust has
+enough information to allow memory-safe operations and disallow operations that
+would create dangling pointers or otherwise violate memory safety.</p>
+<br>
+<h3>Lifetime Annotations in Struct Definitions</h3>
+<br>
+<p>So far, we’ve only defined structs to hold owned types. It’s possible for
+structs to hold references, but in that case we would need to add a lifetime
+annotation on every reference in the struct’s definition. Listing 10-25 has a
+struct named <code>ImportantExcerpt</code> that holds a string slice.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="struct ImportantExcerpt&lt;'a&gt; {"></div><div data-l="    part: &amp;'a str,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let novel = String::from(&quot;Call me Ishmael. Some years ago...&quot;);"></div><div data-l="    let first_sentence = novel.split('.')"></div><div data-l="        .next()"></div><div data-l="        .expect(&quot;Could not find a '.'&quot;);"></div><div data-l="    let i = ImportantExcerpt { part: first_sentence };"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-25: A struct that holds a reference, so its
+definition needs a lifetime annotation</span></p>
+<br>
+<p>This struct has one field, <code>part</code>, that holds a string slice, which is a
+reference. As with generic data types, we declare the name of the generic
+lifetime parameter inside angle brackets after the name of the struct so we can
+use the lifetime parameter in the body of the struct definition. This
+annotation means an instance of <code>ImportantExcerpt</code> can’t outlive the reference
+it holds in its <code>part</code> field.</p>
+<br>
+<p>The <code>main</code> function here creates an instance of the <code>ImportantExcerpt</code> struct
+that holds a reference to the first sentence of the <code>String</code> owned by the
+variable <code>novel</code>. The data in <code>novel</code> exists before the <code>ImportantExcerpt</code>
+instance is created. In addition, <code>novel</code> doesn’t go out of scope until after
+the <code>ImportantExcerpt</code> goes out of scope, so the reference in the
+<code>ImportantExcerpt</code> instance is valid.</p>
+<br>
+<h3>Lifetime Elision</h3>
+<br>
+<p>You’ve learned that every reference has a lifetime and that you need to specify
+lifetime parameters for functions or structs that use references. However, in
+Chapter 4 we had a function in Listing 4-9, which is shown again in Listing
+10-26, that compiled without lifetime annotations.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn first_word(s: &amp;str) -&gt; &amp;str {"></div><div data-l="    let bytes = s.as_bytes();"></div><div data-l=""></div><div data-l="    for (i, &amp;item) in bytes.iter().enumerate() {"></div><div data-l="        if item == b' ' {"></div><div data-l="            return &amp;s[0..i];"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    &amp;s[..]"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 10-26: A function we defined in Listing 4-9 that
+compiled without lifetime annotations, even though the parameter and return
+type are references</span></p>
+<br>
+<p>The reason this function compiles without lifetime annotations is historical:
+in early versions (pre-1.0) of Rust, this code wouldn’t have compiled because
+every reference needed an explicit lifetime. At that time, the function
+signature would have been written like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn first_word&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {"></div></div>
+<br>
+<p>After writing a lot of Rust code, the Rust team found that Rust programmers
+were entering the same lifetime annotations over and over in particular
+situations. These situations were predictable and followed a few deterministic
+patterns. The developers programmed these patterns into the compiler’s code so
+the borrow checker could infer the lifetimes in these situations and wouldn’t
+need explicit annotations.</p>
+<br>
+<p>This piece of Rust history is relevant because it’s possible that more
+deterministic patterns will emerge and be added to the compiler. In the future,
+even fewer lifetime annotations might be required.</p>
+<br>
+<p>The patterns programmed into Rust’s analysis of references are called the
+<i>lifetime elision rules</i>. These aren’t rules for programmers to follow; they’re
+a set of particular cases that the compiler will consider, and if your code
+fits these cases, you don’t need to write the lifetimes explicitly.</p>
+<br>
+<p>The elision rules don’t provide full inference. If Rust deterministically
+applies the rules but there is still ambiguity as to what lifetimes the
+references have, the compiler won’t guess what the lifetime of the remaining
+references should be. In this case, instead of guessing, the compiler will give
+you an error that you can resolve by adding the lifetime annotations that
+specify how the references relate to each other.</p>
+<br>
+<p>Lifetimes on function or method parameters are called <i>input lifetimes</i>, and
+lifetimes on return values are called <i>output lifetimes</i>.</p>
+<br>
+<p>The compiler uses three rules to figure out what lifetimes references have when
+there aren’t explicit annotations. The first rule applies to input lifetimes,
+and the second and third rules apply to output lifetimes. If the compiler gets
+to the end of the three rules and there are still references for which it can’t
+figure out lifetimes, the compiler will stop with an error.</p>
+<br>
+<p>The first rule is that each parameter that is a reference gets its own lifetime
+parameter. In other words, a function with one parameter gets one lifetime
+parameter: <code>fn foo&lt;'a&gt;(x: &amp;'a i32)</code>; a function with two parameters gets two
+separate lifetime parameters: <code>fn foo&lt;'a, 'b&gt;(x: &amp;'a i32, y: &amp;'b i32)</code>; and so
+on.</p>
+<br>
+<p>The second rule is if there is exactly one input lifetime parameter, that
+lifetime is assigned to all output lifetime parameters: <code>fn foo&lt;'a&gt;(x: &amp;'a i32)
+-&gt; &amp;'a i32</code>.</p>
+<br>
+<p>The third rule is if there are multiple input lifetime parameters, but one of
+them is <code>&amp;self</code> or <code>&amp;mut self</code> because this is a method, the lifetime of <code>self</code>
+is assigned to all output lifetime parameters. This third rule makes methods
+much nicer to read and write because fewer symbols are necessary.</p>
+<br>
+<p>Let’s pretend we’re the compiler. We’ll apply these rules to figure out what
+the lifetimes of the references in the signature of the <code>first_word</code> function
+in Listing 10-26 are. The signature starts without any lifetimes associated
+with the references:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn first_word(s: &amp;str) -&gt; &amp;str {"></div></div>
+<br>
+<p>Then the compiler applies the first rule, which specifies that each parameter
+gets its own lifetime. We’ll call it <code>'a</code> as usual, so now the signature is
+this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn first_word&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;str {"></div></div>
+<br>
+<p>The second rule applies because there is exactly one input lifetime. The second
+rule specifies that the lifetime of the one input parameter gets assigned to
+the output lifetime, so the signature is now this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn first_word&lt;'a&gt;(s: &amp;'a str) -&gt; &amp;'a str {"></div></div>
+<br>
+<p>Now all the references in this function signature have lifetimes, and the
+compiler can continue its analysis without needing the programmer to annotate
+the lifetimes in this function signature.</p>
+<br>
+<p>Let’s look at another example, this time using the <code>longest</code> function that had
+no lifetime parameters when we started working with it in Listing 10-21:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn longest(x: &amp;str, y: &amp;str) -&gt; &amp;str {"></div></div>
+<br>
+<p>Let’s apply the first rule: each parameter gets its own lifetime. This time we
+have two parameters instead of one, so we have two lifetimes:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn longest&lt;'a, 'b&gt;(x: &amp;'a str, y: &amp;'b str) -&gt; &amp;str {"></div></div>
+<br>
+<p>You can see that the second rule doesn’t apply because there is more than one
+input lifetime. The third rule doesn’t apply either, because <code>longest</code> is a
+function rather than a method, so none of the parameters are <code>self</code>. After
+working through all three rules, we still haven’t figured out what the return
+type’s lifetime is. This is why we got an error trying to compile the code in
+Listing 10-21: the compiler worked through the lifetime elision rules but still
+couldn’t figure out all the lifetimes of the references in the signature.</p>
+<br>
+<p>Because the third rule really only applies in method signatures, we’ll look at
+lifetimes in that context next to see why the third rule means we don’t have to
+annotate lifetimes in method signatures very often.</p>
+<br>
+<h3>Lifetime Annotations in Method Definitions</h3>
+<br>
+<p>When we implement methods on a struct with lifetimes, we use the same syntax as
+that of generic type parameters shown in Listing 10-11. Where we declare and
+use the lifetime parameters depends on whether they’re related to the struct
+fields or the method parameters and return values.</p>
+<br>
+<p>Lifetime names for struct fields always need to be declared after the <code>impl</code>
+keyword and then used after the struct’s name, because those lifetimes are part
+of the struct’s type.</p>
+<br>
+<p>In method signatures inside the <code>impl</code> block, references might be tied to the
+lifetime of references in the struct’s fields, or they might be independent. In
+addition, the lifetime elision rules often make it so that lifetime annotations
+aren’t necessary in method signatures. Let’s look at some examples using the
+struct named <code>ImportantExcerpt</code> that we defined in Listing 10-25.</p>
+<br>
+<p>First, we’ll use a method named <code>level</code> whose only parameter is a reference to
+<code>self</code> and whose return value is an <code>i32</code>, which is not a reference to anything:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct ImportantExcerpt&lt;'a&gt; {"></div><div data-l="#     part: &amp;'a str,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="impl&lt;'a&gt; ImportantExcerpt&lt;'a&gt; {"></div><div data-l="    fn level(&amp;self) -&gt; i32 {"></div><div data-l="        3"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The lifetime parameter declaration after <code>impl</code> and use after the type name is
+required, but we’re not required to annotate the lifetime of the reference to
+<code>self</code> because of the first elision rule.</p>
+<br>
+<p>Here is an example where the third lifetime elision rule applies:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct ImportantExcerpt&lt;'a&gt; {"></div><div data-l="#     part: &amp;'a str,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="impl&lt;'a&gt; ImportantExcerpt&lt;'a&gt; {"></div><div data-l="    fn announce_and_return_part(&amp;self, announcement: &amp;str) -&gt; &amp;str {"></div><div data-l="        println!(&quot;Attention please: {}&quot;, announcement);"></div><div data-l="        self.part"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>There are two input lifetimes, so Rust applies the first lifetime elision rule
+and gives both <code>&amp;self</code> and <code>announcement</code> their own lifetimes. Then, because
+one of the parameters is <code>&amp;self</code>, the return type gets the lifetime of <code>&amp;self</code>,
+and all lifetimes have been accounted for.</p>
+<br>
+<h3>The Static Lifetime</h3>
+<br>
+<p>One special lifetime we need to discuss is <code>'static</code>, which denotes the entire
+duration of the program. All string literals have the <code>'static</code> lifetime, which
+we can annotate as follows:</p>
+<br>
+<div data-lang="rust"><div data-l="let s: &amp;'static str = &quot;I have a static lifetime.&quot;;"></div></div>
+<br>
+<p>The text of this string is stored directly in the binary of your program, which
+is always available. Therefore, the lifetime of all string literals is
+<code>'static</code>.</p>
+<br>
+<p>You might see suggestions to use the <code>'static</code> lifetime in error messages. But
+before specifying <code>'static</code> as the lifetime for a reference, think about
+whether the reference you have actually lives the entire lifetime of your
+program or not. You might consider whether you want it to live that long, even
+if it could. Most of the time, the problem results from attempting to create a
+dangling reference or a mismatch of the available lifetimes. In such cases, the
+solution is fixing those problems, not specifying the <code>'static</code> lifetime.</p>
+<br>
+<h2>Generic Type Parameters, Trait Bounds, and Lifetimes Together</h2>
+<br>
+<p>Let’s briefly look at the syntax of specifying generic type parameters, trait
+bounds, and lifetimes all in one function!</p>
+<br>
+<div data-lang="rust"><div data-l="use std::fmt::Display;"></div><div data-l=""></div><div data-l="fn longest_with_an_announcement&lt;'a, T&gt;(x: &amp;'a str, y: &amp;'a str, ann: T) -&gt; &amp;'a str"></div><div data-l="    where T: Display"></div><div data-l="{"></div><div data-l="    println!(&quot;Announcement! {}&quot;, ann);"></div><div data-l="    if x.len() &gt; y.len() {"></div><div data-l="        x"></div><div data-l="    } else {"></div><div data-l="        y"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>This is the <code>longest</code> function from Listing 10-22 that returns the longer of
+two string slices. But now it has an extra parameter named <code>ann</code> of the generic
+type <code>T</code>, which can be filled in by any type that implements the <code>Display</code>
+trait as specified by the <code>where</code> clause. This extra parameter will be printed
+before the function compares the lengths of the string slices, which is why the
+<code>Display</code> trait bound is necessary. Because lifetimes are a type of generic,
+the declarations of the lifetime parameter <code>'a</code> and the generic type parameter
+<code>T</code> go in the same list inside the angle brackets after the function name.</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>We covered a lot in this chapter! Now that you know about generic type
+parameters, traits and trait bounds, and generic lifetime parameters, you’re
+ready to write code without repetition that works in many different situations.
+Generic type parameters let you apply the code to different types. Traits and
+trait bounds ensure that even though the types are generic, they’ll have the
+behavior the code needs. You learned how to use lifetime annotations to ensure
+that this flexible code won’t have any dangling references. And all of this
+analysis happens at compile time, which doesn’t affect runtime performance!</p>
+<br>
+<p>Believe it or not, there is much more to learn on the topics we discussed in
+this chapter: Chapter 17 discusses trait objects, which are another way to use
+traits. Chapter 19 covers more complex scenarios involving lifetime annotations
+as well as some advanced type system features. But next, you’ll learn how to
+write tests in Rust so you can make sure your code is working the way it should.</p>

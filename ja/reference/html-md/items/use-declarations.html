@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<h1>Use declarations</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax:&lt;/sup&gt;</b>\
+<s>UseDeclaration</s> :\
+&amp;nbsp;&amp;nbsp; (<a class="notranslate" href="#4_Visibility_">_Visibility_</a>)<sup>?</sup> <code>use</code> <s>UseTree</s> <code>;</code></p>
+<br>
+<p><s>UseTree</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; (<a class="notranslate" href="#4_SimplePath_">_SimplePath_</a><sup>?</sup> <code>::</code>)<sup>?</sup> <code>*</code>\
+&amp;nbsp;&amp;nbsp; | (<a class="notranslate" href="#4_SimplePath_">_SimplePath_</a><sup>?</sup> <code>::</code>)<sup>?</sup> <code>{</code> (<s>UseTree</s> ( <code>,</code>  <s>UseTree</s> )<sup>\*</sup> <code>,</code><sup>?</sup>)<sup>?</sup> <code>}</code>\
+&amp;nbsp;&amp;nbsp; | <a class="notranslate" href="#4_SimplePath_">_SimplePath_</a> <code>as</code> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a></p></blockquote>
+<br>
+<p>A <s>use declaration</s> creates one or more local name bindings synonymous with
+some other <a class="notranslate" href="#4path">path</a>. Usually a <code>use</code> declaration is used to shorten the path
+required to refer to a module item. These declarations may appear in <a class="notranslate" href="#4modules">modules</a>
+and <a class="notranslate" href="#4blocks">blocks</a>, usually at the top.</p>
+<br>
+<a class="notranslate" href="#1paths.html">path</a>
+<a class="notranslate" href="#1items/modules.html">modules</a>
+<a class="notranslate" href="#1expressions/block-expr.html">blocks</a>
+<br>
+<blockquote><p><b>Note</b>: Unlike in many languages, <code>use</code> declarations in Rust do <i>not</i>
+declare linkage dependency with external crates. Rather, <a href="#2items/extern-crates.html"><code>extern crate</code>
+declarations</a> declare linkage dependencies.</p></blockquote>
+<br>
+<p>Use declarations support a number of convenient shortcuts:</p>
+<br>
+<div data-b="*">Simultaneously binding a list of paths with a common prefix, using the
+glob-like brace syntax <code>use a::b::{c, d, e::f, g::h::i};</code></div>
+<div data-b="*">Simultaneously binding a list of paths with a common prefix and their common
+parent module, using the <code>self</code> keyword, such as <code>use a::b::{self, c, d::e};</code></div>
+<div data-b="*">Rebinding the target name as a new local name, using the syntax <code>use p::q::r
+  as x;</code>. This can also be used with the last two features:
+<code>use a::b::{self as ab, c as abc}</code>.</div>
+<div data-b="*">Binding all paths matching a given prefix, using the asterisk wildcard syntax
+<code>use a::b::*;</code>.</div>
+<div data-b="*">Nesting groups of the previous features multiple times, such as
+<code>use a::b::{self as ab, c, d::{*, e::f}};</code></div>
+<br>
+<p>An example of <code>use</code> declarations:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::option::Option::{Some, None};"></div><div data-l="use std::collections::hash_map::{self, HashMap};"></div><div data-l=""></div><div data-l="fn foo&lt;T&gt;(_: T){}"></div><div data-l="fn bar(map1: HashMap&lt;String, usize&gt;, map2: hash_map::HashMap&lt;String, usize&gt;){}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // Equivalent to 'foo(vec![std::option::Option::Some(1.0f64),"></div><div data-l="#    // std::option::Option::None]);'"></div><div data-l="    // ">Equivalent to 'foo(vec!<a class="notranslate" href="#4std::option::Option::Some(1.0f64), std::option::Option::None">std::option::Option::Some(1.0f64), std::option::Option::None</a>);'</div><div data-l="    foo(vec![Some(1.0f64), None]);"></div><div data-l=""></div><div data-l="#    // Both `hash_map` and `HashMap` are in scope."></div><div data-l="    // ">Both <code>hash_map</code> and <code>HashMap</code> are in scope.</div><div data-l="    let map1 = HashMap::new();"></div><div data-l="    let map2 = hash_map::HashMap::new();"></div><div data-l="    bar(map1, map2);"></div><div data-l="}"></div></div>
+<br>
+<p>Like items, <code>use</code> declarations are private to the containing module, by
+default. Also like items, a <code>use</code> declaration can be public, if qualified by
+the <code>pub</code> keyword. Such a <code>use</code> declaration serves to <s>re-export</s> a name. A
+public <code>use</code> declaration can therefore <s>redirect</s> some public name to a
+different target definition: even a definition with a private canonical path,
+inside a different module. If a sequence of such redirections form a cycle or
+cannot be resolved unambiguously, they represent a compile-time error.</p>
+<br>
+<p>An example of re-exporting:</p>
+<br>
+<div data-lang="rust"><div data-l="# fn main() { }"></div><div data-l="mod quux {"></div><div data-l="    pub use quux::foo::{bar, baz};"></div><div data-l=""></div><div data-l="    pub mod foo {"></div><div data-l="        pub fn bar() { }"></div><div data-l="        pub fn baz() { }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>In this example, the module <code>quux</code> re-exports two public names defined in
+<code>foo</code>.</p>
+<br>
+<p>Also note that the paths contained in <code>use</code> items are relative to the crate
+root. So, in the previous example, the <code>use</code> refers to <code>quux::foo::{bar, baz}</code>,
+and not simply to <code>foo::{bar, baz}</code>. This also means that top-level module
+declarations should be at the crate root if direct usage of the declared
+modules within <code>use</code> items is desired. It is also possible to use <code>self</code> and
+<code>super</code> at the beginning of a <code>use</code> item to refer to the current and direct
+parent modules respectively. All rules regarding accessing declared modules in
+<code>use</code> declarations apply to both module declarations and <code>extern crate</code>
+declarations.</p>
+<br>
+<p>An example of what will and will not work for <code>use</code> items:</p>
+<br>
+<div data-lang="rust"><div data-l="# #![allow(unused_imports)]"></div><div data-l="#//use foo::baz::foobaz;    // good: foo is at the root of the crate"></div><div data-l="use foo::baz::foobaz;    // ">good: foo is at the root of the crate</div><div data-l=""></div><div data-l="mod foo {"></div><div data-l=""></div><div data-l="    mod example {"></div><div data-l="        pub mod iter {}"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#//    use foo::example::iter; // good: foo is at crate root"></div><div data-l="    use foo::example::iter; // ">good: foo is at crate root</div><div data-l="#//  use example::iter;      // bad:  example is not at the crate root"></div><div data-l="// "> use example::iter;      // bad:  example is not at the crate root</div><div data-l="#//    use self::baz::foobaz;  // good: self refers to module 'foo'"></div><div data-l="    use self::baz::foobaz;  // ">good: self refers to module 'foo'</div><div data-l="#//    use foo::bar::foobar;   // good: foo is at crate root"></div><div data-l="    use foo::bar::foobar;   // ">good: foo is at crate root</div><div data-l=""></div><div data-l="    pub mod bar {"></div><div data-l="        pub fn foobar() { }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    pub mod baz {"></div><div data-l="#//        use super::bar::foobar; // good: super refers to module 'foo'"></div><div data-l="        use super::bar::foobar; // ">good: super refers to module 'foo'</div><div data-l="        pub fn foobaz() { }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {}"></div></div>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1paths.html">_SimplePath_</a>
+<a class="notranslate" href="#1visibility-and-privacy.html">_Visibility_</a>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h1><code>extern crate</code></h1>
+<br>
+<p>To link a crate to this new library, the <code>extern crate</code> declaration must be
+used. This will not only link the library, but also import all its items under
+a module named the same as the library. The visibility rules that apply to
+modules also apply to libraries.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Link to `library`, import items under the `rary` module"></div><div data-l="// ">Link to <code>library</code>, import items under the <code>rary</code> module</div><div data-l="extern crate rary;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    rary::public_function();"></div><div data-l=""></div><div data-l="#    // Error! `private_function` is private"></div><div data-l="    // ">Error! <code>private_function</code> is private</div><div data-l="    //rary::private_function();"></div><div data-l=""></div><div data-l="    rary::indirect_access();"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="bash"><div data-l="# Where library.rlib is the path to the compiled library, assumed that it's"></div><div data-l="# in the same directory here:"></div><div data-l="$ rustc executable.rs --extern rary=library.rlib &amp;&amp; ./executable"></div><div data-l="called rary's `public_function()`"></div><div data-l="called rary's `indirect_access()`, that"></div><div data-l="&gt; called rary's `private_function()`"></div></div>

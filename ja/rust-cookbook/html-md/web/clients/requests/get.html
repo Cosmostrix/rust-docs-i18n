@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Make a HTTP GET request</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>Parses the supplied URL and makes a synchronous HTTP GET request
+with <a class="notranslate" href="#4`reqwest::get`">`reqwest::get`</a>. Prints obtained <a class="notranslate" href="#4`reqwest::Response`">`reqwest::Response`</a>
+status and headers. Reads HTTP response body into an allocated <a class="notranslate" href="#4`String`">`String`</a>
+using <a class="notranslate" href="#4`read_to_string`">`read_to_string`</a>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="use std::io::Read;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         HttpRequest(reqwest::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let mut res = reqwest::get(&quot;http://httpbin.org/get&quot;)?;"></div><div data-l="    let mut body = String::new();"></div><div data-l="    res.read_to_string(&amp;mut body)?;"></div><div data-l=""></div><div data-l="    println!(&quot;Status: {}&quot;, res.status());"></div><div data-l="    println!(&quot;Headers:\n{}&quot;, res.headers());"></div><div data-l="    println!(&quot;Body:\n{}&quot;, body);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/trait.Read.html#method.read_to_string">`read_to_string`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/fn.get.html">`reqwest::get`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Response.html">`reqwest::Response`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/string/struct.String.html">`String`</a>

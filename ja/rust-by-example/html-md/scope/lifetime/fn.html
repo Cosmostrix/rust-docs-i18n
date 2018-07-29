@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Functions</h1>
+<br>
+<p>Ignoring <a class="notranslate" href="#4elision">elision</a>, function signatures with lifetimes have a few constraints: </p>
+<br>
+<div data-b="*">any reference <i>must</i> have an annotated lifetime.</div>
+<div data-b="*">any reference being returned <i>must</i> have the same lifetime as an input or</div>
+<p>be <code>static</code>.</p>
+<br>
+<p>Additionally, note that returning references without input is banned if it
+would result in returning references to invalid data. The following example shows
+off some valid forms of functions with lifetimes:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// One input reference with lifetime `'a` which must live"></div><div data-l="#// at least as long as the function."></div><div data-l="// ">One input reference with lifetime <code>'a</code> which must live at least as long as the function.</div><div data-l="fn print_one&lt;'a&gt;(x: &amp;'a i32) {"></div><div data-l="    println!(&quot;`print_one`: x is {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Mutable references are possible with lifetimes as well."></div><div data-l="// ">Mutable references are possible with lifetimes as well.</div><div data-l="fn add_one&lt;'a&gt;(x: &amp;'a mut i32) {"></div><div data-l="    *x += 1;"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Multiple elements with different lifetimes. In this case, it"></div><div data-l="#// would be fine for both to have the same lifetime `'a`, but"></div><div data-l="#// in more complex cases, different lifetimes may be required."></div><div data-l="// ">Multiple elements with different lifetimes. In this case, it would be fine for both to have the same lifetime <code>'a</code>, but in more complex cases, different lifetimes may be required.</div><div data-l="fn print_multi&lt;'a, 'b&gt;(x: &amp;'a i32, y: &amp;'b i32) {"></div><div data-l="    println!(&quot;`print_multi`: x is {}, y is {}&quot;, x, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Returning references that have been passed in is acceptable."></div><div data-l="#// However, the correct lifetime must be returned."></div><div data-l="// ">Returning references that have been passed in is acceptable. However, the correct lifetime must be returned.</div><div data-l="fn pass_x&lt;'a, 'b&gt;(x: &amp;'a i32, _: &amp;'b i32) -&gt; &amp;'a i32 { x }"></div><div data-l=""></div><div data-l="//fn invalid_output&lt;'a&gt;() -&gt; &amp;'a String { &amp;String::from(&quot;foo&quot;) }"></div><div data-l="#// The above is invalid: `'a` must live longer than the function."></div><div data-l="#// Here, `&amp;String::from(&quot;foo&quot;)` would create a `String`, followed by a"></div><div data-l="#// reference. Then the data is dropped upon exiting the scope, leaving"></div><div data-l="#// a reference to invalid data to be returned."></div><div data-l="// ">The above is invalid: <code>'a</code> must live longer than the function. Here, <code>&amp;String::from(&quot;foo&quot;)</code> would create a <code>String</code>, followed by a reference. Then the data is dropped upon exiting the scope, leaving a reference to invalid data to be returned.</div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 7;"></div><div data-l="    let y = 9;"></div><div data-l="    "></div><div data-l="    print_one(&amp;x);"></div><div data-l="    print_multi(&amp;x, &amp;y);"></div><div data-l="    "></div><div data-l="    let z = pass_x(&amp;x, &amp;y);"></div><div data-l="    print_one(z);"></div><div data-l=""></div><div data-l="    let mut t = 3;"></div><div data-l="    add_one(&amp;mut t);"></div><div data-l="    print_one(&amp;t);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3fn">functions</a></p>
+<br>
+<a class="notranslate" href="#1scope/lifetime/elision.html">elision</a>
+<a class="notranslate" href="#1fn.html">fn</a>

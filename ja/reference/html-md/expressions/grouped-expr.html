@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<h1>Grouped expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>GroupedExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>(</code> <a class="notranslate" href="#4_Expression_">_Expression_</a> <code>)</code></p></blockquote>
+<br>
+<p>An expression enclosed in parentheses evaluates to the result of the enclosed
+expression. Parentheses can be used to explicitly specify evaluation order
+within an expression.</p>
+<br>
+<p>An example of a parenthesized expression:</p>
+<br>
+<div data-lang="rust"><div data-l="let x: i32 = 2 + 3 * 4;"></div><div data-l="let y: i32 = (2 + 3) * 4;"></div><div data-l="assert_eq!(x, 14);"></div><div data-l="assert_eq!(y, 20);"></div></div>
+<br>
+<p>An example of a necessary use of parentheses is when calling a function pointer
+that is a member of a struct:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct A {"></div><div data-l="#    f: fn() -&gt; &amp;'static str"></div><div data-l="# }"></div><div data-l="# impl A {"></div><div data-l="#    fn f(&amp;self) -&gt; &amp;'static str {"></div><div data-l="#        &quot;The method f&quot;"></div><div data-l="#    }"></div><div data-l="# }"></div><div data-l="# let a = A{f: || &quot;The field f&quot;};"></div><div data-l="#"></div><div data-l="assert_eq!( a.f (), &quot;The method f&quot;);"></div><div data-l="assert_eq!((a.f)(), &quot;The field f&quot;);"></div></div>
+<br>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>

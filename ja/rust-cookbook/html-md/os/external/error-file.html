@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Redirect both stdout and stderr of child process to the same file</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>Spawns a child process and redirects <code>stdout</code> and <code>stderr</code> to the same
+file. It follows the same idea as <a href="#2#run-piped-external-commands">run piped external
+commands</a>, however <a class="notranslate" href="#4`process::Stdio`">`process::Stdio`</a>
+writes to a specified file.  <a class="notranslate" href="#4`File::try_clone`">`File::try_clone`</a> references the same file handle
+for <code>stdout</code> and <code>stderr</code>. It will ensure that both handles write with the same
+cursor position.</p>
+<br>
+<p>The below recipe is equivalent to run the Unix shell command <code>ls
+. oops &gt;out.txt 2&gt;&amp;1</code>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::fs::File;"></div><div data-l="use std::process::{Command, Stdio};"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let outputs = File::create(&quot;out.txt&quot;)?;"></div><div data-l="    let errors = outputs.try_clone()?;"></div><div data-l=""></div><div data-l="    Command::new(&quot;ls&quot;)"></div><div data-l="        .args(&amp;[&quot;.&quot;, &quot;oops&quot;])"></div><div data-l="        .stdout(Stdio::from(outputs))"></div><div data-l="        .stderr(Stdio::from(errors))"></div><div data-l="        .spawn()?"></div><div data-l="        .wait_with_output()?;"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.File.html#method.try_clone">`File::try_clone`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Stdio.html">`process::Stdio`</a>

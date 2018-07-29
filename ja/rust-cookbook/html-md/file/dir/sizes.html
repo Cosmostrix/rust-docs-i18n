@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Recursively calculate file sizes at given depth</h2>
+<br>
+<p><a href="#3walkdir">!<a class="notranslate" href="#4walkdir-badge">walkdir-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Recursion depth can be flexibly set by <a class="notranslate" href="#4`WalkDir::min_depth`">`WalkDir::min_depth`</a> &amp; <a class="notranslate" href="#4`WalkDir::max_depth`">`WalkDir::max_depth`</a> methods.
+Calculates sum of all file sizes to 3 subfolders depth, ignoring files in the root folder.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate walkdir;"></div><div data-l=""></div><div data-l="use walkdir::WalkDir;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let total_size = WalkDir::new(&quot;.&quot;)"></div><div data-l="        .min_depth(1)"></div><div data-l="        .max_depth(3)"></div><div data-l="        .into_iter()"></div><div data-l="        .filter_map(|entry| entry.ok())"></div><div data-l="        .filter_map(|entry| entry.metadata().ok())"></div><div data-l="        .filter(|metadata| metadata.is_file())"></div><div data-l="        .fold(0, |acc, m| acc + m.len());"></div><div data-l=""></div><div data-l="    println!(&quot;Total size: {} bytes.&quot;, total_size);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.WalkDir.html#method.max_depth">`WalkDir::max_depth`</a>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.WalkDir.html#method.min_depth">`WalkDir::min_depth`</a>

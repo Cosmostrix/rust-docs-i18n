@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<h1>Debugging and Testing Dependencies</h1>
+<br>
+<h2>Testing the dependency graph</h2>
+<br>
+<p>There are various ways to write tests against the dependency graph.
+The simplest mechanisms are the <code>#[rustc_if_this_changed]</code> and
+<code>#[rustc_then_this_would_need]</code> annotations. These are used in compile-fail
+tests to test whether the expected set of paths exist in the dependency graph.
+As an example, see <code>src/test/compile-fail/dep-graph-caller-callee.rs</code>.</p>
+<br>
+<p>The idea is that you can annotate a test like:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[rustc_if_this_changed]"></div><div data-l="fn foo() { }"></div><div data-l=""></div><div data-l="#[rustc_then_this_would_need(TypeckTables)] //~ ERROR OK"></div><div data-l="fn bar() { foo(); }"></div><div data-l=""></div><div data-l="#[rustc_then_this_would_need(TypeckTables)] //~ ERROR no path"></div><div data-l="fn baz() { }"></div></div>
+<br>
+<p>This will check whether there is a path in the dependency graph from <code>Hir(foo)</code>
+to <code>TypeckTables(bar)</code>. An error is reported for each
+<code>#[rustc_then_this_would_need]</code> annotation that indicates whether a path
+exists. <code>//~ ERROR</code> annotations can then be used to test if a path is found (as
+demonstrated above).</p>
+<br>
+<h2>Debugging the dependency graph</h2>
+<br>
+<h3>Dumping the graph</h3>
+<br>
+<p>The compiler is also capable of dumping the dependency graph for your
+debugging pleasure. To do so, pass the <code>-Z dump-dep-graph</code> flag. The
+graph will be dumped to <code>dep_graph.{txt,dot}</code> in the current
+directory.  You can override the filename with the <code>RUST_DEP_GRAPH</code>
+environment variable.</p>
+<br>
+<p>Frequently, though, the full dep graph is quite overwhelming and not
+particularly helpful. Therefore, the compiler also allows you to filter
+the graph. You can filter in three ways:</p>
+<br>
+<div data-b="1.">All edges originating in a particular set of nodes (usually a single node).</div>
+<div data-b="2.">All edges reaching a particular set of nodes.</div>
+<div data-b="3.">All edges that lie between given start and end nodes.</div>
+<br>
+<p>To filter, use the <code>RUST_DEP_GRAPH_FILTER</code> environment variable, which should
+look like one of the following:</p>
+<br>
+<div data-lang="text"><div data-l="#//source_filter     // nodes originating from source_filter"></div><div data-l="source_filter     // ">nodes originating from source_filter</div><div data-l="#//-&gt; target_filter  // nodes that can reach target_filter"></div><div data-l="-&gt; target_filter  // ">nodes that can reach target_filter</div><div data-l="#//source_filter -&gt; target_filter // nodes in between source_filter and target_filter"></div><div data-l="source_filter -&gt; target_filter // ">nodes in between source_filter and target_filter</div></div>
+<br>
+<p><code>source_filter</code> and <code>target_filter</code> are a <code>&amp;</code>-separated list of strings.
+A node is considered to match a filter if all of those strings appear in its
+label. So, for example:</p>
+<br>
+<div data-lang="text"><div data-l="RUST_DEP_GRAPH_FILTER='-&gt; TypeckTables'"></div></div>
+<br>
+<p>would select the predecessors of all <code>TypeckTables</code> nodes. Usually though you
+want the <code>TypeckTables</code> node for some particular fn, so you might write:</p>
+<br>
+<div data-lang="text"><div data-l="RUST_DEP_GRAPH_FILTER='-&gt; TypeckTables &amp; bar'"></div></div>
+<br>
+<p>This will select only the predecessors of <code>TypeckTables</code> nodes for functions
+with <code>bar</code> in their name.</p>
+<br>
+<p>Perhaps you are finding that when you change <code>foo</code> you need to re-type-check
+<code>bar</code>, but you don't think you should have to. In that case, you might do:</p>
+<br>
+<div data-lang="text"><div data-l="RUST_DEP_GRAPH_FILTER='Hir &amp; foo -&gt; TypeckTables &amp; bar'"></div></div>
+<br>
+<p>This will dump out all the nodes that lead from <code>Hir(foo)</code> to
+<code>TypeckTables(bar)</code>, from which you can (hopefully) see the source
+of the erroneous edge.</p>
+<br>
+<h3>Tracking down incorrect edges</h3>
+<br>
+<p>Sometimes, after you dump the dependency graph, you will find some
+path that should not exist, but you will not be quite sure how it came
+to be. <b>When the compiler is built with debug assertions,</b> it can
+help you track that down. Simply set the <code>RUST_FORBID_DEP_GRAPH_EDGE</code>
+environment variable to a filter. Every edge created in the dep-graph
+will be tested against that filter – if it matches, a <code>bug€</code> is
+reported, so you can easily see the backtrace (<code>RUST_BACKTRACE=1</code>).</p>
+<br>
+<p>The syntax for these filters is the same as described in the previous
+section. However, note that this filter is applied to every <b>edge</b>
+and doesn't handle longer paths in the graph, unlike the previous
+section.</p>
+<br>
+<p>Example:</p>
+<br>
+<p>You find that there is a path from the <code>Hir</code> of <code>foo</code> to the type
+check of <code>bar</code> and you don't think there should be. You dump the
+dep-graph as described in the previous section and open <code>dep-graph.txt</code>
+to see something like:</p>
+<br>
+<div data-lang="text"><div data-l="Hir(foo) -&gt; Collect(bar)"></div><div data-l="Collect(bar) -&gt; TypeckTables(bar)"></div></div>
+<br>
+<p>That first edge looks suspicious to you. So you set
+<code>RUST_FORBID_DEP_GRAPH_EDGE</code> to <code>Hir&amp;foo -&gt; Collect&amp;bar</code>, re-run, and
+then observe the backtrace. Voila, bug fixed!</p>

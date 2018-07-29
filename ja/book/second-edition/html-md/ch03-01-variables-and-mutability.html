@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<h2>Variables and Mutability</h2>
+<br>
+<p>As mentioned in Chapter 2, by default variables are immutable. This is one of
+many nudges Rust gives you to write your code in a way that takes advantage of
+the safety and easy concurrency that Rust offers. However, you still have the
+option to make your variables mutable. Let’s explore how and why Rust
+encourages you to favor immutability and why sometimes you might want to opt
+out.</p>
+<br>
+<p>When a variable is immutable, once a value is bound to a name, you can’t change
+that value. To illustrate this, let’s generate a new project called <i>variables</i>
+in your <i>projects</i> directory by using <code>cargo new --bin variables</code>.</p>
+<br>
+<p>Then, in your new <i>variables</i> directory, open <i>src/main.rs</i> and replace its
+code with the following code that won’t compile just yet:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let x = 5;"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="    x = 6;"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>Save and run the program using <code>cargo run</code>. You should receive an error
+message, as shown in this output:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0384]: cannot assign twice to immutable variable `x`"></div><div data-l=" --&gt; src/main.rs:4:5"></div><div data-l="  |"></div><div data-l="2 |     let x = 5;"></div><div data-l="  |         - first assignment to `x`"></div><div data-l="3 |     println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="4 |     x = 6;"></div><div data-l="  |     ^^^^^ cannot assign twice to immutable variable"></div></div>
+<br>
+<p>This example shows how the compiler helps you find errors in your programs.
+Even though compiler errors can be frustrating, they only mean your program
+isn’t safely doing what you want it to do yet; they do <i>not</i> mean that you’re
+not a good programmer! Experienced Rustaceans still get compiler errors.</p>
+<br>
+<p>The error message indicates that the cause of the error is that you <code>cannot
+assign twice to immutable variable x</code>, because you tried to assign a second
+value to the immutable <code>x</code> variable.</p>
+<br>
+<p>It’s important that we get compile-time errors when we attempt to change a
+value that we previously designated as immutable because this very situation
+can lead to bugs. If one part of our code operates on the assumption that a
+value will never change and another part of our code changes that value, it’s
+possible that the first part of the code won’t do what it was designed to do.
+The cause of this kind of bug can be difficult to track down after the fact,
+especially when the second piece of code changes the value only <i>sometimes</i>.</p>
+<br>
+<p>In Rust, the compiler guarantees that when you state that a value won’t change,
+it really won’t change. That means that when you’re reading and writing code,
+you don’t have to keep track of how and where a value might change. Your code
+is thus easier to reason through.</p>
+<br>
+<p>But mutability can be very useful. Variables are immutable only by default; as
+you did in Chapter 2, you can make them mutable by adding <code>mut</code> in front of the
+variable name. In addition to allowing this value to change, <code>mut</code> conveys
+intent to future readers of the code by indicating that other parts of the code
+will be changing this variable value.</p>
+<br>
+<p>For example, let’s change <i>src/main.rs</i> to the following:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let mut x = 5;"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="    x = 6;"></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>When we run the program now, we get this:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling variables v0.1.0 (file:///projects/variables)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.30 secs"></div><div data-l="     Running `target/debug/variables`"></div><div data-l="The value of x is: 5"></div><div data-l="The value of x is: 6"></div></div>
+<br>
+<p>We’re allowed to change the value that <code>x</code> binds to from <code>5</code> to <code>6</code> when <code>mut</code>
+is used. In some cases, you’ll want to make a variable mutable because it makes
+the code more convenient to write than if it had only immutable variables.</p>
+<br>
+<p>There are multiple trade-offs to consider in addition to the prevention of
+bugs. For example, in cases where you’re using large data structures, mutating
+an instance in place may be faster than copying and returning newly allocated
+instances. With smaller data structures, creating new instances and writing in
+a more functional programming style may be easier to think through, so lower
+performance might be a worthwhile penalty for gaining that clarity.</p>
+<br>
+<h3>Differences Between Variables and Constants</h3>
+<br>
+<p>Being unable to change the value of a variable might have reminded you of
+another programming concept that most other languages have: <i>constants</i>. Like
+immutable variables, constants are values that are bound to a name and are not
+allowed to change, but there are a few differences between constants and
+variables.</p>
+<br>
+<p>First, you aren’t allowed to use <code>mut</code> with constants. Constants aren’t just
+immutable by default—they’re always immutable.</p>
+<br>
+<p>You declare constants using the <code>const</code> keyword instead of the <code>let</code> keyword,
+and the type of the value <i>must</i> be annotated. We’re about to cover types and
+type annotations in the next section, “Data Types,” so don’t worry about the
+details right now. Just know that you must always annotate the type.</p>
+<br>
+<p>Constants can be declared in any scope, including the global scope, which makes
+them useful for values that many parts of code need to know about.</p>
+<br>
+<p>The last difference is that constants may be set only to a constant expression,
+not the result of a function call or any other value that could only be
+computed at runtime.</p>
+<br>
+<p>Here’s an example of a constant declaration where the constant’s name is
+<code>MAX_POINTS</code> and its value is set to 100,000. (Rust’s naming convention for
+constants is to use all uppercase with underscores between words):</p>
+<br>
+<div data-lang="rust"><div data-l="const MAX_POINTS: u32 = 100_000;"></div></div>
+<br>
+<p>Constants are valid for the entire time a program runs, within the scope they
+were declared in, making them a useful choice for values in your application
+domain that multiple parts of the program might need to know about, such as the
+maximum number of points any player of a game is allowed to earn or the speed
+of light.</p>
+<br>
+<p>Naming hardcoded values used throughout your program as constants is useful in
+conveying the meaning of that value to future maintainers of the code. It also
+helps to have only one place in your code you would need to change if the
+hardcoded value needed to be updated in the future.</p>
+<br>
+<h3>Shadowing</h3>
+<br>
+<p>As you saw in the guessing game tutorial in the “Comparing the Guess to the
+Secret Number” section in Chapter 2, you can declare a new variable with the
+same name as a previous variable, and the new variable shadows the previous
+variable. Rustaceans say that the first variable is <i>shadowed</i> by the second,
+which means that the second variable’s value is what appears when the variable
+is used. We can shadow a variable by using the same variable’s name and
+repeating the use of the <code>let</code> keyword as follows:</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = 5;"></div><div data-l=""></div><div data-l="    let x = x + 1;"></div><div data-l=""></div><div data-l="    let x = x * 2;"></div><div data-l=""></div><div data-l="    println!(&quot;The value of x is: {}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p>This program first binds <code>x</code> to a value of <code>5</code>. Then it shadows <code>x</code> by
+repeating <code>let x =</code>, taking the original value and adding <code>1</code> so the value of
+<code>x</code> is then <code>6</code>. The third <code>let</code> statement also shadows <code>x</code>, multiplying the
+previous value by <code>2</code> to give <code>x</code> a final value of <code>12</code>. When we run this
+program, it will output the following:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling variables v0.1.0 (file:///projects/variables)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 0.31 secs"></div><div data-l="     Running `target/debug/variables`"></div><div data-l="The value of x is: 12"></div></div>
+<br>
+<p>Shadowing is different than marking a variable as <code>mut</code>, because we’ll get a
+compile-time error if we accidentally try to reassign to this variable without
+using the <code>let</code> keyword. By using <code>let</code>, we can perform a few transformations
+on a value but have the variable be immutable after those transformations have
+been completed.</p>
+<br>
+<p>The other difference between <code>mut</code> and shadowing is that because we’re
+effectively creating a new variable when we use the <code>let</code> keyword again, we can
+change the type of the value but reuse the same name. For example, say our
+program asks a user to show how many spaces they want between some text by
+inputting space characters, but we really want to store that input as a number:</p>
+<br>
+<div data-lang="rust"><div data-l="let spaces = &quot;   &quot;;"></div><div data-l="let spaces = spaces.len();"></div></div>
+<br>
+<p>This construct is allowed because the first <code>spaces</code> variable is a string type
+and the second <code>spaces</code> variable, which is a brand-new variable that happens to
+have the same name as the first one, is a number type. Shadowing thus spares us
+from having to come up with different names, such as <code>spaces_str</code> and
+<code>spaces_num</code>; instead, we can reuse the simpler <code>spaces</code> name. However, if we
+try to use <code>mut</code> for this, as shown here, we’ll get a compile-time error:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let mut spaces = &quot;   &quot;;"></div><div data-l="spaces = spaces.len();"></div></div>
+<br>
+<p>The error says we’re not allowed to mutate a variable’s type:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0308]: mismatched types"></div><div data-l=" --&gt; src/main.rs:3:14"></div><div data-l="  |"></div><div data-l="3 |     spaces = spaces.len();"></div><div data-l="  |              ^^^^^^^^^^^^ expected &amp;str, found usize"></div><div data-l="  |"></div><div data-l="  = note: expected type `&amp;str`"></div><div data-l="             found type `usize`"></div></div>
+<br>
+<p>Now that we’ve explored how variables work, let’s look at more data types they
+can have.</p>

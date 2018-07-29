@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h1>Multiple bounds</h1>
+<br>
+<p>Multiple bounds can be applied with a <code>+</code>. Like normal, different types are
+separated with <code>,</code>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::fmt::{Debug, Display};"></div><div data-l=""></div><div data-l="fn compare_prints&lt;T: Debug + Display&gt;(t: &amp;T) {"></div><div data-l="    println!(&quot;Debug: `{:?}`&quot;, t);"></div><div data-l="    println!(&quot;Display: `{}`&quot;, t);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn compare_types&lt;T: Debug, U: Debug&gt;(t: &amp;T, u: &amp;U) {"></div><div data-l="    println!(&quot;t: `{:?}&quot;, t);"></div><div data-l="    println!(&quot;u: `{:?}&quot;, u);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let string = &quot;words&quot;;"></div><div data-l="    let array = [1, 2, 3];"></div><div data-l="    let vec = vec![1, 2, 3];"></div><div data-l=""></div><div data-l="    compare_prints(&amp;string);"></div><div data-l="    //compare_prints(&amp;array);"></div><div data-l="#    // TODO ^ Try uncommenting this."></div><div data-l="    // ">TODO ^ Try uncommenting this.</div><div data-l=""></div><div data-l="    compare_types(&amp;array, &amp;vec);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3fmt"><code>std::fmt</code></a> and <a class="notranslate" href="#3traits"><code>trait</code>s</a></p>
+<br>
+<a class="notranslate" href="#1hello/print.html">fmt</a>
+<a class="notranslate" href="#1trait.html">traits</a>

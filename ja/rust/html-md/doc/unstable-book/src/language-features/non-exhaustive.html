@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1><code>non_exhaustive</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#44109">#44109</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/44109">#44109</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>non_exhaustive</code> gate allows you to use the <code>#[non_exhaustive]</code> attribute
+on structs and enums. When applied within a crate, users of the crate will need
+to use the <code>_</code> pattern when matching enums and use the <code>..</code> pattern when
+matching structs. Structs marked as <code>non_exhaustive</code> will not be able to be
+created normally outside of the defining crate. This is demonstrated below:</p>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="use std::error::Error as StdError;"></div><div data-l=""></div><div data-l="#[non_exhaustive]"></div><div data-l="pub enum Error {"></div><div data-l="    Message(String),"></div><div data-l="    Other,"></div><div data-l="}"></div><div data-l="impl StdError for Error {"></div><div data-l="    fn description(&amp;self) -&gt; &amp;str {"></div><div data-l="#        // This will not error, despite being marked as non_exhaustive, as this"></div><div data-l="#        // enum is defined within the current crate, it can be matched"></div><div data-l="#        // exhaustively."></div><div data-l="        // ">This will not error, despite being marked as non_exhaustive, as this enum is defined within the current crate, it can be matched exhaustively.</div><div data-l="        match *self {"></div><div data-l="            Message(ref s) =&gt; s,"></div><div data-l="            Other =&gt; &quot;other or unknown error&quot;,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="use mycrate::Error;"></div><div data-l=""></div><div data-l="#// This will not error as the non_exhaustive Error enum has been matched with"></div><div data-l="#// a wildcard."></div><div data-l="// ">This will not error as the non_exhaustive Error enum has been matched with a wildcard.</div><div data-l="match error {"></div><div data-l="    Message(ref s) =&gt; ...,"></div><div data-l="    Other =&gt; ...,"></div><div data-l="    _ =&gt; ...,"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="#[non_exhaustive]"></div><div data-l="pub struct Config {"></div><div data-l="    pub window_width: u16,"></div><div data-l="    pub window_height: u16,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// We can create structs as normal within the defining crate when marked as"></div><div data-l="#// non_exhaustive."></div><div data-l="// ">We can create structs as normal within the defining crate when marked as non_exhaustive.</div><div data-l="let config = Config { window_width: 640, window_height: 480 };"></div><div data-l=""></div><div data-l="#// We can match structs exhaustively when within the defining crate."></div><div data-l="// ">We can match structs exhaustively when within the defining crate.</div><div data-l="if let Ok(Config { window_width, window_height }) = load_config() {"></div><div data-l="#    // ..."></div><div data-l="    // ">...</div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore (pseudo-Rust)"><div data-l="use mycrate::Config;"></div><div data-l=""></div><div data-l="#// We cannot create a struct like normal if it has been marked as"></div><div data-l="#// non_exhaustive."></div><div data-l="// ">We cannot create a struct like normal if it has been marked as non_exhaustive.</div><div data-l="let config = Config { window_width: 640, window_height: 480 };"></div><div data-l="#// By adding the `..` we can match the config as below outside of the crate"></div><div data-l="#// when marked non_exhaustive."></div><div data-l="// ">By adding the <code>..</code> we can match the config as below outside of the crate when marked non_exhaustive.</div><div data-l="let &amp;Config { window_width, window_height, .. } = config;"></div></div>
+<br>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<h1>Memory model</h1>
+<br>
+<p>A Rust program's memory consists of a static set of <i>items</i> and a <i>heap</i>.
+Immutable portions of the heap may be safely shared between threads, mutable
+portions may not be safely shared, but several mechanisms for effectively-safe
+sharing of mutable values, built on unsafe code but enforcing a safe locking
+discipline, exist in the standard library.</p>
+<br>
+<p>Allocations in the stack consist of <i>variables</i>, and allocations in the heap
+consist of <i>boxes</i>.</p>

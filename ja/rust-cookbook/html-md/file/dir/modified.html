@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h2>File names that have been modified in the last 24 hours</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Gets the current working directory by calling <a class="notranslate" href="#4`env::current_dir`">`env::current_dir`</a>,
+then for each entries in <a class="notranslate" href="#4`fs::read_dir`">`fs::read_dir`</a>, extracts the
+<a class="notranslate" href="#4`DirEntry::path`">`DirEntry::path`</a> and gets the metada via <a class="notranslate" href="#4`fs::Metadata`">`fs::Metadata`</a>. The
+<a class="notranslate" href="#4`Metadata::modified`">`Metadata::modified`</a> returns the <a class="notranslate" href="#4`SystemTime::elapsed`">`SystemTime::elapsed`</a> time since
+last modification. <a class="notranslate" href="#4`Duration::as_secs`">`Duration::as_secs`</a> converts the time to seconds and
+compared with 24 hours (24 * 60 * 60 seconds). <a class="notranslate" href="#4`Metadata::is_file`">`Metadata::is_file`</a> filters
+out directories.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::{env, fs};"></div><div data-l=""></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         SystemTimeError(std::time::SystemTimeError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let current_dir = env::current_dir()?;"></div><div data-l="    println!("></div><div data-l="        &quot;Entries modified in the last 24 hours in {:?}:&quot;,"></div><div data-l="        current_dir"></div><div data-l="    );"></div><div data-l=""></div><div data-l="    for entry in fs::read_dir(current_dir)? {"></div><div data-l="        let entry = entry?;"></div><div data-l="        let path = entry.path();"></div><div data-l=""></div><div data-l="        let metadata = fs::metadata(&amp;path)?;"></div><div data-l="        let last_modified = metadata.modified()?.elapsed()?.as_secs();"></div><div data-l=""></div><div data-l="        if last_modified &lt; 24 * 3600 &amp;&amp; metadata.is_file() {"></div><div data-l="            println!("></div><div data-l="                &quot;Last modified: {:?} seconds, is read only: {:?}, size: {:?} bytes, filename: {:?}&quot;,"></div><div data-l="                last_modified,"></div><div data-l="                metadata.permissions().readonly(),"></div><div data-l="                metadata.len(),"></div><div data-l="                path.file_name().ok_or(&quot;No filename&quot;)?"></div><div data-l="            );"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.DirEntry.html#method.path">`DirEntry::path`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/time/struct.Duration.html#method.as_secs">`Duration::as_secs`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/env/fn.current_dir.html">`env::current_dir`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.Metadata.html">`fs::Metadata`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/fn.read_dir.html">`fs::read_dir`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.Metadata.html#method.is_file">`Metadata::is_file`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/fs/struct.Metadata.html#method.modified">`Metadata::modified`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/time/struct.SystemTime.html#method.elapsed">`SystemTime::elapsed`</a>

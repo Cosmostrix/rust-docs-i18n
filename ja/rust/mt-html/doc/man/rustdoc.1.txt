@@ -1,0 +1,127 @@
+<pre>.RUSTDOC &quot;1&quot; &quot;&lt;ここに日付を挿入&gt;&quot; &quot;rustdoc &lt;ここに挿入&gt;&quot; &quot;ユーザーコマンド&quot;
+.SH NAME
+rustdoc \  -  Rustのソースコードから文書を生成する
+.SHシノプシス
+.B rustdoc
+[\ fIOPTIONS \ fR] \ fIINPUT \ fR
+
+.SH DESCRIPTION
+このツールは、コメントを抽出してAPIリファレンスドキュメントを生成します
+Rust言語で書かれたソースコード。
+&lt;\ fBhttps：//www.rust-lang.org \ fR&gt;。それはいくつかの入力フォーマットを受け入れ、
+生成されたドキュメントのいくつかの出力形式を提供します。
+
+.SHオプション
+
+.TP
+\ fB \ -r \ fR、\ fB \  -  \  - 入力\ -format \ fR \ fIFORMAT \ fR
+さびた
+.TP
+\ fB \ -w \ fR、\ fB \  -  \  - 出力\  - 書式\ fR \ fIFORMAT \ fR
+html
+.TP
+\ fB \ -o \ fR、\ fB \  -  \  - 出力\ fR \ fIOUTPUT \ fR、
+出力する場所（デフォルト：\ fIdoc / \ fR html）
+.TP
+\ fB \  -  \  -  \ fR \ fILIST \ fRを渡します
+space \ [hy]区切りで実行するパスのリスト（デフォルト： &#39;&#39;）
+.TP
+\ fB \  -  \  -  no \ --defaults \ fR
+デフォルトパスを実行しない
+.TP
+\ fB \  -  \  -  plugins \ fR \ fILIST \ fR
+実行するプラグインのスペースで区切られたリスト（デフォルト： &#39;&#39;）
+.TP
+\ fB \  -  \  -  plugin \ -path \ fR \ fIDIR \ fR
+プラグインをロードするディレクトリ（デフォルト：\ fI / tmp / rustdoc_ng / plugins \ fR）
+.TP
+\ fB \  -  \  -  target \ fR \ fITRIPLE \ fR
+ドキュメントをトリプルにする
+.TP
+\ fB \  -  \  -  crate \ -name \ fR \ fINAME \ fR
+このクレートの名前を指定する
+.TP
+\ fB \ -L \ fR、\ fB \  -  \  - ライブラリ\ -path \ fR \ fIDIR \ fR
+crate検索パスに追加するディレクトリ
+.TP
+\ fB \  -  \  -  cfg \ fR \ fISPEC \ fR
+\ fI \  -  \  -  cfg \ fRをrustcに渡す
+.TP
+\ fB \  -  \  -  extern \ fR \ fIVAL \ fR
+\ fI \  -  \  -  extern \ fRをrustcに渡す
+.TP
+\ fB \  -  \  -  test \ fR
+コード例をテストとして実行する
+.TP
+\ fB \  -  \  -  test \ -args \ fR \ fIARGS \ fR
+引数をテストランナーに渡す
+.TP
+\ fB \  -  \  -  html \ -in \ -header \ fR \ fIFILE \ fR
+&lt;head&gt;に追加するファイル
+.TP
+\ fB \  -  \  -  html \ -before \ -content \ fR \ fIFILES \ fR
+&lt;body&gt;とレンダリングされたMarkdownの内容との間のインラインを含むファイル
+ファイルまたは生成されたドキュメント
+.TP
+\ fB \  -  \  - マークダウン\  - 前\\コンテンツ\ fR \ fIFILES \ fR
+&lt;body&gt;とレンダリングされたコンテンツの間のインラインを含むファイル
+マークダウンファイルまたは生成されたドキュメント
+.TP
+\ fB \  -  \  -  html \ -after \ -content \ fR \ fIFILES \ fR
+レンダリングされたコンテンツと&lt;/ body&gt;の間のインラインを含むファイル
+マークダウンファイルまたは生成されたドキュメント
+.TP
+\ fB \  -  \  - マークダウン\ -after \ -content \ fR \ fIFILES \ fR
+レンダリングされたコンテンツと&lt;/ body&gt;の間のインラインを含むファイル
+マークダウンファイルまたは生成されたドキュメント
+.TP
+\ fB \  -  \  - マークダウン\ -css \ fR \ fIFILES \ fR
+レンダリングされたMarkdownファイルのMarkdownファイルに&lt;link&gt;経由で含めるCSSファイル
+生成されたドキュメント
+.TP
+\ fB \  -  \  - マークダウン\ -playground \ -url \ fR \ fIURL \ fR
+コードスニペットを送信するURL
+.TP
+\ fB \  -  \  - マークダウン\ -no \ -toc \ fR
+目次は含まない
+.TP
+\ fB \ -h \ fR、\ fB \  -  \  -  extend \ -css \ fR
+与えられたファイルでいくつかのCSSルールを再定義して、独自のテーマを持つdocを生成する
+.TP
+\ fB \ -V \ fR、\ fB \  -  \  - バージョン\ fR
+rustdocのバージョンを表示してください
+
+.SH &quot;出力形式&quot;
+
+rustdocツールは、HTML形式で出力を生成できます。
+
+HTML形式を使用している場合、指定された出力先はルートになります
+すべてのドキュメントのHTML構造のディレクトリ。
+ページはこのディレクトリに置かれ、ソースファイルも
+おそらくそれにもレンダリングされる可能性があります。
+
+.SH &quot;例&quot;
+
+現在のディレクトリにあるソースのドキュメントを生成するには：
+    $ rustdoc hello.rs
+
+rustdocが持つ利用可能なすべてのパスを、デフォルトのパスとともにリストします。
+    $ rustdoc \  -  \  - リストを渡す
+
+生成されたHTMLは、標準のWebブラウザで表示できます。
+
+.SH &quot;関連項目&quot;
+
+.BR rustc（1）
+
+.SH &quot;バグ&quot;
+&lt;\ fBhttps：//github.com/rust \ -lang / rust / issues \ fR&gt;を参照してください。
+問題について
+
+.SH &quot;著者&quot;
+Rustソースディストリビューションの\ fIAUTHORS.txt \ fRを参照してください。
+
+.SH &quot;COPYRIGHT&quot;
+この作業はApache \ 2.0とMITの下でライセンスされた二重\ [hy]です。
+錆源分布の\ fICOPYRIGHT \ fRファイルを参照してください。
+</pre>

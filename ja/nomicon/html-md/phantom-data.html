@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<h1>PhantomData</h1>
+<br>
+<p>When working with unsafe code, we can often end up in a situation where
+types or lifetimes are logically associated with a struct, but not actually
+part of a field. This most commonly occurs with lifetimes. For instance, the
+<code>Iter</code> for <code>&amp;'a [T]</code> is (approximately) defined as follows:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct Iter&lt;'a, T: 'a&gt; {"></div><div data-l="    ptr: *const T,"></div><div data-l="    end: *const T,"></div><div data-l="}"></div></div>
+<br>
+<p>However because <code>'a</code> is unused within the struct's body, it's <i>unbounded</i>.
+Because of the troubles this has historically caused, unbounded lifetimes and
+types are <i>forbidden</i> in struct definitions. Therefore we must somehow refer
+to these types in the body. Correctly doing this is necessary to have
+correct variance and drop checking.</p>
+<br>
+<p>We do this using <code>PhantomData</code>, which is a special marker type. <code>PhantomData</code>
+consumes no space, but simulates a field of the given type for the purpose of
+static analysis. This was deemed to be less error-prone than explicitly telling
+the type-system the kind of variance that you want, while also providing other
+useful such as the information needed by drop check.</p>
+<br>
+<p>Iter logically contains a bunch of <code>&amp;'a T</code>s, so this is exactly what we tell
+the PhantomData to simulate:</p>
+<br>
+<div data-lang=""><div data-l="use std::marker;"></div><div data-l=""></div><div data-l="struct Iter&lt;'a, T: 'a&gt; {"></div><div data-l="    ptr: *const T,"></div><div data-l="    end: *const T,"></div><div data-l="    _marker: marker::PhantomData&lt;&amp;'a T&gt;,"></div><div data-l="}"></div></div>
+<br>
+<p>and that's it. The lifetime will be bounded, and your iterator will be variant
+over <code>'a</code> and <code>T</code>. Everything Just Works.</p>
+<br>
+<p>Another important example is Vec, which is (approximately) defined as follows:</p>
+<br>
+<div data-lang=""><div data-l="struct Vec&lt;T&gt; {"></div><div data-l="#//    data: *const T, // *const for variance!"></div><div data-l="    data: *const T, // ">*const for variance!</div><div data-l="    len: usize,"></div><div data-l="    cap: usize,"></div><div data-l="}"></div></div>
+<br>
+<p>Unlike the previous example, it <i>appears</i> that everything is exactly as we
+want. Every generic argument to Vec shows up in at least one field.
+Good to go!</p>
+<br>
+<p>Nope.</p>
+<br>
+<p>The drop checker will generously determine that <code>Vec&lt;T&gt;</code> does not own any values
+of type T. This will in turn make it conclude that it doesn't need to worry
+about Vec dropping any T's in its destructor for determining drop check
+soundness. This will in turn allow people to create unsoundness using
+Vec's destructor.</p>
+<br>
+<p>In order to tell dropck that we <i>do</i> own values of type T, and therefore may
+drop some T's when <i>we</i> drop, we must add an extra PhantomData saying exactly
+that:</p>
+<br>
+<div data-lang=""><div data-l="use std::marker;"></div><div data-l=""></div><div data-l="struct Vec&lt;T&gt; {"></div><div data-l="#//    data: *const T, // *const for variance!"></div><div data-l="    data: *const T, // ">*const for variance!</div><div data-l="    len: usize,"></div><div data-l="    cap: usize,"></div><div data-l="    _marker: marker::PhantomData&lt;T&gt;,"></div><div data-l="}"></div></div>
+<br>
+<p>Raw pointers that own an allocation is such a pervasive pattern that the
+standard library made a utility for itself called <code>Unique&lt;T&gt;</code> which:</p>
+<br>
+<div data-b="*">wraps a <code>*const T</code> for variance</div>
+<div data-b="*">includes a <code>PhantomData&lt;T&gt;</code></div>
+<div data-b="*">auto-derives <code>Send</code>/<code>Sync</code> as if T was contained</div>
+<div data-b="*">marks the pointer as <code>NonZero</code> for the null-pointer optimization</div>
+<br>
+<h2>Table of <code>PhantomData</code> patterns</h2>
+<br>
+<p>Here’s a table of all the wonderful ways <code>PhantomData</code> could be used:</p>
+<br>
+<div data-tbl><div> Phantom type                </div><div> <code>'a</code>      </div><div> <code>T</code>                       </div></div>
+<div data-tbl><div>-----------------------------</div><div>-----------</div><div>---------------------------</div></div>
+<div data-tbl><div> <code>PhantomData&lt;T&gt;</code>            </div><div> -         </div><div> variant (with drop check) </div></div>
+<div data-tbl><div> <code>PhantomData&lt;&amp;'a T&gt;</code>        </div><div> variant   </div><div> variant                   </div></div>
+<div data-tbl><div> <code>PhantomData&lt;&amp;'a mut T&gt;</code>    </div><div> variant   </div><div> invariant                 </div></div>
+<div data-tbl><div> <code>PhantomData&lt;*const T&gt;</code>     </div><div> -         </div><div> variant                   </div></div>
+<div data-tbl><div> <code>PhantomData&lt;*mut T&gt;</code>       </div><div> -         </div><div> invariant                 </div></div>
+<div data-tbl><div> <code>PhantomData&lt;fn(T)&gt;</code>        </div><div> -         </div><div> contravariant (*)         </div></div>
+<div data-tbl><div> <code>PhantomData&lt;fn() -&gt; T&gt;</code>    </div><div> -         </div><div> variant                   </div></div>
+<div data-tbl><div> <code>PhantomData&lt;fn(T) -&gt; T&gt;</code>   </div><div> -         </div><div> invariant                 </div></div>
+<div data-tbl><div> <code>PhantomData&lt;Cell&lt;&amp;'a ()&gt;&gt;</code> </div><div> invariant </div><div> -                         </div></div>
+<br>
+<p>(*) If contravariance gets scrapped, this would be invariant.</p>

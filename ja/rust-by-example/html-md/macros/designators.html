@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1>Designators</h1>
+<br>
+<p>The arguments of a macro are prefixed by a dollar sign <code>$</code> and type annotated
+with a <i>designator</i>:</p>
+<br>
+<div data-lang="rust,editable"><div data-l="macro_rules! create_function {"></div><div data-l="#    // This macro takes an argument of designator `ident` and"></div><div data-l="#    // creates a function named `$func_name`."></div><div data-l="#    // The `ident` designator is used for variable/function names."></div><div data-l="    // ">This macro takes an argument of designator <code>ident</code> and creates a function named <code>$func_name</code>. The <code>ident</code> designator is used for variable/function names.</div><div data-l="    ($func_name:ident) =&gt; ("></div><div data-l="        fn $func_name() {"></div><div data-l="#            // The `stringify!` macro converts an `ident` into a string."></div><div data-l="            // ">The <code>stringify€</code> macro converts an <code>ident</code> into a string.</div><div data-l="            println!(&quot;You called {:?}()&quot;,"></div><div data-l="                     stringify!($func_name));"></div><div data-l="        }"></div><div data-l="    )"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Create functions named `foo` and `bar` with the above macro."></div><div data-l="// ">Create functions named <code>foo</code> and <code>bar</code> with the above macro.</div><div data-l="create_function!(foo);"></div><div data-l="create_function!(bar);"></div><div data-l=""></div><div data-l="macro_rules! print_result {"></div><div data-l="#    // This macro takes an expression of type `expr` and prints"></div><div data-l="#    // it as a string along with its result."></div><div data-l="#    // The `expr` designator is used for expressions."></div><div data-l="    // ">This macro takes an expression of type <code>expr</code> and prints it as a string along with its result. The <code>expr</code> designator is used for expressions.</div><div data-l="    ($expression:expr) =&gt; ("></div><div data-l="#        // `stringify!` will convert the expression *as it is* into a string."></div><div data-l="        // "><code>stringify€</code> will convert the expression <i>as it is</i> into a string.</div><div data-l="        println!(&quot;{:?} = {:?}&quot;,"></div><div data-l="                 stringify!($expression),"></div><div data-l="                 $expression);"></div><div data-l="    )"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo();"></div><div data-l="    bar();"></div><div data-l=""></div><div data-l="    print_result!(1u32 + 1);"></div><div data-l=""></div><div data-l="#    // Recall that blocks are expressions too!"></div><div data-l="    // ">Recall that blocks are expressions too!</div><div data-l="    print_result!({"></div><div data-l="        let x = 1u32;"></div><div data-l=""></div><div data-l="        x * x + 2 * x - 1"></div><div data-l="    });"></div><div data-l="}"></div></div>
+<br>
+<p>This is a list of all the designators:</p>
+<br>
+<div data-b="*"><code>block</code></div>
+<div data-b="*"><code>expr</code> is used for expressions</div>
+<div data-b="*"><code>ident</code> is used for variable/function names</div>
+<div data-b="*"><code>item</code></div>
+<div data-b="*"><code>pat</code> (<i>pattern</i>)</div>
+<div data-b="*"><code>path</code></div>
+<div data-b="*"><code>stmt</code> (<i>statement</i>)</div>
+<div data-b="*"><code>tt</code> (<i>token tree</i>)</div>
+<div data-b="*"><code>ty</code> (<i>type</i>)</div>

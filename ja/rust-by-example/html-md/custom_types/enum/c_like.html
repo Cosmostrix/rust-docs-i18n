@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h1>C-like</h1>
+<br>
+<p><code>enum</code> can also be used as C-like enums.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// An attribute to hide warnings for unused code."></div><div data-l="// ">An attribute to hide warnings for unused code.</div><div data-l="#![allow(dead_code)]"></div><div data-l=""></div><div data-l="#// enum with implicit discriminator (starts at 0)"></div><div data-l="// ">enum with implicit discriminator (starts at 0)</div><div data-l="enum Number {"></div><div data-l="    Zero,"></div><div data-l="    One,"></div><div data-l="    Two,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// enum with explicit discriminator"></div><div data-l="// ">enum with explicit discriminator</div><div data-l="enum Color {"></div><div data-l="    Red = 0xff0000,"></div><div data-l="    Green = 0x00ff00,"></div><div data-l="    Blue = 0x0000ff,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="#    // `enums` can be cast as integers."></div><div data-l="    // "><code>enums</code> can be cast as integers.</div><div data-l="    println!(&quot;zero is {}&quot;, Number::Zero as i32);"></div><div data-l="    println!(&quot;one is {}&quot;, Number::One as i32);"></div><div data-l=""></div><div data-l="    println!(&quot;roses are #{:06x}&quot;, Color::Red as i32);"></div><div data-l="    println!(&quot;violets are #{:06x}&quot;, Color::Blue as i32);"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3cast">casting</a></p>
+<br>
+<a class="notranslate" href="#1types/cast.html">cast</a>

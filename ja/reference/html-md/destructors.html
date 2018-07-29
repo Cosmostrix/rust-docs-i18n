@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<h1>Destructors</h1>
+<br>
+<p>When an <a class="notranslate" href="#4initialized">initialized</a>&amp;#32;<a class="notranslate" href="#4variable">variable</a> in Rust goes out of scope or a <a class="notranslate" href="#4temporary">temporary</a>
+is no longer needed its <s>destructor</s> is run. <a class="notranslate" href="#4Assignment">Assignment</a> also runs the
+destructor of its left-hand operand, unless it's an uninitialized variable. If a
+<a class="notranslate" href="#4struct">struct</a> variable has been partially initialized, only its initialized fields
+are dropped.</p>
+<br>
+<p>The destructor of a type consists of</p>
+<br>
+<div data-b="1.">Calling its <a class="notranslate" href="#4`std::ops::Drop::drop`">`std::ops::Drop::drop`</a> method, if it has one.</div>
+<div data-b="2.">Recursively running the destructor of all of its fields.</div>
+<div data-b="    *">The fields of a <a class="notranslate" href="#4struct">struct</a>, <a class="notranslate" href="#4tuple">tuple</a> or <a class="notranslate" href="#4enum variant">enum variant</a> are dropped in
+declaration order. \<i>
+    </i> The elements of an <a class="notranslate" href="#4array">array</a> or owned <a class="notranslate" href="#3array">slice</a> are dropped from the
+first element to the last. \<i>
+    </i> The captured values of a <a class="notranslate" href="#4closure">closure</a> are dropped in an unspecified order.</div>
+<div data-b="    *"><a class="notranslate" href="#4Trait objects">Trait objects</a> run the destructor of the underlying type.</div>
+<div data-b="    *">Other types don't result in any further drops.</div>
+<br>
+<p>\* This order was stabilized in <a class="notranslate" href="#4RFC 1857">RFC 1857</a>.</p>
+<br>
+<p>Variables are dropped in reverse order of declaration. Variables declared in
+the same pattern drop in an unspecified ordered.</p>
+<br>
+<p>If a destructor must be run manually, such as when implementing your own smart
+pointer, <a class="notranslate" href="#4`std::ptr::drop_in_place`">`std::ptr::drop_in_place`</a> can be used.</p>
+<br>
+<p>Some examples:</p>
+<br>
+<div data-lang="rust"><div data-l="struct ShowOnDrop(&amp;'static str);"></div><div data-l=""></div><div data-l="impl Drop for ShowOnDrop {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;{}&quot;, self.0);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="{"></div><div data-l="    let mut overwritten = ShowOnDrop(&quot;Drops when overwritten&quot;);"></div><div data-l="    overwritten = ShowOnDrop(&quot;drops when scope ends&quot;);"></div><div data-l="}"></div><div data-l="# println!(&quot;&quot;);"></div><div data-l="{"></div><div data-l="    let declared_first = ShowOnDrop(&quot;Dropped last&quot;);"></div><div data-l="    let declared_last = ShowOnDrop(&quot;Dropped first&quot;);"></div><div data-l="}"></div><div data-l="# println!(&quot;&quot;);"></div><div data-l="{"></div><div data-l="#    // Tuple elements drop in forwards order"></div><div data-l="    // ">Tuple elements drop in forwards order</div><div data-l="    let tuple = (ShowOnDrop(&quot;Tuple first&quot;), ShowOnDrop(&quot;Tuple second&quot;));"></div><div data-l="}"></div><div data-l="# println!(&quot;&quot;);"></div><div data-l="loop {"></div><div data-l="#    // Tuple expression doesn't finish evaluating so temporaries drop in reverse order:"></div><div data-l="    // ">Tuple expression doesn't finish evaluating so temporaries drop in reverse order:</div><div data-l="    let partial_tuple = (ShowOnDrop(&quot;Temp first&quot;), ShowOnDrop(&quot;Temp second&quot;), break);"></div><div data-l="}"></div><div data-l="# println!(&quot;&quot;);"></div><div data-l="{"></div><div data-l="    let moved;"></div><div data-l="#    // No destructor run on assignment."></div><div data-l="    // ">No destructor run on assignment.</div><div data-l="    moved = ShowOnDrop(&quot;Drops when moved&quot;);"></div><div data-l="#    // drops now, but is then uninitialized"></div><div data-l="    // ">drops now, but is then uninitialized</div><div data-l="    moved;"></div><div data-l="    let uninitialized: ShowOnDrop;"></div><div data-l="#    // Only first element drops"></div><div data-l="    // ">Only first element drops</div><div data-l="    let mut partially_initialized: (ShowOnDrop, ShowOnDrop);"></div><div data-l="    partially_initialized.0 = ShowOnDrop(&quot;Partial tuple first&quot;);"></div><div data-l="}"></div></div>
+<br>
+<h2>Not running destructors</h2>
+<br>
+<p>Not running destructors in Rust is safe even if it has a type that isn't
+<code>'static</code>. <a class="notranslate" href="#4`std::mem::ManuallyDrop`">`std::mem::ManuallyDrop`</a> provides a wrapper to prevent a
+variable or field from being dropped automatically.</p>
+<br>
+<a class="notranslate" href="#1glossary.html#initialized">initialized</a>
+<a class="notranslate" href="#1variables.html">variable</a>
+<a class="notranslate" href="#1expressions.html#temporary-lifetimes">temporary</a>
+<a class="notranslate" href="#1expressions/operator-expr.html#assignment-expressions">Assignment</a>
+<a class="notranslate" href="#1../std/ops/trait.Drop.html">`std::ops::Drop::drop`</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1857-stabilize-drop-order.md">RFC 1857</a>
+<a class="notranslate" href="#1types.html#struct-types">struct</a>
+<a class="notranslate" href="#1types.html#tuple-types">tuple</a>
+<a class="notranslate" href="#1types.html#enumerated-types">enum variant</a>
+<a class="notranslate" href="#1types.html#array-and-slice-types">array</a>
+<a class="notranslate" href="#1types.html#closure-types">closure</a>
+<a class="notranslate" href="#1types.html#trait-objects">Trait objects</a>
+<a class="notranslate" href="#1../std/ptr/fn.drop_in_place.html">`std::ptr::drop_in_place`</a>
+<a class="notranslate" href="#1../std/mem/fn.forget.html">`std::mem::forget`</a>
+<a class="notranslate" href="#1../std/mem/struct.ManuallyDrop.html">`std::mem::ManuallyDrop`</a>

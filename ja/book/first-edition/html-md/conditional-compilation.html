@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<h1>Conditional Compilation</h1>
+<br>
+<p>Rust has a special attribute, <code>#[cfg]</code>, which allows you to compile code
+based on a flag passed to the compiler. It has two forms:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(foo)]"></div><div data-l="# fn foo() {}"></div><div data-l=""></div><div data-l="#[cfg(bar = &quot;baz&quot;)]"></div><div data-l="# fn bar() {}"></div></div>
+<br>
+<p>They also have some helpers:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(any(unix, windows))]"></div><div data-l="# fn foo() {}"></div><div data-l=""></div><div data-l="#[cfg(all(unix, target_pointer_width = &quot;32&quot;))]"></div><div data-l="# fn bar() {}"></div><div data-l=""></div><div data-l="#[cfg(not(foo))]"></div><div data-l="# fn not_foo() {}"></div></div>
+<br>
+<p>These can nest arbitrarily:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(any(not(unix), all(target_os=&quot;macos&quot;, target_arch = &quot;powerpc&quot;)))]"></div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>As for how to enable or disable these switches, if you’re using Cargo,
+they get set in the <a href="#3features"><code>[features]</code> section</a> of your <code>Cargo.toml</code>:</p>
+<br>
+<a class="notranslate" href="#1http://doc.crates.io/manifest.html#the-features-section">features</a>
+<br>
+<div data-lang="toml"><div data-l="[features]"></div><div data-l="# no features by default"></div><div data-l="default = []"></div><div data-l=""></div><div data-l="# Add feature &quot;foo&quot; here, then you can use it. "></div><div data-l="# Our &quot;foo&quot; feature depends on nothing else."></div><div data-l="foo = []"></div></div>
+<br>
+<p>When you do this, Cargo passes along a flag to <code>rustc</code>:</p>
+<br>
+<div data-lang="text"><div data-l="--cfg feature=&quot;${feature_name}&quot;"></div></div>
+<br>
+<p>The sum of these <code>cfg</code> flags will determine which ones get activated, and
+therefore, which code gets compiled. Let’s take this code:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg(feature = &quot;foo&quot;)]"></div><div data-l="mod foo {"></div><div data-l="}"></div></div>
+<br>
+<p>If we compile it with <code>cargo build --features &quot;foo&quot;</code>, it will send the <code>--cfg
+feature=&quot;foo&quot;</code> flag to <code>rustc</code>, and the output will have the <code>mod foo</code> in it.
+If we compile it with a regular <code>cargo build</code>, no extra flags get passed on,
+and so, no <code>foo</code> module will exist.</p>
+<br>
+<h1>cfg_attr</h1>
+<br>
+<p>You can also set another attribute based on a <code>cfg</code> variable with <code>cfg_attr</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="#[cfg_attr(a, b)]"></div><div data-l="# fn foo() {}"></div></div>
+<br>
+<p>Will be the same as <code>#[b]</code> if <code>a</code> is set by <code>cfg</code> attribute, and nothing otherwise.</p>
+<br>
+<h1>cfg!</h1>
+<br>
+<p>The <code>cfg€</code> macro lets you use these kinds of flags elsewhere in your code, too:</p>
+<br>
+<div data-lang="rust"><div data-l="if cfg!(target_os = &quot;macos&quot;) || cfg!(target_os = &quot;ios&quot;) {"></div><div data-l="    println!(&quot;Think Different!&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>These will be replaced by a <code>true</code> or <code>false</code> at compile-time, depending on the
+configuration settings.</p>

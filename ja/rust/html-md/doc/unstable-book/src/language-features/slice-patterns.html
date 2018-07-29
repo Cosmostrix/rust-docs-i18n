@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1><code>slice_patterns</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#23121">#23121</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/23121">#23121</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>slice_patterns</code> feature gate lets you use <code>..</code> to indicate any number of
+elements inside a pattern matching a slice. This wildcard can only be used once
+for a given array. If there's an pattern before the <code>..</code>, the subslice will be
+matched against that pattern. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(slice_patterns)]"></div><div data-l=""></div><div data-l="fn is_symmetric(list: &amp;[u32]) -&gt; bool {"></div><div data-l="    match list {"></div><div data-l="        &amp;[] | &amp;[_] =&gt; true,"></div><div data-l="        &amp;[x, ref inside.., y] if x == y =&gt; is_symmetric(inside),"></div><div data-l="        &amp;[..] =&gt; false,"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let sym = &amp;[0, 1, 4, 2, 4, 1, 0];"></div><div data-l="    assert!(is_symmetric(sym));"></div><div data-l=""></div><div data-l="    let not_sym = &amp;[0, 1, 7, 2, 4, 1, 0];"></div><div data-l="    assert!(!is_symmetric(not_sym));"></div><div data-l="}"></div></div>

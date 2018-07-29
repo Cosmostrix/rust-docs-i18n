@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h1>Threads</h1>
+<br>
+<p>Rust provides a mechanism for spawning native OS threads via the <code>spawn</code>
+function, the argument of this function is a moving closure.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::thread;"></div><div data-l=""></div><div data-l="static NTHREADS: i32 = 10;"></div><div data-l=""></div><div data-l="#// This is the `main` thread"></div><div data-l="// ">This is the <code>main</code> thread</div><div data-l="fn main() {"></div><div data-l="#    // Make a vector to hold the children which are spawned."></div><div data-l="    // ">Make a vector to hold the children which are spawned.</div><div data-l="    let mut children = vec![];"></div><div data-l=""></div><div data-l="    for i in 0..NTHREADS {"></div><div data-l="#        // Spin up another thread"></div><div data-l="        // ">Spin up another thread</div><div data-l="        children.push(thread::spawn(move || {"></div><div data-l="            println!(&quot;this is thread number {}&quot;, i);"></div><div data-l="        }));"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    for child in children {"></div><div data-l="#        // Wait for the thread to finish. Returns a result."></div><div data-l="        // ">Wait for the thread to finish. Returns a result.</div><div data-l="        let _ = child.join();"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>These threads will be scheduled by the OS.</p>

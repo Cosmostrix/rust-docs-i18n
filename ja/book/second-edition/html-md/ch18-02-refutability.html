@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<h2>Refutability: Whether a Pattern Might Fail to Match</h2>
+<br>
+<p>Patterns come in two forms: refutable and irrefutable. Patterns that will match
+for any possible value passed are <i>irrefutable</i>. An example would be <code>x</code> in the
+statement <code>let x = 5;</code> because <code>x</code> matches anything and therefore cannot fail
+to match. Patterns that can fail to match for some possible value are
+<i>refutable</i>. An example would be <code>Some(x)</code> in the expression <code>if let Some(x) =
+a_value</code> because if the value in the <code>a_value</code> variable is <code>None</code> rather than
+<code>Some</code>, the <code>Some(x)</code> pattern will not match.</p>
+<br>
+<p>Function parameters, <code>let</code> statements, and <code>for</code> loops can only accept
+irrefutable patterns, because the program cannot do anything meaningful when
+values don’t match. The <code>if let</code> and <code>while let</code> expressions only accept
+refutable patterns, because by definition they’re intended to handle possible
+failure: the functionality of a conditional is in its ability to perform
+differently depending on success or failure.</p>
+<br>
+<p>In general, you shouldn’t have to worry about the distinction between refutable
+and irrefutable patterns; however, you do need to be familiar with the concept
+of refutability so you can respond when you see it in an error message. In
+those cases, you’ll need to change either the pattern or the construct you’re
+using the pattern with, depending on the intended behavior of the code.</p>
+<br>
+<p>Let’s look at an example of what happens when we try to use a refutable pattern
+where Rust requires an irrefutable pattern and vice versa. Listing 18-8 shows a
+<code>let</code> statement, but for the pattern we’ve specified <code>Some(x)</code>, a refutable
+pattern. As you might expect, this code will not compile.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let Some(x) = some_option_value;"></div></div>
+<br>
+<p><span class="caption">Listing 18-8: Attempting to use a refutable pattern with
+<code>let</code></span></p>
+<br>
+<p>If <code>some_option_value</code> was a <code>None</code> value, it would fail to match the pattern
+<code>Some(x)</code>, meaning the pattern is refutable. However, the <code>let</code> statement can
+only accept an irrefutable pattern because there is nothing valid the code can
+do with a <code>None</code> value. At compile time, Rust will complain that we’ve tried to
+use a refutable pattern where an irrefutable pattern is required:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0005]: refutable pattern in local binding: `None` not covered"></div><div data-l=" --&gt;"></div><div data-l="  |"></div><div data-l="3 | let Some(x) = some_option_value;"></div><div data-l="  |     ^^^^^^^ pattern `None` not covered"></div></div>
+<br>
+<p>Because we didn’t cover (and couldn’t cover!) every valid value with the
+pattern <code>Some(x)</code>, Rust rightfully produces a compiler error.</p>
+<br>
+<p>To fix the problem where we have a refutable pattern where an irrefutable
+pattern is needed, we can change the code that uses the pattern: instead of
+using <code>let</code>, we can use <code>if let</code>. Then if the pattern doesn’t match, the code
+will just skip the code in the curly brackets, giving it a way to continue
+validly. Listing 18-9 shows how to fix the code in Listing 18-8.</p>
+<br>
+<div data-lang="rust"><div data-l="# let some_option_value: Option&lt;i32&gt; = None;"></div><div data-l="if let Some(x) = some_option_value {"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-9: Using <code>if let</code> and a block with refutable
+patterns instead of <code>let</code></span></p>
+<br>
+<p>We’ve given the code an out! This code is perfectly valid, although it means we
+cannot use an irrefutable pattern without receiving an error. If we give <code>if
+let</code> a pattern that will always match, such as <code>x</code>, as shown in Listing 18-10,
+it will not compile.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="if let x = 5 {"></div><div data-l="    println!(&quot;{}&quot;, x);"></div><div data-l="};"></div></div>
+<br>
+<p><span class="caption">Listing 18-10: Attempting to use an irrefutable pattern
+with <code>if let</code></span></p>
+<br>
+<p>Rust complains that it doesn’t make sense to use <code>if let</code> with an irrefutable
+pattern:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0162]: irrefutable if-let pattern"></div><div data-l=" --&gt; &lt;anon&gt;:2:8"></div><div data-l="  |"></div><div data-l="2 | if let x = 5 {"></div><div data-l="  |        ^ irrefutable pattern"></div></div>
+<br>
+<p>For this reason, match arms must use refutable patterns, except for the last
+arm, which should match any remaining values with an irrefutable pattern. Rust
+allows us to use an irrefutable pattern in a <code>match</code> with only one arm, but
+this syntax isn’t particularly useful and could be replaced with a simpler
+<code>let</code> statement.</p>
+<br>
+<p>Now that you know where to use patterns and the difference between refutable
+and irrefutable patterns, let’s cover all the syntax we can use to create
+patterns.</p>

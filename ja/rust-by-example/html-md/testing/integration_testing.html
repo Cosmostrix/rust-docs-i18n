@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<h1>Integration testing</h1>
+<br>
+<p><a href="#3unit">Unit tests</a> are testing one module in isolation at a time: they're small
+and can test private code. Integration tests are external to your crate and use
+only its public interface in the same way any other code would. Their purpose is
+to test that many parts of your library work correctly together.</p>
+<br>
+<p>Cargo looks for integration tests in <code>tests</code> directory next to <code>src</code>.</p>
+<br>
+<p>File <code>src/lib.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Assume that crate is called adder, will have to extern it in integration test."></div><div data-l="// ">Assume that crate is called adder, will have to extern it in integration test.</div><div data-l="pub fn add(a: i32, b: i32) -&gt; i32 {"></div><div data-l="    a + b"></div><div data-l="}"></div></div>
+<br>
+<p>File with test: <code>tests/integration_test.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// extern crate we're testing, same as any other code would do."></div><div data-l="// ">extern crate we're testing, same as any other code would do.</div><div data-l="extern crate adder;"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn test_add() {"></div><div data-l="    assert_eq!(adder::add(3, 2), 5);"></div><div data-l="}"></div></div>
+<br>
+<p>Running tests with <code>cargo test</code> command:</p>
+<br>
+<div data-lang="bash"><div data-l="$ cargo test"></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="     Running target/debug/deps/integration_test-bcd60824f5fbfe19"></div><div data-l=""></div><div data-l="running 1 test"></div><div data-l="test test_add ... ok"></div><div data-l=""></div><div data-l="test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div><div data-l=""></div><div data-l="   Doc-tests adder"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<p>Each Rust source file in <code>tests</code> directory is compiled as a separate crate. One
+way of sharing some code between integration tests is making module with public
+functions, importing and using it within tests.</p>
+<br>
+<p>File <code>tests/common.rs</code>:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn setup() {"></div><div data-l="#    // some setup code, like creating required files/directories, starting"></div><div data-l="#    // servers, etc."></div><div data-l="    // ">some setup code, like creating required files/directories, starting servers, etc.</div><div data-l="}"></div></div>
+<br>
+<p>File with test: <code>tests/integration_test.rs</code></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// extern crate we're testing, same as any other code will do."></div><div data-l="// ">extern crate we're testing, same as any other code will do.</div><div data-l="extern crate adder;"></div><div data-l=""></div><div data-l="#// importing common module."></div><div data-l="// ">importing common module.</div><div data-l="mod common;"></div><div data-l=""></div><div data-l="#[test]"></div><div data-l="fn test_add() {"></div><div data-l="#    // using common code."></div><div data-l="    // ">using common code.</div><div data-l="    common::setup();"></div><div data-l="    assert_eq!(adder::add(3, 2), 5);"></div><div data-l="}"></div></div>
+<br>
+<p>Modules with common code follow the ordinary <a class="notranslate" href="#3mod">modules</a> rules, so it's ok to
+create common module as <code>tests/common/mod.rs</code>.</p>
+<br>
+<a class="notranslate" href="#1testing/unit_testing.html">unit</a>
+<a class="notranslate" href="#1mod.html">mod</a>

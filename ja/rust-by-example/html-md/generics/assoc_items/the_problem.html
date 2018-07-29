@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1>The Problem</h1>
+<br>
+<p>A <code>trait</code> that is generic over its container type has type specification
+requirements - users of the <code>trait</code> <i>must</i> specify all of its generic types.</p>
+<br>
+<p>In the example below, the <code>Contains</code> <code>trait</code> allows the use of the generic 
+types <code>A</code> and <code>B</code>. The trait is then implemented for the <code>Container</code> type, 
+specifying <code>i32</code> for <code>A</code> and <code>B</code> so that it can be used with <code>fn difference()</code>.</p>
+<br>
+<p>Because <code>Contains</code> is generic, we are forced to explicitly state <i>all</i> of the 
+generic types for <code>fn difference()</code>. In practice, we want a way to express that 
+<code>A</code> and <code>B</code> are determined by the <i>input</i> <code>C</code>. As you will see in the next 
+section, associated types provide exactly that capability.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="struct Container(i32, i32);"></div><div data-l=""></div><div data-l="#// A trait which checks if 2 items are stored inside of container."></div><div data-l="#// Also retrieves first or last value."></div><div data-l="// ">A trait which checks if 2 items are stored inside of container. Also retrieves first or last value.</div><div data-l="trait Contains&lt;A, B&gt; {"></div><div data-l="#//    fn contains(&amp;self, &amp;A, &amp;B) -&gt; bool; // Explicitly requires `A` and `B`."></div><div data-l="    fn contains(&amp;self, &amp;A, &amp;B) -&gt; bool; // ">Explicitly requires <code>A</code> and <code>B</code>.</div><div data-l="#//    fn first(&amp;self) -&gt; i32; // Doesn't explicitly require `A` or `B`."></div><div data-l="    fn first(&amp;self) -&gt; i32; // ">Doesn't explicitly require <code>A</code> or <code>B</code>.</div><div data-l="#//    fn last(&amp;self) -&gt; i32;  // Doesn't explicitly require `A` or `B`."></div><div data-l="    fn last(&amp;self) -&gt; i32;  // ">Doesn't explicitly require <code>A</code> or <code>B</code>.</div><div data-l="}"></div><div data-l=""></div><div data-l="impl Contains&lt;i32, i32&gt; for Container {"></div><div data-l="#    // True if the numbers stored are equal."></div><div data-l="    // ">True if the numbers stored are equal.</div><div data-l="    fn contains(&amp;self, number_1: &amp;i32, number_2: &amp;i32) -&gt; bool {"></div><div data-l="        (&amp;self.0 == number_1) &amp;&amp; (&amp;self.1 == number_2)"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // Grab the first number."></div><div data-l="    // ">Grab the first number.</div><div data-l="    fn first(&amp;self) -&gt; i32 { self.0 }"></div><div data-l=""></div><div data-l="#    // Grab the last number."></div><div data-l="    // ">Grab the last number.</div><div data-l="    fn last(&amp;self) -&gt; i32 { self.1 }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// `C` contains `A` and `B`. In light of that, having to express `A` and"></div><div data-l="#// `B` again is a nuisance."></div><div data-l="// "><code>C</code> contains <code>A</code> and <code>B</code>. In light of that, having to express <code>A</code> and <code>B</code> again is a nuisance.</div><div data-l="fn difference&lt;A, B, C&gt;(container: &amp;C) -&gt; i32 where"></div><div data-l="    C: Contains&lt;A, B&gt; {"></div><div data-l="    container.last() - container.first()"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let number_1 = 3;"></div><div data-l="    let number_2 = 10;"></div><div data-l=""></div><div data-l="    let container = Container(number_1, number_2);"></div><div data-l=""></div><div data-l="    println!(&quot;Does container contain {} and {}: {}&quot;,"></div><div data-l="        &amp;number_1, &amp;number_2,"></div><div data-l="        container.contains(&amp;number_1, &amp;number_2));"></div><div data-l="    println!(&quot;First number: {}&quot;, container.first());"></div><div data-l="    println!(&quot;Last number: {}&quot;, container.last());"></div><div data-l=""></div><div data-l="    println!(&quot;The difference is: {}&quot;, difference(&amp;container));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3structs"><code>struct</code>s</a>, and <a class="notranslate" href="#3traits"><code>trait</code>s</a></p>
+<br>
+<a class="notranslate" href="#1custom_types/structs.html">structs</a>
+<a class="notranslate" href="#1trait.html">traits</a>

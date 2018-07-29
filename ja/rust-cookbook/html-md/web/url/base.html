@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h2>Create a base URL by removing path segments</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>A base URL includes a protocol and a domain.  Base URLs have no folders,
+files or query strings.  Each of those items are stripped out of the given
+URL.  <a class="notranslate" href="#4`PathSegmentsMut::clear`">`PathSegmentsMut::clear`</a> removes paths and <a class="notranslate" href="#4`Url::set_query`">`Url::set_query`</a> removes
+query string.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::Url;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="#     errors {"></div><div data-l="#         CannotBeABase"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let full = &quot;https://github.com/rust-lang/cargo?asdf&quot;;"></div><div data-l=""></div><div data-l="    let url = Url::parse(full)?;"></div><div data-l="    let base = base_url(url)?;"></div><div data-l=""></div><div data-l="    assert_eq!(base.as_str(), &quot;https://github.com/&quot;);"></div><div data-l="    println!(&quot;The base of the URL is: {}&quot;, base);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn base_url(mut url: Url) -&gt; Result&lt;Url&gt; {"></div><div data-l="    match url.path_segments_mut() {"></div><div data-l="        Ok(mut path) =&gt; {"></div><div data-l="            path.clear();"></div><div data-l="        }"></div><div data-l="        Err(_) =&gt; {"></div><div data-l="            return Err(Error::from_kind(ErrorKind::CannotBeABase));"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    url.set_query(None);"></div><div data-l=""></div><div data-l="    Ok(url)"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.PathSegmentsMut.html#method.clear">`PathSegmentsMut::clear`</a>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html#method.set_query">`Url::set_query`</a>

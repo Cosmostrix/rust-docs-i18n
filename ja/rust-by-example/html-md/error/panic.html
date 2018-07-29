@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<h1><code>panic</code></h1>
+<br>
+<p>The simplest error handling mechanism we will see is <code>panic</code>. It prints an 
+error message, starts unwinding the task, and usually exits the program. 
+Here, we explicitly call <code>panic</code> on our error condition: </p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn give_princess(gift: &amp;str) {"></div><div data-l="#    // Princesses hate snakes, so we need to stop if she disapproves!"></div><div data-l="    // ">Princesses hate snakes, so we need to stop if she disapproves!</div><div data-l="    if gift == &quot;snake&quot; { panic!(&quot;AAAaaaaa!!!!&quot;); }"></div><div data-l=""></div><div data-l="    println!(&quot;I love {}s!!!!!&quot;, gift);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    give_princess(&quot;teddy bear&quot;);"></div><div data-l="    give_princess(&quot;snake&quot;);"></div><div data-l="}"></div></div>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<h2>Handle errors correctly in main</h2>
+<br>
+<p><a href="#3error-chain">!<a class="notranslate" href="#4error-chain-badge">error-chain-badge</a></a> <a href="#3cat-rust-patterns">!<a class="notranslate" href="#4cat-rust-patterns-badge">cat-rust-patterns-badge</a></a></p>
+<br>
+<p>Handles error that occur when trying to open a file that does not
+exist. It is achieved by using <a class="notranslate" href="#4error-chain">error-chain</a>, a library that takes
+care of a lot of boilerplate code needed in order to <a class="notranslate" href="#4handle errors in Rust">handle errors in Rust</a>.</p>
+<br>
+<p><code>Io(std::io::Error)</code> inside <a class="notranslate" href="#4`foreign_links`">`foreign_links`</a> allows automatic
+conversion from <a class="notranslate" href="#4`std::io::Error`">`std::io::Error`</a> into <a class="notranslate" href="#4`error_chain!`">`error_chain!`</a> defined type
+implementing the <a class="notranslate" href="#4`Error`">`Error`</a> trait.</p>
+<br>
+<p>The below recipe will tell how long the system has been running by
+opening the Unix file <code>/proc/uptime</code> and parse the content to get the
+first number. Returns uptime unless there is an error.</p>
+<br>
+<p>Other recipes in this book will hide the <a class="notranslate" href="#4error-chain">error-chain</a> boilerplate, and can be
+seen by expanding the code with the ⤢ button.</p>
+<br>
+<div data-lang="rust"><div data-l="#[macro_use]"></div><div data-l="extern crate error_chain;"></div><div data-l=""></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Read;"></div><div data-l=""></div><div data-l="error_chain!{"></div><div data-l="    foreign_links {"></div><div data-l="        Io(std::io::Error);"></div><div data-l="        ParseInt(::std::num::ParseIntError);"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn read_uptime() -&gt; Result&lt;u64&gt; {"></div><div data-l="    let mut uptime = String::new();"></div><div data-l="    File::open(&quot;/proc/uptime&quot;)?.read_to_string(&amp;mut uptime)?;"></div><div data-l=""></div><div data-l="    Ok(uptime"></div><div data-l="        .split('.')"></div><div data-l="        .next()"></div><div data-l="        .ok_or(&quot;Cannot parse uptime data&quot;)?"></div><div data-l="        .parse()?)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    match read_uptime() {"></div><div data-l="        Ok(uptime) =&gt; println!(&quot;uptime: {} seconds&quot;, uptime),"></div><div data-l="        Err(err) =&gt; eprintln!(&quot;error: {}&quot;, err),"></div><div data-l="    };"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/macro.error_chain.html">`error_chain!`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/error/trait.Error.html">`Error`</a>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/#foreign-links">`foreign_links`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/io/struct.Error.html">`std::io::Error`</a>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/second-edition/ch09-00-error-handling.html">handle errors in Rust</a>

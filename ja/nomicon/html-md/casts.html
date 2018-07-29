@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<h1>Casts</h1>
+<br>
+<p>Casts are a superset of coercions: every coercion can be explicitly
+invoked via a cast. However some conversions require a cast.
+While coercions are pervasive and largely harmless, these &quot;true casts&quot;
+are rare and potentially dangerous. As such, casts must be explicitly invoked
+using the <code>as</code> keyword: <code>expr as Type</code>.</p>
+<br>
+<p>True casts generally revolve around raw pointers and the primitive numeric
+types. Even though they're dangerous, these casts are infallible at runtime.
+If a cast triggers some subtle corner case no indication will be given that
+this occurred. The cast will simply succeed. That said, casts must be valid
+at the type level, or else they will be prevented statically. For instance,
+<code>7u8 as bool</code> will not compile.</p>
+<br>
+<p>That said, casts aren't <code>unsafe</code> because they generally can't violate memory
+safety <i>on their own</i>. For instance, converting an integer to a raw pointer can
+very easily lead to terrible things. However the act of creating the pointer
+itself is safe, because actually using a raw pointer is already marked as
+<code>unsafe</code>.</p>
+<br>
+<p>Here's an exhaustive list of all the true casts. For brevity, we will use <code>*</code>
+to denote either a <code>*const</code> or <code>*mut</code>, and <code>integer</code> to denote any integral
+primitive:</p>
+<br>
+<div data-b=" *"><code>*T as *U</code> where <code>T, U: Sized</code></div>
+<div data-b=" *"><code>*T as *U</code> TODO: explain unsized situation</div>
+<div data-b=" *"><code>*T as integer</code></div>
+<div data-b=" *"><code>integer as *T</code></div>
+<div data-b=" *"><code>number as number</code></div>
+<div data-b=" *"><code>field-less enum as integer</code></div>
+<div data-b=" *"><code>bool as integer</code></div>
+<div data-b=" *"><code>char as integer</code></div>
+<div data-b=" *"><code>u8 as char</code></div>
+<div data-b=" *"><code>&amp;[T; n] as *const T</code></div>
+<div data-b=" *"><code>fn as *T</code> where <code>T: Sized</code></div>
+<div data-b=" *"><code>fn as integer</code></div>
+<br>
+<p>Note that lengths are not adjusted when casting raw slices -
+<code>*const [u16] as *const [u8]</code> creates a slice that only includes
+half of the original memory.</p>
+<br>
+<p>Casting is not transitive, that is, even if <code>e as U1 as U2</code> is a valid
+expression, <code>e as U2</code> is not necessarily so.</p>
+<br>
+<p>For numeric casts, there are quite a few cases to consider:</p>
+<br>
+<div data-b="*">casting between two integers of the same size (e.g. i32 -&gt; u32) is a no-op</div>
+<div data-b="*">casting from a larger integer to a smaller integer (e.g. u32 -&gt; u8) will
+truncate</div>
+<div data-b="*">casting from a smaller integer to a larger integer (e.g. u8 -&gt; u32) will</div>
+<div data-b="    *">zero-extend if the source is unsigned</div>
+<div data-b="    *">sign-extend if the source is signed</div>
+<div data-b="*">casting from a float to an integer will round the float towards zero</div>
+<div data-b="    *"><b>[NOTE: currently this will cause Undefined Behavior if the rounded
+      value cannot be represented by the target integer type][float-int]</b>.
+This includes Inf and NaN. This is a bug and will be fixed.</div>
+<div data-b="*">casting from an integer to float will produce the floating point
+representation of the integer, rounded if necessary (rounding to
+nearest, ties to even)</div>
+<div data-b="*">casting from an f32 to an f64 is perfect and lossless</div>
+<div data-b="*">casting from an f64 to an f32 will produce the closest possible value
+(rounding to nearest, ties to even)</div>
+<br>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/10184">float-int</a>

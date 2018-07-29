@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1>Elision</h1>
+<br>
+<p>Some lifetime patterns are overwelmingly common and so the borrow checker
+will implicitly add them to save typing and to improve readability.
+This process of implicit addition is called elision. Elision exists in Rust
+solely because these patterns are common.</p>
+<br>
+<p>The following code shows a few examples of elision. For a more comprehensive
+description of elision, see <a href="#3elision">lifetime elision</a> in the book.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="#// `elided_input` and `annotated_input` essentially have identical signatures"></div><div data-l="#// because the lifetime of `elided_input` is elided by the compiler:"></div><div data-l="// "><code>elided_input</code> and <code>annotated_input</code> essentially have identical signatures because the lifetime of <code>elided_input</code> is elided by the compiler:</div><div data-l="fn elided_input(x: &amp;i32) {"></div><div data-l="    println!(&quot;`elided_input`: {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn annotated_input&lt;'a&gt;(x: &amp;'a i32) {"></div><div data-l="    println!(&quot;`annotated_input`: {}&quot;, x);"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// Similarly, `elided_pass` and `annotated_pass` have identical signatures"></div><div data-l="#// because the lifetime is added implicitly to `elided_pass`:"></div><div data-l="// ">Similarly, <code>elided_pass</code> and <code>annotated_pass</code> have identical signatures because the lifetime is added implicitly to <code>elided_pass</code>:</div><div data-l="fn elided_pass(x: &amp;i32) -&gt; &amp;i32 { x }"></div><div data-l=""></div><div data-l="fn annotated_pass&lt;'a&gt;(x: &amp;'a i32) -&gt; &amp;'a i32 { x }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 3;"></div><div data-l=""></div><div data-l="    elided_input(&amp;x);"></div><div data-l="    annotated_input(&amp;x);"></div><div data-l=""></div><div data-l="    println!(&quot;`elided_pass`: {}&quot;, elided_pass(&amp;x));"></div><div data-l="    println!(&quot;`annotated_pass`: {}&quot;, annotated_pass(&amp;x));"></div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a class="notranslate" href="#3elision">elision</a></p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/second-edition/ch10-03-lifetime-syntax.html#lifetime-elision">elision</a>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<h1>Comments</h1>
+<br>
+<p>Now that we have some functions, it’s a good idea to learn about comments.
+Comments are notes that you leave to other programmers to help explain things
+about your code. The compiler mostly ignores them.</p>
+<br>
+<p>Rust has two kinds of comments that you should care about: <i>line comments</i>
+and <i>doc comments</i>.</p>
+<br>
+<div data-lang="rust"><div data-l="#// Line comments are anything after ‘//’ and extend to the end of the line."></div><div data-l="// ">Line comments are anything after ‘//’ and extend to the end of the line.</div><div data-l=""></div><div data-l="#//let x = 5; // This is also a line comment."></div><div data-l="let x = 5; // ">This is also a line comment.</div><div data-l=""></div><div data-l="#// If you have a long explanation for something, you can put line comments next"></div><div data-l="#// to each other. Put a space between the // and your comment so that it’s"></div><div data-l="#// more readable."></div><div data-l="// ">If you have a long explanation for something, you can put line comments next to each other. Put a space between the // and your comment so that it’s more readable.</div></div>
+<br>
+<p>The other kind of comment is a doc comment. Doc comments use <code>///</code> instead of
+<code>//</code>, and support Markdown notation inside:</p>
+<br>
+<div data-lang="rust"><div data-l="#///// Adds one to the number given."></div><div data-l="/// ">Adds one to the number given.</div><div data-l="///"></div><div data-l="#///// # Examples"></div><div data-l="/// "># Examples</div><div data-l="///"></div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="#///// let five = 5;"></div><div data-l="/// ">let five = 5;</div><div data-l="///"></div><div data-l="#///// assert_eq!(6, add_one(5));"></div><div data-l="/// ">assert_eq!(6, add_one(5));</div><div data-l="#///// # fn add_one(x: i32) -&gt; i32 {"></div><div data-l="/// "># fn add_one(x: i32) -&gt; i32 {</div><div data-l="#///// #     x + 1"></div><div data-l="/// ">#     x + 1</div><div data-l="#///// # }"></div><div data-l="/// "># }</div><div data-l="#///// ```"></div><div data-l="/// ">```</div><div data-l="fn add_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>There is another style of doc comment, <code>//€</code>, to comment containing items (e.g.
+crates, modules or functions), instead of the items following it. Commonly used
+inside crates root (lib.rs) or modules root (mod.rs):</p>
+<br>
+<div data-lang=""><div data-l="//! # The Rust Standard Library"></div><div data-l="//!"></div><div data-l="//! The Rust Standard Library provides the essential runtime"></div><div data-l="//! functionality for building portable Rust software."></div></div>
+<br>
+<p>When writing doc comments, providing some examples of usage is very, very
+helpful. You’ll notice we’ve used a new macro here: <code>assert_eq€</code>. This compares
+two values, and <code>panic€</code>s if they’re not equal to each other. It’s very helpful
+in documentation. There’s another macro, <code>assert€</code>, which <code>panic€</code>s if the
+value passed to it is <code>false</code>.</p>
+<br>
+<p>You can use the <a class="notranslate" href="#2documentation.html"><code>rustdoc</code></a> tool to generate HTML documentation
+from these doc comments, and also to run the code examples as tests!</p>

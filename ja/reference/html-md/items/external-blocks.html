@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<h1>External blocks</h1>
+<br>
+<p>External blocks form the basis for Rust's foreign function interface.
+Declarations in an external block describe symbols in external, non-Rust
+libraries.</p>
+<br>
+<p>Functions within external blocks are declared in the same way as other Rust
+functions, with the exception that they may not have a body and are instead
+terminated by a semicolon.</p>
+<br>
+<p>Functions within external blocks may be called by Rust code, just like
+functions defined in Rust. The Rust compiler automatically translates between
+the Rust ABI and the foreign ABI.</p>
+<br>
+<p>Functions within external blocks may be variadic by specifying <code>...</code> after one
+or more named arguments in the argument list:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern {"></div><div data-l="    fn foo(x: i32, ...);"></div><div data-l="}"></div></div>
+<br>
+<p>A number of <a class="notranslate" href="#4attributes">attributes</a> control the behavior of external blocks.</p>
+<br>
+<a class="notranslate" href="#1attributes.html#ffi-attributes">attributes</a>
+<br>
+<p>By default external blocks assume that the library they are calling uses the
+standard C ABI on the specific platform. Other ABIs may be specified using an
+<code>abi</code> string, as shown here:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// Interface to the Windows API"></div><div data-l="// ">Interface to the Windows API</div><div data-l="extern &quot;stdcall&quot; { }"></div></div>
+<br>
+<p>There are three ABI strings which are cross-platform, and which all compilers
+are guaranteed to support:</p>
+<br>
+<div data-b="*"><code>extern &quot;Rust&quot;</code> -- The default ABI when you write a normal <code>fn foo()</code> in any
+Rust code.</div>
+<div data-b="*"><code>extern &quot;C&quot;</code> -- This is the same as <code>extern fn foo()</code>; whatever the default
+your C compiler supports.</div>
+<div data-b="*"><code>extern &quot;system&quot;</code> -- Usually the same as <code>extern &quot;C&quot;</code>, except on Win32, in
+which case it's <code>&quot;stdcall&quot;</code>, or what you should use to link to the Windows
+API itself</div>
+<br>
+<p>There are also some platform-specific ABI strings:</p>
+<br>
+<div data-b="*"><code>extern &quot;cdecl&quot;</code> -- The default for x86\_32 C code.</div>
+<div data-b="*"><code>extern &quot;stdcall&quot;</code> -- The default for the Win32 API on x86\_32.</div>
+<div data-b="*"><code>extern &quot;win64&quot;</code> -- The default for C code on x86\_64 Windows.</div>
+<div data-b="*"><code>extern &quot;sysv64&quot;</code> -- The default for C code on non-Windows x86\_64.</div>
+<div data-b="*"><code>extern &quot;aapcs&quot;</code> -- The default for ARM.</div>
+<div data-b="*"><code>extern &quot;fastcall&quot;</code> -- The <code>fastcall</code> ABI -- corresponds to MSVC's
+<code>__fastcall</code> and GCC and clang's <code>__attribute__((fastcall))</code></div>
+<div data-b="*"><code>extern &quot;vectorcall&quot;</code> -- The <code>vectorcall</code> ABI -- corresponds to MSVC's
+<code>__vectorcall</code> and clang's <code>__attribute__((vectorcall))</code></div>
+<br>
+<p>Finally, there are some rustc-specific ABI strings:</p>
+<br>
+<div data-b="*"><code>extern &quot;rust-intrinsic&quot;</code> -- The ABI of rustc intrinsics.</div>
+<div data-b="*"><code>extern &quot;rust-call&quot;</code> -- The ABI of the Fn::call trait functions.</div>
+<div data-b="*"><code>extern &quot;platform-intrinsic&quot;</code> -- Specific platform intrinsics -- like, for
+example, <code>sqrt</code> -- have this ABI. You should never have to deal with it.</div>
+<br>
+<p>The <code>link</code> attribute allows the name of the library to be specified. When
+specified the compiler will attempt to link against the native library of the
+specified name.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#[link(name = &quot;crypto&quot;)]"></div><div data-l="extern { }"></div></div>
+<br>
+<p>The type of a function declared in an extern block is <code>extern &quot;abi&quot; fn(A1, ...,
+An) -&gt; R</code>, where <code>A1...An</code> are the declared types of its arguments and <code>R</code> is
+the declared return type.</p>
+<br>
+<p>It is valid to add the <code>link</code> attribute on an empty extern block. You can use
+this to satisfy the linking requirements of extern blocks elsewhere in your
+code (including upstream crates) instead of adding the attribute to each extern
+block.</p>

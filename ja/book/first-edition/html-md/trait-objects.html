@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<h1>Trait Objects</h1>
+<br>
+<p>When code involves polymorphism, there needs to be a mechanism to determine
+which specific version is actually run. This is called ‘dispatch’. There are
+two major forms of dispatch: static dispatch and dynamic dispatch. While Rust
+favors static dispatch, it also supports dynamic dispatch through a mechanism
+called ‘trait objects’.</p>
+<br>
+<h2>Background</h2>
+<br>
+<p>For the rest of this chapter, we’ll need a trait and some implementations.
+Let’s make a simple one, <code>Foo</code>. It has one method that is expected to return a
+<code>String</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="trait Foo {"></div><div data-l="    fn method(&amp;self) -&gt; String;"></div><div data-l="}"></div></div>
+<br>
+<p>We’ll also implement this trait for <code>u8</code> and <code>String</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo { fn method(&amp;self) -&gt; String; }"></div><div data-l="impl Foo for u8 {"></div><div data-l="    fn method(&amp;self) -&gt; String { format!(&quot;u8: {}&quot;, *self) }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Foo for String {"></div><div data-l="    fn method(&amp;self) -&gt; String { format!(&quot;string: {}&quot;, *self) }"></div><div data-l="}"></div></div>
+<br>
+<br>
+<h2>Static dispatch</h2>
+<br>
+<p>We can use this trait to perform static dispatch with trait bounds:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo { fn method(&amp;self) -&gt; String; }"></div><div data-l="# impl Foo for u8 { fn method(&amp;self) -&gt; String { format!(&quot;u8: {}&quot;, *self) } }"></div><div data-l="# impl Foo for String { fn method(&amp;self) -&gt; String { format!(&quot;string: {}&quot;, *self) } }"></div><div data-l="fn do_something&lt;T: Foo&gt;(x: T) {"></div><div data-l="    x.method();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 5u8;"></div><div data-l="    let y = &quot;Hello&quot;.to_string();"></div><div data-l=""></div><div data-l="    do_something(x);"></div><div data-l="    do_something(y);"></div><div data-l="}"></div></div>
+<br>
+<p>Rust uses ‘monomorphization’ to perform static dispatch here. This means that
+Rust will create a special version of <code>do_something()</code> for both <code>u8</code> and
+<code>String</code>, and then replace the call sites with calls to these specialized
+functions. In other words, Rust generates something like this:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo { fn method(&amp;self) -&gt; String; }"></div><div data-l="# impl Foo for u8 { fn method(&amp;self) -&gt; String { format!(&quot;u8: {}&quot;, *self) } }"></div><div data-l="# impl Foo for String { fn method(&amp;self) -&gt; String { format!(&quot;string: {}&quot;, *self) } }"></div><div data-l="fn do_something_u8(x: u8) {"></div><div data-l="    x.method();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn do_something_string(x: String) {"></div><div data-l="    x.method();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 5u8;"></div><div data-l="    let y = &quot;Hello&quot;.to_string();"></div><div data-l=""></div><div data-l="    do_something_u8(x);"></div><div data-l="    do_something_string(y);"></div><div data-l="}"></div></div>
+<br>
+<p>This has a great upside: static dispatch allows function calls to be
+inlined because the callee is known at compile time, and inlining is
+the key to good optimization. Static dispatch is fast, but it comes at
+a tradeoff: ‘code bloat’, due to many copies of the same function
+existing in the binary, one for each type.</p>
+<br>
+<p>Furthermore, compilers aren’t perfect and may “optimize” code to become slower.
+For example, functions inlined too eagerly will bloat the instruction cache
+(cache rules everything around us). This is part of the reason that <code>#[inline]</code>
+and <code>#[inline(always)]</code> should be used carefully, and one reason why using a
+dynamic dispatch is sometimes more efficient.</p>
+<br>
+<p>However, the common case is that it is more efficient to use static dispatch,
+and one can always have a thin statically-dispatched wrapper function that does
+a dynamic dispatch, but not vice versa, meaning static calls are more flexible.
+The standard library tries to be statically dispatched where possible for this
+reason.</p>
+<br>
+<h2>Dynamic dispatch</h2>
+<br>
+<p>Rust provides dynamic dispatch through a feature called ‘trait objects’. Trait
+objects, like <code>&amp;Foo</code> or <code>Box&lt;Foo&gt;</code>, are normal values that store a value of
+<i>any</i> type that implements the given trait, where the precise type can only be
+known at runtime.</p>
+<br>
+<p>A trait object can be obtained from a pointer to a concrete type that
+implements the trait by <i>casting</i> it (e.g. <code>&amp;x as &amp;Foo</code>) or <i>coercing</i> it
+(e.g. using <code>&amp;x</code> as an argument to a function that takes <code>&amp;Foo</code>).</p>
+<br>
+<p>These trait object coercions and casts also work for pointers like <code>&amp;mut T</code> to
+<code>&amp;mut Foo</code> and <code>Box&lt;T&gt;</code> to <code>Box&lt;Foo&gt;</code>, but that’s all at the moment. Coercions
+and casts are identical.</p>
+<br>
+<p>This operation can be seen as ‘erasing’ the compiler’s knowledge about the
+specific type of the pointer, and hence trait objects are sometimes referred to
+as ‘type erasure’.</p>
+<br>
+<p>Coming back to the example above, we can use the same trait to perform dynamic
+dispatch with trait objects by casting:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo { fn method(&amp;self) -&gt; String; }"></div><div data-l="# impl Foo for u8 { fn method(&amp;self) -&gt; String { format!(&quot;u8: {}&quot;, *self) } }"></div><div data-l="# impl Foo for String { fn method(&amp;self) -&gt; String { format!(&quot;string: {}&quot;, *self) } }"></div><div data-l="fn do_something(x: &amp;Foo) {"></div><div data-l="    x.method();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = 5u8;"></div><div data-l="    do_something(&amp;x as &amp;Foo);"></div><div data-l="}"></div></div>
+<br>
+<p>or by coercing:</p>
+<br>
+<div data-lang="rust"><div data-l="# trait Foo { fn method(&amp;self) -&gt; String; }"></div><div data-l="# impl Foo for u8 { fn method(&amp;self) -&gt; String { format!(&quot;u8: {}&quot;, *self) } }"></div><div data-l="# impl Foo for String { fn method(&amp;self) -&gt; String { format!(&quot;string: {}&quot;, *self) } }"></div><div data-l="fn do_something(x: &amp;Foo) {"></div><div data-l="    x.method();"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let x = &quot;Hello&quot;.to_string();"></div><div data-l="    do_something(&amp;x);"></div><div data-l="}"></div></div>
+<br>
+<p>A function that takes a trait object is not specialized to each of the types
+that implements <code>Foo</code>: only one copy is generated, often (but not always)
+resulting in less code bloat. However, this comes at the cost of requiring
+slower virtual function calls, and effectively inhibiting any chance of
+inlining and related optimizations from occurring.</p>
+<br>
+<h3>Why pointers?</h3>
+<br>
+<p>Rust does not put things behind a pointer by default, unlike many managed
+languages, so types can have different sizes. Knowing the size of the value at
+compile time is important for things like passing it as an argument to a
+function, moving it about on the stack and allocating (and deallocating) space
+on the heap to store it.</p>
+<br>
+<p>For <code>Foo</code>, we would need to have a value that could be at least either a
+<code>String</code> (24 bytes) or a <code>u8</code> (1 byte), as well as any other type for which
+dependent crates may implement <code>Foo</code> (any number of bytes at all). There’s no
+way to guarantee that this last point can work if the values are stored without
+a pointer, because those other types can be arbitrarily large.</p>
+<br>
+<p>Putting the value behind a pointer means the size of the value is not relevant
+when we are tossing a trait object around, only the size of the pointer itself.</p>
+<br>
+<h3>Representation</h3>
+<br>
+<p>The methods of the trait can be called on a trait object via a special record
+of function pointers traditionally called a ‘vtable’ (created and managed by
+the compiler).</p>
+<br>
+<p>Trait objects are both simple and complicated: their core representation and
+layout is quite straight-forward, but there are some curly error messages and
+surprising behaviors to discover.</p>
+<br>
+<p>Let’s start simple, with the runtime representation of a trait object. The
+<code>std::raw</code> module contains structs with layouts that are the same as the
+complicated built-in types, <a href="#3stdraw">including trait objects</a>:</p>
+<br>
+<div data-lang="rust"><div data-l="# mod foo {"></div><div data-l="pub struct TraitObject {"></div><div data-l="    pub data: *mut (),"></div><div data-l="    pub vtable: *mut (),"></div><div data-l="}"></div><div data-l="# }"></div></div>
+<br>
+<a class="notranslate" href="#1../../std/raw/struct.TraitObject.html">stdraw</a>
+<br>
+<p>That is, a trait object like <code>&amp;Foo</code> consists of a ‘data’ pointer and a ‘vtable’
+pointer.</p>
+<br>
+<p>The data pointer addresses the data (of some unknown type <code>T</code>) that the trait
+object is storing, and the vtable pointer points to the vtable (‘virtual method
+table’) corresponding to the implementation of <code>Foo</code> for <code>T</code>.</p>
+<br>
+<br>
+<p>A vtable is essentially a struct of function pointers, pointing to the concrete
+piece of machine code for each method in the implementation. A method call like
+<code>trait_object.method()</code> will retrieve the correct pointer out of the vtable and
+then do a dynamic call of it. For example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct FooVtable {"></div><div data-l="    destructor: fn(*mut ()),"></div><div data-l="    size: usize,"></div><div data-l="    align: usize,"></div><div data-l="    method: fn(*const ()) -&gt; String,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// u8:"></div><div data-l="// ">u8:</div><div data-l=""></div><div data-l="fn call_method_on_u8(x: *const ()) -&gt; String {"></div><div data-l="#    // The compiler guarantees that this function is only called"></div><div data-l="#    // with `x` pointing to a u8."></div><div data-l="    // ">The compiler guarantees that this function is only called with <code>x</code> pointing to a u8.</div><div data-l="    let byte: &amp;u8 = unsafe { &amp;*(x as *const u8) };"></div><div data-l=""></div><div data-l="    byte.method()"></div><div data-l="}"></div><div data-l=""></div><div data-l="static Foo_for_u8_vtable: FooVtable = FooVtable {"></div><div data-l="    destructor: /* compiler magic */,"></div><div data-l="    size: 1,"></div><div data-l="    align: 1,"></div><div data-l=""></div><div data-l="#    // Cast to a function pointer:"></div><div data-l="    // ">Cast to a function pointer:</div><div data-l="    method: call_method_on_u8 as fn(*const ()) -&gt; String,"></div><div data-l="};"></div><div data-l=""></div><div data-l=""></div><div data-l="#// String:"></div><div data-l="// ">String:</div><div data-l=""></div><div data-l="fn call_method_on_String(x: *const ()) -&gt; String {"></div><div data-l="#    // The compiler guarantees that this function is only called"></div><div data-l="#    // with `x` pointing to a String."></div><div data-l="    // ">The compiler guarantees that this function is only called with <code>x</code> pointing to a String.</div><div data-l="    let string: &amp;String = unsafe { &amp;*(x as *const String) };"></div><div data-l=""></div><div data-l="    string.method()"></div><div data-l="}"></div><div data-l=""></div><div data-l="static Foo_for_String_vtable: FooVtable = FooVtable {"></div><div data-l="    destructor: /* compiler magic */,"></div><div data-l="#    // Values for a 64-bit computer, halve them for 32-bit ones."></div><div data-l="    // ">Values for a 64-bit computer, halve them for 32-bit ones.</div><div data-l="    size: 24,"></div><div data-l="    align: 8,"></div><div data-l=""></div><div data-l="    method: call_method_on_String as fn(*const ()) -&gt; String,"></div><div data-l="};"></div></div>
+<br>
+<p>The <code>destructor</code> field in each vtable points to a function that will clean up
+any resources of the vtable’s type: for <code>u8</code> it is trivial, but for <code>String</code> it
+will free the memory. This is necessary for owning trait objects like
+<code>Box&lt;Foo&gt;</code>, which need to clean-up both the <code>Box</code> allocation as well as the
+internal type when they go out of scope. The <code>size</code> and <code>align</code> fields store
+the size of the erased type, and its alignment requirements.</p>
+<br>
+<p>Suppose we’ve got some values that implement <code>Foo</code>. The explicit form of
+construction and use of <code>Foo</code> trait objects might look a bit like (ignoring the
+type mismatches: they’re all pointers anyway):</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let a: String = &quot;foo&quot;.to_string();"></div><div data-l="let x: u8 = 1;"></div><div data-l=""></div><div data-l="#// let b: &amp;Foo = &amp;a;"></div><div data-l="// ">let b: &amp;Foo = &amp;a;</div><div data-l="let b = TraitObject {"></div><div data-l="#    // Store the data:"></div><div data-l="    // ">Store the data:</div><div data-l="    data: &amp;a,"></div><div data-l="#    // Store the methods:"></div><div data-l="    // ">Store the methods:</div><div data-l="    vtable: &amp;Foo_for_String_vtable"></div><div data-l="};"></div><div data-l=""></div><div data-l="#// let y: &amp;Foo = x;"></div><div data-l="// ">let y: &amp;Foo = x;</div><div data-l="let y = TraitObject {"></div><div data-l="#    // Store the data:"></div><div data-l="    // ">Store the data:</div><div data-l="    data: &amp;x,"></div><div data-l="#    // Store the methods:"></div><div data-l="    // ">Store the methods:</div><div data-l="    vtable: &amp;Foo_for_u8_vtable"></div><div data-l="};"></div><div data-l=""></div><div data-l="#// b.method();"></div><div data-l="// ">b.method();</div><div data-l="(b.vtable.method)(b.data);"></div><div data-l=""></div><div data-l="#// y.method();"></div><div data-l="// ">y.method();</div><div data-l="(y.vtable.method)(y.data);"></div></div>
+<br>
+<h2>Object Safety</h2>
+<br>
+<p>Not every trait can be used to make a trait object. For example, vectors implement
+<code>Clone</code>, but if we try to make a trait object:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let v = vec![1, 2, 3];"></div><div data-l="let o = &amp;v as &amp;Clone;"></div></div>
+<br>
+<p>We get an error:</p>
+<br>
+<div data-lang="text"><div data-l="error: cannot convert to a trait object because trait `core::clone::Clone` is not object-safe [E0038]"></div><div data-l="let o = &amp;v as &amp;Clone;"></div><div data-l="        ^~"></div><div data-l="note: the trait cannot require that `Self : Sized`"></div><div data-l="let o = &amp;v as &amp;Clone;"></div><div data-l="        ^~"></div></div>
+<br>
+<p>The error says that <code>Clone</code> is not ‘object-safe’. Only traits that are
+object-safe can be made into trait objects. A trait is object-safe if both of
+these are true:</p>
+<br>
+<div data-b="*">the trait does not require that <code>Self: Sized</code></div>
+<div data-b="*">all of its methods are object-safe</div>
+<br>
+<p>So what makes a method object-safe? Each method must require that <code>Self: Sized</code>
+or all of the following:</p>
+<br>
+<div data-b="*">must not have any type parameters</div>
+<div data-b="*">must not use <code>Self</code></div>
+<br>
+<p>Whew! As we can see, almost all of these rules talk about <code>Self</code>. A good intuition
+is “except in special circumstances, if your trait’s method uses <code>Self</code>, it is not
+object-safe.”</p>

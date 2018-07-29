@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<h2>Build Scripts</h2>
+<br>
+<p>Some packages need to compile third-party non-Rust code, for example C
+libraries. Other packages need to link to C libraries which can either be
+located on the system or possibly need to be built from source. Others still
+need facilities for functionality such as code generation before building (think
+parser generators).</p>
+<br>
+<p>Cargo does not aim to replace other tools that are well-optimized for
+these tasks, but it does integrate with them with the <code>build</code> configuration
+option.</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="# ..."></div><div data-l="build = &quot;build.rs&quot;"></div></div>
+<br>
+<p>The Rust file designated by the <code>build</code> command (relative to the package root)
+will be compiled and invoked before anything else is compiled in the package,
+allowing your Rust code to depend on the built or generated artifacts.
+By default Cargo looks up for <code>&quot;build.rs&quot;</code> file in a package root (even if you
+do not specify a value for <code>build</code>). Use <code>build = &quot;custom_build_name.rs&quot;</code> to specify
+a custom build name or <code>build = false</code> to disable automatic detection of the build script.</p>
+<br>
+<p>Some example use cases of the build command are:</p>
+<br>
+<div data-b="*">Building a bundled C library.</div>
+<div data-b="*">Finding a C library on the host system.</div>
+<div data-b="*">Generating a Rust module from a specification.</div>
+<div data-b="*">Performing any platform-specific configuration needed for the crate.</div>
+<br>
+<p>Each of these use cases will be detailed in full below to give examples of how
+the build command works.</p>
+<br>
+<h3>Inputs to the Build Script</h3>
+<br>
+<p>When the build script is run, there are a number of inputs to the build script,
+all passed in the form of <a href="#3env">environment variables</a>.</p>
+<br>
+<p>In addition to environment variables, the build script’s current directory is
+the source directory of the build script’s package.</p>
+<br>
+<a class="notranslate" href="#1reference/environment-variables.html">env</a>
+<br>
+<h3>Outputs of the Build Script</h3>
+<br>
+<p>All the lines printed to stdout by a build script are written to a file like
+<code>target/debug/build/&lt;pkg&gt;/output</code> (the precise location may depend on your
+configuration). If you would like to see such output directly in your terminal,
+invoke cargo as 'very verbose' with the <code>-vv</code> flag. Note that if neither the
+build script nor project source files are modified, subsequent calls to
+cargo with <code>-vv</code> will <b>not</b> print output to the terminal because a
+new build is not executed. Run <code>cargo clean</code> before each cargo invocation
+if you want to ensure that output is always displayed on your terminal.
+Any line that starts with <code>cargo:</code> is interpreted directly by Cargo.
+This line must be of the form <code>cargo:key=value</code>, like the examples below:</p>
+<br>
+<div data-lang=""><div data-l="# specially recognized by Cargo"></div><div data-l="cargo:rustc-link-lib=static=foo"></div><div data-l="cargo:rustc-link-search=native=/path/to/foo"></div><div data-l="cargo:rustc-cfg=foo"></div><div data-l="cargo:rustc-env=FOO=bar"></div><div data-l="# arbitrary user-defined metadata"></div><div data-l="cargo:root=/path/to/foo"></div><div data-l="cargo:libdir=/path/to/foo/lib"></div><div data-l="cargo:include=/path/to/foo/include"></div></div>
+<br>
+<p>On the other hand, lines printed to stderr are written to a file like
+<code>target/debug/build/&lt;pkg&gt;/stderr</code> but are not interpreted by cargo.</p>
+<br>
+<p>There are a few special keys that Cargo recognizes, some affecting how the
+crate is built:</p>
+<br>
+<div data-b="*"><code>rustc-link-lib=[KIND=]NAME</code> indicates that the specified value is a library
+name and should be passed to the compiler as a <code>-l</code> flag. The optional <code>KIND</code>
+can be one of <code>static</code>, <code>dylib</code> (the default), or <code>framework</code>, see
+<code>rustc --help</code> for more details.</div>
+<div data-b="*"><code>rustc-link-search=[KIND=]PATH</code> indicates the specified value is a library
+search path and should be passed to the compiler as a <code>-L</code> flag. The optional
+<code>KIND</code> can be one of <code>dependency</code>, <code>crate</code>, <code>native</code>, <code>framework</code> or <code>all</code>
+(the default), see <code>rustc --help</code> for more details.</div>
+<div data-b="*"><code>rustc-flags=FLAGS</code> is a set of flags passed to the compiler, only <code>-l</code> and
+<code>-L</code> flags are supported.</div>
+<div data-b="*"><code>rustc-cfg=FEATURE</code> indicates that the specified feature will be passed as a
+<code>--cfg</code> flag to the compiler. This is often useful for performing compile-time
+detection of various features.</div>
+<div data-b="*"><code>rustc-env=VAR=VALUE</code> indicates that the specified environment variable
+will be added to the environment which the compiler is run within.
+The value can be then retrieved by the <code>env€</code> macro in the compiled crate.
+This is useful for embedding additional metadata in crate's code,
+such as the hash of Git HEAD or the unique identifier of a continuous
+integration server.</div>
+<div data-b="*"><code>rerun-if-changed=PATH</code> is a path to a file or directory which indicates that
+the build script should be re-run if it changes (detected by a more-recent
+last-modified timestamp on the file). Normally build scripts are re-run if
+any file inside the crate root changes, but this can be used to scope changes
+to just a small set of files. (If this path points to a directory the entire
+directory will not be traversed for changes -- only changes to the timestamp
+of the directory itself (which corresponds to some types of changes within the
+directory, depending on platform) will trigger a rebuild. To request a re-run
+on any changes within an entire directory, print a line for the directory and
+another line for everything inside it, recursively.)
+Note that if the build script itself (or one of its dependencies) changes,
+then it's rebuilt and rerun unconditionally, so
+<code>cargo:rerun-if-changed=build.rs</code> is almost always redundant (unless you
+want to ignore changes in all other files except for <code>build.rs</code>).</div>
+<div data-b="*"><code>rerun-if-env-changed=VAR</code> is the name of an environment variable which
+indicates that if the environment variable's value changes the build script
+should be rerun. This basically behaves the same as <code>rerun-if-changed</code> except
+that it works with environment variables instead. Note that the environment
+variables here are intended for global environment variables like <code>CC</code> and
+such, it's not necessary to use this for env vars like <code>TARGET</code> that Cargo
+sets. Also note that if <code>rerun-if-env-changed</code> is printed out then Cargo will</div>
+<p>  <i>only</i> rerun the build script if those environment variables change or if
+  files printed out by <code>rerun-if-changed</code> change.</p>
+<br>
+<div data-b="*"><code>warning=MESSAGE</code> is a message that will be printed to the main console after
+a build script has finished running. Warnings are only shown for path
+dependencies (that is, those you're working on locally), so for example
+warnings printed out in crates.io crates are not emitted by default.</div>
+<br>
+<p>Any other element is a user-defined metadata that will be passed to
+dependents. More information about this can be found in the <a class="notranslate" href="#3links"><code>links</code></a>
+section.</p>
+<br>
+<a class="notranslate" href="#1#the-links-manifest-key">links</a>
+<br>
+<h3>Build Dependencies</h3>
+<br>
+<p>Build scripts are also allowed to have dependencies on other Cargo-based crates.
+Dependencies are declared through the <code>build-dependencies</code> section of the
+manifest.</p>
+<br>
+<div data-lang="toml"><div data-l="[build-dependencies]"></div><div data-l="foo = { git = &quot;https://github.com/your-packages/foo&quot; }"></div></div>
+<br>
+<p>The build script <b>does not</b> have access to the dependencies listed in the
+<code>dependencies</code> or <code>dev-dependencies</code> section (they’re not built yet!). All build
+dependencies will also not be available to the package itself unless explicitly
+stated as so.</p>
+<br>
+<h3>The <code>links</code> Manifest Key</h3>
+<br>
+<p>In addition to the manifest key <code>build</code>, Cargo also supports a <code>links</code> manifest
+key to declare the name of a native library that is being linked to:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="# ..."></div><div data-l="links = &quot;foo&quot;"></div><div data-l="build = &quot;build.rs&quot;"></div></div>
+<br>
+<p>This manifest states that the package links to the <code>libfoo</code> native library, and
+it also has a build script for locating and/or building the library. Cargo
+requires that a <code>build</code> command is specified if a <code>links</code> entry is also
+specified.</p>
+<br>
+<p>The purpose of this manifest key is to give Cargo an understanding about the set
+of native dependencies that a package has, as well as providing a principled
+system of passing metadata between package build scripts.</p>
+<br>
+<p>Primarily, Cargo requires that there is at most one package per <code>links</code> value.
+In other words, it’s forbidden to have two packages link to the same native
+library. Note, however, that there are <a href="#3star-sys">conventions in place</a> to
+alleviate this.</p>
+<br>
+<a class="notranslate" href="#1#a-sys-packages">star-sys</a>
+<br>
+<p>As mentioned above in the output format, each build script can generate an
+arbitrary set of metadata in the form of key-value pairs. This metadata is
+passed to the build scripts of <b>dependent</b> packages. For example, if <code>libbar</code>
+depends on <code>libfoo</code>, then if <code>libfoo</code> generates <code>key=value</code> as part of its
+metadata, then the build script of <code>libbar</code> will have the environment variables
+<code>DEP_FOO_KEY=value</code>.</p>
+<br>
+<p>Note that metadata is only passed to immediate dependents, not transitive
+dependents. The motivation for this metadata passing is outlined in the linking
+to system libraries case study below.</p>
+<br>
+<h3>Overriding Build Scripts</h3>
+<br>
+<p>If a manifest contains a <code>links</code> key, then Cargo supports overriding the build
+script specified with a custom library. The purpose of this functionality is to
+prevent running the build script in question altogether and instead supply the
+metadata ahead of time.</p>
+<br>
+<p>To override a build script, place the following configuration in any acceptable
+Cargo <a href="#2reference/config.html">configuration location</a>.</p>
+<br>
+<div data-lang="toml"><div data-l="[target.x86_64-unknown-linux-gnu.foo]"></div><div data-l="rustc-link-search = [&quot;/path/to/foo&quot;]"></div><div data-l="rustc-link-lib = [&quot;foo&quot;]"></div><div data-l="root = &quot;/path/to/foo&quot;"></div><div data-l="key = &quot;value&quot;"></div></div>
+<br>
+<p>This section states that for the target <code>x86_64-unknown-linux-gnu</code> the library
+named <code>foo</code> has the metadata specified. This metadata is the same as the
+metadata generated as if the build script had run, providing a number of
+key/value pairs where the <code>rustc-flags</code>, <code>rustc-link-search</code>, and
+<code>rustc-link-lib</code> keys are slightly special.</p>
+<br>
+<p>With this configuration, if a package declares that it links to <code>foo</code> then the
+build script will <b>not</b> be compiled or run, and the metadata specified will
+instead be used.</p>
+<br>
+<h3>Case study: Code generation</h3>
+<br>
+<p>Some Cargo packages need to have code generated just before they are compiled
+for various reasons. Here we’ll walk through a simple example which generates a
+library call as part of the build script.</p>
+<br>
+<p>First, let’s take a look at the directory structure of this package:</p>
+<br>
+<div data-lang=""><div data-l="."></div><div data-l="├── Cargo.toml"></div><div data-l="├── build.rs"></div><div data-l="└── src"></div><div data-l="    └── main.rs"></div><div data-l=""></div><div data-l="1 directory, 3 files"></div></div>
+<br>
+<p>Here we can see that we have a <code>build.rs</code> build script and our binary in
+<code>main.rs</code>. Next, let’s take a look at the manifest:</p>
+<br>
+<div data-lang="toml"><div data-l="# Cargo.toml"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="name = &quot;hello-from-generated-code&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;you@example.com&quot;]"></div><div data-l="build = &quot;build.rs&quot;"></div></div>
+<br>
+<p>Here we can see we’ve got a build script specified which we’ll use to generate
+some code. Let’s see what’s inside the build script:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#// build.rs"></div><div data-l="// ">build.rs</div><div data-l=""></div><div data-l="use std::env;"></div><div data-l="use std::fs::File;"></div><div data-l="use std::io::Write;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let out_dir = env::var(&quot;OUT_DIR&quot;).unwrap();"></div><div data-l="    let dest_path = Path::new(&amp;out_dir).join(&quot;hello.rs&quot;);"></div><div data-l="    let mut f = File::create(&amp;dest_path).unwrap();"></div><div data-l=""></div><div data-l="    f.write_all(b&quot;"></div><div data-l="        pub fn message() -&gt; &amp;'static str {"></div><div data-l="            \&quot;Hello, World!\&quot;"></div><div data-l="        }"></div><div data-l="    &quot;).unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p>There’s a couple of points of note here:</p>
+<br>
+<div data-b="*">The script uses the <code>OUT_DIR</code> environment variable to discover where the
+output files should be located. It can use the process’ current working
+directory to find where the input files should be located, but in this case we
+don’t have any input files.</div>
+<div data-b="*">In general, build scripts should not modify any files outside of <code>OUT_DIR</code>.
+It may seem fine on the first blush, but it does cause problems when you use
+such crate as a dependency, because there's an <i>implicit</i> invariant that
+sources in <code>.cargo/registry</code> should be immutable. <code>cargo</code> won't allow such
+scripts when packaging.</div>
+<div data-b="*">This script is relatively simple as it just writes out a small generated file.
+One could imagine that other more fanciful operations could take place such as
+generating a Rust module from a C header file or another language definition,
+for example.</div>
+<br>
+<p>Next, let’s peek at the library itself:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// src/main.rs"></div><div data-l="// ">src/main.rs</div><div data-l=""></div><div data-l="include!(concat!(env!(&quot;OUT_DIR&quot;), &quot;/hello.rs&quot;));"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    println!(&quot;{}&quot;, message());"></div><div data-l="}"></div></div>
+<br>
+<p>This is where the real magic happens. The library is using the rustc-defined
+<code>include€</code> macro in combination with the <code>concat€</code> and <code>env€</code> macros to include
+the generated file (<code>hello.rs</code>) into the crate’s compilation.</p>
+<br>
+<p>Using the structure shown here, crates can include any number of generated files
+from the build script itself.</p>
+<br>
+<h3>Case study: Building some native code</h3>
+<br>
+<p>Sometimes it’s necessary to build some native C or C++ code as part of a
+package. This is another excellent use case of leveraging the build script to
+build a native library before the Rust crate itself. As an example, we’ll create
+a Rust library which calls into C to print “Hello, World!”.</p>
+<br>
+<p>Like above, let’s first take a look at the project layout:</p>
+<br>
+<div data-lang=""><div data-l="."></div><div data-l="├── Cargo.toml"></div><div data-l="├── build.rs"></div><div data-l="└── src"></div><div data-l="    ├── hello.c"></div><div data-l="    └── main.rs"></div><div data-l=""></div><div data-l="1 directory, 4 files"></div></div>
+<br>
+<p>Pretty similar to before! Next, the manifest:</p>
+<br>
+<div data-lang="toml"><div data-l="# Cargo.toml"></div><div data-l=""></div><div data-l="[package]"></div><div data-l="name = &quot;hello-world-from-c&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;you@example.com&quot;]"></div><div data-l="build = &quot;build.rs&quot;"></div></div>
+<br>
+<p>For now we’re not going to use any build dependencies, so let’s take a look at
+the build script now:</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="#// build.rs"></div><div data-l="// ">build.rs</div><div data-l=""></div><div data-l="use std::process::Command;"></div><div data-l="use std::env;"></div><div data-l="use std::path::Path;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let out_dir = env::var(&quot;OUT_DIR&quot;).unwrap();"></div><div data-l=""></div><div data-l="#    // note that there are a number of downsides to this approach, the comments"></div><div data-l="#    // below detail how to improve the portability of these commands."></div><div data-l="    // ">note that there are a number of downsides to this approach, the comments below detail how to improve the portability of these commands.</div><div data-l="    Command::new(&quot;gcc&quot;).args(&amp;[&quot;src/hello.c&quot;, &quot;-c&quot;, &quot;-fPIC&quot;, &quot;-o&quot;])"></div><div data-l="                       .arg(&amp;format!(&quot;{}/hello.o&quot;, out_dir))"></div><div data-l="                       .status().unwrap();"></div><div data-l="    Command::new(&quot;ar&quot;).args(&amp;[&quot;crus&quot;, &quot;libhello.a&quot;, &quot;hello.o&quot;])"></div><div data-l="                      .current_dir(&amp;Path::new(&amp;out_dir))"></div><div data-l="                      .status().unwrap();"></div><div data-l=""></div><div data-l="    println!(&quot;cargo:rustc-link-search=native={}&quot;, out_dir);"></div><div data-l="    println!(&quot;cargo:rustc-link-lib=static=hello&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>This build script starts out by compiling our C file into an object file (by
+invoking <code>gcc</code>) and then converting this object file into a static library (by
+invoking <code>ar</code>). The final step is feedback to Cargo itself to say that our
+output was in <code>out_dir</code> and the compiler should link the crate to <code>libhello.a</code>
+statically via the <code>-l static=hello</code> flag.</p>
+<br>
+<p>Note that there are a number of drawbacks to this hardcoded approach:</p>
+<br>
+<div data-b="*">The <code>gcc</code> command itself is not portable across platforms. For example it’s
+unlikely that Windows platforms have <code>gcc</code>, and not even all Unix platforms
+may have <code>gcc</code>. The <code>ar</code> command is also in a similar situation.</div>
+<div data-b="*">These commands do not take cross-compilation into account. If we’re cross
+compiling for a platform such as Android it’s unlikely that <code>gcc</code> will produce
+an ARM executable.</div>
+<br>
+<p>Not to fear, though, this is where a <code>build-dependencies</code> entry would help! The
+Cargo ecosystem has a number of packages to make this sort of task much easier,
+portable, and standardized. For example, the build script could be written as:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// build.rs"></div><div data-l="// ">build.rs</div><div data-l=""></div><div data-l="#// Bring in a dependency on an externally maintained `cc` package which manages"></div><div data-l="#// invoking the C compiler."></div><div data-l="// ">Bring in a dependency on an externally maintained <code>cc</code> package which manages invoking the C compiler.</div><div data-l="extern crate cc;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    cc::Build::new()"></div><div data-l="        .file(&quot;src/hello.c&quot;)"></div><div data-l="        .compile(&quot;hello&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p>Add a build time dependency on the <code>cc</code> crate with the following addition to
+your <code>Cargo.toml</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[build-dependencies]"></div><div data-l="cc = &quot;1.0&quot;"></div></div>
+<br>
+<p>The <a href="#2https://crates.io/crates/cc"><code>cc</code> crate</a> abstracts a range of build
+script requirements for C code:</p>
+<br>
+<div data-b="*">It invokes the appropriate compiler (MSVC for windows, <code>gcc</code> for MinGW, <code>cc</code>
+for Unix platforms, etc.).</div>
+<div data-b="*">It takes the <code>TARGET</code> variable into account by passing appropriate flags to
+the compiler being used.</div>
+<div data-b="*">Other environment variables, such as <code>OPT_LEVEL</code>, <code>DEBUG</code>, etc., are all
+handled automatically.</div>
+<div data-b="*">The stdout output and <code>OUT_DIR</code> locations are also handled by the <code>cc</code>
+library.</div>
+<br>
+<p>Here we can start to see some of the major benefits of farming as much
+functionality as possible out to common build dependencies rather than
+duplicating logic across all build scripts!</p>
+<br>
+<p>Back to the case study though, let’s take a quick look at the contents of the
+<code>src</code> directory:</p>
+<br>
+<div data-lang="c"><div data-l="#// src/hello.c"></div><div data-l="// ">src/hello.c</div><div data-l=""></div><div data-l="#include &lt;stdio.h&gt;"></div><div data-l=""></div><div data-l="void hello() {"></div><div data-l="    printf(&quot;Hello, World!\n&quot;);"></div><div data-l="}"></div></div>
+<br>
+<div data-lang="rust,ignore"><div data-l="#// src/main.rs"></div><div data-l="// ">src/main.rs</div><div data-l=""></div><div data-l="#// Note the lack of the `#[link]` attribute. We’re delegating the responsibility"></div><div data-l="#// of selecting what to link to over to the build script rather than hardcoding"></div><div data-l="#// it in the source file."></div><div data-l="// ">Note the lack of the <code>#[link]</code> attribute. We’re delegating the responsibility of selecting what to link to over to the build script rather than hardcoding it in the source file.</div><div data-l="extern { fn hello(); }"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    unsafe { hello(); }"></div><div data-l="}"></div></div>
+<br>
+<p>And there we go! This should complete our example of building some C code from a
+Cargo package using the build script itself. This also shows why using a build
+dependency can be crucial in many situations and even much more concise!</p>
+<br>
+<p>We’ve also seen a brief example of how a build script can use a crate as a
+dependency purely for the build process and not for the crate itself at runtime.</p>
+<br>
+<h3>Case study: Linking to system libraries</h3>
+<br>
+<p>The final case study here will be investigating how a Cargo library links to a
+system library and how the build script is leveraged to support this use case.</p>
+<br>
+<p>Quite frequently a Rust crate wants to link to a native library often provided
+on the system to bind its functionality or just use it as part of an
+implementation detail. This is quite a nuanced problem when it comes to
+performing this in a platform-agnostic fashion, and the purpose of a build
+script is again to farm out as much of this as possible to make this as easy as
+possible for consumers.</p>
+<br>
+<p>As an example to follow, let’s take a look at one of <a href="#3git2-rs">Cargo’s own
+dependencies</a>, <a class="notranslate" href="#3libgit2">libgit2</a>. The C library has a number of
+constraints:</p>
+<br>
+<a class="notranslate" href="#1https://github.com/alexcrichton/git2-rs/tree/master/libgit2-sys">git2-rs</a>
+<a class="notranslate" href="#1https://github.com/libgit2/libgit2">libgit2</a>
+<br>
+<div data-b="*">It has an optional dependency on OpenSSL on Unix to implement the https
+transport.</div>
+<div data-b="*">It has an optional dependency on libssh2 on all platforms to implement the ssh
+transport.</div>
+<div data-b="*">It is often not installed on all systems by default.</div>
+<div data-b="*">It can be built from source using <code>cmake</code>.</div>
+<br>
+<p>To visualize what’s going on here, let’s take a look at the manifest for the
+relevant Cargo package that links to the native C library.</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;libgit2-sys&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;...&quot;]"></div><div data-l="links = &quot;git2&quot;"></div><div data-l="build = &quot;build.rs&quot;"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="libssh2-sys = { git = &quot;https://github.com/alexcrichton/ssh2-rs&quot; }"></div><div data-l=""></div><div data-l="[target.'cfg(unix)'.dependencies]"></div><div data-l="openssl-sys = { git = &quot;https://github.com/alexcrichton/openssl-sys&quot; }"></div><div data-l=""></div><div data-l="# ..."></div></div>
+<br>
+<p>As the above manifests show, we’ve got a <code>build</code> script specified, but it’s
+worth noting that this example has a <code>links</code> entry which indicates that the
+crate (<code>libgit2-sys</code>) links to the <code>git2</code> native library.</p>
+<br>
+<p>Here we also see that we chose to have the Rust crate have an unconditional
+dependency on <code>libssh2</code> via the <code>libssh2-sys</code> crate, as well as a
+platform-specific dependency on <code>openssl-sys</code> for \<i>nix (other variants elided
+for now). It may seem a little counterintuitive to express </i>C dependencies* in
+the <i>Cargo manifest</i>, but this is actually using one of Cargo’s conventions in
+this space.</p>
+<br>
+<h3><code>*-sys</code> Packages</h3>
+<br>
+<p>To alleviate linking to system libraries, crates.io has a <i>convention</i> of package
+naming and functionality. Any package named <code>foo-sys</code> should provide two major
+pieces of functionality:</p>
+<br>
+<div data-b="*">The library crate should link to the native library <code>libfoo</code>. This will often
+probe the current system for <code>libfoo</code> before resorting to building from
+source.</div>
+<div data-b="*">The library crate should provide <b>declarations</b> for functions in <code>libfoo</code>,
+but <b>not</b> bindings or higher-level abstractions.</div>
+<br>
+<p>The set of <code>*-sys</code> packages provides a common set of dependencies for linking
+to native libraries. There are a number of benefits earned from having this
+convention of native-library-related packages:</p>
+<br>
+<div data-b="*">Common dependencies on <code>foo-sys</code> alleviates the above rule about one package
+per value of <code>links</code>.</div>
+<div data-b="*">A common dependency allows centralizing logic on discovering <code>libfoo</code> itself
+(or building it from source).</div>
+<div data-b="*">These dependencies are easily overridable.</div>
+<br>
+<h3>Building libgit2</h3>
+<br>
+<p>Now that we’ve got libgit2’s dependencies sorted out, we need to actually write
+the build script. We’re not going to look at specific snippets of code here and
+instead only take a look at the high-level details of the build script of
+<code>libgit2-sys</code>. This is not recommending all packages follow this strategy, but
+rather just outlining one specific strategy.</p>
+<br>
+<p>The first step of the build script should do is to query whether libgit2 is
+already installed on the host system. To do this we’ll leverage the preexisting
+tool <code>pkg-config</code> (when its available). We’ll also use a <code>build-dependencies</code>
+section to refactor out all the <code>pkg-config</code> related code (or someone’s already
+done that!).</p>
+<br>
+<p>If <code>pkg-config</code> failed to find libgit2, or if <code>pkg-config</code> just wasn’t
+installed, the next step is to build libgit2 from bundled source code
+(distributed as part of <code>libgit2-sys</code> itself). There are a few nuances when
+doing so that we need to take into account, however:</p>
+<br>
+<div data-b="*">The build system of libgit2, <code>cmake</code>, needs to be able to find libgit2’s
+optional dependency of libssh2. We’re sure we’ve already built it (it’s a
+Cargo dependency), we just need to communicate this information. To do this
+we leverage the metadata format to communicate information between build
+scripts. In this example the libssh2 package printed out <code>cargo:root=...</code> to
+tell us where libssh2 is installed at, and we can then pass this along to
+cmake with the <code>CMAKE_PREFIX_PATH</code> environment variable.</div>
+<br>
+<div data-b="*">We’ll need to handle some <code>CFLAGS</code> values when compiling C code (and tell
+<code>cmake</code> about this). Some flags we may want to pass are <code>-m64</code> for 64-bit
+code, <code>-m32</code> for 32-bit code, or <code>-fPIC</code> for 64-bit code as well.</div>
+<br>
+<div data-b="*">Finally, we’ll invoke <code>cmake</code> to place all output into the <code>OUT_DIR</code>
+environment variable, and then we’ll print the necessary metadata to instruct
+rustc how to link to libgit2.</div>
+<br>
+<p>Most of the functionality of this build script is easily refactorable into
+common dependencies, so our build script isn’t quite as intimidating as this
+descriptions! In reality it’s expected that build scripts are quite succinct by
+farming logic such as above to build dependencies.</p>

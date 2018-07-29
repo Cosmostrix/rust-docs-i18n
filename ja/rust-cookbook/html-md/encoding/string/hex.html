@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h2>Encode and decode hex</h2>
+<br>
+<p><a href="#3data-encoding">!<a class="notranslate" href="#4data-encoding-badge">data-encoding-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>The <a class="notranslate" href="#4`data_encoding`">`data_encoding`</a> crate provides a <code>HEXUPPER::encode</code> method which
+takes a <code>&amp;[u8]</code> and returns a <code>String</code> containing the hexadecimal
+representation of the data.</p>
+<br>
+<p>Similarly, a <code>HEXUPPER::decode</code> method is provided which takes a <code>&amp;[u8]</code> and
+returns a <code>Vec&lt;u8&gt;</code> if the input data is successfully decoded.</p>
+<br>
+<p>The example below coverts <code>&amp;[u8]</code> data to hexadecimal equivalent.  Compares this
+value to the expected value.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate data_encoding;"></div><div data-l=""></div><div data-l="use data_encoding::{HEXUPPER, DecodeError};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Decode(DecodeError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let original = b&quot;The quick brown fox jumps over the lazy dog.&quot;;"></div><div data-l="    let expected = &quot;54686520717569636B2062726F776E20666F78206A756D7073206F76\"></div><div data-l="        657220746865206C617A7920646F672E&quot;;"></div><div data-l=""></div><div data-l="    let encoded = HEXUPPER.encode(original);"></div><div data-l="    assert_eq!(encoded, expected);"></div><div data-l=""></div><div data-l="    let decoded = HEXUPPER.decode(&amp;encoded.into_bytes())?;"></div><div data-l="    assert_eq!(&amp;decoded[..], &amp;original[..]);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/data-encoding/*/data_encoding/">`data_encoding`</a>

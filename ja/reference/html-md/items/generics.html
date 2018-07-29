@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<h1>Type and Lifetime Parameters</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>Generics</s> :\
+&amp;nbsp;&amp;nbsp; <code>&lt;</code> <s>GenericParams</s> <code>&gt;</code></p>
+<br>
+<p><s>GenericParams</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <s>LifetimeParams</s>\
+&amp;nbsp;&amp;nbsp; | ( <s>LifetimeParam</s> <code>,</code> )<sup>\<i>&lt;/sup&gt; _TypeParams_
+
+_LifetimeParams_ :\
+&amp;nbsp;&amp;nbsp; ( _LifetimeParam_ `,` )&lt;sup&gt;\</i></sup> <s>LifetimeParam</s><sup>?</sup></p>
+<br>
+<p><s>LifetimeParam</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_OuterAttribute_">_OuterAttribute_</a><sup>?</sup> <a class="notranslate" href="#4LIFETIME_OR_LABEL">LIFETIME_OR_LABEL</a> <code>:</code> <a class="notranslate" href="#4_LifetimeBounds_">_LifetimeBounds_</a><sup>?</sup></p>
+<br>
+<p><s>TypeParams</s>:\
+&amp;nbsp;&amp;nbsp; ( <s>TypeParam</s> <code>,</code> )<sup>\*</sup> <s>TypeParam</s> <sup>?</sup></p>
+<br>
+<p><s>TypeParam</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_OuterAttribute_">_OuterAttribute_</a><sup>?</sup> <a class="notranslate" href="#4IDENTIFIER">IDENTIFIER</a> ( <code>:</code> <a class="notranslate" href="#4_TypeParamBounds_">_TypeParamBounds_</a> )<sup>?</sup> ( <code>=</code> <a class="notranslate" href="#4_Type_">_Type_</a> )<sup>?</sup></p></blockquote>
+<br>
+<p>Functions, type aliases, structs, enumerations, unions, traits and
+implementations may be <i>parameterized</i> by types and lifetimes. These parameters
+are listed in angle <span class="parenthetical">brackets (<code>&lt;...&gt;</code>)</span>,
+usually immediately after and before its definition the name of the item. For
+implementations, which don't have a name, they come directly after <code>impl</code>.
+Lifetime parameters must be declared before type parameters. Some examples of
+items with type and lifetime parameters:</p>
+<br>
+<div data-lang="rust"><div data-l="fn foo&lt;'a, T&gt;() {}"></div><div data-l="trait A&lt;U&gt; {}"></div><div data-l="struct Ref&lt;'a, T&gt; where T: 'a { r: &amp;'a T }"></div></div>
+<br>
+<p><a class="notranslate" href="#4References">References</a>, <a class="notranslate" href="#4raw pointers">raw pointers</a>, <a class="notranslate" href="#4arrays">arrays</a>, <a class="notranslate" href="#3arrays">slices</a>, <a class="notranslate" href="#4tuples">tuples</a> and
+<a class="notranslate" href="#4function pointers">function pointers</a> have lifetime or type parameters as well, but are not
+referred to with path syntax.</p>
+<br>
+<h2>Where clauses</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>WhereClause</s> :\
+&amp;nbsp;&amp;nbsp; <code>where</code> ( <s>WhereClauseItem</s> <code>,</code> )<sup>\*</sup> <s>WhereClauseItem</s> <sup>?</sup></p>
+<br>
+<p><s>WhereClauseItem</s> :\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <s>LifetimeWhereClauseItem</s>\
+&amp;nbsp;&amp;nbsp; | <s>TypeBoundWhereClauseItem</s></p>
+<br>
+<p><s>LifetimeWhereClauseItem</s> :\
+&amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Lifetime_">_Lifetime_</a> <code>:</code> <a class="notranslate" href="#4_LifetimeBounds_">_LifetimeBounds_</a></p>
+<br>
+<p><s>TypeBoundWhereClauseItem</s> :\
+&amp;nbsp;&amp;nbsp; <s>ForLifetimes</s><sup>?</sup> <a class="notranslate" href="#4_Type_">_Type_</a> <code>:</code> <a class="notranslate" href="#4_TypeParamBounds_">_TypeParamBounds_</a><sup>?</sup></p>
+<br>
+<p><s>ForLifetimes</s> :\
+&amp;nbsp;&amp;nbsp; <code>for</code> <code>&lt;</code> <a class="notranslate" href="#2#type-and-lifetime-parameters"><s>LifetimeParams</s></a> <code>&gt;</code></p></blockquote>
+<br>
+<p><i>Where clauses</i> provide an another way to specify bounds on type and lifetime
+parameters as well as a way to specify bounds on types that aren't type
+parameters.</p>
+<br>
+<p>Bounds that don't use the item's parameters or higher-ranked lifetimes are
+checked when the item is defined. It is an error for such a bound to be false.</p>
+<br>
+<p><a class="notranslate" href="#4`Copy`">`Copy`</a>, <a class="notranslate" href="#4`Clone`">`Clone`</a> and <a class="notranslate" href="#4`Sized`">`Sized`</a> bounds are also checked for certain generic
+types when defining the item. It is an error to have <code>Copy</code> or <code>Clone</code>as a
+bound on a mutable reference, <a class="notranslate" href="#4trait object">trait object</a> or <a class="notranslate" href="#3arrays">slice</a> or <code>Sized</code> as a
+bound on a trait object or slice.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="struct A&lt;T&gt;"></div><div data-l="where"></div><div data-l="#//    T: Iterator,            // Could use A&lt;T: Iterator&gt; instead"></div><div data-l="    T: Iterator,            // ">Could use A<T: Iterator> instead</div><div data-l="    T::Item: Copy,"></div><div data-l="    String: PartialEq&lt;T&gt;,"></div><div data-l="#//    i32: Default,           // Allowed, but not useful"></div><div data-l="    i32: Default,           // ">Allowed, but not useful</div><div data-l="#//    i32: Iterator,          // Error: the trait bound is not satisfied"></div><div data-l="    i32: Iterator,          // ">Error: the trait bound is not satisfied</div><div data-l="#//    [T]: Copy,              // Error: the trait bound is not satisfied"></div><div data-l="    [T]: Copy,              // ">Error: the trait bound is not satisfied</div><div data-l="{"></div><div data-l="    f: T,"></div><div data-l="}"></div></div>
+<br>
+<h2>Attributes</h2>
+<br>
+<p>Generic lifetime and type parameters allow <a class="notranslate" href="#4attributes">attributes</a> on them. There are no
+built-in attributes that do anything in this position, although custom derive
+attributes may give meaning to it.</p>
+<br>
+<p>This example shows using a custom derive attribute to modify the meaning of a
+generic parameter.</p>
+<br>
+<div data-lang="ignore"><div data-l="#// Assume that the derive for MyFlexibleClone declared `my_flexible_clone` as"></div><div data-l="#// an attribute it understands."></div><div data-l="// ">Assume that the derive for MyFlexibleClone declared <code>my_flexible_clone</code> as an attribute it understands.</div><div data-l="#[derive(MyFlexibleClone)] struct Foo&lt;#[my_flexible_clone(unbounded)] H&gt; {"></div><div data-l="    a: *const H"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1identifiers.html">IDENTIFIER</a>
+<a class="notranslate" href="#1tokens.html#lifetimes-and-loop-labels">LIFETIME_OR_LABEL</a>
+<br>
+<a class="notranslate" href="#1trait-bounds.html">_LifetimeBounds_</a>
+<a class="notranslate" href="#1trait-bounds.html">_Lifetime_</a>
+<a class="notranslate" href="#1attributes.html">_OuterAttribute_</a>
+<a class="notranslate" href="#1types.html">_Type_</a>
+<a class="notranslate" href="#1trait-bounds.html">_TypeParamBounds_</a>
+<br>
+<a class="notranslate" href="#1types.html#array-and-slice-types">arrays</a>
+<a class="notranslate" href="#1types.html#function-pointer-types">function pointers</a>
+<a class="notranslate" href="#1types.html#shared-references-">references</a>
+<a class="notranslate" href="#1types.html#raw-pointers-const-and-mut">raw pointers</a>
+<a class="notranslate" href="#1special-types-and-traits.html#clone">`Clone`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#copy">`Copy`</a>
+<a class="notranslate" href="#1special-types-and-traits.html#sized">`Sized`</a>
+<a class="notranslate" href="#1types.html#tuple-types">tuples</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait object</a>
+<a class="notranslate" href="#1attributes.html">attributes</a>
+<br>
+<a class="notranslate" href="#1../paths.html">path</a>
+<a class="notranslate" href="#1traits.html#trait-bounds">Trait</a>
+<a class="notranslate" href="#1paths.html">_TypePath_</a>

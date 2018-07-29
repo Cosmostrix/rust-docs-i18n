@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<h2>Create new URLs from a base URL</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a></p>
+<br>
+<p>The <a class="notranslate" href="#4`join`">`join`</a> method creates a new URL from a base and relative path.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate url;"></div><div data-l=""></div><div data-l="use url::Url;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         UrlParse(url::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let path = &quot;/rust-lang/cargo&quot;;"></div><div data-l=""></div><div data-l="    let gh = build_github_url(path)?;"></div><div data-l=""></div><div data-l="    assert_eq!(gh.as_str(), &quot;https://github.com/rust-lang/cargo&quot;);"></div><div data-l="    println!(&quot;The joined URL is: {}&quot;, gh);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn build_github_url(path: &amp;str) -&gt; Result&lt;Url&gt; {"></div><div data-l="    const GITHUB: &amp;'static str = &quot;https://github.com&quot;;"></div><div data-l=""></div><div data-l="    let base = Url::parse(GITHUB).expect(&quot;hardcoded URL is known to be valid&quot;);"></div><div data-l="    let joined = base.join(path)?;"></div><div data-l=""></div><div data-l="    Ok(joined)"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/struct.Url.html#method.join">`join`</a>

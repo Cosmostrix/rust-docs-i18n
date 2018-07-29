@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<h1>Freezing</h1>
+<br>
+<p>When data is immutably borrowed, it also <i>freezes</i>. <i>Frozen</i> data can't be 
+modified via the original object until all references to it go out of scope:</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="fn main() {"></div><div data-l="    let mut _mutable_integer = 7i32;"></div><div data-l=""></div><div data-l="    {"></div><div data-l="#        // Borrow `_mutable_integer`"></div><div data-l="        // ">Borrow <code>_mutable_integer</code></div><div data-l="        let _large_integer = &amp;_mutable_integer;"></div><div data-l=""></div><div data-l="#        // Error! `_mutable_integer` is frozen in this scope"></div><div data-l="        // ">Error! <code>_mutable_integer</code> is frozen in this scope</div><div data-l="        _mutable_integer = 50;"></div><div data-l="#        // FIXME ^ Comment out this line"></div><div data-l="        // ">FIXME ^ Comment out this line</div><div data-l=""></div><div data-l="#        // `_large_integer` goes out of scope"></div><div data-l="        // "><code>_large_integer</code> goes out of scope</div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // Ok! `_mutable_integer` is not frozen in this scope"></div><div data-l="    // ">Ok! <code>_mutable_integer</code> is not frozen in this scope</div><div data-l="    _mutable_integer = 3;"></div><div data-l="}"></div></div>

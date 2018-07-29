@@ -1,0 +1,315 @@
+<pre>.THRUSTC &quot;1&quot; &quot;&lt;ここに日付を挿入&gt;&quot; &quot;rustc &lt;ここに挿入&gt;&quot; &quot;ユーザーコマンド&quot;
+.SH NAME
+rustc \  -  Rustコンパイラ
+.SHシノプシス
+.B rustc
+[\ fIOPTIONS \ fR] \ fIINPUT \ fR
+
+.SH DESCRIPTION
+このプログラムは、Rust言語用のコンパイラです。https：//www.rust \ -lang.orgにあります。
+
+.SHオプション
+
+.TP
+\ fB \ -h \ fR、\ fB \  -  \  -  help \ fR
+ヘルプメッセージを表示します。
+.TP
+\ fB \  -  \  -  cfg \ fR \ fISPEC \ fR
+コンパイル環境を設定します。
+.TP
+\ fB \ -L \ fR [\ fIKIND \ fR =] \ fIPATH \ fR
+ライブラリの検索パスにディレクトリを追加します。
+オプションの\ fIKIND \ fRは次のいずれかです：
+.RS
+.TP
+\ fB依存\ fR
+ここでのみ推移的依存関係を検索する
+.TP
+.Bクレート
+ローカルの `extern crate`ディレクティブのみを参照してください
+.TP
+.Bネイティブ
+ここでネイティブライブラリを検索するだけです
+.TP
+.Bフレームワーク
+OSXフレームワークのみをここで探す
+.TP
+。玉
+ここで何かを探す（デフォルト）
+.RE
+.TP
+\ fB \ -l \ fR [\ fIKIND \ fR =] \ fINAME \ fR
+生成されたクレートを指定されたライブラリ\ fINAME \ fRにリンクします。
+オプションの\ fIKIND \ fRは\ fIstatic \ fR、\ fIdylib \ fR、または
+\ fIframework \ fR。
+省略すると、\ fIdylib \ fRとみなされます。
+.TP
+\ fB \  -  \  -  crate \ -type \ fR [bin | lib | rlib | dylib | cdylib | staticlib]
+コンパイラが発行するクレートのタイプのカンマ区切りリスト。
+.TP
+\ fB \  -  \  -  crate \ -name \ fR \ fINAME \ fR
+作成するクレートの名前を指定します。
+.TP
+\ fB \  -  \  -  emit \ fR [asm | llvm \ -bc | llvm \ -ir | obj | link | dep \ -info | mir] [= \ fIPATH \ fR]
+\ fBrustc \ fRが生成する出力を設定します。それぞれの排出量は、
+特定の排出量に対して指定されたオプションの明示的な出力\ fIPATH \ fR
+種類。このパスは\ fB-o \ fRオプションよりも優先されます。
+.TP
+\：ターゲット\ -cpus | \：ターゲット\ -features \ fB \  -  \ \：ターゲット\ -spec \ -json | \：ネイティブ\ -static \ -libs] \：リロード\  - モデル\：コード\
+stdoutに出力するコンパイラ情報のカンマ区切りのリスト。
+.TP
+\ fB \ -g \ fR
+\ fI \ -C \ debuginfo = 2 \ fRに相当します。
+.TP
+\ fB \ -O \ fR
+\ fI \ -C \ opt \ -level = 2 \ fRと同じです。
+.TP
+\ fB \ -o \ fR \ fIFILENAME \ fR
+\ fIFILENAME \ fRに出力を書き出します。複数の\ fI \  -  \  -  emit \ fR出力が指定されている場合は無視されます。
+それ以外の場合は明示的なパスを持たない。
+.TP
+\ fB \  -  \  -  out \ -dir \ fR \ fIDIR \ fR
+\ fIDIR \ fRのコンパイラ\ [hy]で選択したファイル名に出力を書き込みます。 \ fI \ -o \ fRが指定されている場合は無視されます。
+デフォルトは現在のディレクトリです。
+.TP
+\ fB \  -  \  - 説明\ fR \ fIOPT \ fR
+エラーメッセージの詳細な説明を入力します。
+.TP
+\ fB \  -  \  -  test \ fR
+テストハーネスを構築する。
+.TP
+\ fB \  -  \  -  target \ fR \ fITARGET \ fR
+コードがコンパイルされるターゲットのトリプル。このオプションのデフォルトはホストのターゲットです
+トリプル。ターゲットのトリプルは、&lt;arch&gt; &lt;sub&gt; \  -  &lt;vendor&gt; \  -  &lt;sys&gt; \  -  &lt;abi&gt;という一般的な形式です。
+.RS
+.TP
+.B &lt;arch&gt;
+x86、アーム、サム、mipsなど
+.TP
+.B &lt;sub&gt;
+たとえば、ARM：v5、v6m、v7a、v7mなど
+.TP
+.B &lt;ベンダー&gt;
+PC、リンゴ、NVIDIA、ibmなど
+.TP
+.B &lt;sys&gt;
+none、linux、win32、darwin、cudaなど
+.TP
+.B &lt;abi&gt;
+eabi、gnu、アンドロイド、マッチョ、エルフなど
+.RE
+.TP
+\ fB \ -W help \ fR
+&#39;lint&#39;オプションとデフォルト設定を表示します。
+.TP
+\ fB \ -W \ fR \ fIOPT \ fR、\ fB \  -  \  -  warn \ fR \ fIOPT \ fR
+リントの警告を設定します。
+.TP
+\ fB \ -A \ fR \ fIOPT \ fR、\ fB \  -  \  -  \ fR \ fIOPT \ fRを許可する
+lintの設定を許可します。
+.TP
+\ fB \ -D \ fR \ fIOPT \ fR、\ fB \  -  \  -  \ fR \ fIOPT \ fRを拒否する
+lintは拒否されました。
+.TP
+\ fB \ -F \ fR \ fIOPT \ fR、\ fB \  -  \  - 禁止\ fR \ fIOPT \ fR
+lintは禁止されています。
+.TP
+\ fB \ -C \ fR \ fIFLAG \ fR [= \ fIVAL \ fR]、\ fB \  -  \
+codegen \ [hy]関連フラグを指定された値に設定します。
+使用可能なフラグを出力するには、\ fI \ -C help \ fRを使用します。
+以下のCODEGEN OPTIONSを参照してください。
+.TP
+\ fB \ -V \ fR、\ fB \  -  \  - バージョン\ fR
+バージョン情報を表示して終了します。
+.TP
+\ fB \ -v \ fR、\ fB \  -  \  - 冗長\ fR
+冗長出力を使用します。
+.TP
+\ fB \  -  \  -  remap \ -path \ -prefix \ fR \ fI \ fRから\ fIto \ fRへ
+コンパイラの診断、デバッグ情報、
+マクロの展開などがあります。\ fIfrom \ fR = \ fIto \ fRパラメータは右から左に走査されるので、\ fIfrom \ fR
+&#39;=&#39;を含むことができますが、\ fIto \ fRはできません。
+
+これはビルド製品を正規化するのに便利です。たとえば、現在のディレクトリを
+オブジェクトファイルに出力されるパス名。置換は純粋にテキストであり、考慮されていません
+現在のシステムのパス名の構文たとえば、\ fI \  -  \  -  remap \ -path \ -prefix foo = bar \ fRは次のようになります。
+\ fBfoo / lib.rs \ fRは一致しますが、\ fB./foo/lib.rs \ fRは一致しません。
+.TP
+\ fB \  -  \  -  extern \ fR \ fINAME \ fR = \ fIPATH \ fR
+外部の錆びた場所がどこにあるかを指定します。これらは一致する必要があります
+\ fIextern \ fR宣言はクレートのソースコードに含まれています。
+.TP
+\ fB \  -  \  -  sysroot \ fR \ fIPATH \ fR
+システムルートを上書きします。
+.TP
+\ fB \ -Z \ fR \ fIFLAG \ fR
+内部デバッグオプションを設定します。
+使用可能なオプションを表示するには、\ fI \ -Z help \ fRを使用します。
+.TP
+\ fB \  -  \  -  color \ fR auto | always | never
+出力のカラーリングを設定する：
+.RS
+.TP
+.B auto
+出力がtty（デフォルト）に行く場合は色付けします。
+.TP
+.B常に
+常に出力をカラー化します。
+.TP
+.B never
+出力を色づけすることはありません。
+.RE
+
+.SH CODEGENオプション
+
+.TP
+\ fBlinker \ fR = \ fI / path / to / cc \ fR
+ライブラリ、実行可能ファイル、およびライブラリをリンクするときに使用するリンカーユーティリティへのパス
+オブジェクト。
+.TP
+\ fBlink \ -args \ fR = &#39;\ fI \ -flag1 \ -flag2 \ fR&#39;
+リンカーがリンカーに渡すときにリンカーに渡す余分な引数のスペース\ [hy]で区切られたリスト
+が呼び出されます。
+.TP
+\ fBlto \ fR
+LLVMリンク\ [hy]時間の最適化を実行します。
+.TP
+\ fBターゲット\ -cpu \ fR = \ fIhelp \ fR
+ターゲットプロセッサを選択します。
+値が &#39;help&#39;の場合、使用可能なCPUのリストが表示されます。
+.TP
+\ fBtarget \ -feature \ fR = &#39;\ fI + feature1 \ fR、\ fI \ -feature2 \ fR&#39;
+コンマ\ [hy]で区切られた、ターゲットを有効または無効にする機能のリスト。
+前の &#39;+&#39;は機能を有効にし、前の &#39; -   - &#39;は機能を無効にします。
+利用可能な機能は、\ fIllc -mcpu = help \ fRを通して発見することができます。
+.TP
+\ fBpasses \ fR = \ fIval \ fR
+実行する余分なLLVMパスのスペース\ [hy]で区切られたリスト。
+&#39;list&#39;の値を指定すると、\ fBrustc \ fRはすべての既知のパスを出力し、
+出口。
+指定されたパスは、通常のパスマネージャの最後に追加されます。
+.TP
+\ fBllvm \ -args \ fR = &#39;\ fI \ -arg1 \ fR \ fI \ -arg2 \ fR&#39;
+space \ [hy]で区切られた引数のリストは、LLVMに渡されます。
+.TP
+\ fBセーブ\ -temps \ fR
+指定すると、コンパイラは生成されたファイル（.bc、.o、.no \ -opt.bc）をさらに保存します
+出力ディレクトリのコンパイルのたびに。
+.TP
+\ fBrpath \ fR
+指定した場合、動的ライブラリのrpath値は次のように設定されます。
+ダイナミックライブラリまたは実行可能な出力
+.TP
+\ fBno \ -prepopulate \ -passes \ fR
+モジュール上で実行されるLLVMパスマネージャのpre \ [hy]個体数を抑止します。
+.TP
+\ fBno \ -vectorize \ -loops \ fR
+最適化に関係なく、ループベクトル化LLVMパスの実行を抑止します。
+レベル。
+.TP
+\ fBno \ -vectorize \ -slp \ fR
+最適化に関係なく、LLVM SLPベクトル化パスの実行を抑止します。
+レベル。
+.TP
+\ fBsoft \ -float \ fR
+ハードウェアの代わりにソフトウェア浮動小数点ライブラリ呼び出しを生成する
+指示。
+.TP
+\ fBrefer \ -dynamic \ fR
+静的リンクへの動的リンクを優先します。
+.TP
+\ fBno \  - 統合\ -as \ fR
+LLVMの統合されたアセンブラではなく外部のアセンブラを強制的に使用します。
+.TP
+\ fBno \ -redzone \ fR
+redzoneの使用を無効にします。
+.TP
+\ fBrelocation \ -model \ fR = [pic、static、dynamic \ -no \ -pic]
+使用する再配置モデル。
+（デフォルト：\ fIpic \ fR）
+.TP
+\ fBcode \ -model \ fR = [小、カーネル、中、大]
+使用するコードモデルを選択します。
+.TP
+\ fBメタデータ\ fR = \ fIval \ fR
+シンボル名をmangleするためのメタデータ。
+.TP
+\ fBextra \ -filename \ fR = \ fIval \ fR
+各出力ファイル名に入れる余分なデータ。
+.TP
+\ fBcodegen \ -units \ fR = \ fIn \ fR
+並行して最適化するには、枠を\ fIn \ fR単位に分割します。
+.TP
+\ fBマーク\ fR = \ fIval \ fR
+これらの最適化パスの注釈を印刷します（スペース区切りまたは &quot;すべて&quot;）。
+.TP
+\ fBno \ -stack \ -check \ fR
+スタックの枯渇のチェックを無効にします（メモリーの危険性！）。
+.TP
+\ fBdebuginfo \ fR = \ fIval \ fR
+デバッグ情報排出レベル：
+.RS
+.TP
+.B 0
+デバッグ情報はありません。
+.TP
+.B 1
+行\ [hy]テーブルのみ（スタックトレースとブレークポイント用）。
+.TP
+.B 2
+変数と型情報を持つ完全なデバッグ情報。
+.RE
+.TP
+\ fBopt \ -level \ fR = \ fIVAL \ fR
+可能なレベルで最適化する0 \ [en] 3
+
+.SH環境
+
+これらのうちのいくつかはコンパイラの出力に影響を及ぼし、その他はプログラムに影響を与えます
+標準ライブラリにリンクしています。
+
+.TP
+\ fBRUST_TEST_THREADS \ fR
+テストフレームワークRustは、テストを並行して実行します。この変数は、
+この目的のために使用されるスレッドの最大数。この設定は上書きされます
+--test-threadsオプションで指定します。
+
+.TP
+\ fBRUST_TEST_NOCAPTURE \ fR
+&quot;0&quot;以外の値に設定されている場合、--nocaptureフラグの同義語です。
+
+.TP
+\ fBRUST_MIN_STACK \ fR
+新しいスレッドの最小スタックサイズを設定します。
+
+.TP
+\ fBRUST_BACKTRACE \ fR
+&quot;0&quot;以外の値に設定されている場合、パニックするプログラムの出力にバックトレースが生成されます。
+
+.SH &quot;例&quot;
+main関数を含むソースファイルから実行可能ファイルをビルドするには：
+    $ rustc \ -o hello hello.rs
+
+ソースファイルからライブラリを構築するには：
+    $ rustc \  -  \  -  crate \ -type = lib hello \ -lib.rs
+
+木箱（.rs）ファイルでビルドするには：
+    $ rustc hello.rs
+
+デバッグ情報を含む実行可能ファイルをビルドするには：
+    $ rustc \ -g \ -o hello hello.rs
+
+.SH &quot;関連項目&quot;
+
+.BR rustdoc（1）
+
+.SH &quot;バグ&quot;
+問題についてはhttps://github.com/rust\-lang/rust/issuesをご覧ください。
+
+.SH &quot;著者&quot;
+https://github.com/rust\-lang/rust/graphs/contributorsを参照するか、 `git log --all --format = &#39;％cN &lt;％cE&gt;&#39;を使用してください。ソール-u`を錆源分布に適用する。
+
+.SH &quot;COPYRIGHT&quot;
+この作業はApache \ 2.0とMITの下でライセンスされた二重\ [hy]です。
+錆源分布の\ fICOPYRIGHT \ fRファイルを参照してください。
+</pre>

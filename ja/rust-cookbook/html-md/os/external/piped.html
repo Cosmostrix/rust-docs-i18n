@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Run piped external commands</h2>
+<br>
+<p><a href="#3std">!<a class="notranslate" href="#4std-badge">std-badge</a></a> <a href="#3cat-os">!<a class="notranslate" href="#4cat-os-badge">cat-os-badge</a></a></p>
+<br>
+<p>Shows up to the 10<sup>th</sup> biggest files and subdirectories in
+the current working directory. It is equivalent to running: <code>du -ah . |
+sort -hr | head -n 10</code>.</p>
+<br>
+<p><a class="notranslate" href="#4`Command`">`Command`</a>s represent a process. Output of a child process is captured with a
+<a class="notranslate" href="#4`Stdio::piped`">`Stdio::piped`</a> between parent and child.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use std::process::{Command, Stdio};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         Utf8(std::string::FromUtf8Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let directory = std::env::current_dir()?;"></div><div data-l="    let mut du_output_child = Command::new(&quot;du&quot;)"></div><div data-l="        .arg(&quot;-ah&quot;)"></div><div data-l="        .arg(&amp;directory)"></div><div data-l="        .stdout(Stdio::piped())"></div><div data-l="        .spawn()?;"></div><div data-l=""></div><div data-l="    if let Some(du_output) = du_output_child.stdout.take() {"></div><div data-l="        let mut sort_output_child = Command::new(&quot;sort&quot;)"></div><div data-l="            .arg(&quot;-hr&quot;)"></div><div data-l="            .stdin(du_output)"></div><div data-l="            .stdout(Stdio::piped())"></div><div data-l="            .spawn()?;"></div><div data-l=""></div><div data-l="        du_output_child.wait()?;"></div><div data-l=""></div><div data-l="        if let Some(sort_output) = sort_output_child.stdout.take() {"></div><div data-l="            let head_output_child = Command::new(&quot;head&quot;)"></div><div data-l="                .args(&amp;[&quot;-n&quot;, &quot;10&quot;])"></div><div data-l="                .stdin(sort_output)"></div><div data-l="                .stdout(Stdio::piped())"></div><div data-l="                .spawn()?;"></div><div data-l=""></div><div data-l="            let head_stdout = head_output_child.wait_with_output()?;"></div><div data-l=""></div><div data-l="            sort_output_child.wait()?;"></div><div data-l=""></div><div data-l="            println!("></div><div data-l="                &quot;Top 10 biggest files and directories in '{}':\n{}&quot;,"></div><div data-l="                directory.display(),"></div><div data-l="                String::from_utf8(head_stdout.stdout).unwrap()"></div><div data-l="            );"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Command.html">`Command`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/process/struct.Stdio.html">`Stdio::piped`</a>

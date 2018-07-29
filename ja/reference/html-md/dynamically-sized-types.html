@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<h1>Dynamically Sized Types</h1>
+<br>
+<p>Most types have a fixed size that is known at compile time and implement the
+trait <a class="notranslate" href="#3sized"><code>Sized</code></a>. A type with a size that is known only at run-time is
+called a <s>dynamically sized type</s> (<s>DST</s>) or, informally, an unsized type.
+<a class="notranslate" href="#4Slices">Slices</a> and <a class="notranslate" href="#4trait objects">trait objects</a> are two examples of <abbr title="dynamically sized
+types">DSTs</abbr>. Such types can only be used in certain cases:</p>
+<br>
+<div data-b="*"><a class="notranslate" href="#4Pointer types">Pointer types</a> to <abbr title="dynamically sized types">DSTs</abbr> are
+sized but have twice the size of pointers to sized types</div>
+<div data-b="    *">Pointers to slices also store the number of elements of the slice.</div>
+<div data-b="    *">Pointers to trait objects also store a pointer to a vtable.</div>
+<div data-b="*"><abbr title="dynamically sized types">DSTs</abbr> can be provided as
+type arguments when a bound of <code>?Sized</code>. By default any type parameter
+has a <code>Sized</code> bound.</div>
+<div data-b="*">Traits may be implemented for <abbr title="dynamically sized
+  types">DSTs</abbr>. Unlike type parameters <code>Self: ?Sized</code> by default in trait
+definitions.</div>
+<div data-b="*">Structs may contain a <abbr title="dynamically sized type">DST</abbr> as the
+last field, this makes the struct itself a
+<abbr title="dynamically sized type">DST</abbr>.</div>
+<br>
+<p>Notably: <a class="notranslate" href="#4variables">variables</a>, function parameters, <a class="notranslate" href="#4const">const</a> and <a class="notranslate" href="#4static">static</a> items must be
+<code>Sized</code>.</p>
+<br>
+<a class="notranslate" href="#1special-types-and-traits.html#sized">sized</a>
+<a class="notranslate" href="#1types.html#array-and-slice-types">Slices</a>
+<a class="notranslate" href="#1types.html#trait-objects">trait objects</a>
+<a class="notranslate" href="#1types.html#pointer-types">Pointer types</a>
+<a class="notranslate" href="#1variables.html">variables</a>
+<a class="notranslate" href="#1items/constant-items.html">const</a>
+<a class="notranslate" href="#1items/static-items.html">static</a>

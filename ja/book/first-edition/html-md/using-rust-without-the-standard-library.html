@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<h1>Using Rust Without the Standard Library</h1>
+<br>
+<p>Rust’s standard library provides a lot of useful functionality, but assumes
+support for various features of its host system: threads, networking, heap
+allocation, and others. There are systems that do not have these features,
+however, and Rust can work with those too! To do so, we tell Rust that we
+don’t want to use the standard library via an attribute: <code>#€[no_std]</code>.</p>
+<br>
+<blockquote><p>Note: This feature is technically stable, but there are some caveats. For
+one, you can build a <code>#€[no_std]</code> <s>library</s> on stable, but not a <s>binary</s>.
+For details on binaries without the standard library, see <a href="#3unstable book lang items">the nightly
+chapter on 'lang items'</a></p></blockquote>
+<br>
+<p>To use <code>#€[no_std]</code>, add it to your crate root:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![no_std]"></div><div data-l=""></div><div data-l="fn plus_one(x: i32) -&gt; i32 {"></div><div data-l="    x + 1"></div><div data-l="}"></div></div>
+<br>
+<p>Much of the functionality that’s exposed in the standard library is also
+available via the <a href="#2../../core/index.html"><code>core</code> crate</a>. When we’re using the
+standard library, Rust automatically brings <code>std</code> into scope, allowing you to
+use its features without an explicit import. By the same token, when using
+<code>#€[no_std]</code>, Rust will bring <code>core</code> into scope for you, as well as <a class="notranslate" href="#2../../core/prelude/v1/index.html">its
+prelude</a>. This means that a lot of code will Just
+Work:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![no_std]"></div><div data-l=""></div><div data-l="fn may_fail(failure: bool) -&gt; Result&lt;(), &amp;'static str&gt; {"></div><div data-l="    if failure {"></div><div data-l="        Err(&quot;this didn’t work!&quot;)"></div><div data-l="    } else {"></div><div data-l="        Ok(())"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1../../unstable-book/language-features/lang-items.html#using-libc">unstable book lang items</a>

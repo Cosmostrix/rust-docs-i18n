@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<h2>Pattern Syntax</h2>
+<br>
+<p>Throughout the book, you’ve seen examples of many kinds of patterns. In this
+section, we gather all the syntax valid in patterns and discuss why you might
+want to use each one.</p>
+<br>
+<h3>Matching Literals</h3>
+<br>
+<p>As you saw in Chapter 6, you can match patterns against literals directly. The
+following code gives some examples:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 =&gt; println!(&quot;one&quot;),"></div><div data-l="    2 =&gt; println!(&quot;two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This code prints <code>one</code> because the value in <code>x</code> is 1. This syntax is useful
+when you want your code to take an action if it gets a particular concrete
+value.</p>
+<br>
+<h3>Matching Named Variables</h3>
+<br>
+<p>Named variables are irrefutable patterns that match any value, and we’ve used
+them many times in the book. However, there is a complication when you use
+named variables in <code>match</code> expressions. Because <code>match</code> starts a new scope,
+variables declared as part of a pattern inside the <code>match</code> expression will
+shadow those with the same name outside the <code>match</code> construct, as is the case
+with all variables. In Listing 18-11, we declare a variable named <code>x</code> with the
+value <code>Some(5)</code> and a variable <code>y</code> with the value <code>10</code>. We then create a
+<code>match</code> expression on the value <code>x</code>. Look at the patterns in the match arms and
+<code>println€</code> at the end, and try to figure out what the code will print before
+running this code or reading further.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = Some(5);"></div><div data-l="    let y = 10;"></div><div data-l=""></div><div data-l="    match x {"></div><div data-l="        Some(50) =&gt; println!(&quot;Got 50&quot;),"></div><div data-l="        Some(y) =&gt; println!(&quot;Matched, y = {:?}&quot;, y),"></div><div data-l="        _ =&gt; println!(&quot;Default case, x = {:?}&quot;, x),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;at the end: x = {:?}, y = {:?}&quot;, x, y);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-11: A <code>match</code> expression with an arm that
+introduces a shadowed variable <code>y</code></span></p>
+<br>
+<p>Let’s walk through what happens when the <code>match</code> expression runs. The pattern
+in the first match arm doesn’t match the defined value of <code>x</code>, so the code
+continues.</p>
+<br>
+<p>The pattern in the second match arm introduces a new variable named <code>y</code> that
+will match any value inside a <code>Some</code> value. Because we’re in a new scope inside
+the <code>match</code> expression, this is a new <code>y</code> variable, not the <code>y</code> we declared at
+the beginning with the value 10. This new <code>y</code> binding will match any value
+inside a <code>Some</code>, which is what we have in <code>x</code>. Therefore, this new <code>y</code> binds to
+the inner value of the <code>Some</code> in <code>x</code>. That value is <code>5</code>, so the expression for
+that arm executes and prints <code>Matched, y = 5</code>.</p>
+<br>
+<p>If <code>x</code> had been a <code>None</code> value instead of <code>Some(5)</code>, the patterns in the first
+two arms wouldn’t have matched, so the value would have matched to the
+underscore. We didn’t introduce the <code>x</code> variable in the pattern of the
+underscore arm, so the <code>x</code> in the expression is still the outer <code>x</code> that hasn’t
+been shadowed. In this hypothetical case, the <code>match</code> would print <code>Default
+case, x = None</code>.</p>
+<br>
+<p>When the <code>match</code> expression is done, its scope ends, and so does the scope of
+the inner <code>y</code>. The last <code>println€</code> produces <code>at the end: x = Some(5), y = 10</code>.</p>
+<br>
+<p>To create a <code>match</code> expression that compares the values of the outer <code>x</code> and
+<code>y</code>, rather than introducing a shadowed variable, we would need to use a match
+guard conditional instead. We’ll talk about match guards later in the “Extra
+Conditionals with Match Guards” section.</p>
+<br>
+<h3>Multiple Patterns</h3>
+<br>
+<p>In <code>match</code> expressions, you can match multiple patterns using the <code>|</code> syntax,
+which means <i>or</i>. For example, the following code matches the value of <code>x</code>
+against the match arms, the first of which has an <i>or</i> option, meaning if the
+value of <code>x</code> matches either of the values in that arm, that arm’s code will
+run:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 1;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 | 2 =&gt; println!(&quot;one or two&quot;),"></div><div data-l="    3 =&gt; println!(&quot;three&quot;),"></div><div data-l="    _ =&gt; println!(&quot;anything&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>This code prints <code>one or two</code>.</p>
+<br>
+<h3>Matching Ranges of Values with <code>...</code></h3>
+<br>
+<p>The <code>...</code> syntax allows us to match to an inclusive range of values. In the
+following code, when a pattern matches any of the values within the range, that
+arm will execute:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 5;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    1 ... 5 =&gt; println!(&quot;one through five&quot;),"></div><div data-l="    _ =&gt; println!(&quot;something else&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>If <code>x</code> is 1, 2, 3, 4, or 5, the first arm will match. This syntax is more
+convenient than using the <code>|</code> operator to express the same idea; instead of <code>1
+... 5</code>, we would have to specify <code>1 | 2 | 3 | 4 | 5</code> if we used <code>|</code>. Specifying
+a range is much shorter, especially if we want to match, say, any number
+between 1 and 1,000!</p>
+<br>
+<p>Ranges are only allowed with numeric values or <code>char</code> values, because the
+compiler checks that the range isn’t empty at compile time. The only types for
+which Rust can tell if a range is empty or not are <code>char</code> and numeric values.</p>
+<br>
+<p>Here is an example using ranges of <code>char</code> values:</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 'c';"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    'a' ... 'j' =&gt; println!(&quot;early ASCII letter&quot;),"></div><div data-l="    'k' ... 'z' =&gt; println!(&quot;late ASCII letter&quot;),"></div><div data-l="    _ =&gt; println!(&quot;something else&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p>Rust can tell that <code>c</code> is within the first pattern’s range and prints <code>early
+ASCII letter</code>.</p>
+<br>
+<h3>Destructuring to Break Apart Values</h3>
+<br>
+<p>We can also use patterns to destructure structs, enums, tuples, and references
+to use different parts of these values. Let’s walk through each value.</p>
+<br>
+<h4>Destructuring Structs</h4>
+<br>
+<p>Listing 18-12 shows a <code>Point</code> struct with two fields, <code>x</code> and <code>y</code>, that we can
+break apart using a pattern with a <code>let</code> statement.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let p = Point { x: 0, y: 7 };"></div><div data-l=""></div><div data-l="    let Point { x: a, y: b } = p;"></div><div data-l="    assert_eq!(0, a);"></div><div data-l="    assert_eq!(7, b);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-12: Destructuring a struct’s fields into
+separate variables</span></p>
+<br>
+<p>This code creates the variables <code>a</code> and <code>b</code> that match the values of the <code>x</code>
+and <code>y</code> fields of the <code>p</code> variable. This example shows that the names of the
+variables in the pattern don’t have to match the field names of the struct. But
+it’s common to want the variable names to match the field names to make it
+easier to remember which variables came from which fields.</p>
+<br>
+<p>Because having variable names match the fields is common and because writing
+<code>let Point { x: x, y: y } = p;</code> contains a lot of duplication, there is a
+shorthand for patterns that match struct fields: you only need to list the name
+of the struct field, and the variables created from the pattern will have the
+same names. Listing 18-13 shows code that behaves in the same way as the code
+in Listing 18-12, but the variables created in the <code>let</code> pattern are <code>x</code> and
+<code>y</code> instead of <code>a</code> and <code>b</code>.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let p = Point { x: 0, y: 7 };"></div><div data-l=""></div><div data-l="    let Point { x, y } = p;"></div><div data-l="    assert_eq!(0, x);"></div><div data-l="    assert_eq!(7, y);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-13: Destructuring struct fields using struct
+field shorthand</span></p>
+<br>
+<p>This code creates the variables <code>x</code> and <code>y</code> that match the <code>x</code> and <code>y</code> fields
+of the <code>p</code> variable. The outcome is that the variables <code>x</code> and <code>y</code> contain the
+values from the <code>p</code> struct.</p>
+<br>
+<p>We can also destructure with literal values as part of the struct pattern
+rather than creating variables for all the fields. Doing so allows us to test
+some of the fields for particular values while creating variables to
+destructure the other fields.</p>
+<br>
+<p>Listing 18-14 shows a <code>match</code> expression that separates <code>Point</code> values into
+three cases: points that lie directly on the <code>x</code> axis (which is true when <code>y =
+0</code>), on the <code>y</code> axis (<code>x = 0</code>), or neither.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point {"></div><div data-l="#     x: i32,"></div><div data-l="#     y: i32,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn main() {"></div><div data-l="    let p = Point { x: 0, y: 7 };"></div><div data-l=""></div><div data-l="    match p {"></div><div data-l="        Point { x, y: 0 } =&gt; println!(&quot;On the x axis at {}&quot;, x),"></div><div data-l="        Point { x: 0, y } =&gt; println!(&quot;On the y axis at {}&quot;, y),"></div><div data-l="        Point { x, y } =&gt; println!(&quot;On neither axis: ({}, {})&quot;, x, y),"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-14: Destructuring and matching literal values
+in one pattern</span></p>
+<br>
+<p>The first arm will match any point that lies on the <code>x</code> axis by specifying that
+the <code>y</code> field matches if its value matches the literal <code>0</code>. The pattern still
+creates an <code>x</code> variable that we can use in the code for this arm.</p>
+<br>
+<p>Similarly, the second arm matches any point on the <code>y</code> axis by specifying that
+the <code>x</code> field matches if its value is <code>0</code> and creates a variable <code>y</code> for the
+value of the <code>y</code> field. The third arm doesn’t specify any literals, so it
+matches any other <code>Point</code> and creates variables for both the <code>x</code> and <code>y</code> fields.</p>
+<br>
+<p>In this example, the value <code>p</code> matches the second arm by virtue of <code>x</code>
+containing a 0, so this code will print <code>On the y axis at 7</code>.</p>
+<br>
+<h4>Destructuring Enums</h4>
+<br>
+<p>We’ve destructured enums earlier in this book, for example, when we
+destructured <code>Option&lt;i32&gt;</code> in Listing 6-5 in Chapter 6. One detail we haven’t
+mentioned explicitly is that the pattern to destructure an enum should
+correspond to the way the data stored within the enum is defined. As an
+example, in Listing 18-15 we use the <code>Message</code> enum from Listing 6-2 and write
+a <code>match</code> with patterns that will destructure each inner value.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="enum Message {"></div><div data-l="    Quit,"></div><div data-l="    Move { x: i32, y: i32 },"></div><div data-l="    Write(String),"></div><div data-l="    ChangeColor(i32, i32, i32),"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let msg = Message::ChangeColor(0, 160, 255);"></div><div data-l=""></div><div data-l="    match msg {"></div><div data-l="        Message::Quit =&gt; {"></div><div data-l="            println!(&quot;The Quit variant has no data to destructure.&quot;)"></div><div data-l="        },"></div><div data-l="        Message::Move { x, y } =&gt; {"></div><div data-l="            println!("></div><div data-l="                &quot;Move in the x direction {} and in the y direction {}&quot;,"></div><div data-l="                x,"></div><div data-l="                y"></div><div data-l="            );"></div><div data-l="        }"></div><div data-l="        Message::Write(text) =&gt; println!(&quot;Text message: {}&quot;, text),"></div><div data-l="        Message::ChangeColor(r, g, b) =&gt; {"></div><div data-l="            println!("></div><div data-l="                &quot;Change the color to red {}, green {}, and blue {}&quot;,"></div><div data-l="                r,"></div><div data-l="                g,"></div><div data-l="                b"></div><div data-l="            )"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-15: Destructuring enum variants that hold
+different kinds of values</span></p>
+<br>
+<p>This code will print <code>Change the color to red 0, green 160, and blue 255</code>. Try
+changing the value of <code>msg</code> to see the code from the other arms run.</p>
+<br>
+<p>For enum variants without any data, like <code>Message::Quit</code>, we can’t destructure
+the value any further. We can only match on the literal <code>Message::Quit</code> value,
+and no variables are in that pattern.</p>
+<br>
+<p>For struct-like enum variants, such as <code>Message::Move</code>, we can use a pattern
+similar to the pattern we specify to match structs. After the variant name, we
+place curly brackets and then list the fields with variables so we break apart
+the pieces to use in the code for this arm. Here we use the shorthand form as
+we did in Listing 18-13.</p>
+<br>
+<p>For tuple-like enum variants, like <code>Message::Write</code> that holds a tuple with one
+element and <code>Message::ChangeColor</code> that holds a tuple with three elements, the
+pattern is similar to the pattern we specify to match tuples. The number of
+variables in the pattern must match the number of elements in the variant we’re
+matching.</p>
+<br>
+<h4>Destructuring Nested Structs &amp; Enums</h4>
+<br>
+<p>Up until now, all of our examples have been matching structures that were one
+level deep. Matching can work on nested structures too!</p>
+<br>
+<p>We can refactor the example above to support both RGB and HSV colors:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Color {"></div><div data-l="   Rgb(i32, i32, i32),"></div><div data-l="   Hsv(i32, i32, i32)"></div><div data-l="}"></div><div data-l=""></div><div data-l="enum Message {"></div><div data-l="    Quit,"></div><div data-l="    Move { x: i32, y: i32 },"></div><div data-l="    Write(String),"></div><div data-l="    ChangeColor(Color),"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let msg = Message::ChangeColor(Color::Hsv(0, 160, 255));"></div><div data-l=""></div><div data-l="    match msg {"></div><div data-l="        Message::ChangeColor(Color::Rgb(r, g, b)) =&gt; {"></div><div data-l="            println!("></div><div data-l="                &quot;Change the color to red {}, green {}, and blue {}&quot;,"></div><div data-l="                r,"></div><div data-l="                g,"></div><div data-l="                b"></div><div data-l="            )     "></div><div data-l="        },"></div><div data-l="        Message::ChangeColor(Color::Hsv(h, s, v)) =&gt; {"></div><div data-l="            println!("></div><div data-l="                &quot;Change the color to hue {}, saturation {}, and value {}&quot;,"></div><div data-l="                h,"></div><div data-l="                s,"></div><div data-l="                v"></div><div data-l="            )"></div><div data-l="        }"></div><div data-l="        _ =&gt; ()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<h4>Destructuring References</h4>
+<br>
+<p>When the value we’re matching to our pattern contains a reference, we need to
+destructure the reference from the value, which we can do by specifying a <code>&amp;</code>
+in the pattern. Doing so lets us get a variable holding the value that the
+reference points to rather than getting a variable that holds the reference.
+This technique is especially useful in closures where we have iterators that
+iterate over references, but we want to use the values in the closure rather
+than the references.</p>
+<br>
+<p>The example in Listing 18-16 iterates over references to <code>Point</code> instances in a
+vector, destructuring the reference and the struct so we can perform
+calculations on the <code>x</code> and <code>y</code> values easily.</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point {"></div><div data-l="#     x: i32,"></div><div data-l="#     y: i32,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="let points = vec!["></div><div data-l="    Point { x: 0, y: 0 },"></div><div data-l="    Point { x: 1, y: 5 },"></div><div data-l="    Point { x: 10, y: -3 },"></div><div data-l="];"></div><div data-l=""></div><div data-l="let sum_of_squares: i32 = points"></div><div data-l="    .iter()"></div><div data-l="    .map(|&amp;Point { x, y }| x * x + y * y)"></div><div data-l="    .sum();"></div></div>
+<br>
+<p><span class="caption">Listing 18-16: Destructuring a reference to a struct into
+the struct field values</span></p>
+<br>
+<p>This code gives us the variable <code>sum_of_squares</code> holding the value 135, which
+is the result of squaring the <code>x</code> value and the <code>y</code> value, adding those
+together, and then adding the result for each <code>Point</code> in the <code>points</code> vector to
+get one number.</p>
+<br>
+<p>If we had not included the <code>&amp;</code> in <code>&amp;Point { x, y }</code>, we’d get a type mismatch
+error, because <code>iter</code> would then iterate over references to the items in the
+vector rather than the actual values. The error would look like this:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0308]: mismatched types"></div><div data-l="  --&gt;"></div><div data-l="   |"></div><div data-l="14 |         .map(|Point { x, y }| x * x + y * y)"></div><div data-l="   |               ^^^^^^^^^^^^ expected &amp;Point, found struct `Point`"></div><div data-l="   |"></div><div data-l="   = note: expected type `&amp;Point`"></div><div data-l="              found type `Point`"></div></div>
+<br>
+<p>This error indicates that Rust was expecting our closure to match <code>&amp;Point</code>, but
+we tried to match directly to a <code>Point</code> value, not a reference to a <code>Point</code>.</p>
+<br>
+<h4>Destructuring Structs and Tuples</h4>
+<br>
+<p>We can mix, match, and nest destructuring patterns in even more complex ways.
+The following example shows a complicated destructure where we nest structs and
+tuples inside a tuple and destructure all the primitive values out:</p>
+<br>
+<div data-lang="rust"><div data-l="# struct Point {"></div><div data-l="#     x: i32,"></div><div data-l="#     y: i32,"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="let ((feet, inches), Point {x, y}) = ((3, 10), Point { x: 3, y: -10 });"></div></div>
+<br>
+<p>This code lets us break complex types into their component parts so we can use
+the values we’re interested in separately.</p>
+<br>
+<p>Destructuring with patterns is a convenient way to use pieces of values, such
+as the value from each field in a struct, separately from each other.</p>
+<br>
+<h3>Ignoring Values in a Pattern</h3>
+<br>
+<p>You’ve seen that it’s sometimes useful to ignore values in a pattern, such as
+in the last arm of a <code>match</code>, to get a catchall that doesn’t actually do
+anything but does account for all remaining possible values. There are a few
+ways to ignore entire values or parts of values in a pattern: using the <code>_</code>
+pattern (which you’ve seen), using the <code>_</code> pattern within another pattern,
+using a name that starts with an underscore, or using <code>..</code> to ignore remaining
+parts of a value. Let’s explore how and why to use each of these patterns.</p>
+<br>
+<h4>Ignoring an Entire Value with <code>_</code></h4>
+<br>
+<p>We’ve used the underscore (<code>_</code>) as a wildcard pattern that will match any value
+but not bind to the value. Although the underscore <code>_</code> pattern is especially
+useful as the last arm in a <code>match</code> expression, we can use it in any pattern,
+including function parameters, as shown in Listing 18-17.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn foo(_: i32, y: i32) {"></div><div data-l="    println!(&quot;This code only uses the y parameter: {}&quot;, y);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    foo(3, 4);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-17: Using <code>_</code> in a function signature</span></p>
+<br>
+<p>This code will completely ignore the value passed as the first argument, <code>3</code>,
+and will print <code>This code only uses the y parameter: 4</code>.</p>
+<br>
+<p>In most cases when you no longer need a particular function parameter, you
+would change the signature so it doesn’t include the unused parameter. Ignoring
+a function parameter can be especially useful in some cases, for example, when
+implementing a trait when you need a certain type signature but the function
+body in your implementation doesn’t need one of the parameters. The compiler
+will then not warn about unused function parameters, as it would if you used a
+name instead.</p>
+<br>
+<h4>Ignoring Parts of a Value with a Nested <code>_</code></h4>
+<br>
+<p>We can also use <code>_</code> inside another pattern to ignore just part of a value, for
+example, when we want to test for only part of a value but have no use for the
+other parts in the corresponding code we want to run. Listing 18-18 shows code
+responsible for managing a setting’s value. The business requirements are that
+the user should not be allowed to overwrite an existing customization of a
+setting but can unset the setting and can give the setting a value if it is
+currently unset.</p>
+<br>
+<div data-lang="rust"><div data-l="let mut setting_value = Some(5);"></div><div data-l="let new_setting_value = Some(10);"></div><div data-l=""></div><div data-l="match (setting_value, new_setting_value) {"></div><div data-l="    (Some(_), Some(_)) =&gt; {"></div><div data-l="        println!(&quot;Can't overwrite an existing customized value&quot;);"></div><div data-l="    }"></div><div data-l="    _ =&gt; {"></div><div data-l="        setting_value = new_setting_value;"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;setting is {:?}&quot;, setting_value);"></div></div>
+<br>
+<p><span class="caption">Listing 18-18: Using an underscore within patterns that
+match <code>Some</code> variants when we don’t need to use the value inside the
+<code>Some</code></span></p>
+<br>
+<p>This code will print <code>Can't overwrite an existing customized value</code> and then
+<code>setting is Some(5)</code>. In the first match arm, we don’t need to match on or use
+the values inside either <code>Some</code> variant, but we do need to test for the case
+when <code>setting_value</code> and <code>new_setting_value</code> are the <code>Some</code> variant. In that
+case, we print why we’re not changing <code>setting_value</code>, and it doesn’t get
+changed.</p>
+<br>
+<p>In all other cases (if either <code>setting_value</code> or <code>new_setting_value</code> are
+<code>None</code>) expressed by the <code>_</code> pattern in the second arm, we want to allow
+<code>new_setting_value</code> to become <code>setting_value</code>.</p>
+<br>
+<p>We can also use underscores in multiple places within one pattern to ignore
+particular values. Listing 18-19 shows an example of ignoring the second and
+fourth values in a tuple of five items.</p>
+<br>
+<div data-lang="rust"><div data-l="let numbers = (2, 4, 8, 16, 32);"></div><div data-l=""></div><div data-l="match numbers {"></div><div data-l="    (first, _, third, _, fifth) =&gt; {"></div><div data-l="        println!(&quot;Some numbers: {}, {}, {}&quot;, first, third, fifth)"></div><div data-l="    },"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-19: Ignoring multiple parts of a tuple</span></p>
+<br>
+<p>This code will print <code>Some numbers: 2, 8, 32</code>, and the values 4 and 16 will be
+ignored.</p>
+<br>
+<h4>Ignoring an Unused Variable by Starting Its Name with <code>_</code></h4>
+<br>
+<p>If you create a variable but don’t use it anywhere, Rust will usually issue a
+warning because that could be a bug. But sometimes it’s useful to create a
+variable you won’t use yet, such as when you’re prototyping or just starting a
+project. In this situation, you can tell Rust not to warn you about the unused
+variable by starting the name of the variable with an underscore. In Listing
+18-20, we create two unused variables, but when we run this code, we should
+only get a warning about one of them.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let _x = 5;"></div><div data-l="    let y = 10;"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-20: Starting a variable name with an
+underscore to avoid getting unused variable warnings</span></p>
+<br>
+<p>Here we get a warning about not using the variable <code>y</code>, but we don’t get a
+warning about not using the variable preceded by the underscore.</p>
+<br>
+<p>Note that there is a subtle difference between using only <code>_</code> and using a name
+that starts with an underscore. The syntax <code>_x</code> still binds the value to the
+variable, whereas <code>_</code> doesn’t bind at all. To show a case where this
+distinction matters, Listing 18-21 will provide us with an error.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let s = Some(String::from(&quot;Hello!&quot;));"></div><div data-l=""></div><div data-l="if let Some(_s) = s {"></div><div data-l="    println!(&quot;found a string&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;{:?}&quot;, s);"></div></div>
+<br>
+<p><span class="caption">Listing 18-21: An unused variable starting with an
+underscore still binds the value, which might take ownership of the value</span></p>
+<br>
+<p>We’ll receive an error because the <code>s</code> value will still be moved into <code>_s</code>,
+which prevents us from using <code>s</code> again. However, using the underscore by itself
+doesn’t ever bind to the value. Listing 18-22 will compile without any errors
+because <code>s</code> doesn’t get moved into <code>_</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="let s = Some(String::from(&quot;Hello!&quot;));"></div><div data-l=""></div><div data-l="if let Some(_) = s {"></div><div data-l="    println!(&quot;found a string&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;{:?}&quot;, s);"></div></div>
+<br>
+<p><span class="caption">Listing 18-22: Using an underscore does not bind the
+value</span></p>
+<br>
+<p>This code works just fine because we never bind <code>s</code> to anything; it isn’t moved.</p>
+<br>
+<h4>Ignoring Remaining Parts of a Value with <code>..</code></h4>
+<br>
+<p>With values that have many parts, we can use the <code>..</code> syntax to use only a few
+parts and ignore the rest, avoiding the need to list underscores for each
+ignored value. The <code>..</code> pattern ignores any parts of a value that we haven’t
+explicitly matched in the rest of the pattern. In Listing 18-23, we have a
+<code>Point</code> struct that holds a coordinate in three-dimensional space. In the
+<code>match</code> expression, we want to operate only on the <code>x</code> coordinate and ignore
+the values in the <code>y</code> and <code>z</code> fields.</p>
+<br>
+<div data-lang="rust"><div data-l="struct Point {"></div><div data-l="    x: i32,"></div><div data-l="    y: i32,"></div><div data-l="    z: i32,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let origin = Point { x: 0, y: 0, z: 0 };"></div><div data-l=""></div><div data-l="match origin {"></div><div data-l="    Point { x, .. } =&gt; println!(&quot;x is {}&quot;, x),"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-23: Ignoring all fields of a <code>Point</code> except
+for <code>x</code> by using <code>..</code></span></p>
+<br>
+<p>We list the <code>x</code> value and then just include the <code>..</code> pattern. This is quicker
+than having to list <code>y: _</code> and <code>z: _</code>, particularly when we’re working with
+structs that have lots of fields in situations where only one or two fields are
+relevant.</p>
+<br>
+<p>The syntax <code>..</code> will expand to as many values as it needs to be. Listing 18-24
+shows how to use <code>..</code> with a tuple.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let numbers = (2, 4, 8, 16, 32);"></div><div data-l=""></div><div data-l="    match numbers {"></div><div data-l="        (first, .., last) =&gt; {"></div><div data-l="            println!(&quot;Some numbers: {}, {}&quot;, first, last);"></div><div data-l="        },"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-24: Matching only the first and last values in
+a tuple and ignoring all other values</span></p>
+<br>
+<p>In this code, the first and last value are matched with <code>first</code> and <code>last</code>. The
+<code>..</code> will match and ignore everything in the middle.</p>
+<br>
+<p>However, using <code>..</code> must be unambiguous. If it is unclear which values are
+intended for matching and which should be ignored, Rust will give us an error.
+Listing 18-25 shows an example of using <code>..</code> ambiguously, so it will not
+compile.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let numbers = (2, 4, 8, 16, 32);"></div><div data-l=""></div><div data-l="    match numbers {"></div><div data-l="        (.., second, ..) =&gt; {"></div><div data-l="            println!(&quot;Some numbers: {}&quot;, second)"></div><div data-l="        },"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-25: An attempt to use <code>..</code> in an ambiguous
+way</span></p>
+<br>
+<p>When we compile this example, we get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: `..` can only be used once per tuple or tuple struct pattern"></div><div data-l=" --&gt; src/main.rs:5:22"></div><div data-l="  |"></div><div data-l="5 |         (.., second, ..) =&gt; {"></div><div data-l="  |                      ^^"></div></div>
+<br>
+<p>It’s impossible for Rust to determine how many values in the tuple to ignore
+before matching a value with <code>second</code> and then how many further values to
+ignore thereafter. This code could mean that we want to ignore <code>2</code>, bind
+<code>second</code> to <code>4</code>, and then ignore <code>8</code>, <code>16</code>, and <code>32</code>; or that we want to ignore
+<code>2</code> and <code>4</code>, bind <code>second</code> to <code>8</code>, and then ignore <code>16</code> and <code>32</code>; and so forth.
+The variable name <code>second</code> doesn’t mean anything special to Rust, so we get a
+compiler error because using <code>..</code> in two places like this is ambiguous.</p>
+<br>
+<h3>Extra Conditionals with Match Guards</h3>
+<br>
+<p>A <i>match guard</i> is an additional <code>if</code> condition specified after the pattern in
+a <code>match</code> arm that must also match, along with the pattern matching, for that
+arm to be chosen. Match guards are useful for expressing more complex ideas
+than a pattern alone allows.</p>
+<br>
+<p>The condition can use variables created in the pattern. Listing 18-26 shows a
+<code>match</code> where the first arm has the pattern <code>Some(x)</code> and also has a match
+guard of <code>if x &lt; 5</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="let num = Some(4);"></div><div data-l=""></div><div data-l="match num {"></div><div data-l="    Some(x) if x &lt; 5 =&gt; println!(&quot;less than five: {}&quot;, x),"></div><div data-l="    Some(x) =&gt; println!(&quot;{}&quot;, x),"></div><div data-l="    None =&gt; (),"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-26: Adding a match guard to a pattern</span></p>
+<br>
+<p>This example will print <code>less than five: 4</code>. When <code>num</code> is compared to the
+pattern in the first arm, it matches, because <code>Some(4)</code> matches <code>Some(x)</code>. Then
+the match guard checks whether the value in <code>x</code> is less than <code>5</code>, and because
+it is, the first arm is selected.</p>
+<br>
+<p>If <code>num</code> had been <code>Some(10)</code> instead, the match guard in the first arm would
+have been false because 10 is not less than 5. Rust would then go to the second
+arm, which would match because the second arm doesn’t have a match guard and
+therefore matches any <code>Some</code> variant.</p>
+<br>
+<p>There is no way to express the <code>if x &lt; 5</code> condition within a pattern, so the
+match guard gives us the ability to express this logic.</p>
+<br>
+<p>In Listing 18-11, we mentioned that we could use match guards to solve our
+pattern-shadowing problem. Recall that a new variable was created inside the
+pattern in the <code>match</code> expression instead of using the variable outside the
+<code>match</code>. That new variable meant we couldn’t test against the value of the
+outer variable. Listing 18-30 shows how we can use a match guard to fix this
+problem.</p>
+<br>
+<p><span class="filename">Filename: src/main.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let x = Some(5);"></div><div data-l="    let y = 10;"></div><div data-l=""></div><div data-l="    match x {"></div><div data-l="        Some(50) =&gt; println!(&quot;Got 50&quot;),"></div><div data-l="        Some(n) if n == y =&gt; println!(&quot;Matched, n = {:?}&quot;, n),"></div><div data-l="        _ =&gt; println!(&quot;Default case, x = {:?}&quot;, x),"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;at the end: x = {:?}, y = {:?}&quot;, x, y);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-27: Using a match guard to test for equality
+with an outer variable</span></p>
+<br>
+<p>This code will now print <code>Default case, x = Some(5)</code>. The pattern in the second
+match arm doesn’t introduce a new variable <code>y</code> that would shadow the outer <code>y</code>,
+meaning we can use the outer <code>y</code> in the match guard. Instead of specifying the
+pattern as <code>Some(y)</code>, which would have shadowed the outer <code>y</code>, we specify
+<code>Some(n)</code>. This creates a new variable <code>n</code> that doesn’t shadow anything because
+there is no <code>n</code> variable outside the <code>match</code>.</p>
+<br>
+<p>The match guard <code>if n == y</code> is not a pattern and therefore doesn’t introduce
+new variables. This <code>y</code> <i>is</i> the outer <code>y</code> rather than a new shadowed <code>y</code>, and
+we can look for a value that has the same value as the outer <code>y</code> by comparing
+<code>n</code> to <code>y</code>.</p>
+<br>
+<p>You can also use the <i>or</i> operator <code>|</code> in a match guard to specify multiple
+patterns; the match guard condition will apply to all the patterns. Listing
+18-31 shows the precedence of combining a match guard with a pattern that uses
+<code>|</code>. The important part of this example is that the <code>if y</code> match guard applies
+to <code>4</code>, <code>5</code>, <i>and</i> <code>6</code>, even though it might look like <code>if y</code> only applies to
+<code>6</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="let x = 4;"></div><div data-l="let y = false;"></div><div data-l=""></div><div data-l="match x {"></div><div data-l="    4 | 5 | 6 if y =&gt; println!(&quot;yes&quot;),"></div><div data-l="    _ =&gt; println!(&quot;no&quot;),"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-18: Combining multiple patterns with a match
+guard</span></p>
+<br>
+<p>The match condition states that the arm only matches if the value of <code>x</code> is
+equal to <code>4</code>, <code>5</code>, or <code>6</code> <i>and</i> if <code>y</code> is <code>true</code>. When this code runs, the
+pattern of the first arm matches because <code>x</code> is <code>4</code>, but the match guard <code>if y</code>
+is false, so the first arm is not chosen. The code moves on to the second arm,
+which does match, and this program prints <code>no</code>. The reason is that the <code>if</code>
+condition applies to the whole pattern <code>4 | 5 | 6</code>, not only to the last value
+<code>6</code>. In other words, the precedence of a match guard in relation to a pattern
+behaves like this:</p>
+<br>
+<div data-lang="text"><div data-l="(4 | 5 | 6) if y =&gt; ..."></div></div>
+<br>
+<p>rather than this:</p>
+<br>
+<div data-lang="text"><div data-l="4 | 5 | (6 if y) =&gt; ..."></div></div>
+<br>
+<p>After running the code, the precedence behavior is evident: if the match guard
+were applied only to the final value in the list of values specified using the
+<code>|</code> operator, the arm would have matched and the program would have printed
+<code>yes</code>.</p>
+<br>
+<h3><code>@</code> Bindings</h3>
+<br>
+<p>The <i>at</i> operator (<code>@</code>) lets us create a variable that holds a value at the
+same time we’re testing that value to see whether it matches a pattern. Listing
+18-32 shows an example where we want to test that a <code>Message::Hello</code> <code>id</code> field
+is within the range <code>3...7</code>. But we also want to bind the value to the variable
+<code>id_variable</code> so we can use it in the code associated with the arm. We could
+name this variable <code>id</code>, the same as the field, but for this example we’ll use
+a different name.</p>
+<br>
+<div data-lang="rust"><div data-l="enum Message {"></div><div data-l="    Hello { id: i32 },"></div><div data-l="}"></div><div data-l=""></div><div data-l="let msg = Message::Hello { id: 5 };"></div><div data-l=""></div><div data-l="match msg {"></div><div data-l="    Message::Hello { id: id_variable @ 3...7 } =&gt; {"></div><div data-l="        println!(&quot;Found an id in range: {}&quot;, id_variable)"></div><div data-l="    },"></div><div data-l="    Message::Hello { id: 10...12 } =&gt; {"></div><div data-l="        println!(&quot;Found an id in another range&quot;)"></div><div data-l="    },"></div><div data-l="    Message::Hello { id } =&gt; {"></div><div data-l="        println!(&quot;Found some other id: {}&quot;, id)"></div><div data-l="    },"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 18-19: Using <code>@</code> to bind to a value in a pattern
+while also testing it</span></p>
+<br>
+<p>This example will print <code>Found an id in range: 5</code>. By specifying <code>id_variable
+@</code> before the range <code>3...7</code>, we’re capturing whatever value matched the range
+while also testing that the value matched the range pattern.</p>
+<br>
+<p>In the second arm, where we only have a range specified in the pattern, the code
+associated with the arm doesn’t have a variable that contains the actual value
+of the <code>id</code> field. The <code>id</code> field’s value could have been 10, 11, or 12, but
+the code that goes with that pattern doesn’t know which it is. The pattern code
+isn’t able to use the value from the <code>id</code> field, because we haven’t saved the
+<code>id</code> value in a variable.</p>
+<br>
+<p>In the last arm, where we’ve specified a variable without a range, we do have
+the value available to use in the arm’s code in a variable named <code>id</code>. The
+reason is that we’ve used the struct field shorthand syntax. But we haven’t
+applied any test to the value in the <code>id</code> field in this arm, as we did with the
+first two arms: any value would match this pattern.</p>
+<br>
+<p>Using <code>@</code> lets us test a value and save it in a variable within one pattern.</p>
+<br>
+<h3>Legacy patterns: <code>ref</code> and <code>ref mut</code></h3>
+<br>
+<p>In older versions of Rust, <code>match</code> would assume that you want to move what is
+matched. But sometimes, that's not what you wanted. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="let robot_name = &amp;Some(String::from(&quot;Bors&quot;));"></div><div data-l=""></div><div data-l="match robot_name {"></div><div data-l="    Some(name) =&gt; println!(&quot;Found a name: {}&quot;, name),"></div><div data-l="    None =&gt; (),"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;robot_name is: {:?}&quot;, robot_name);"></div></div>
+<br>
+<p>Here, <code>robot_name</code> is a <code>&amp;Option&lt;String&gt;</code>. Rust would then complain that
+<code>Some(name)</code> doesn't match up with <code>&amp;Option&lt;T&gt;</code>, so you'd have to write this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="let robot_name = &amp;Some(String::from(&quot;Bors&quot;));"></div><div data-l=""></div><div data-l="match robot_name {"></div><div data-l="    &amp;Some(name) =&gt; println!(&quot;Found a name: {}&quot;, name),"></div><div data-l="    None =&gt; (),"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;robot_name is: {:?}&quot;, robot_name);"></div></div>
+<br>
+<p>Next, Rust would complain that <code>name</code> is trying to move the <code>String</code> out of
+the option, but because it's a reference to an option, it's borrowed, and so
+can't be moved out of. This is where the <code>ref</code> keyword comes into play:</p>
+<br>
+<div data-lang="rust"><div data-l="let robot_name = &amp;Some(String::from(&quot;Bors&quot;));"></div><div data-l=""></div><div data-l="match robot_name {"></div><div data-l="    &amp;Some(ref name) =&gt; println!(&quot;Found a name: {}&quot;, name),"></div><div data-l="    None =&gt; (),"></div><div data-l="}"></div><div data-l=""></div><div data-l="println!(&quot;robot_name is: {:?}&quot;, robot_name);"></div></div>
+<br>
+<p>The <code>ref</code> keyword is like the opposite of <code>&amp;</code> in patterns; this says &quot;please
+bind <code>ref</code> to be a <code>&amp;String</code>, don't try to move it out. In other words, the
+<code>&amp;</code> in <code>&amp;Some</code> is matching against a reference, but <code>ref</code> <i>creates</i> a
+reference. <code>ref mut</code> is like <code>ref</code>, but for mutable references.</p>
+<br>
+<p>Anyway, today's Rust doesn't work like this. If you try to <code>match</code> on
+something borrowed, then all of the bindings you create will attempt to
+borrow as well. This means that the original code works as you'd expect.</p>
+<br>
+<p>Because Rust is backwards compatible, we couldn't remove <code>ref</code> and <code>ref mut</code>,
+and they're sometimes useful in obscure situations, where you want to
+partially borrow part of a struct as mutable and another part as immutable.
+But you may see them in older Rust code, so knowing what they do is still
+useful.</p>
+<br>
+<h2>Summary</h2>
+<br>
+<p>Rust’s patterns are very useful in that they help distinguish between different
+kinds of data. When used in <code>match</code> expressions, Rust ensures your patterns
+cover every possible value, or your program won’t compile. Patterns in <code>let</code>
+statements and function parameters make those constructs more useful, enabling
+the destructuring of values into smaller parts at the same time as assigning to
+variables. We can create simple or complex patterns to suit our needs.</p>
+<br>
+<p>Next, for the penultimate chapter of the book, we’ll look at some advanced
+aspects of a variety of Rust’s features.</p>

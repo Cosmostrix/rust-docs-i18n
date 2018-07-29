@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<h2>Parse string into DateTime struct</h2>
+<br>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Parses a <a class="notranslate" href="#4`DateTime`">`DateTime`</a> struct from strings representing the well-known formats
+<a class="notranslate" href="#4RFC 2822">RFC 2822</a>, <a class="notranslate" href="#4RFC 3339">RFC 3339</a>, and a custom format, using
+<a class="notranslate" href="#4`DateTime::parse_from_rfc2822`">`DateTime::parse_from_rfc2822`</a>, <a class="notranslate" href="#4`DateTime::parse_from_rfc3339`">`DateTime::parse_from_rfc3339`</a>, and
+<a class="notranslate" href="#4`DateTime::parse_from_str`">`DateTime::parse_from_str`</a> respectively.</p>
+<br>
+<p>Escape sequences that are available for the <a class="notranslate" href="#4`DateTime::parse_from_str`">`DateTime::parse_from_str`</a> can be
+found at <a class="notranslate" href="#4`chrono::format::strftime`">`chrono::format::strftime`</a>. Note that the <a class="notranslate" href="#4`DateTime::parse_from_str`">`DateTime::parse_from_str`</a>
+requires that such a DateTime struct must be creatable that it uniquely
+identifies a date and a time. For parsing dates and times without timezones use
+<a class="notranslate" href="#4`NaiveDate`">`NaiveDate`</a>, <a class="notranslate" href="#4`NaiveTime`">`NaiveTime`</a>, and <a class="notranslate" href="#4`NaiveDateTime`">`NaiveDateTime`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#"></div><div data-l="use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         DateParse(chrono::format::ParseError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let rfc2822 = DateTime::parse_from_rfc2822(&quot;Tue, 1 Jul 2003 10:52:37 +0200&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, rfc2822);"></div><div data-l=""></div><div data-l="    let rfc3339 = DateTime::parse_from_rfc3339(&quot;1996-12-19T16:39:57-08:00&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, rfc3339);"></div><div data-l=""></div><div data-l="    let custom = DateTime::parse_from_str(&quot;5.8.1994 8:00 am +0000&quot;, &quot;%d.%m.%Y %H:%M %P %z&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, custom);"></div><div data-l=""></div><div data-l="    let time_only = NaiveTime::parse_from_str(&quot;23:56:04&quot;, &quot;%H:%M:%S&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, time_only);"></div><div data-l=""></div><div data-l="    let date_only = NaiveDate::parse_from_str(&quot;2015-09-05&quot;, &quot;%Y-%m-%d&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, date_only);"></div><div data-l=""></div><div data-l="    let no_timezone = NaiveDateTime::parse_from_str(&quot;2015-09-05 23:56:04&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;)?;"></div><div data-l="    println!(&quot;{}&quot;, no_timezone);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/format/strftime/index.html">`chrono::format::strftime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.format">`DateTime::format`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.parse_from_rfc2822">`DateTime::parse_from_rfc2822`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.parse_from_rfc3339">`DateTime::parse_from_rfc3339`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.parse_from_str">`DateTime::parse_from_str`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.to_rfc2822">`DateTime::to_rfc2822`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html#method.to_rfc3339">`DateTime::to_rfc3339`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html">`DateTime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveDate.html">`NaiveDate`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveDateTime.html">`NaiveDateTime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/naive/struct.NaiveTime.html">`NaiveTime`</a>
+<br>
+<a class="notranslate" href="#1https://www.ietf.org/rfc/rfc2822.txt">RFC 2822</a>
+<a class="notranslate" href="#1https://www.ietf.org/rfc/rfc3339.txt">RFC 3339</a>

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h2>Query the GitHub API</h2>
+<br>
+<p><a href="#3reqwest">!<a class="notranslate" href="#4reqwest-badge">reqwest-badge</a></a> <a href="#3serde">!<a class="notranslate" href="#4serde-badge">serde-badge</a></a> <a href="#3cat-net">!<a class="notranslate" href="#4cat-net-badge">cat-net-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>Queries GitHub <a href="#2https://developer.github.com/v3/activity/starring/#list-stargazers">stargazers API v3</a>
+with <a class="notranslate" href="#4`reqwest::get`">`reqwest::get`</a> to get list of all users who have marked a GitHub project with a star. <a class="notranslate" href="#4`reqwest::Response`">`reqwest::Response`</a> is deserialized with <a class="notranslate" href="#4`Response::json`">`Response::json`</a> into <code>User</code> objects implementing <a class="notranslate" href="#4`serde::Deserialize`">`serde::Deserialize`</a>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate serde_derive;"></div><div data-l="extern crate reqwest;"></div><div data-l=""></div><div data-l="#[derive(Deserialize, Debug)]"></div><div data-l="struct User {"></div><div data-l="    login: String,"></div><div data-l="    id: u32,"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Reqwest(reqwest::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let request_url = format!(&quot;https://api.github.com/repos/{owner}/{repo}/stargazers&quot;,"></div><div data-l="                              owner = &quot;rust-lang-nursery&quot;,"></div><div data-l="                              repo = &quot;rust-cookbook&quot;);"></div><div data-l="    println!(&quot;{}&quot;, request_url);"></div><div data-l="    let mut response = reqwest::get(&amp;request_url)?;"></div><div data-l=""></div><div data-l="    let users: Vec&lt;User&gt; = response.json()?;"></div><div data-l="    println!(&quot;{:?}&quot;, users);"></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/fn.get.html">`reqwest::get`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Response.html">`reqwest::Response`</a>
+<a class="notranslate" href="#1https://docs.rs/reqwest/*/reqwest/struct.Response.html#method.json">`Response::json`</a>
+<a class="notranslate" href="#1https://docs.rs/serde/*/serde/trait.Deserialize.html">`serde::Deserialize`</a>

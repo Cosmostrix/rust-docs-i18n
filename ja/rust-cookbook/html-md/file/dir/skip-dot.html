@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h2>Traverse directories while skipping dotfiles</h2>
+<br>
+<p><a href="#3walkdir">!<a class="notranslate" href="#4walkdir-badge">walkdir-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Uses <a class="notranslate" href="#4`filter_entry`">`filter_entry`</a> to descend recursively into entries passing the
+<code>is_not_hidden</code> predicate thus skipping hidden files and directories.
+ <a class="notranslate" href="#4`Iterator::filter`">`Iterator::filter`</a> applies to each <a class="notranslate" href="#4`WalkDir::DirEntry`">`WalkDir::DirEntry`</a> even if the parent
+ is a hidden directory.</p>
+<br>
+<p>Root dir <code>&quot;.&quot;</code> yields through <a class="notranslate" href="#4`WalkDir::depth`">`WalkDir::depth`</a> usage in <code>is_not_hidden</code>
+predicate.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate walkdir;"></div><div data-l=""></div><div data-l="use walkdir::{DirEntry, WalkDir};"></div><div data-l=""></div><div data-l="fn is_not_hidden(entry: &amp;DirEntry) -&gt; bool {"></div><div data-l="    entry"></div><div data-l="         .file_name()"></div><div data-l="         .to_str()"></div><div data-l="         .map(|s| entry.depth() == 0 || !s.starts_with(&quot;.&quot;))"></div><div data-l="         .unwrap_or(false)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    WalkDir::new(&quot;.&quot;)"></div><div data-l="        .into_iter()"></div><div data-l="        .filter_entry(|e| is_not_hidden(e))"></div><div data-l="        .filter_map(|v| v.ok())"></div><div data-l="        .for_each(|x| println!(&quot;{}&quot;, x.path().display()));"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.IntoIter.html#method.filter_entry">`filter_entry`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.filter">`Iterator::filter`</a>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.DirEntry.html#method.depth">`WalkDir::depth`</a>
+<a class="notranslate" href="#1https://docs.rs/walkdir/*/walkdir/struct.DirEntry.html">`WalkDir::DirEntry`</a>

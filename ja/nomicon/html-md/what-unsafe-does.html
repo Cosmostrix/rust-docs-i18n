@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<h1>What Unsafe Rust Can Do</h1>
+<br>
+<p>The only things that are different in Unsafe Rust are that you can:</p>
+<br>
+<div data-b="*">Dereference raw pointers</div>
+<div data-b="*">Call <code>unsafe</code> functions (including C functions, compiler intrinsics, and the raw allocator)</div>
+<div data-b="*">Implement <code>unsafe</code> traits</div>
+<div data-b="*">Mutate statics</div>
+<br>
+<p>That's it. The reason these operations are relegated to Unsafe is that misusing
+any of these things will cause the ever dreaded Undefined Behavior. Invoking
+Undefined Behavior gives the compiler full rights to do arbitrarily bad things
+to your program. You definitely <i>should not</i> invoke Undefined Behavior.</p>
+<br>
+<p>Unlike C, Undefined Behavior is pretty limited in scope in Rust. All the core
+language cares about is preventing the following things:</p>
+<br>
+<div data-b="*">Dereferencing null, dangling, or unaligned pointers</div>
+<div data-b="*">Reading <a href="#3">uninitialized memory</a></div>
+<div data-b="*">Breaking the <a href="#3">pointer aliasing rules</a></div>
+<div data-b="*">Producing invalid primitive values:</div>
+<div data-b="    *">dangling/null references</div>
+<div data-b="    *">a <code>bool</code> that isn't 0 or 1</div>
+<div data-b="    *">an undefined <code>enum</code> discriminant</div>
+<div data-b="    *">a <code>char</code> outside the ranges <a class="notranslate" href="#40x0, 0xD7FF">0x0, 0xD7FF</a> and <a class="notranslate" href="#40xE000, 0x10FFFF">0xE000, 0x10FFFF</a></div>
+<div data-b="    *">A non-utf8 <code>str</code></div>
+<div data-b="*">Unwinding into another language</div>
+<div data-b="*">Causing a <a href="#3race">data race</a></div>
+<br>
+<p>That's it. That's all the causes of Undefined Behavior baked into Rust. Of
+course, unsafe functions and traits are free to declare arbitrary other
+constraints that a program must maintain to avoid Undefined Behavior. For
+instance, the allocator APIs declare that deallocating unallocated memory is
+Undefined Behavior.</p>
+<br>
+<p>However, violations of these constraints generally will just transitively lead to one of
+the above problems. Some additional constraints may also derive from compiler
+intrinsics that make special assumptions about how code can be optimized. For instance,
+Vec and Box make use of intrinsics that require their pointers to be non-null at all times.</p>
+<br>
+<p>Rust is otherwise quite permissive with respect to other dubious operations.
+Rust considers it &quot;safe&quot; to:</p>
+<br>
+<div data-b="*">Deadlock</div>
+<div data-b="*">Have a <a href="#3race">race condition</a></div>
+<div data-b="*">Leak memory</div>
+<div data-b="*">Fail to call destructors</div>
+<div data-b="*">Overflow integers</div>
+<div data-b="*">Abort the program</div>
+<div data-b="*">Delete the production database</div>
+<br>
+<p>However any program that actually manages to do such a thing is <i>probably</i>
+incorrect. Rust provides lots of tools to make these things rare, but
+these problems are considered impractical to categorically prevent.</p>
+<br>
+<a class="notranslate" href="#1references.html">pointer aliasing rules</a>
+<a class="notranslate" href="#1uninitialized.html">uninitialized memory</a>
+<a class="notranslate" href="#1races.html">race</a>

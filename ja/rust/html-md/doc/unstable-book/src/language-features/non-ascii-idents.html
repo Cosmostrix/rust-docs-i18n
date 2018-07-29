@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<h1><code>non_ascii_idents</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#28979">#28979</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/28979">#28979</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>The <code>non_ascii_idents</code> feature adds support for non-ASCII identifiers.</p>
+<br>
+<h2>Examples</h2>
+<br>
+<div data-lang="rust"><div data-l="#![feature(non_ascii_idents)]"></div><div data-l=""></div><div data-l="const ε: f64 = 0.00001f64;"></div><div data-l="const Π: f64 = 3.14f64;"></div></div>
+<br>
+<h2>Changes to the language reference</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Lexer:&lt;sup&gt;</b>  
+IDENTIFIER :  
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; XID_start XID_continue<sup>\*</sup>  
+&amp;nbsp;&amp;nbsp; | <code>_</code> XID_continue<sup>+</sup>  </p></blockquote>
+<br>
+<p>An identifier is any nonempty Unicode string of the following form:</p>
+<br>
+<p>Either</p>
+<br>
+<div data-b="   *">The first character has property <a class="notranslate" href="#4`XID_start`">`XID_start`</a></div>
+<div data-b="   *">The remaining characters have property <a class="notranslate" href="#4`XID_continue`">`XID_continue`</a></div>
+<br>
+<p>Or</p>
+<br>
+<div data-b="   *">The first character is <code>_</code></div>
+<div data-b="   *">The identifier is more than one character, <code>_</code> alone is not an identifier</div>
+<div data-b="   *">The remaining characters have property <a class="notranslate" href="#4`XID_continue`">`XID_continue`</a></div>
+<br>
+<p>that does <s>not</s> occur in the set of <a class="notranslate" href="#4strict keywords">strict keywords</a>.</p>
+<br>
+<blockquote><p><b>Note</b>: <a class="notranslate" href="#4`XID_start`">`XID_start`</a> and <a class="notranslate" href="#4`XID_continue`">`XID_continue`</a> as character properties cover the
+character ranges used to form the more familiar C and Java language-family
+identifiers.</p></blockquote>
+<br>
+<a class="notranslate" href="#1 http://unicode.org/cldr/utility/list-unicodeset.jsp?a=%5B%3AXID_Start%3A%5D&abb=on&g=&i=">`XID_start`</a>
+<a class="notranslate" href="#1http://unicode.org/cldr/utility/list-unicodeset.jsp?a=%5B%3AXID_Continue%3A%5D&abb=on&g=&i=">`XID_continue`</a>
+<a class="notranslate" href="#1../reference/keywords.html#strict-keywords">strict keywords</a>

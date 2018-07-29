@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<h2>Source Replacement</h2>
+<br>
+<p>This document is about replacing the crate index. You can read about overriding
+dependencies in the <a href="#3overriding">overriding dependencies</a> section of this
+documentation.</p>
+<br>
+<p>Cargo supports the ability to <b>replace one source with another</b> to express
+strategies along the lines of mirrors or vendoring dependencies. Configuration
+is currently done through the <a href="#3config"><code>.cargo/config</code> configuration</a> mechanism,
+like so:</p>
+<br>
+<a class="notranslate" href="#1reference/config.html">config</a>
+<br>
+<div data-lang="toml"><div data-l="# The `source` table is where all keys related to source-replacement"></div><div data-l="# are stored."></div><div data-l="[source]"></div><div data-l=""></div><div data-l="# Under the `source` table are a number of other tables whose keys are a"></div><div data-l="# name for the relevant source. For example this section defines a new"></div><div data-l="# source, called `my-awesome-source`, which comes from a directory"></div><div data-l="# located at `vendor` relative to the directory containing this `.cargo/config`"></div><div data-l="# file"></div><div data-l="[source.my-awesome-source]"></div><div data-l="directory = &quot;vendor&quot;"></div><div data-l=""></div><div data-l="# Git sources can optionally specify a branch/tag/rev as well"></div><div data-l="git = &quot;https://example.com/path/to/repo&quot;"></div><div data-l="# branch = &quot;master&quot;"></div><div data-l="# tag = &quot;v1.0.1&quot;"></div><div data-l="# rev = &quot;313f44e8&quot;"></div><div data-l=""></div><div data-l="# The crates.io default source for crates is available under the name"></div><div data-l="# &quot;crates-io&quot;, and here we use the `replace-with` key to indicate that it's"></div><div data-l="# replaced with our source above."></div><div data-l="[source.crates-io]"></div><div data-l="replace-with = &quot;my-awesome-source&quot;"></div></div>
+<br>
+<p>With this configuration Cargo attempts to look up all crates in the directory
+&quot;vendor&quot; rather than querying the online registry at crates.io. Using source
+replacement Cargo can express:</p>
+<br>
+<div data-b="*">Vendoring - custom sources can be defined which represent crates on the local
+filesystem. These sources are subsets of the source that they're replacing and
+can be checked into projects if necessary.</div>
+<br>
+<div data-b="*">Mirroring - sources can be replaced with an equivalent version which acts as a
+cache for crates.io itself.</div>
+<br>
+<p>Cargo has a core assumption about source replacement that the source code is
+exactly the same from both sources. In our above example Cargo assumes that all
+of the crates coming from <code>my-awesome-source</code> are the exact same as the copies
+from <code>crates-io</code>. Note that this also means that <code>my-awesome-source</code> is not
+allowed to have crates which are not present in the <code>crates-io</code> source.</p>
+<br>
+<p>As a consequence, source replacement is not appropriate for situations such as
+patching a dependency or a private registry. Cargo supports patching
+dependencies through the usage of <a href="#3replace-section">the <code>[replace]</code> key</a>, and
+private registry support is planned for a future version of Cargo.</p>
+<br>
+<a class="notranslate" href="#1reference/manifest.html#the-replace-section">replace-section</a>
+<a class="notranslate" href="#1reference/specifying-dependencies.html#overriding-dependencies">overriding</a>
+<br>
+<h3>Configuration</h3>
+<br>
+<p>Configuration of replacement sources is done through <a class="notranslate" href="#3config"><code>.cargo/config</code></a>
+and the full set of available keys are:</p>
+<br>
+<div data-lang="toml"><div data-l="# Each source has its own table where the key is the name of the source"></div><div data-l="[source.the-source-name]"></div><div data-l=""></div><div data-l="# Indicate that `the-source-name` will be replaced with `another-source`,"></div><div data-l="# defined elsewhere"></div><div data-l="replace-with = &quot;another-source&quot;"></div><div data-l=""></div><div data-l="# Available kinds of sources that can be specified (described below)"></div><div data-l="registry = &quot;https://example.com/path/to/index&quot;"></div><div data-l="local-registry = &quot;path/to/registry&quot;"></div><div data-l="directory = &quot;path/to/vendor&quot;"></div></div>
+<br>
+<p>The <code>crates-io</code> represents the crates.io online registry (default source of
+crates) and can be replaced with:</p>
+<br>
+<div data-lang="toml"><div data-l="[source.crates-io]"></div><div data-l="replace-with = 'another-source'"></div></div>
+<br>
+<h3>Registry Sources</h3>
+<br>
+<p>A &quot;registry source&quot; is one that is the same as crates.io itself. That is, it has
+an index served in a git repository which matches the format of the
+<a href="#2https://github.com/rust-lang/crates.io-index">crates.io index</a>. That repository
+then has configuration indicating where to download crates from.</p>
+<br>
+<p>Currently there is not an already-available project for setting up a mirror of
+crates.io. Stay tuned though!</p>
+<br>
+<h3>Local Registry Sources</h3>
+<br>
+<p>A &quot;local registry source&quot; is intended to be a subset of another registry
+source, but available on the local filesystem (aka vendoring). Local registries
+are downloaded ahead of time, typically sync'd with a <code>Cargo.lock</code>, and are
+made up of a set of <code>*.crate</code> files and an index like the normal registry is.</p>
+<br>
+<p>The primary way to manage and crate local registry sources is through the
+<a class="notranslate" href="#3cargo-local-registry"><code>cargo-local-registry</code></a> subcommand, available on
+crates.io and can be installed with <code>cargo install cargo-local-registry</code>.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/cargo-local-registry">cargo-local-registry</a>
+<br>
+<p>Local registries are contained within one directory and contain a number of
+<code>*.crate</code> files downloaded from crates.io as well as an <code>index</code> directory with
+the same format as the crates.io-index project (populated with just entries for
+the crates that are present).</p>
+<br>
+<h3>Directory Sources</h3>
+<br>
+<p>A &quot;directory source&quot; is similar to a local registry source where it contains a
+number of crates available on the local filesystem, suitable for vendoring
+dependencies. Also like local registries, directory sources can primarily be
+managed by an external subcommand, <a class="notranslate" href="#3cargo-vendor"><code>cargo-vendor</code></a>, which can be
+installed with <code>cargo install cargo-vendor</code>.</p>
+<br>
+<a class="notranslate" href="#1https://crates.io/crates/cargo-vendor">cargo-vendor</a>
+<br>
+<p>Directory sources are distinct from local registries though in that they contain
+the unpacked version of <code>*.crate</code> files, making it more suitable in some
+situations to check everything into source control. A directory source is just a
+directory containing a number of other directories which contain the source code
+for crates (the unpacked version of <code>*.crate</code> files). Currently no restriction
+is placed on the name of each directory.</p>
+<br>
+<p>Each crate in a directory source also has an associated metadata file indicating
+the checksum of each file in the crate to protect against accidental
+modifications.</p>

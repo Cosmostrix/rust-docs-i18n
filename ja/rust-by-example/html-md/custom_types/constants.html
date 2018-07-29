@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<h1>constants</h1>
+<br>
+<p>Rust has two different types of constants which can be declared in any scope
+including global. Both require explicit type annotation:</p>
+<br>
+<div data-b="*"><code>const</code>: An unchangeable value (the common case).</div>
+<div data-b="*"><code>static</code>: A possibly <code>mut</code>able variable with <a class="notranslate" href="#3static"><code>'static</code></a> lifetime.</div>
+<br>
+<p>One special case is the <code>&quot;string&quot;</code> literal. It can be assigned directly to a
+<code>static</code> variable without modification because its type signature:
+<code>&amp;'static str</code> has the required lifetime of <code>'static</code>. All other reference
+types must be specifically annotated so that they fulfill the <code>'static</code>
+lifetime. This may seem minor though because the required explicit annotation
+hides the distinction.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#// Globals are declared outside all other scopes."></div><div data-l="// ">Globals are declared outside all other scopes.</div><div data-l="static LANGUAGE: &amp;'static str = &quot;Rust&quot;;"></div><div data-l="const  THRESHOLD: i32 = 10;"></div><div data-l=""></div><div data-l="fn is_big(n: i32) -&gt; bool {"></div><div data-l="#    // Access constant in some function"></div><div data-l="    // ">Access constant in some function</div><div data-l="    n &gt; THRESHOLD"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let n = 16;"></div><div data-l=""></div><div data-l="#    // Access constant in the main thread"></div><div data-l="    // ">Access constant in the main thread</div><div data-l="    println!(&quot;This is {}&quot;, LANGUAGE);"></div><div data-l="    println!(&quot;The threshold is {}&quot;, THRESHOLD);"></div><div data-l="    println!(&quot;{} is {}&quot;, n, if is_big(n) { &quot;big&quot; } else { &quot;small&quot; });"></div><div data-l=""></div><div data-l="#    // Error! Cannot modify a `const`."></div><div data-l="    // ">Error! Cannot modify a <code>const</code>.</div><div data-l="    THRESHOLD = 5;"></div><div data-l="#    // FIXME ^ Comment out this line"></div><div data-l="    // ">FIXME ^ Comment out this line</div><div data-l="}"></div></div>
+<br>
+<h3>See also:</h3>
+<br>
+<p><a href="#2
+https://github.com/rust-lang/rfcs/blob/master/text/0246-const-vs-static.md">The <code>const</code>/<code>static</code> RFC</a>,
+<a href="#3static"><code>'static</code> lifetime</a></p>
+<br>
+<a class="notranslate" href="#1scope/lifetime/static_lifetime.html">static</a>

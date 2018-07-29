@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<h2>Recursively find duplicate file names</h2>
+<br>
+<p><a href="#3walkdir">!<a class="notranslate" href="#4walkdir-badge">walkdir-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Find recursively in the current directory duplicate filenames,
+printing them only once.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="extern crate walkdir;"></div><div data-l=""></div><div data-l="use std::collections::HashMap;"></div><div data-l="use walkdir::WalkDir;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let mut filenames = HashMap::new();"></div><div data-l=""></div><div data-l="    for entry in WalkDir::new(&quot;.&quot;)"></div><div data-l="            .into_iter()"></div><div data-l="            .filter_map(Result::ok)"></div><div data-l="            .filter(|e| !e.file_type().is_dir()) {"></div><div data-l="        let f_name = String::from(entry.file_name().to_string_lossy());"></div><div data-l="        let counter = filenames.entry(f_name.clone()).or_insert(0);"></div><div data-l="        *counter += 1;"></div><div data-l=""></div><div data-l="        if *counter == 2 {"></div><div data-l="            println!(&quot;{}&quot;, f_name);"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>

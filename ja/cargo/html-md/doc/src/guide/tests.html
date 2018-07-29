@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<h2>Tests</h2>
+<br>
+<p>Cargo can run your tests with the <code>cargo test</code> command. Cargo looks for tests
+to run in two places: in each of your <code>src</code> files and any tests in <code>tests/</code>.
+Tests in your <code>src</code> files should be unit tests, and tests in <code>tests/</code> should be
+integration-style tests. As such, you’ll need to import your crates into
+the files in <code>tests</code>.</p>
+<br>
+<p>Here's an example of running <code>cargo test</code> in our project, which currently has
+no tests:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo test"></div><div data-l="   Compiling rand v0.1.0 (https://github.com/rust-lang-nursery/rand.git#9f35b8e)"></div><div data-l="   Compiling hello_world v0.1.0 (file:///path/to/project/hello_world)"></div><div data-l="     Running target/test/hello_world-9c2b65bbb79eabce"></div><div data-l=""></div><div data-l="running 0 tests"></div><div data-l=""></div><div data-l="test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"></div></div>
+<br>
+<p>If our project had tests, we would see more output with the correct number of
+tests.</p>
+<br>
+<p>You can also run a specific test by passing a filter:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo test foo"></div></div>
+<br>
+<p>This will run any test with <code>foo</code> in its name.</p>
+<br>
+<p><code>cargo test</code> runs additional checks as well. For example, it will compile any
+examples you’ve included and will also test the examples in your
+documentation. Please see the <a href="#3testing">testing guide</a> in the Rust
+documentation for more details.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/book/testing.html">testing</a>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<h2>Graceful Shutdown and Cleanup</h2>
+<br>
+<p>The code in Listing 20-21 is responding to requests asynchronously through the
+use of a thread pool, as we intended. We get some warnings about the <code>workers</code>,
+<code>id</code>, and <code>thread</code> fields that we’re not using in a direct way that reminds us
+we’re not cleaning up anything. When we use the less elegant <span
+class="keystroke">ctrl-c</span> method to halt the main thread, all other
+threads are stopped immediately as well, even if they’re in the middle of
+serving a request.</p>
+<br>
+<p>Now we’ll implement the <code>Drop</code> trait to call <code>join</code> on each of the threads in
+the pool so they can finish the requests they’re working on before closing.
+Then we’ll implement a way to tell the threads they should stop accepting new
+requests and shut down. To see this code in action, we’ll modify our server to
+accept only two requests before gracefully shutting down its thread pool.</p>
+<br>
+<h3>Implementing the <code>Drop</code> Trait on <code>ThreadPool</code></h3>
+<br>
+<p>Let’s start with implementing <code>Drop</code> on our thread pool. When the pool is
+dropped, our threads should all join to make sure they finish their work.
+Listing 20-23 shows a first attempt at a <code>Drop</code> implementation; this code won’t
+quite work yet.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl Drop for ThreadPool {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        for worker in &amp;mut self.workers {"></div><div data-l="            println!(&quot;Shutting down worker {}&quot;, worker.id);"></div><div data-l=""></div><div data-l="            worker.thread.join().unwrap();"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-23: Joining each thread when the thread pool
+goes out of scope</span></p>
+<br>
+<p>First, we loop through each of the thread pool <code>workers</code>. We use <code>&amp;mut</code> for
+this because <code>self</code> is a mutable reference, and we also need to be able to
+mutate <code>worker</code>. For each worker, we print a message saying that this
+particular worker is shutting down, and then we call <code>join</code> on that worker’s
+thread. If the call to <code>join</code> fails, we use <code>unwrap</code> to make Rust panic and go
+into an ungraceful shutdown.</p>
+<br>
+<p>Here is the error we get when we compile this code:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0507]: cannot move out of borrowed content"></div><div data-l="  --&gt; src/lib.rs:65:13"></div><div data-l="   |"></div><div data-l="65 |             worker.thread.join().unwrap();"></div><div data-l="   |             ^^^^^^ cannot move out of borrowed content"></div></div>
+<br>
+<p>The error tells us we can’t call <code>join</code> because we only have a mutable borrow
+of each <code>worker</code> and <code>join</code> takes ownership of its argument. To solve this
+issue, we need to move the thread out of the <code>Worker</code> instance that owns
+<code>thread</code> so <code>join</code> can consume the thread. We did this in Listing 17-15: if
+<code>Worker</code> holds an <code>Option&lt;thread::JoinHandle&lt;()&gt;</code> instead, we can call the
+<code>take</code> method on the <code>Option</code> to move the value out of the <code>Some</code> variant and
+leave a <code>None</code> variant in its place. In other words, a <code>Worker</code> that is running
+will have a <code>Some</code> variant in <code>thread</code>, and when we want to clean up a
+<code>Worker</code>, we’ll replace <code>Some</code> with <code>None</code> so the <code>Worker</code> doesn’t have a
+thread to run.</p>
+<br>
+<p>So we know we want to update the definition of <code>Worker</code> like this:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# use std::thread;"></div><div data-l="struct Worker {"></div><div data-l="    id: usize,"></div><div data-l="    thread: Option&lt;thread::JoinHandle&lt;()&gt;&gt;,"></div><div data-l="}"></div></div>
+<br>
+<p>Now let’s lean on the compiler to find the other places that need to change.
+Checking this code, we get two errors:</p>
+<br>
+<div data-lang="text"><div data-l="error[E0599]: no method named `join` found for type"></div><div data-l="`std::option::Option&lt;std::thread::JoinHandle&lt;()&gt;&gt;` in the current scope"></div><div data-l="  --&gt; src/lib.rs:65:27"></div><div data-l="   |"></div><div data-l="65 |             worker.thread.join().unwrap();"></div><div data-l="   |                           ^^^^"></div><div data-l=""></div><div data-l="error[E0308]: mismatched types"></div><div data-l="  --&gt; src/lib.rs:89:13"></div><div data-l="   |"></div><div data-l="89 |             thread,"></div><div data-l="   |             ^^^^^^"></div><div data-l="   |             |"></div><div data-l="   |             expected enum `std::option::Option`, found struct"></div><div data-l="   `std::thread::JoinHandle`"></div><div data-l="   |             help: try using a variant of the expected type: `Some(thread)`"></div><div data-l="   |"></div><div data-l="   = note: expected type `std::option::Option&lt;std::thread::JoinHandle&lt;()&gt;&gt;`"></div><div data-l="              found type `std::thread::JoinHandle&lt;_&gt;`"></div></div>
+<br>
+<p>Let’s address the second error, which points to the code at the end of
+<code>Worker::new</code>; we need to wrap the <code>thread</code> value in <code>Some</code> when we create a
+new <code>Worker</code>. Make the following changes to fix this error:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Job&gt;&gt;&gt;) -&gt; Worker {"></div><div data-l="#        // --snip--"></div><div data-l="        // ">--snip--</div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread: Some(thread),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The first error is in our <code>Drop</code> implementation. We mentioned earlier that we
+intended to call <code>take</code> on the <code>Option</code> value to move <code>thread</code> out of <code>worker</code>.
+The following changes will do so:</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl Drop for ThreadPool {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        for worker in &amp;mut self.workers {"></div><div data-l="            println!(&quot;Shutting down worker {}&quot;, worker.id);"></div><div data-l=""></div><div data-l="            if let Some(thread) = worker.thread.take() {"></div><div data-l="                thread.join().unwrap();"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>As discussed in Chapter 17, the <code>take</code> method on <code>Option</code> takes the <code>Some</code>
+variant out and leaves <code>None</code> in its place. We’re using <code>if let</code> to destructure
+the <code>Some</code> and get the thread; then we call <code>join</code> on the thread. If a worker’s
+thread is already <code>None</code>, we know that worker has already had its thread
+cleaned up, so nothing happens in that case.</p>
+<br>
+<h3>Signaling to the Threads to Stop Listening for Jobs</h3>
+<br>
+<p>With all the changes we’ve made, our code compiles without any warnings. But
+the bad news is this code doesn’t function the way we want it to yet. The key
+is the logic in the closures run by the threads of the <code>Worker</code> instances: at
+the moment, we call <code>join</code>, but that won’t shut down the threads because they
+<code>loop</code> forever looking for jobs. If we try to drop our <code>ThreadPool</code> with our
+current implementation of <code>drop</code>, the main thread will block forever waiting
+for the first thread to finish.</p>
+<br>
+<p>To fix this problem, we’ll modify the threads so they listen for either a <code>Job</code>
+to run or a signal that they should stop listening and exit the infinite loop.
+Instead of <code>Job</code> instances, our channel will send one of these two enum
+variants.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="# struct Job;"></div><div data-l="enum Message {"></div><div data-l="    NewJob(Job),"></div><div data-l="    Terminate,"></div><div data-l="}"></div></div>
+<br>
+<p>This <code>Message</code> enum will either be a <code>NewJob</code> variant that holds the <code>Job</code> the
+thread should run, or it will be a <code>Terminate</code> variant that will cause the
+thread to exit its loop and stop.</p>
+<br>
+<p>We need to adjust the channel to use values of type <code>Message</code> rather than type
+<code>Job</code>, as shown in Listing 20-24.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub struct ThreadPool {"></div><div data-l="    workers: Vec&lt;Worker&gt;,"></div><div data-l="    sender: mpsc::Sender&lt;Message&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#    // --snip--"></div><div data-l="    // ">--snip--</div><div data-l=""></div><div data-l="    pub fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="        where"></div><div data-l="            F: FnOnce() + Send + 'static"></div><div data-l="    {"></div><div data-l="        let job = Box::new(f);"></div><div data-l=""></div><div data-l="        self.sender.send(Message::NewJob(job)).unwrap();"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// --snip--"></div><div data-l="// ">--snip--</div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Message&gt;&gt;&gt;) -&gt;"></div><div data-l="        Worker {"></div><div data-l=""></div><div data-l="        let thread = thread::spawn(move ||{"></div><div data-l="            loop {"></div><div data-l="                let message = receiver.lock().unwrap().recv().unwrap();"></div><div data-l=""></div><div data-l="                match message {"></div><div data-l="                    Message::NewJob(job) =&gt; {"></div><div data-l="                        println!(&quot;Worker {} got a job; executing.&quot;, id);"></div><div data-l=""></div><div data-l="                        job.call_box();"></div><div data-l="                    },"></div><div data-l="                    Message::Terminate =&gt; {"></div><div data-l="                        println!(&quot;Worker {} was told to terminate.&quot;, id);"></div><div data-l=""></div><div data-l="                        break;"></div><div data-l="                    },"></div><div data-l="                }"></div><div data-l="            }"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread: Some(thread),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-24: Sending and receiving <code>Message</code> values and
+exiting the loop if a <code>Worker</code> receives <code>Message::Terminate</code></span></p>
+<br>
+<p>To incorporate the <code>Message</code> enum, we need to change <code>Job</code> to <code>Message</code> in two
+places: the definition of <code>ThreadPool</code> and the signature of <code>Worker::new</code>. The
+<code>execute</code> method of <code>ThreadPool</code> needs to send jobs wrapped in the
+<code>Message::NewJob</code> variant. Then, in <code>Worker::new</code> where a <code>Message</code> is received
+from the channel, the job will be processed if the <code>NewJob</code> variant is
+received, and the thread will break out of the loop if the <code>Terminate</code> variant
+is received.</p>
+<br>
+<p>With these changes, the code will compile and continue to function in the same
+way as it did after Listing 20-21. But we’ll get a warning because we aren’t
+creating any messages of the <code>Terminate</code> variety. Let’s fix this warning by
+changing our <code>Drop</code> implementation to look like Listing 20-25.</p>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl Drop for ThreadPool {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Sending terminate message to all workers.&quot;);"></div><div data-l=""></div><div data-l="        for _ in &amp;mut self.workers {"></div><div data-l="            self.sender.send(Message::Terminate).unwrap();"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        println!(&quot;Shutting down all workers.&quot;);"></div><div data-l=""></div><div data-l="        for worker in &amp;mut self.workers {"></div><div data-l="            println!(&quot;Shutting down worker {}&quot;, worker.id);"></div><div data-l=""></div><div data-l="            if let Some(thread) = worker.thread.take() {"></div><div data-l="                thread.join().unwrap();"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-25: Sending <code>Message::Terminate</code> to the
+workers before calling <code>join</code> on each worker thread</span></p>
+<br>
+<p>We’re now iterating over the workers twice: once to send one <code>Terminate</code>
+message for each worker and once to call <code>join</code> on each worker’s thread. If we
+tried to send a message and <code>join</code> immediately in the same loop, we couldn’t
+guarantee that the worker in the current iteration would be the one to get the
+message from the channel.</p>
+<br>
+<p>To better understand why we need two separate loops, imagine a scenario with
+two workers. If we used a single loop to iterate through each worker, on the
+first iteration a terminate message would be sent down the channel and <code>join</code>
+called on the first worker’s thread. If that first worker was busy processing a
+request at that moment, the second worker would pick up the terminate message
+from the channel and shut down. We would be left waiting on the first worker to
+shut down, but it never would because the second thread picked up the terminate
+message. Deadlock!</p>
+<br>
+<p>To prevent this scenario, we first put all of our <code>Terminate</code> messages on the
+channel in one loop; then we join on all the threads in another loop. Each
+worker will stop receiving requests on the channel once it gets a terminate
+message. So, we can be sure that if we send the same number of terminate
+messages as there are workers, each worker will receive a terminate message
+before <code>join</code> is called on its thread.</p>
+<br>
+<p>To see this code in action, let’s modify <code>main</code> to accept only two requests
+before gracefully shutting down the server, as shown in Listing 20-26.</p>
+<br>
+<p><span class="filename">Filename: src/bin/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l="    let pool = ThreadPool::new(4);"></div><div data-l=""></div><div data-l="    for stream in listener.incoming().take(2) {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        pool.execute(|| {"></div><div data-l="            handle_connection(stream);"></div><div data-l="        });"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;Shutting down.&quot;);"></div><div data-l="}"></div></div>
+<br>
+<p><span class="caption">Listing 20-26: Shut down the server after serving two
+requests by exiting the loop</span></p>
+<br>
+<p>You wouldn’t want a real-world web server to shut down after serving only two
+requests. This code just demonstrates that the graceful shutdown and cleanup is
+in working order.</p>
+<br>
+<p>The <code>take</code> method is defined in the <code>Iterator</code> trait and limits the iteration
+to the first two items at most. The <code>ThreadPool</code> will go out of scope at the
+end of <code>main</code>, and the <code>drop</code> implementation will run.</p>
+<br>
+<p>Start the server with <code>cargo run</code>, and make three requests. The third request
+should error, and in your terminal you should see output similar to this:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo run"></div><div data-l="   Compiling hello v0.1.0 (file:///projects/hello)"></div><div data-l="    Finished dev [unoptimized + debuginfo] target(s) in 1.0 secs"></div><div data-l="     Running `target/debug/hello`"></div><div data-l="Worker 0 got a job; executing."></div><div data-l="Worker 3 got a job; executing."></div><div data-l="Shutting down."></div><div data-l="Sending terminate message to all workers."></div><div data-l="Shutting down all workers."></div><div data-l="Shutting down worker 0"></div><div data-l="Worker 1 was told to terminate."></div><div data-l="Worker 2 was told to terminate."></div><div data-l="Worker 0 was told to terminate."></div><div data-l="Worker 3 was told to terminate."></div><div data-l="Shutting down worker 1"></div><div data-l="Shutting down worker 2"></div><div data-l="Shutting down worker 3"></div></div>
+<br>
+<p>You might see a different ordering of workers and messages printed. We can see
+how this code works from the messages: workers 0 and 3 got the first two
+requests, and then on the third request, the server stopped accepting
+connections. When the <code>ThreadPool</code> goes out of scope at the end of <code>main</code>, its
+<code>Drop</code> implementation kicks in, and the pool tells all workers to terminate.
+The workers each print a message when they see the terminate message, and then
+the thread pool calls <code>join</code> to shut down each worker thread.</p>
+<br>
+<p>Notice one interesting aspect of this particular execution: the <code>ThreadPool</code>
+sent the terminate messages down the channel, and before any worker received
+the messages, we tried to join worker 0. Worker 0 had not yet received the
+terminate message, so the main thread blocked waiting for worker 0 to finish.
+In the meantime, each of the workers received the termination messages. When
+worker 0 finished, the main thread waited for the rest of the workers to
+finish. At that point, they had all received the termination message and were
+able to shut down.</p>
+<br>
+<p>Congrats! We’ve now completed our project; we have a basic web server that uses
+a thread pool to respond asynchronously. We’re able to perform a graceful
+shutdown of the server, which cleans up all the threads in the pool.</p>
+<br>
+<p>Here’s the full code for reference:</p>
+<br>
+<p><span class="filename">Filename: src/bin/main.rs</span></p>
+<br>
+<div data-lang="rust,ignore"><div data-l="extern crate hello;"></div><div data-l="use hello::ThreadPool;"></div><div data-l=""></div><div data-l="use std::io::prelude::*;"></div><div data-l="use std::net::TcpListener;"></div><div data-l="use std::net::TcpStream;"></div><div data-l="use std::fs;"></div><div data-l="use std::thread;"></div><div data-l="use std::time::Duration;"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let listener = TcpListener::bind(&quot;127.0.0.1:7878&quot;).unwrap();"></div><div data-l="    let pool = ThreadPool::new(4);"></div><div data-l=""></div><div data-l="    for stream in listener.incoming().take(2) {"></div><div data-l="        let stream = stream.unwrap();"></div><div data-l=""></div><div data-l="        pool.execute(|| {"></div><div data-l="            handle_connection(stream);"></div><div data-l="        });"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    println!(&quot;Shutting down.&quot;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn handle_connection(mut stream: TcpStream) {"></div><div data-l="    let mut buffer = [0; 512];"></div><div data-l="    stream.read(&amp;mut buffer).unwrap();"></div><div data-l=""></div><div data-l="    let get = b&quot;GET / HTTP/1.1\r\n&quot;;"></div><div data-l="    let sleep = b&quot;GET /sleep HTTP/1.1\r\n&quot;;"></div><div data-l=""></div><div data-l="    let (status_line, filename) = if buffer.starts_with(get) {"></div><div data-l="        (&quot;HTTP/1.1 200 OK\r\n\r\n&quot;, &quot;hello.html&quot;)"></div><div data-l="    } else if buffer.starts_with(sleep) {"></div><div data-l="        thread::sleep(Duration::from_secs(5));"></div><div data-l="        (&quot;HTTP/1.1 200 OK\r\n\r\n&quot;, &quot;hello.html&quot;)"></div><div data-l="    } else {"></div><div data-l="        (&quot;HTTP/1.1 404 NOT FOUND\r\n\r\n&quot;, &quot;404.html&quot;)"></div><div data-l="    };"></div><div data-l=""></div><div data-l="     let contents = fs::read_to_string(filename).unwrap();"></div><div data-l=""></div><div data-l="     let response = format!(&quot;{}{}&quot;, status_line, contents);"></div><div data-l=""></div><div data-l="     stream.write(response.as_bytes()).unwrap();"></div><div data-l="     stream.flush().unwrap();"></div><div data-l="}"></div></div>
+<br>
+<p><span class="filename">Filename: src/lib.rs</span></p>
+<br>
+<div data-lang="rust"><div data-l="use std::thread;"></div><div data-l="use std::sync::mpsc;"></div><div data-l="use std::sync::Arc;"></div><div data-l="use std::sync::Mutex;"></div><div data-l=""></div><div data-l="enum Message {"></div><div data-l="    NewJob(Job),"></div><div data-l="    Terminate,"></div><div data-l="}"></div><div data-l=""></div><div data-l="pub struct ThreadPool {"></div><div data-l="    workers: Vec&lt;Worker&gt;,"></div><div data-l="    sender: mpsc::Sender&lt;Message&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="trait FnBox {"></div><div data-l="    fn call_box(self: Box&lt;Self&gt;);"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;F: FnOnce()&gt; FnBox for F {"></div><div data-l="    fn call_box(self: Box&lt;F&gt;) {"></div><div data-l="        (*self)()"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="type Job = Box&lt;dyn FnBox + Send + 'static&gt;;"></div><div data-l=""></div><div data-l="impl ThreadPool {"></div><div data-l="#//    /// Create a new ThreadPool."></div><div data-l="    /// ">Create a new ThreadPool.</div><div data-l="    ///"></div><div data-l="#//    /// The size is the number of threads in the pool."></div><div data-l="    /// ">The size is the number of threads in the pool.</div><div data-l="    ///"></div><div data-l="#//    /// # Panics"></div><div data-l="    /// "># Panics</div><div data-l="    ///"></div><div data-l="#//    /// The `new` function will panic if the size is zero."></div><div data-l="    /// ">The <code>new</code> function will panic if the size is zero.</div><div data-l="    pub fn new(size: usize) -&gt; ThreadPool {"></div><div data-l="        assert!(size &gt; 0);"></div><div data-l=""></div><div data-l="        let (sender, receiver) = mpsc::channel();"></div><div data-l=""></div><div data-l="        let receiver = Arc::new(Mutex::new(receiver));"></div><div data-l=""></div><div data-l="        let mut workers = Vec::with_capacity(size);"></div><div data-l=""></div><div data-l="        for id in 0..size {"></div><div data-l="            workers.push(Worker::new(id, Arc::clone(&amp;receiver)));"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        ThreadPool {"></div><div data-l="            workers,"></div><div data-l="            sender,"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    pub fn execute&lt;F&gt;(&amp;self, f: F)"></div><div data-l="        where"></div><div data-l="            F: FnOnce() + Send + 'static"></div><div data-l="    {"></div><div data-l="        let job = Box::new(f);"></div><div data-l=""></div><div data-l="        self.sender.send(Message::NewJob(job)).unwrap();"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Drop for ThreadPool {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        println!(&quot;Sending terminate message to all workers.&quot;);"></div><div data-l=""></div><div data-l="        for _ in &amp;mut self.workers {"></div><div data-l="            self.sender.send(Message::Terminate).unwrap();"></div><div data-l="        }"></div><div data-l=""></div><div data-l="        println!(&quot;Shutting down all workers.&quot;);"></div><div data-l=""></div><div data-l="        for worker in &amp;mut self.workers {"></div><div data-l="            println!(&quot;Shutting down worker {}&quot;, worker.id);"></div><div data-l=""></div><div data-l="            if let Some(thread) = worker.thread.take() {"></div><div data-l="                thread.join().unwrap();"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="struct Worker {"></div><div data-l="    id: usize,"></div><div data-l="    thread: Option&lt;thread::JoinHandle&lt;()&gt;&gt;,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Worker {"></div><div data-l="    fn new(id: usize, receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Message&gt;&gt;&gt;) -&gt;"></div><div data-l="        Worker {"></div><div data-l=""></div><div data-l="        let thread = thread::spawn(move ||{"></div><div data-l="            loop {"></div><div data-l="                let message = receiver.lock().unwrap().recv().unwrap();"></div><div data-l=""></div><div data-l="                match message {"></div><div data-l="                    Message::NewJob(job) =&gt; {"></div><div data-l="                        println!(&quot;Worker {} got a job; executing.&quot;, id);"></div><div data-l=""></div><div data-l="                        job.call_box();"></div><div data-l="                    },"></div><div data-l="                    Message::Terminate =&gt; {"></div><div data-l="                        println!(&quot;Worker {} was told to terminate.&quot;, id);"></div><div data-l=""></div><div data-l="                        break;"></div><div data-l="                    },"></div><div data-l="                }"></div><div data-l="            }"></div><div data-l="        });"></div><div data-l=""></div><div data-l="        Worker {"></div><div data-l="            id,"></div><div data-l="            thread: Some(thread),"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>We could do more here! If you want to continue enhancing this project, here are
+some ideas:</p>
+<br>
+<div data-b="*">Add more documentation to <code>ThreadPool</code> and its public methods.</div>
+<div data-b="*">Add tests of the library’s functionality.</div>
+<div data-b="*">Change calls to <code>unwrap</code> to more robust error handling.</div>
+<div data-b="*">Use <code>ThreadPool</code> to perform some task other than serving web requests.</div>
+<div data-b="*">Find a thread pool crate on <i>https://crates.io/</i> and implement a similar web
+server using the crate instead. Then compare its API and robustness to the
+thread pool we implemented.</div>
+<br>
+<h2>Summary</h2>
+<br>
+<p>Well done! You’ve made it to the end of the book! We want to thank you for
+joining us on this tour of Rust. You’re now ready to implement your own Rust
+projects and help with other peoples’ projects. Keep in mind that there is a
+welcoming community of other Rustaceans who would love to help you with any
+challenges you encounter on your Rust journey.</p>

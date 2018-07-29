@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<h1><code>fn_traits</code></h1>
+<br>
+<p>The tracking issue for this feature is <a class="notranslate" href="#4#29625">#29625</a></p>
+<br>
+<p>See Also: <a class="notranslate" href="#2language-features/unboxed-closures.html"><code>unboxed_closures</code></a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/29625">#29625</a>
+<br>
+<p>----</p>
+<br>
+<p>The <code>fn_traits</code> feature allows for implementation of the <a class="notranslate" href="#4`Fn*`">`Fn*`</a> traits
+for creating custom closure-like types.</p>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/ops/trait.Fn.html">`Fn*`</a>
+<br>
+<div data-lang="rust"><div data-l="#![feature(unboxed_closures)]"></div><div data-l="#![feature(fn_traits)]"></div><div data-l=""></div><div data-l="struct Adder {"></div><div data-l="    a: u32"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl FnOnce&lt;(u32, )&gt; for Adder {"></div><div data-l="    type Output = u32;"></div><div data-l="    extern &quot;rust-call&quot; fn call_once(self, b: (u32, )) -&gt; Self::Output {"></div><div data-l="        self.a + b.0"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let adder = Adder { a: 3 };"></div><div data-l="    assert_eq!(adder(2), 5);"></div><div data-l="}"></div></div>

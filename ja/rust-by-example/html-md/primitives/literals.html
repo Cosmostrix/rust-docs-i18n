@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1>Literals and operators</h1>
+<br>
+<p>Integers <code>1</code>, floats <code>1.2</code>, characters <code>'a'</code>, strings <code>&quot;abc&quot;</code>, booleans <code>true</code>
+and the unit type <code>()</code> can be expressed using literals.</p>
+<br>
+<p>Integers can, alternatively, be expressed using hexadecimal, octal or binary
+notation using either of these prefixes: <code>0x</code>, <code>0o</code> or <code>0b</code>.</p>
+<br>
+<p>Underscores can be inserted in numeric literals to improve readability, e.g.
+<code>1_000</code> is the same as <code>1000</code>, and <code>0.000_001</code> is the same as <code>0.000001</code>.</p>
+<br>
+<p>We need to tell the compiler the type of the literals we use. For now,
+we'll use the <code>u32</code> suffix to indicate that the literal is an unsigned 32-bit
+integer, and the <code>i32</code> suffix to indicate that it's a signed 32-bit integer.</p>
+<br>
+<p>The operators available and their precedence <a href="#3rust op-prec">in Rust</a> are similar to other
+<a href="#3op-prec">C-like languages</a>.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="fn main() {"></div><div data-l="#    // Integer addition"></div><div data-l="    // ">Integer addition</div><div data-l="    println!(&quot;1 + 2 = {}&quot;, 1u32 + 2);"></div><div data-l=""></div><div data-l="#    // Integer subtraction"></div><div data-l="    // ">Integer subtraction</div><div data-l="    println!(&quot;1 - 2 = {}&quot;, 1i32 - 2);"></div><div data-l="#    // TODO ^ Try changing `1i32` to `1u32` to see why the type is important"></div><div data-l="    // ">TODO ^ Try changing <code>1i32</code> to <code>1u32</code> to see why the type is important</div><div data-l=""></div><div data-l="#    // Short-circuiting boolean logic"></div><div data-l="    // ">Short-circuiting boolean logic</div><div data-l="    println!(&quot;true AND false is {}&quot;, true &amp;&amp; false);"></div><div data-l="    println!(&quot;true OR false is {}&quot;, true || false);"></div><div data-l="    println!(&quot;NOT true is {}&quot;, !true);"></div><div data-l=""></div><div data-l="#    // Bitwise operations"></div><div data-l="    // ">Bitwise operations</div><div data-l="    println!(&quot;0011 AND 0101 is {:04b}&quot;, 0b0011u32 &amp; 0b0101);"></div><div data-l="    println!(&quot;0011 OR 0101 is {:04b}&quot;, 0b0011u32 | 0b0101);"></div><div data-l="    println!(&quot;0011 XOR 0101 is {:04b}&quot;, 0b0011u32 ^ 0b0101);"></div><div data-l="    println!(&quot;1 &lt;&lt; 5 is {}&quot;, 1u32 &lt;&lt; 5);"></div><div data-l="    println!(&quot;0x80 &gt;&gt; 2 is 0x{:x}&quot;, 0x80u32 &gt;&gt; 2);"></div><div data-l=""></div><div data-l="#    // Use underscores to improve readability!"></div><div data-l="    // ">Use underscores to improve readability!</div><div data-l="    println!(&quot;One million is written as {}&quot;, 1_000_000u32);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/reference/expressions.html#expression-precedence">rust op-prec</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Operator_precedence#Programming_languages">op-prec</a>

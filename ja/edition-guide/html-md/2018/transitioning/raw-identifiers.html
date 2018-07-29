@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<h1>Raw identifiers</h1>
+<br>
+<p>Rust, like many programming languages, has the concept of &quot;keywords&quot;.
+These identifiers mean something to the language, and so you cannot use them in
+places like variable names, function names, and other places.
+Raw identifiers let you use keywords where they would not normally be allowed.</p>
+<br>
+<p>For example, <code>match</code> is a keyword. If you try to compile this function:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn match(needle: &amp;str, haystack: &amp;str) -&gt; bool {"></div><div data-l="    haystack.contains(needle)"></div><div data-l="}"></div></div>
+<br>
+<p>You'll get this error:</p>
+<br>
+<div data-lang="text"><div data-l="error: expected identifier, found keyword `match`"></div><div data-l=" --&gt; src/main.rs:4:4"></div><div data-l="  |"></div><div data-l="4 | fn match(needle: &amp;str, haystack: &amp;str) -&gt; bool {"></div><div data-l="  |    ^^^^^ expected identifier, found keyword"></div></div>
+<br>
+<p>You can write this with a raw identifier:</p>
+<br>
+<div data-lang="rust"><div data-l="#![feature(rust_2018_preview)]"></div><div data-l="#![feature(raw_identifiers)]"></div><div data-l=""></div><div data-l="fn r#match(needle: &amp;str, haystack: &amp;str) -&gt; bool {"></div><div data-l="    haystack.contains(needle)"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    assert!(r#match(&quot;foo&quot;, &quot;foobar&quot;));"></div><div data-l="}"></div></div>
+<br>
+<p>Note the <code>r#</code> prefix on both the function name, as well as the call.</p>
+<br>
+<h2>More details</h2>
+<br>
+<p>This feature is useful for a few reasons, but the primary motivation was
+inter-edition situations. For example, <code>try</code> is not a keyword in the 2015
+edition, but is in the 2018 edition. So if you have a library that is written
+in Rust 2015 and has a <code>try</code> function, to call it in Rust 2018, you'll need
+to use the raw identifier.</p>
+<br>
+<h2>New keywords</h2>
+<br>
+<p>The new confirmed keywords in edition 2018 are:</p>
+<br>
+<h3><code>async</code> and <code>await</code></h3>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/2394-async_await.md#final-syntax-for-the-await-expression">RFC 2394</a>
+<br>
+<p>Here, <code>async</code> is reserved for use in <code>async fn</code> as well as in <code>async ||</code> closures and
+<code>async { .. }</code> blocks. Meanwhile, <code>await</code> is reserved to keep our options open
+with respect to <code>await€(expr)</code> syntax. See <a class="notranslate" href="#4RFC 2394">RFC 2394</a> for more details.</p>
+<br>
+<h3><code>try</code></h3>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/2388">RFC 2388</a>
+<br>
+<p>The <code>do catch { .. }</code> blocks have been renamed to <code>try { .. }</code> and to support
+that, the keyword <code>try</code> is reserved in edition 2018.
+See <a class="notranslate" href="#4RFC 2388">RFC 2388</a> for more details.</p>

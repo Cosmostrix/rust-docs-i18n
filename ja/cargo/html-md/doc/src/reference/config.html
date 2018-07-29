@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h2>Configuration</h2>
+<br>
+<p>This document will explain how Cargo’s configuration system works, as well as
+available keys or configuration.  For configuration of a project through its
+manifest, see the <a href="#2reference/manifest.html">manifest format</a>.</p>
+<br>
+<h3>Hierarchical structure</h3>
+<br>
+<br>
+<p>Cargo allows local configuration for a particular project as well as global
+configuration, like git. Cargo extends this to a hierarchical strategy.
+If, for example, Cargo were invoked in <code>/projects/foo/bar/baz</code>, then the
+following configuration files would be probed for and unified in this order:</p>
+<br>
+<div data-b="*"><code>/projects/foo/bar/baz/.cargo/config</code></div>
+<div data-b="*"><code>/projects/foo/bar/.cargo/config</code></div>
+<div data-b="*"><code>/projects/foo/.cargo/config</code></div>
+<div data-b="*"><code>/projects/.cargo/config</code></div>
+<div data-b="*"><code>/.cargo/config</code></div>
+<div data-b="*"><code>$HOME/.cargo/config</code></div>
+<br>
+<p>With this structure, you can specify configuration per-project, and even
+possibly check it into version control. You can also specify personal defaults
+with a configuration file in your home directory.</p>
+<br>
+<h3>Configuration format</h3>
+<br>
+<p>All configuration is currently in the <a href="#3toml">TOML format</a> (like the manifest),
+with simple key-value pairs inside of sections (tables) which all get merged
+together.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/toml-lang/toml">toml</a>
+<br>
+<h3>Configuration keys</h3>
+<br>
+<p>All of the following keys are optional, and their defaults are listed as their
+value unless otherwise noted.</p>
+<br>
+<p>Key values that specify a tool may be given as an absolute path, a relative path
+or as a pathless tool name. Absolute paths and pathless tool names are used as
+given. Relative paths are resolved relative to the parent directory of the
+<code>.cargo</code> directory of the config file that the value resides within.</p>
+<br>
+<div data-lang="toml"><div data-l="# An array of paths to local repositories which are to be used as overrides for"></div><div data-l="# dependencies. For more information see the Specifying Dependencies guide."></div><div data-l="paths = [&quot;/path/to/override&quot;]"></div><div data-l=""></div><div data-l="[cargo-new]"></div><div data-l="# This is your name/email to place in the `authors` section of a new Cargo.toml"></div><div data-l="# that is generated. If not present, then `git` will be probed, and if that is"></div><div data-l="# not present then `$USER` and `$EMAIL` will be used."></div><div data-l="name = &quot;...&quot;"></div><div data-l="email = &quot;...&quot;"></div><div data-l=""></div><div data-l="# By default `cargo new` will initialize a new Git repository. This key can be"></div><div data-l="# set to `hg` to create a Mercurial repository, or `none` to disable this"></div><div data-l="# behavior."></div><div data-l="vcs = &quot;none&quot;"></div><div data-l=""></div><div data-l="# For the following sections, $triple refers to any valid target triple, not the"></div><div data-l="# literal string &quot;$triple&quot;, and it will apply whenever that target triple is"></div><div data-l="# being compiled to. 'cfg(...)' refers to the Rust-like `#[cfg]` syntax for"></div><div data-l="# conditional compilation."></div><div data-l="[target.$triple]"></div><div data-l="# This is the linker which is passed to rustc (via `-C linker=`) when the `$triple`"></div><div data-l="# is being compiled for. By default this flag is not passed to the compiler."></div><div data-l="linker = &quot;..&quot;"></div><div data-l="# Same but for the library archiver which is passed to rustc via `-C ar=`."></div><div data-l="ar = &quot;..&quot;"></div><div data-l="# If a runner is provided, compiled targets for the `$triple` will be executed"></div><div data-l="# by invoking the specified runner executable with actual target as first argument."></div><div data-l="# This applies to `cargo run`, `cargo test` and `cargo bench` commands."></div><div data-l="# By default compiled targets are executed directly."></div><div data-l="runner = &quot;..&quot;"></div><div data-l="# custom flags to pass to all compiler invocations that target $triple"></div><div data-l="# this value overrides build.rustflags when both are present"></div><div data-l="rustflags = [&quot;..&quot;, &quot;..&quot;]"></div><div data-l=""></div><div data-l="[target.'cfg(...)']"></div><div data-l="# Similar for the $triple configuration, but using the `cfg` syntax."></div><div data-l="# If several `cfg` and $triple targets are candidates, then the rustflags"></div><div data-l="# are concatenated. The `cfg` syntax only applies to rustflags, and not to"></div><div data-l="# linker."></div><div data-l="rustflags = [&quot;..&quot;, &quot;..&quot;]"></div><div data-l=""></div><div data-l="# Configuration keys related to the registry"></div><div data-l="[registry]"></div><div data-l="index = &quot;...&quot;   # URL of the registry index (defaults to the central repository)"></div><div data-l="token = &quot;...&quot;   # Access token (found on the central repo’s website)"></div><div data-l=""></div><div data-l="[http]"></div><div data-l="proxy = &quot;host:port&quot; # HTTP proxy to use for HTTP requests (defaults to none)"></div><div data-l="                    # in libcurl format, e.g. &quot;socks5h://host:port&quot;"></div><div data-l="timeout = 60000     # Timeout for each HTTP request, in milliseconds"></div><div data-l="cainfo = &quot;cert.pem&quot; # Path to Certificate Authority (CA) bundle (optional)"></div><div data-l="check-revoke = true # Indicates whether SSL certs are checked for revocation"></div><div data-l=""></div><div data-l="[build]"></div><div data-l="jobs = 1                  # number of parallel jobs, defaults to # of CPUs"></div><div data-l="rustc = &quot;rustc&quot;           # the rust compiler tool"></div><div data-l="rustdoc = &quot;rustdoc&quot;       # the doc generator tool"></div><div data-l="target = &quot;triple&quot;         # build for the target triple"></div><div data-l="target-dir = &quot;target&quot;     # path of where to place all generated artifacts"></div><div data-l="rustflags = [&quot;..&quot;, &quot;..&quot;]  # custom flags to pass to all compiler invocations"></div><div data-l="incremental = true        # whether or not to enable incremental compilation"></div><div data-l="dep-info-basedir = &quot;..&quot;   # full path for the base directory for targets in depfiles"></div><div data-l=""></div><div data-l="[term]"></div><div data-l="verbose = false        # whether cargo provides verbose output"></div><div data-l="color = 'auto'         # whether cargo colorizes output"></div><div data-l=""></div><div data-l="# Network configuration"></div><div data-l="[net]"></div><div data-l="retry = 2 # number of times a network call will automatically retried"></div><div data-l=""></div><div data-l="# Alias cargo commands. The first 3 aliases are built in. If your"></div><div data-l="# command requires grouped whitespace use the list format."></div><div data-l="[alias]"></div><div data-l="b = &quot;build&quot;"></div><div data-l="t = &quot;test&quot;"></div><div data-l="r = &quot;run&quot;"></div><div data-l="rr = &quot;run --release&quot;"></div><div data-l="space_example = [&quot;run&quot;, &quot;--release&quot;, &quot;--&quot;, &quot;\&quot;command list\&quot;&quot;]"></div></div>
+<br>
+<h3>Environment variables</h3>
+<br>
+<p>Cargo can also be configured through environment variables in addition to the
+TOML syntax above. For each configuration key above of the form <code>foo.bar</code> the
+environment variable <code>CARGO_FOO_BAR</code> can also be used to define the value. For
+example the <code>build.jobs</code> key can also be defined by <code>CARGO_BUILD_JOBS</code>.</p>
+<br>
+<p>Environment variables will take precedent over TOML configuration, and currently
+only integer, boolean, and string keys are supported to be defined by
+environment variables. This means that <a href="#3source">source replacement</a>, which is expressed by
+tables, cannot be configured through environment variables.</p>
+<br>
+<p>In addition to the system above, Cargo recognizes a few other specific
+<a href="#3env">environment variables</a>.</p>
+<br>
+<a class="notranslate" href="#1reference/environment-variables.html">env</a>
+<a class="notranslate" href="#1reference/source-replacement.html">source</a>

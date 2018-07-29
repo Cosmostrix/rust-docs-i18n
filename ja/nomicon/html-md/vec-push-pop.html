@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<h1>Push and Pop</h1>
+<br>
+<p>Alright. We can initialize. We can allocate. Let's actually implement some
+functionality! Let's start with <code>push</code>. All it needs to do is check if we're
+full to grow, unconditionally write to the next index, and then increment our
+length.</p>
+<br>
+<p>To do the write we have to be careful not to evaluate the memory we want to write
+to. At worst, it's truly uninitialized memory from the allocator. At best it's the
+bits of some old value we popped off. Either way, we can't just index to the memory
+and dereference it, because that will evaluate the memory as a valid instance of
+T. Worse, <code>foo[idx] = x</code> will try to call <code>drop</code> on the old value of <code>foo[idx]</code>!</p>
+<br>
+<p>The correct way to do this is with <code>ptr::write</code>, which just blindly overwrites the
+target address with the bits of the value we provide. No evaluation involved.</p>
+<br>
+<p>For <code>push</code>, if the old len (before push was called) is 0, then we want to write
+to the 0th index. So we should offset by the old len.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn push(&amp;mut self, elem: T) {"></div><div data-l="    if self.len == self.cap { self.grow(); }"></div><div data-l=""></div><div data-l="    unsafe {"></div><div data-l="        ptr::write(self.ptr.offset(self.len as isize), elem);"></div><div data-l="    }"></div><div data-l=""></div><div data-l="#    // Can't fail, we'll OOM first."></div><div data-l="    // ">Can't fail, we'll OOM first.</div><div data-l="    self.len += 1;"></div><div data-l="}"></div></div>
+<br>
+<p>Easy! How about <code>pop</code>? Although this time the index we want to access is
+initialized, Rust won't just let us dereference the location of memory to move
+the value out, because that would leave the memory uninitialized! For this we
+need <code>ptr::read</code>, which just copies out the bits from the target address and
+interprets it as a value of type T. This will leave the memory at this address
+logically uninitialized, even though there is in fact a perfectly good instance
+of T there.</p>
+<br>
+<p>For <code>pop</code>, if the old len is 1, we want to read out of the 0th index. So we
+should offset by the new len.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="pub fn pop(&amp;mut self) -&gt; Option&lt;T&gt; {"></div><div data-l="    if self.len == 0 {"></div><div data-l="        None"></div><div data-l="    } else {"></div><div data-l="        self.len -= 1;"></div><div data-l="        unsafe {"></div><div data-l="            Some(ptr::read(self.ptr.offset(self.len as isize)))"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>

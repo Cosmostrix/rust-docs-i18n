@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<h1><code>panic€</code></h1>
+<br>
+<p>The <code>panic€</code> macro can be used to generate a panic and start unwinding
+its stack. While unwinding, the runtime will take care of freeing all the
+resources <i>owned</i> by the thread by calling the destructor of all its objects.</p>
+<br>
+<p>Since we are dealing with programs with only one thread, <code>panic€</code> will cause the
+program to report the panic message and exit.</p>
+<br>
+<div data-lang="rust,editable,ignore,mdbook-runnable"><div data-l="#// Re-implementation of integer division (/)"></div><div data-l="// ">Re-implementation of integer division (/)</div><div data-l="fn division(dividend: i32, divisor: i32) -&gt; i32 {"></div><div data-l="    if divisor == 0 {"></div><div data-l="#        // Division by zero triggers a panic"></div><div data-l="        // ">Division by zero triggers a panic</div><div data-l="        panic!(&quot;division by zero&quot;);"></div><div data-l="    } else {"></div><div data-l="        dividend / divisor"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="#// The `main` task"></div><div data-l="// ">The <code>main</code> task</div><div data-l="fn main() {"></div><div data-l="#    // Heap allocated integer"></div><div data-l="    // ">Heap allocated integer</div><div data-l="    let _x = Box::new(0i32);"></div><div data-l=""></div><div data-l="#    // This operation will trigger a task failure"></div><div data-l="    // ">This operation will trigger a task failure</div><div data-l="    division(3, 0);"></div><div data-l=""></div><div data-l="    println!(&quot;This point won't be reached!&quot;);"></div><div data-l=""></div><div data-l="#    // `_x` should get destroyed at this point"></div><div data-l="    // "><code>_x</code> should get destroyed at this point</div><div data-l="}"></div></div>
+<br>
+<p>Let's check that <code>panic€</code> doesn't leak memory.</p>
+<br>
+<div data-lang="bash"><div data-l="$ rustc panic.rs &amp;&amp; valgrind ./panic"></div><div data-l="==4401== Memcheck, a memory error detector"></div><div data-l="==4401== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al."></div><div data-l="==4401== Using Valgrind-3.10.0.SVN and LibVEX; rerun with -h for copyright info"></div><div data-l="==4401== Command: ./panic"></div><div data-l="==4401== "></div><div data-l="thread '&lt;main&gt;' panicked at 'division by zero', panic.rs:5"></div><div data-l="==4401== "></div><div data-l="==4401== HEAP SUMMARY:"></div><div data-l="==4401==     in use at exit: 0 bytes in 0 blocks"></div><div data-l="==4401==   total heap usage: 18 allocs, 18 frees, 1,648 bytes allocated"></div><div data-l="==4401== "></div><div data-l="==4401== All heap blocks were freed -- no leaks are possible"></div><div data-l="==4401== "></div><div data-l="==4401== For counts of detected and suppressed errors, rerun with: -v"></div><div data-l="==4401== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"></div></div>

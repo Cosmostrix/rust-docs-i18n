@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<h1>How Safe and Unsafe Interact</h1>
+<br>
+<p>What's the relationship between Safe Rust and Unsafe Rust? How do they
+interact?</p>
+<br>
+<p>The separation between Safe Rust and Unsafe Rust is controlled with the
+<code>unsafe</code> keyword, which acts as an interface from one to the other. This is
+why we can say Safe Rust is a safe language: all the unsafe parts are kept
+exclusively behind the <code>unsafe</code> boundary. If you wish, you can even toss
+<code>#€[forbid(unsafe_code)]</code> into your code base to statically guarantee that
+you're only writing Safe Rust.</p>
+<br>
+<p>The <code>unsafe</code> keyword has two uses: to declare the existence of contracts the
+compiler can't check, and to declare that a programmer has checked that these
+contracts have been upheld.</p>
+<br>
+<p>You can use <code>unsafe</code> to indicate the existence of unchecked contracts on
+<s>functions</s> and <s>trait declarations</s>. On functions, <code>unsafe</code> means that
+users of the function must check that function's documentation to ensure
+they are using it in a way that maintains the contracts the function
+requires. On trait declarations, <code>unsafe</code> means that implementors of the
+trait must check the trait documentation to ensure their implementation
+maintains the contracts the trait requires.</p>
+<br>
+<p>You can use <code>unsafe</code> on a block to declare that all unsafe actions performed
+within are verified to uphold the contracts of those operations. For instance,
+the index passed to <code>slice::get_unchecked</code> is in-bounds.</p>
+<br>
+<p>You can use <code>unsafe</code> on a trait implementation to declare that the implementation
+upholds the trait's contract. For instance, that a type implementing <code>Send</code> is
+really safe to move to another thread.</p>
+<br>
+<p>The standard library has a number of unsafe functions, including:</p>
+<br>
+<div data-b="*"><code>slice::get_unchecked</code>, which performs unchecked indexing, allowing
+memory safety to be freely violated.</div>
+<div data-b="*"><code>mem::transmute</code> reinterprets some value as having a given type, bypassing
+type safety in arbitrary ways (see <a class="notranslate" href="#4conversions">conversions</a> for details).</div>
+<div data-b="*">Every raw pointer to a sized type has an <code>offset</code> method that
+invokes Undefined Behavior if the passed offset is not <a href="#3ptr_offset">&quot;in bounds&quot;</a>.</div>
+<div data-b="*">All FFI (Foreign Function Interface) functions are <code>unsafe</code> to call because the
+other language can do arbitrary operations that the Rust compiler can't check.</div>
+<br>
+<p>As of Rust 1.0 there are exactly two unsafe traits:</p>
+<br>
+<div data-b="*"><code>Send</code> is a marker trait (a trait with no API) that promises implementors are
+safe to send (move) to another thread.</div>
+<div data-b="*"><code>Sync</code> is a marker trait that promises threads can safely share implementors
+through a shared reference.</div>
+<br>
+<p>Much of the Rust standard library also uses Unsafe Rust internally. These
+implementations have generally been rigorously manually checked, so the Safe Rust
+interfaces built on top of these implementations can be assumed to be safe.</p>
+<br>
+<p>The need for all of this separation boils down a single fundamental property
+of Safe Rust:</p>
+<br>
+<p><b>No matter what, Safe Rust can't cause Undefined Behavior.</b></p>
+<br>
+<p>The design of the safe/unsafe split means that there is an asymmetric trust
+relationship between Safe and Unsafe Rust. Safe Rust inherently has to
+trust that any Unsafe Rust it touches has been written correctly.
+On the other hand, Unsafe Rust has to be very careful about trusting Safe Rust.</p>
+<br>
+<p>As an example, Rust has the <code>PartialOrd</code> and <code>Ord</code> traits to differentiate
+between types which can &quot;just&quot; be compared, and those that provide a &quot;total&quot;
+ordering (which basically means that comparison behaves reasonably).</p>
+<br>
+<p><code>BTreeMap</code> doesn't really make sense for partially-ordered types, and so it
+requires that its keys implement <code>Ord</code>. However, <code>BTreeMap</code> has Unsafe Rust code
+inside of its implementation. Because it would be unacceptable for a sloppy <code>Ord</code>
+implementation (which is Safe to write) to cause Undefined Behavior, the Unsafe
+code in BTreeMap must be written to be robust against <code>Ord</code> implementations which
+aren't actually total — even though that's the whole point of requiring <code>Ord</code>.</p>
+<br>
+<p>The Unsafe Rust code just can't trust the Safe Rust code to be written correctly.
+That said, <code>BTreeMap</code> will still behave completely erratically if you feed in
+values that don't have a total ordering. It just won't ever cause Undefined
+Behavior.</p>
+<br>
+<p>One may wonder, if <code>BTreeMap</code> cannot trust <code>Ord</code> because it's Safe, why can it
+trust <i>any</i> Safe code? For instance <code>BTreeMap</code> relies on integers and slices to
+be implemented correctly. Those are safe too, right?</p>
+<br>
+<p>The difference is one of scope. When <code>BTreeMap</code> relies on integers and slices,
+it's relying on one very specific implementation. This is a measured risk that
+can be weighed against the benefit. In this case there's basically zero risk;
+if integers and slices are broken, <i>everyone</i> is broken. Also, they're maintained
+by the same people who maintain <code>BTreeMap</code>, so it's easy to keep tabs on them.</p>
+<br>
+<p>On the other hand, <code>BTreeMap</code>'s key type is generic. Trusting its <code>Ord</code> implementation
+means trusting every <code>Ord</code> implementation in the past, present, and future.
+Here the risk is high: someone somewhere is going to make a mistake and mess up
+their <code>Ord</code> implementation, or even just straight up lie about providing a total
+ordering because &quot;it seems to work&quot;. When that happens, <code>BTreeMap</code> needs to be
+prepared.</p>
+<br>
+<p>The same logic applies to trusting a closure that's passed to you to behave
+correctly.</p>
+<br>
+<p>This problem of unbounded generic trust is the problem that <code>unsafe</code> traits
+exist to resolve. The <code>BTreeMap</code> type could theoretically require that keys
+implement a new trait called <code>UnsafeOrd</code>, rather than <code>Ord</code>, that might look
+like this:</p>
+<br>
+<div data-lang="rust"><div data-l="use std::cmp::Ordering;"></div><div data-l=""></div><div data-l="unsafe trait UnsafeOrd {"></div><div data-l="    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering;"></div><div data-l="}"></div></div>
+<br>
+<p>Then, a type would use <code>unsafe</code> to implement <code>UnsafeOrd</code>, indicating that
+they've ensured their implementation maintains whatever contracts the
+trait expects. In this situation, the Unsafe Rust in the internals of
+<code>BTreeMap</code> would be justified in trusting that the key type's <code>UnsafeOrd</code>
+implementation is correct. If it isn't, it's the fault of the unsafe trait
+implementation, which is consistent with Rust's safety guarantees.</p>
+<br>
+<p>The decision of whether to mark a trait <code>unsafe</code> is an API design choice.
+Rust has traditionally avoided doing this because it makes Unsafe
+Rust pervasive, which isn't desirable. <code>Send</code> and <code>Sync</code> are marked unsafe
+because thread safety is a <i>fundamental property</i> that unsafe code can't
+possibly hope to defend against in the way it could defend against a bad
+<code>Ord</code> implementation. The decision of whether to mark your own traits <code>unsafe</code>
+depends on the same sort of consideration. If <code>unsafe</code> code can't reasonably
+expect to defend against a bad implementation of the trait, then marking the
+trait <code>unsafe</code> is a reasonable choice.</p>
+<br>
+<p>As an aside, while <code>Send</code> and <code>Sync</code> are <code>unsafe</code> traits, they are <i>also</i>
+automatically implemented for types when such derivations are provably safe
+to do. <code>Send</code> is automatically derived for all types composed only of values
+whose types also implement <code>Send</code>. <code>Sync</code> is automatically derived for all
+types composed only of values whose types also implement <code>Sync</code>. This minimizes
+the pervasive unsafety of making these two traits <code>unsafe</code>.</p>
+<br>
+<p>This is the balance between Safe and Unsafe Rust. The separation is designed to
+make using Safe Rust as ergonomic as possible, but requires extra effort and
+care when writing Unsafe Rust. The rest of this book is largely a discussion
+of the sort of care that must be taken, and what contracts Unsafe Rust must uphold.</p>
+<br>
+<a class="notranslate" href="#1conversions.html">conversions</a>
+<a class="notranslate" href="#1../std/primitive.pointer.html#method.offset">ptr_offset</a>
+<br>

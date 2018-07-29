@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<h2>Appendix B: Operators and Symbols</h2>
+<br>
+<p>This appendix contains a glossary of Rust’s syntax, including operators and
+other symbols that appear by themselves or in the context of paths, generics,
+trait bounds, macros, attributes, comments, tuples, and brackets.</p>
+<br>
+<h3>Operators</h3>
+<br>
+<p>Table B-1 contains the operators in Rust, an example of how the operator would
+appear in context, a short explanation, and whether that operator is
+overloadable. If an operator is overloadable, the relevant trait to use to
+overload that operator is listed.</p>
+<br>
+<p><span class="caption">Table B-1: Operators</span></p>
+<br>
+<div data-tbl><div> Operator </div><div> Example </div><div> Explanation </div><div> Overloadable? </div></div>
+<div data-tbl><div>----------</div><div>---------</div><div>-------------</div><div>---------------</div></div>
+<div data-tbl><div> <code>€</code> </div><div> <code>ident€(...)</code>, <code>ident€{...}</code>, <code>ident€[...]</code> </div><div> Macro expansion </div><div> </div></div>
+<div data-tbl><div> <code>€</code> </div><div> <code>€expr</code> </div><div> Bitwise or logical complement </div><div> <code>Not</code> </div></div>
+<div data-tbl><div> <code>€=</code> </div><div> <code>var €= expr</code> </div><div> Nonequality comparison </div><div> <code>PartialEq</code> </div></div>
+<div data-tbl><div> <code>%</code> </div><div> <code>expr % expr</code> </div><div> Arithmetic remainder </div><div> <code>Rem</code> </div></div>
+<div data-tbl><div> <code>%=</code> </div><div> <code>var %= expr</code> </div><div> Arithmetic remainder and assignment </div><div> <code>RemAssign</code> </div></div>
+<div data-tbl><div> <code>&amp;</code> </div><div> <code>&amp;expr</code>, <code>&amp;mut expr</code> </div><div> Borrow </div><div> </div></div>
+<div data-tbl><div> <code>&amp;</code> </div><div> <code>&amp;type</code>, <code>&amp;mut type</code>, <code>&amp;'a type</code>, <code>&amp;'a mut type</code> </div><div> Borrowed pointer type </div><div> </div></div>
+<div data-tbl><div> <code>&amp;</code> </div><div> <code>expr &amp; expr</code> </div><div> Bitwise AND </div><div> <code>BitAnd</code> </div></div>
+<div data-tbl><div> <code>&amp;=</code> </div><div> <code>var &amp;= expr</code> </div><div> Bitwise AND and assignment </div><div> <code>BitAndAssign</code> </div></div>
+<div data-tbl><div> <code>&amp;&amp;</code> </div><div> <code>expr &amp;&amp; expr</code> </div><div> Logical AND </div><div> </div></div>
+<div data-tbl><div> <code>*</code> </div><div> <code>expr * expr</code> </div><div> Arithmetic multiplication </div><div> <code>Mul</code> </div></div>
+<div data-tbl><div> <code>*=</code> </div><div> <code>var *= expr</code> </div><div> Arithmetic multiplication and assignment </div><div> <code>MulAssign</code> </div></div>
+<div data-tbl><div> <code>*</code> </div><div> <code>*expr</code> </div><div> Dereference </div><div> </div></div>
+<div data-tbl><div> <code>*</code> </div><div> <code>*const type</code>, <code>*mut type</code> </div><div> Raw pointer </div><div> </div></div>
+<div data-tbl><div> <code>+</code> </div><div> <code>trait + trait</code>, <code>'a + trait</code> </div><div> Compound type constraint </div><div> </div></div>
+<div data-tbl><div> <code>+</code> </div><div> <code>expr + expr</code> </div><div> Arithmetic addition </div><div> <code>Add</code> </div></div>
+<div data-tbl><div> <code>+=</code> </div><div> <code>var += expr</code> </div><div> Arithmetic addition and assignment </div><div> <code>AddAssign</code> </div></div>
+<div data-tbl><div> <code>,</code> </div><div> <code>expr, expr</code> </div><div> Argument and element separator </div><div> </div></div>
+<div data-tbl><div> <code>-</code> </div><div> <code>- expr</code> </div><div> Arithmetic negation </div><div> <code>Neg</code> </div></div>
+<div data-tbl><div> <code>-</code> </div><div> <code>expr - expr</code> </div><div> Arithmetic subtraction </div><div> <code>Sub</code> </div></div>
+<div data-tbl><div> <code>-=</code> </div><div> <code>var -= expr</code> </div><div> Arithmetic subtraction and assignment </div><div> <code>SubAssign</code> </div></div>
+<div data-tbl><div> <code>-&gt;</code> </div><div> <code>fn(...) -&gt; type</code>, <code>|...| -&gt; type</code> </div><div> Function and closure return type </div><div> </div></div>
+<div data-tbl><div> <code>.</code> </div><div> <code>expr.ident</code> </div><div> Member access </div><div> </div></div>
+<div data-tbl><div> <code>..</code> </div><div> <code>..</code>, <code>expr..</code>, <code>..expr</code>, <code>expr..expr</code> </div><div> Right-exclusive range literal </div><div> </div></div>
+<div data-tbl><div> <code>..</code> </div><div> <code>..expr</code> </div><div> Struct literal update syntax </div><div> </div></div>
+<div data-tbl><div> <code>..</code> </div><div> <code>variant(x, ..)</code>, <code>struct_type { x, .. }</code> </div><div> “And the rest” pattern binding </div><div> </div></div>
+<div data-tbl><div> <code>...</code> </div><div> <code>expr...expr</code> </div><div> In a pattern: inclusive range pattern </div><div> </div></div>
+<div data-tbl><div> <code>/</code> </div><div> <code>expr / expr</code> </div><div> Arithmetic division </div><div> <code>Div</code> </div></div>
+<div data-tbl><div> <code>/=</code> </div><div> <code>var /= expr</code> </div><div> Arithmetic division and assignment </div><div> <code>DivAssign</code> </div></div>
+<div data-tbl><div> <code>:</code> </div><div> <code>pat: type</code>, <code>ident: type</code> </div><div> Constraints </div><div> </div></div>
+<div data-tbl><div> <code>:</code> </div><div> <code>ident: expr</code> </div><div> Struct field initializer </div><div> </div></div>
+<div data-tbl><div> <code>:</code> </div><div> <code>'a: loop {...}</code> </div><div> Loop label </div><div> </div></div>
+<div data-tbl><div> <code>;</code> </div><div> <code>expr;</code> </div><div> Statement and item terminator </div><div> </div></div>
+<div data-tbl><div> <code>;</code> </div><div> <code>[...; len]</code> </div><div> Part of fixed-size array syntax </div><div> </div></div>
+<div data-tbl><div> <code>&lt;&lt;</code> </div><div> <code>expr &lt;&lt; expr</code> </div><div> Left-shift </div><div> <code>Shl</code> </div></div>
+<div data-tbl><div> <code>&lt;&lt;=</code> </div><div> <code>var &lt;&lt;= expr</code> </div><div> Left-shift and assignment </div><div> <code>ShlAssign</code> </div></div>
+<div data-tbl><div> <code>&lt;</code> </div><div> <code>expr &lt; expr</code> </div><div> Less than comparison </div><div> <code>PartialOrd</code> </div></div>
+<div data-tbl><div> <code>&lt;=</code> </div><div> <code>expr &lt;= expr</code> </div><div> Less than or equal to comparison </div><div> <code>PartialOrd</code> </div></div>
+<div data-tbl><div> <code>=</code> </div><div> <code>var = expr</code>, <code>ident = type</code> </div><div> Assignment/equivalence </div><div> </div></div>
+<div data-tbl><div> <code>==</code> </div><div> <code>expr == expr</code> </div><div> Equality comparison </div><div> <code>PartialEq</code> </div></div>
+<div data-tbl><div> <code>=&gt;</code> </div><div> <code>pat =&gt; expr</code> </div><div> Part of match arm syntax </div><div> </div></div>
+<div data-tbl><div> <code>&gt;</code> </div><div> <code>expr &gt; expr</code> </div><div> Greater than comparison </div><div> <code>PartialOrd</code> </div></div>
+<div data-tbl><div> <code>&gt;=</code> </div><div> <code>expr &gt;= expr</code> </div><div> Greater than or equal to comparison </div><div> <code>PartialOrd</code> </div></div>
+<div data-tbl><div> <code>&gt;&gt;</code> </div><div> <code>expr &gt;&gt; expr</code> </div><div> Right-shift </div><div> <code>Shr</code> </div></div>
+<div data-tbl><div> <code>&gt;&gt;=</code> </div><div> <code>var &gt;&gt;= expr</code> </div><div> Right-shift and assignment </div><div> <code>ShrAssign</code> </div></div>
+<div data-tbl><div> <code>@</code> </div><div> <code>ident @ pat</code> </div><div> Pattern binding </div><div> </div></div>
+<div data-tbl><div> <code>^</code> </div><div> <code>expr ^ expr</code> </div><div> Bitwise exclusive OR </div><div> <code>BitXor</code> </div></div>
+<div data-tbl><div> <code>^=</code> </div><div> <code>var ^= expr</code> </div><div> Bitwise exclusive OR and assignment </div><div> <code>BitXorAssign</code> </div></div>
+<div data-tbl><div> <code>|</code> </div><div> <code>pat | pat</code> </div><div> Pattern alternatives </div><div> </div></div>
+<div data-tbl><div> <code>|</code> </div><div> <code>expr | expr</code> </div><div> Bitwise OR </div><div> <code>BitOr</code> </div></div>
+<div data-tbl><div> <code>|=</code> </div><div> <code>var |= expr</code> </div><div> Bitwise OR and assignment </div><div> <code>BitOrAssign</code> </div></div>
+<div data-tbl><div> <code>||</code> </div><div> <code>expr || expr</code> </div><div> Logical OR </div><div> </div></div>
+<div data-tbl><div> <code>?</code> </div><div> <code>expr?</code> </div><div> Error propagation </div><div> </div></div>
+<br>
+<h3>Non-operator Symbols</h3>
+<br>
+<p>The following list contains all non-letters that don’t function as operators;
+that is, they don’t behave like a function or method call.</p>
+<br>
+<p>Table B-2 shows symbols that appear on their own and are valid in a variety of
+locations.</p>
+<br>
+<p><span class="caption">Table B-2: Stand-Alone Syntax</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>'ident</code> </div><div> Named lifetime or loop label </div></div>
+<div data-tbl><div> <code>...u8</code>, <code>...i32</code>, <code>...f64</code>, <code>...usize</code>, etc. </div><div> Numeric literal of specific type </div></div>
+<div data-tbl><div> <code>&quot;...&quot;</code> </div><div> String literal </div></div>
+<div data-tbl><div> <code>r&quot;...&quot;</code>, <code>r#&quot;...&quot;#</code>, <code>r##&quot;...&quot;##</code>, etc. </div><div> Raw string literal, escape characters not processed </div></div>
+<div data-tbl><div> <code>b&quot;...&quot;</code> </div><div> Byte string literal; constructs a <code>[u8]</code> instead of a string </div></div>
+<div data-tbl><div> <code>br&quot;...&quot;</code>, <code>br#&quot;...&quot;#</code>, <code>br##&quot;...&quot;##</code>, etc. </div><div> Raw byte string literal, combination of raw and byte string literal </div></div>
+<div data-tbl><div> <code>'...'</code> </div><div> Character literal </div></div>
+<div data-tbl><div> <code>b'...'</code> </div><div> ASCII byte literal </div></div>
+<div data-tbl><div> <code>|...| expr</code> </div><div> Closure </div></div>
+<div data-tbl><div> <code>€</code> </div><div> Always empty bottom type for diverging functions </div></div>
+<div data-tbl><div> <code>_</code> </div><div> “Ignored” pattern binding; also used to make integer literals readable </div></div>
+<br>
+<p>Table B-3 shows symbols that appear in the context of a path through the module
+hierarchy to an item.</p>
+<br>
+<p><span class="caption">Table B-3: Path-Related Syntax</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>ident::ident</code> </div><div> Namespace path </div></div>
+<div data-tbl><div> <code>::path</code> </div><div> Path relative to the crate root (i.e., an explicitly absolute path) </div></div>
+<p>| <code>self::path</code> | Path relative to the current module (i.e., an explicitly relative path).
+| <code>super::path</code> | Path relative to the parent of the current module |
+| <code>type::ident</code>, <code>&lt;type as trait&gt;::ident</code> | Associated constants, functions, and types |
+| <code>&lt;type&gt;::...</code> | Associated item for a type that cannot be directly named (e.g., <code>&lt;&amp;T&gt;::...</code>, <code>&lt;[T]&gt;::...</code>, etc.) |
+| <code>trait::method(...)</code> | Disambiguating a method call by naming the trait that defines it |
+| <code>type::method(...)</code> | Disambiguating a method call by naming the type for which it’s defined |
+| <code>&lt;type as trait&gt;::method(...)</code> | Disambiguating a method call by naming the trait and type |</p>
+<br>
+<p>Table B-4 shows symbols that appear in the context of using generic type
+parameters.</p>
+<br>
+<p><span class="caption">Table B-4: Generics</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>path&lt;...&gt;</code> </div><div> Specifies parameters to generic type in a type (e.g., <code>Vec&lt;u8&gt;</code>) </div></div>
+<div data-tbl><div> <code>path::&lt;...&gt;</code>, <code>method::&lt;...&gt;</code> </div><div> Specifies parameters to generic type, function, or method in an expression; often referred to as turbofish (e.g., <code>&quot;42&quot;.parse::&lt;i32&gt;()</code>) </div></div>
+<div data-tbl><div> <code>fn ident&lt;...&gt; ...</code> </div><div> Define generic function </div></div>
+<div data-tbl><div> <code>struct ident&lt;...&gt; ...</code> </div><div> Define generic structure </div></div>
+<div data-tbl><div> <code>enum ident&lt;...&gt; ...</code> </div><div> Define generic enumeration </div></div>
+<div data-tbl><div> <code>impl&lt;...&gt; ...</code> </div><div> Define generic implementation </div></div>
+<div data-tbl><div> <code>for&lt;...&gt; type</code> </div><div> Higher-ranked lifetime bounds </div></div>
+<div data-tbl><div> <code>type&lt;ident=type&gt;</code> </div><div> A generic type where one or more associated types have specific assignments (e.g., <code>Iterator&lt;Item=T&gt;</code>) </div></div>
+<br>
+<p>Table B-5 shows symbols that appear in the context of constraining generic type
+parameters with trait bounds.</p>
+<br>
+<p><span class="caption">Table B-5: Trait Bound Constraints</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>T: U</code> </div><div> Generic parameter <code>T</code> constrained to types that implement <code>U</code> </div></div>
+<div data-tbl><div> <code>T: 'a</code> </div><div> Generic type <code>T</code> must outlive lifetime <code>'a</code> (meaning the type cannot transitively contain any references with lifetimes shorter than <code>'a</code>) </div></div>
+<div data-tbl><div> <code>T : 'static</code> </div><div> Generic type <code>T</code> contains no borrowed references other than <code>'static</code> ones </div></div>
+<div data-tbl><div> <code>'b: 'a</code> </div><div> Generic lifetime <code>'b</code> must outlive lifetime <code>'a</code> </div></div>
+<div data-tbl><div> <code>T: ?Sized</code> </div><div> Allow generic type parameter to be a dynamically sized type </div></div>
+<div data-tbl><div> <code>'a + trait</code>, <code>trait + trait</code> </div><div> Compound type constraint </div></div>
+<br>
+<p>Table B-6 shows symbols that appear in the context of calling or defining
+macros and specifying attributes on an item.</p>
+<br>
+<p><span class="caption">Table B-6: Macros and Attributes</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>#[meta]</code> </div><div> Outer attribute </div></div>
+<div data-tbl><div> <code>#€[meta]</code> </div><div> Inner attribute </div></div>
+<div data-tbl><div> <code>$ident</code> </div><div> Macro substitution </div></div>
+<div data-tbl><div> <code>$ident:kind</code> </div><div> Macro capture </div></div>
+<div data-tbl><div> <code>$(…)…</code> </div><div> Macro repetition </div></div>
+<br>
+<p>Table B-7 shows symbols that create comments.</p>
+<br>
+<p><span class="caption">Table B-7: Comments</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>//</code> </div><div> Line comment </div></div>
+<div data-tbl><div> <code>//€</code> </div><div> Inner line doc comment </div></div>
+<div data-tbl><div> <code>///</code> </div><div> Outer line doc comment </div></div>
+<div data-tbl><div> <code>/*...*/</code> </div><div> Block comment </div></div>
+<div data-tbl><div> <code>/*€...*/</code> </div><div> Inner block doc comment </div></div>
+<div data-tbl><div> <code>/**...*/</code> </div><div> Outer block doc comment </div></div>
+<br>
+<p>Table B-8 shows symbols that appear in the context of using tuples.</p>
+<br>
+<p><span class="caption">Table B-8: Tuples</span></p>
+<br>
+<div data-tbl><div> Symbol </div><div> Explanation </div></div>
+<div data-tbl><div>--------</div><div>-------------</div></div>
+<div data-tbl><div> <code>()</code> </div><div> Empty tuple (aka unit), both literal and type </div></div>
+<div data-tbl><div> <code>(expr)</code> </div><div> Parenthesized expression </div></div>
+<div data-tbl><div> <code>(expr,)</code> </div><div> Single-element tuple expression </div></div>
+<div data-tbl><div> <code>(type,)</code> </div><div> Single-element tuple type </div></div>
+<div data-tbl><div> <code>(expr, ...)</code> </div><div> Tuple expression </div></div>
+<div data-tbl><div> <code>(type, ...)</code> </div><div> Tuple type </div></div>
+<div data-tbl><div> <code>expr(expr, ...)</code> </div><div> Function call expression; also used to initialize tuple <code>struct</code>s and tuple <code>enum</code> variants </div></div>
+<div data-tbl><div> <code>ident€(...)</code>, <code>ident€{...}</code>, <code>ident€[...]</code> </div><div> Macro invocation </div></div>
+<div data-tbl><div> <code>expr.0</code>, <code>expr.1</code>, etc. </div><div> Tuple indexing </div></div>
+<br>
+<p>Table B-9 shows the contexts in which curly braces are used.</p>
+<br>
+<p><span class="caption">Table B-9: Curly Brackets</span></p>
+<br>
+<div data-tbl><div> Context </div><div> Explanation </div></div>
+<div data-tbl><div>---------</div><div>-------------</div></div>
+<div data-tbl><div> <code>{...}</code> </div><div> Block expression </div></div>
+<div data-tbl><div> <code>Type {...}</code> </div><div> <code>struct</code> literal </div></div>
+<br>
+<p>Table B-10 shows the contexts in which square brackets are used.</p>
+<br>
+<p><span class="caption">Table B-10: Square Brackets</span></p>
+<br>
+<div data-tbl><div> Context </div><div> Explanation </div></div>
+<div data-tbl><div>---------</div><div>-------------</div></div>
+<div data-tbl><div> <code>[...]</code> </div><div> Array literal </div></div>
+<div data-tbl><div> <code>[expr; len]</code> </div><div> Array literal containing <code>len</code> copies of <code>expr</code> </div></div>
+<div data-tbl><div> <code>[type; len]</code> </div><div> Array type containing <code>len</code> instances of <code>type</code> </div></div>
+<div data-tbl><div> <code>expr[expr]</code> </div><div> Collection indexing. Overloadable (<code>Index</code>, <code>IndexMut</code>) </div></div>
+<div data-tbl><div> <code>expr[..]</code>, <code>expr[a..]</code>, <code>expr[..b]</code>, <code>expr[a..b]</code> </div><div> Collection indexing pretending to be collection slicing, using <code>Range</code>, <code>RangeFrom</code>, <code>RangeTo</code>, or <code>RangeFull</code> as the “index” </div></div>

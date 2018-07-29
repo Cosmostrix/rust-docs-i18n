@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<h1><code>profile</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#2https://github.com/rust-lang/rust/issues/42524">#42524</a>.</p>
+<br>
+<p>------------------------</p>
+<br>
+<p>This feature allows the generation of code coverage reports.</p>
+<br>
+<p>Set the <code>-Zprofile</code> compiler flag in order to enable gcov profiling.</p>
+<br>
+<p>For example:
+`<code class=2>Bash
+cargo new testgcov --bin
+cd testgcov
+export RUSTFLAGS=&quot;-Zprofile&quot;
+cargo build
+cargo run
+</code>`</p>
+<br>
+<p>Once you've built and run your program, files with the <code>gcno</code> (after build) and <code>gcda</code> (after execution) extensions will be created.
+You can parse them with <a href="#2http://llvm.org/docs/CommandGuide/llvm-cov.html#llvm-cov-gcov">llvm-cov gcov</a> or <a class="notranslate" href="#2https://github.com/marco-c/grcov">grcov</a>.</p>

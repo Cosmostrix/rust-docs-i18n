@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<h1>Lifetime Elision</h1>
+<br>
+<p>In order to make common patterns more ergonomic, Rust allows lifetimes to be
+<i>elided</i> in function signatures.</p>
+<br>
+<p>A <i>lifetime position</i> is anywhere you can write a lifetime in a type:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="&amp;'a T"></div><div data-l="&amp;'a mut T"></div><div data-l="T&lt;'a&gt;"></div></div>
+<br>
+<p>Lifetime positions can appear as either &quot;input&quot; or &quot;output&quot;:</p>
+<br>
+<div data-b="*">For <code>fn</code> definitions, input refers to the types of the formal arguments
+in the <code>fn</code> definition, while output refers to
+result types. So <code>fn foo(s: &amp;str) -&gt; (&amp;str, &amp;str)</code> has elided one lifetime in
+input position and two lifetimes in output position.
+Note that the input positions of a <code>fn</code> method definition do not
+include the lifetimes that occur in the method's <code>impl</code> header
+(nor lifetimes that occur in the trait header, for a default method).</div>
+<br>
+<div data-b="*">In the future, it should be possible to elide <code>impl</code> headers in the same manner.</div>
+<br>
+<p>Elision rules are as follows:</p>
+<br>
+<div data-b="*">Each elided lifetime in input position becomes a distinct lifetime
+parameter.</div>
+<br>
+<div data-b="*">If there is exactly one input lifetime position (elided or not), that lifetime
+is assigned to <i>all</i> elided output lifetimes.</div>
+<br>
+<div data-b="*">If there are multiple input lifetime positions, but one of them is <code>&amp;self</code> or
+<code>&amp;mut self</code>, the lifetime of <code>self</code> is assigned to <i>all</i> elided output lifetimes.</div>
+<br>
+<div data-b="*">Otherwise, it is an error to elide an output lifetime.</div>
+<br>
+<p>Examples:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#//fn print(s: &amp;str);                                      // elided"></div><div data-l="fn print(s: &amp;str);                                      // ">elided</div><div data-l="#//fn print&lt;'a&gt;(s: &amp;'a str);                               // expanded"></div><div data-l="fn print&lt;'a&gt;(s: &amp;'a str);                               // ">expanded</div><div data-l=""></div><div data-l="#//fn debug(lvl: usize, s: &amp;str);                          // elided"></div><div data-l="fn debug(lvl: usize, s: &amp;str);                          // ">elided</div><div data-l="#//fn debug&lt;'a&gt;(lvl: usize, s: &amp;'a str);                   // expanded"></div><div data-l="fn debug&lt;'a&gt;(lvl: usize, s: &amp;'a str);                   // ">expanded</div><div data-l=""></div><div data-l="#//fn substr(s: &amp;str, until: usize) -&gt; &amp;str;               // elided"></div><div data-l="fn substr(s: &amp;str, until: usize) -&gt; &amp;str;               // ">elided</div><div data-l="#//fn substr&lt;'a&gt;(s: &amp;'a str, until: usize) -&gt; &amp;'a str;     // expanded"></div><div data-l="fn substr&lt;'a&gt;(s: &amp;'a str, until: usize) -&gt; &amp;'a str;     // ">expanded</div><div data-l=""></div><div data-l="#//fn get_str() -&gt; &amp;str;                                   // ILLEGAL"></div><div data-l="fn get_str() -&gt; &amp;str;                                   // ">ILLEGAL</div><div data-l=""></div><div data-l="#//fn frob(s: &amp;str, t: &amp;str) -&gt; &amp;str;                      // ILLEGAL"></div><div data-l="fn frob(s: &amp;str, t: &amp;str) -&gt; &amp;str;                      // ">ILLEGAL</div><div data-l=""></div><div data-l="#//fn get_mut(&amp;mut self) -&gt; &amp;mut T;                        // elided"></div><div data-l="fn get_mut(&amp;mut self) -&gt; &amp;mut T;                        // ">elided</div><div data-l="#//fn get_mut&lt;'a&gt;(&amp;'a mut self) -&gt; &amp;'a mut T;              // expanded"></div><div data-l="fn get_mut&lt;'a&gt;(&amp;'a mut self) -&gt; &amp;'a mut T;              // ">expanded</div><div data-l=""></div><div data-l="#//fn args&lt;T: ToCStr&gt;(&amp;mut self, args: &amp;[T]) -&gt; &amp;mut Command                  // elided"></div><div data-l="fn args&lt;T: ToCStr&gt;(&amp;mut self, args: &amp;[T]) -&gt; &amp;mut Command                  // ">elided</div><div data-l="#//fn args&lt;'a, 'b, T: ToCStr&gt;(&amp;'a mut self, args: &amp;'b [T]) -&gt; &amp;'a mut Command // expanded"></div><div data-l="fn args&lt;'a, 'b, T: ToCStr&gt;(&amp;'a mut self, args: &amp;'b [T]) -&gt; &amp;'a mut Command // ">expanded</div><div data-l=""></div><div data-l="#//fn new(buf: &amp;mut [u8]) -&gt; BufWriter;                    // elided"></div><div data-l="fn new(buf: &amp;mut [u8]) -&gt; BufWriter;                    // ">elided</div><div data-l="#//fn new&lt;'a&gt;(buf: &amp;'a mut [u8]) -&gt; BufWriter&lt;'a&gt;          // expanded"></div><div data-l="fn new&lt;'a&gt;(buf: &amp;'a mut [u8]) -&gt; BufWriter&lt;'a&gt;          // ">expanded</div><div data-l=""></div></div>

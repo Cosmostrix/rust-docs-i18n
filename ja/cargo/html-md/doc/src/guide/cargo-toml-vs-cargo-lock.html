@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<h2>Cargo.toml vs Cargo.lock</h2>
+<br>
+<p><code>Cargo.toml</code> and <code>Cargo.lock</code> serve two different purposes. Before we talk
+about them, here’s a summary:</p>
+<br>
+<div data-b="*"><code>Cargo.toml</code> is about describing your dependencies in a broad sense, and is
+written by you.</div>
+<div data-b="*"><code>Cargo.lock</code> contains exact information about your dependencies. It is
+maintained by Cargo and should not be manually edited.</div>
+<br>
+<p>If you’re building a library that other projects will depend on, put
+<code>Cargo.lock</code> in your <code>.gitignore</code>. If you’re building an executable like a
+command-line tool or an application, check <code>Cargo.lock</code> into <code>git</code>. If you're
+curious about why that is, see <a href="#2faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries">&quot;Why do binaries have <code>Cargo.lock</code> in version
+control, but not libraries?&quot; in the
+FAQ</a>.</p>
+<br>
+<p>Let’s dig in a little bit more.</p>
+<br>
+<p><code>Cargo.toml</code> is a <b>manifest</b> file in which we can specify a bunch of
+different metadata about our project. For example, we can say that we depend
+on another project:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="rand = { git = &quot;https://github.com/rust-lang-nursery/rand.git&quot; }"></div></div>
+<br>
+<p>This project has a single dependency, on the <code>rand</code> library. We’ve stated in
+this case that we’re relying on a particular Git repository that lives on
+GitHub. Since we haven’t specified any other information, Cargo assumes that
+we intend to use the latest commit on the <code>master</code> branch to build our project.</p>
+<br>
+<p>Sound good? Well, there’s one problem: If you build this project today, and
+then you send a copy to me, and I build this project tomorrow, something bad
+could happen. There could be more commits to <code>rand</code> in the meantime, and my
+build would include new commits while yours would not. Therefore, we would
+get different builds. This would be bad because we want reproducible builds.</p>
+<br>
+<p>We could fix this problem by putting a <code>rev</code> line in our <code>Cargo.toml</code>:</p>
+<br>
+<div data-lang="toml"><div data-l="[dependencies]"></div><div data-l="rand = { git = &quot;https://github.com/rust-lang-nursery/rand.git&quot;, rev = &quot;9f35b8e&quot; }"></div></div>
+<br>
+<p>Now our builds will be the same. But there’s a big drawback: now we have to
+manually think about SHA-1s every time we want to update our library. This is
+both tedious and error prone.</p>
+<br>
+<p>Enter the <code>Cargo.lock</code>. Because of its existence, we don’t need to manually
+keep track of the exact revisions: Cargo will do it for us. When we have a
+manifest like this:</p>
+<br>
+<div data-lang="toml"><div data-l="[package]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="authors = [&quot;Your Name &lt;you@example.com&gt;&quot;]"></div><div data-l=""></div><div data-l="[dependencies]"></div><div data-l="rand = { git = &quot;https://github.com/rust-lang-nursery/rand.git&quot; }"></div></div>
+<br>
+<p>Cargo will take the latest commit and write that information out into our
+<code>Cargo.lock</code> when we build for the first time. That file will look like this:</p>
+<br>
+<div data-lang="toml"><div data-l="[[package]]"></div><div data-l="name = &quot;hello_world&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="dependencies = ["></div><div data-l=" &quot;rand 0.1.0 (git+https://github.com/rust-lang-nursery/rand.git#9f35b8e439eeedd60b9414c58f389bdc6a3284f9)&quot;,"></div><div data-l="]"></div><div data-l=""></div><div data-l="[[package]]"></div><div data-l="name = &quot;rand&quot;"></div><div data-l="version = &quot;0.1.0&quot;"></div><div data-l="source = &quot;git+https://github.com/rust-lang-nursery/rand.git#9f35b8e439eeedd60b9414c58f389bdc6a3284f9&quot;"></div></div>
+<br>
+<p>You can see that there’s a lot more information here, including the exact
+revision we used to build. Now when you give your project to someone else,
+they’ll use the exact same SHA, even though we didn’t specify it in our
+<code>Cargo.toml</code>.</p>
+<br>
+<p>When we’re ready to opt in to a new version of the library, Cargo can
+re-calculate the dependencies and update things for us:</p>
+<br>
+<div data-lang="console"><div data-l="$ cargo update           # updates all dependencies"></div><div data-l="$ cargo update -p rand   # updates just “rand”"></div></div>
+<br>
+<p>This will write out a new <code>Cargo.lock</code> with the new version information. Note
+that the argument to <code>cargo update</code> is actually a
+<a href="#2reference/pkgid-spec.html">Package ID Specification</a> and <code>rand</code> is just a short
+specification.</p>

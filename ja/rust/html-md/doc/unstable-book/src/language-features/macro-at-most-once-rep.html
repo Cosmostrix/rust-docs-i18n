@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h1><code>macro_at_most_once_rep</code></h1>
+<br>
+<p>NOTE: This feature is only available in the 2018 Edition.</p>
+<br>
+<p>The tracking issue for this feature is: #48075</p>
+<br>
+<p>With this feature gate enabled, one can use <code>?</code> as a Kleene operator meaning &quot;0
+or 1 repetitions&quot; in a macro definition. Previously only <code>+</code> and <code>*</code> were allowed.</p>
+<br>
+<p>For example:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#![feature(macro_at_most_once_rep)]"></div><div data-l=""></div><div data-l="macro_rules! foo {"></div><div data-l="#//    (something $(,)?) // `?` indicates `,` is &quot;optional&quot;..."></div><div data-l="    (something $(,)?) // "><code>?</code> indicates <code>,</code> is &quot;optional&quot;...</div><div data-l="        =&gt; {}"></div><div data-l="}"></div></div>
+<br>
+<p>------------------------</p>
+<br>

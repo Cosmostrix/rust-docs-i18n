@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<h1><code>try_trait</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#42327">#42327</a></p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/42327">#42327</a>
+<br>
+<p>------------------------</p>
+<br>
+<p>This introduces a new trait <code>Try</code> for extending the <code>?</code> operator to types
+other than <code>Result</code> (a part of <a class="notranslate" href="#4RFC 1859">RFC 1859</a>).  The trait provides the canonical
+way to <s>view</s> a type in terms of a success/failure dichotomy.  This will
+allow <code>?</code> to supplant the <code>try_opt€</code> macro on <code>Option</code> and the <code>try_ready€</code>
+macro on <code>Poll</code>, among other things.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/pull/1859">RFC 1859</a>
+<br>
+<p>Here's an example implementation of the trait:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="#///// A distinct type to represent the `None` value of an `Option`."></div><div data-l="/// ">A distinct type to represent the <code>None</code> value of an <code>Option</code>.</div><div data-l="///"></div><div data-l="#///// This enables using the `?` operator on `Option`; it's rarely useful alone."></div><div data-l="/// ">This enables using the <code>?</code> operator on <code>Option</code>; it's rarely useful alone.</div><div data-l="#[derive(Debug)]"></div><div data-l="#[unstable(feature = &quot;try_trait&quot;, issue = &quot;42327&quot;)]"></div><div data-l="pub struct None { _priv: () }"></div><div data-l=""></div><div data-l="#[unstable(feature = &quot;try_trait&quot;, issue = &quot;42327&quot;)]"></div><div data-l="impl&lt;T&gt; ops::Try for Option&lt;T&gt;  {"></div><div data-l="    type Ok = T;"></div><div data-l="    type Error = None;"></div><div data-l=""></div><div data-l="    fn into_result(self) -&gt; Result&lt;T, None&gt; {"></div><div data-l="        self.ok_or(None { _priv: () })"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn from_ok(v: T) -&gt; Self {"></div><div data-l="        Some(v)"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn from_error(_: None) -&gt; Self {"></div><div data-l="        None"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Note the <code>Error</code> associated type here is a new marker.  The <code>?</code> operator
+allows interconversion between different <code>Try</code> implementers only when
+the error type can be converted <code>Into</code> the error type of the enclosing
+function (or catch block).  Having a distinct error type (as opposed to
+just <code>()</code>, or similar) restricts this to where it's semantically meaningful.</p>

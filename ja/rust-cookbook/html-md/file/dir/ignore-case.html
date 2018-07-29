@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<h2>Find all files with given pattern ignoring filename case.</h2>
+<br>
+<p><a href="#3glob">!<a class="notranslate" href="#4glob-badge">glob-badge</a></a> <a href="#3cat-filesystem">!<a class="notranslate" href="#4cat-filesystem-badge">cat-filesystem-badge</a></a></p>
+<br>
+<p>Find all image files in the <code>/media/</code> directory matching the <code>img_[0-9]*.png</code> pattern.</p>
+<br>
+<p>A custom <a class="notranslate" href="#4`MatchOptions`">`MatchOptions`</a> struct is passed to the <a class="notranslate" href="#4`glob_with`">`glob_with`</a> function making the glob pattern case insensitive while keeping the other options <a class="notranslate" href="#4`Default`">`Default`</a>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate glob;"></div><div data-l=""></div><div data-l="use glob::{glob_with, MatchOptions};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Glob(glob::GlobError);"></div><div data-l="#         Pattern(glob::PatternError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let options = MatchOptions {"></div><div data-l="        case_sensitive: false,"></div><div data-l="        ..Default::default()"></div><div data-l="    };"></div><div data-l=""></div><div data-l="    for entry in glob_with(&quot;/media/img_[0-9]*.png&quot;, &amp;options)? {"></div><div data-l="        println!(&quot;{}&quot;, entry?.display());"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/default/trait.Default.html">`Default`</a>
+<a class="notranslate" href="#1https://docs.rs/glob/*/glob/fn.glob_with.html">`glob_with`</a>
+<a class="notranslate" href="#1https://docs.rs/glob/*/glob/struct.MatchOptions.html">`MatchOptions`</a>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<h2>Obtain backtrace of complex error scenarios</h2>
+<br>
+<p><a href="#3error-chain">!<a class="notranslate" href="#4error-chain-badge">error-chain-badge</a></a> <a href="#3cat-rust-patterns">!<a class="notranslate" href="#4cat-rust-patterns-badge">cat-rust-patterns-badge</a></a></p>
+<br>
+<p>This recipe shows how to handle a complex error scenario and then
+print a backtrace. It relies on <a class="notranslate" href="#4`chain_err`">`chain_err`</a> to extend errors by
+appending new errors. The error stack can be unwound, thus providing
+a better context to understand why an error was raised.</p>
+<br>
+<p>The below recipes attempts to deserialize the value <code>256</code> into a
+<code>u8</code>. An error will bubble up from Serde then csv and finally up to the
+user code.</p>
+<br>
+<div data-lang="rust"><div data-l="# extern crate csv;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate error_chain;"></div><div data-l="# #[macro_use]"></div><div data-l="# extern crate serde_derive;"></div><div data-l="#"></div><div data-l="# use std::fmt;"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Reader(csv::Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="#[derive(Debug, Deserialize)]"></div><div data-l="struct Rgb {"></div><div data-l="    red: u8,"></div><div data-l="    blue: u8,"></div><div data-l="    green: u8,"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl Rgb {"></div><div data-l="    fn from_reader(csv_data: &amp;[u8]) -&gt; Result&lt;Rgb&gt; {"></div><div data-l="        let color: Rgb = csv::Reader::from_reader(csv_data)"></div><div data-l="            .deserialize()"></div><div data-l="            .nth(0)"></div><div data-l="            .ok_or(&quot;Cannot deserialize the first CSV record&quot;)?"></div><div data-l="            .chain_err(|| &quot;Cannot deserialize RGB color&quot;)?;"></div><div data-l=""></div><div data-l="        Ok(color)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="# impl fmt::UpperHex for Rgb {"></div><div data-l="#     fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {"></div><div data-l="#         let hexa = u32::from(self.red) &lt;&lt; 16 | u32::from(self.blue) &lt;&lt; 8 | u32::from(self.green);"></div><div data-l="#         write!(f, &quot;{:X}&quot;, hexa)"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l="#"></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let csv = &quot;red,blue,green"></div><div data-l="102,256,204&quot;;"></div><div data-l=""></div><div data-l="    let rgb = Rgb::from_reader(csv.as_bytes()).chain_err(|| &quot;Cannot read CSV data&quot;)?;"></div><div data-l="    println!(&quot;{:?} to hexadecimal #{:X}&quot;, rgb, rgb);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    if let Err(ref errors) = run() {"></div><div data-l="        eprintln!(&quot;Error level - description&quot;);"></div><div data-l="        errors"></div><div data-l="            .iter()"></div><div data-l="            .enumerate()"></div><div data-l="            .for_each(|(index, error)| eprintln!(&quot;└&gt; {} - {}&quot;, index, error));"></div><div data-l=""></div><div data-l="        if let Some(backtrace) = errors.backtrace() {"></div><div data-l="            eprintln!(&quot;{:?}&quot;, backtrace);"></div><div data-l="        }"></div><div data-l="#"></div><div data-l="#//#         // In a real use case, errors should handled. For example:"></div><div data-l="#         // ">In a real use case, errors should handled. For example:</div><div data-l="#//#         // ::std::process::exit(1);"></div><div data-l="#         // ">::std::process::exit(1);</div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Backtrace error rendered:</p>
+<br>
+<div data-lang="text"><div data-l="Error level - description"></div><div data-l="└&gt; 0 - Cannot read CSV data"></div><div data-l="└&gt; 1 - Cannot deserialize RGB color"></div><div data-l="└&gt; 2 - CSV deserialize error: record 1 (line: 2, byte: 15): field 1: number too large to fit in target type"></div><div data-l="└&gt; 3 - field 1: number too large to fit in target type"></div></div>
+<br>
+<p>Run the recipe with <code>RUST_BACKTRACE=1</code> to display a detailed <a class="notranslate" href="#4`backtrace`">`backtrace`</a> associated with this error.</p>
+<br>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/trait.ChainedError.html#tymethod.backtrace">`backtrace`</a>
+<a class="notranslate" href="#1https://docs.rs/error-chain/*/error_chain/index.html#chaining-errors">`chain_err`</a>

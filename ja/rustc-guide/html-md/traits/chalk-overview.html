@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<h1>An Overview of Chalk</h1>
+<br>
+<blockquote><p>Chalk is under heavy development, so if any of these links are broken or if
+any of the information is inconsistent with the code or outdated, please
+<a href="#3rustc-issues">open an issue</a> so we can fix it. If you are able to fix the
+issue yourself, we would love your contribution!</p></blockquote>
+<br>
+<p><a class="notranslate" href="#3chalk">Chalk</a> recasts Rust's trait system explicitly in terms of logic
+programming by &quot;lowering&quot; Rust code into a kind of logic program we can then
+execute queries against. (See <a href="#3lowering-to-logic"><i>Lowering to Logic</i></a> and
+<a href="#3lowering-rules"><i>Lowering Rules</i></a>) Its goal is to be an executable, highly
+readable specification of the Rust trait system.</p>
+<br>
+<p>There are many expected benefits from this work. It will consolidate our
+existing, somewhat ad-hoc implementation into something far more principled and
+expressive, which should behave better in corner cases, and be much easier to
+extend.</p>
+<br>
+<h2>Resources</h2>
+<br>
+<div data-b="*"><a href="#2https://github.com/rust-lang-nursery/chalk">Chalk Source Code</a></div>
+<div data-b="*"><a href="#2https://github.com/rust-lang-nursery/chalk/blob/master/GLOSSARY.md">Chalk Glossary</a></div>
+<div data-b="*">The traits section of the rustc guide (you are here)</div>
+<br>
+<h3>Blog Posts</h3>
+<br>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2017/01/26/lowering-rust-traits-to-logic/">Lowering Rust traits to logic</a></div>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2017/03/25/unification-in-chalk-part-1/">Unification in Chalk, part 1</a></div>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2017/04/23/unification-in-chalk-part-2/">Unification in Chalk, part 2</a></div>
+<div data-b="*"><a href="#2http://aturon.github.io/blog/2017/04/24/negative-chalk/">Negative reasoning in Chalk</a></div>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2017/05/25/query-structure-in-chalk/">Query structure in chalk</a></div>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2017/09/12/tabling-handling-cyclic-queries-in-chalk/">Cyclic queries in chalk</a></div>
+<div data-b="*"><a href="#2http://smallcultfollowing.com/babysteps/blog/2018/01/31/an-on-demand-slg-solver-for-chalk/">An on-demand SLG solver for chalk</a></div>
+<br>
+<h2>Parsing</h2>
+<br>
+<p>Chalk is designed to be incorporated with the Rust compiler, so the syntax and
+concepts it deals with heavily borrow from Rust. It is convenient for the sake
+of testing to be able to run chalk on its own, so chalk includes a parser for a
+Rust-like syntax. This syntax is orthogonal to the Rust AST and grammar. It is
+not intended to look exactly like it or support the exact same syntax.</p>
+<br>
+<p>The parser takes that syntax and produces an <a href="#3ast">Abstract Syntax Tree (AST)</a>.
+You can find the <a href="#3chalk-ast">complete definition of the AST</a> in the source code.</p>
+<br>
+<p>The syntax contains things from Rust that we know and love, for example: traits,
+impls, and struct definitions. Parsing is often the first &quot;phase&quot; of
+transformation that a program goes through in order to become a format that
+chalk can understand.</p>
+<br>
+<h2>Lowering</h2>
+<br>
+<p>After parsing, there is a &quot;lowering&quot; phase. This aims to convert traits/impls
+into &quot;program clauses&quot;. A <a href="#3programclause"><code>ProgramClause</code> (source code)</a> is
+essentially one of the following:</p>
+<br>
+<div data-b="*">A <a class="notranslate" href="#4clause">clause</a> of the form <code>consequence :- conditions</code> where <code>:-</code> is read as
+&quot;if&quot; and <code>conditions = cond1 &amp;&amp; cond2 &amp;&amp; ...</code></div>
+<div data-b="*">A universally quantified clause of the form
+<code>forall&lt;T&gt; { consequence :- conditions }</code></div>
+<div data-b="  *"><code>forall&lt;T&gt; { ... }</code> is used to represent <a class="notranslate" href="#4universal quantification">universal quantification</a>. See the
+section on <a href="#3lowering-forall">Lowering to logic</a> for more information.</div>
+<div data-b="  *">A key thing to note about <code>forall</code> is that we don't allow you to &quot;quantify&quot;
+over traits, only types and regions (lifetimes). That is, you can't make a
+rule like <code>forall&lt;Trait&gt; { u32: Trait }</code> which would say &quot;<code>u32</code> implements
+all traits&quot;. You can however say <code>forall&lt;T&gt; { T: Trait }</code> meaning &quot;<code>Trait</code>
+is implemented by all types&quot;.</div>
+<div data-b="  *"><code>forall&lt;T&gt; { ... }</code> is represented in the code using the <a href="#3binders-struct"><code>Binders&lt;T&gt;</code>
+    struct</a>.</div>
+<br>
+<p><i>See also: [Goals and Clauses][goals-and-clauses]</i></p>
+<br>
+<p>Lowering is the phase where we encode the rules of the trait system into logic.
+For example, if we have the following Rust:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T: Clone&gt; Clone for Vec&lt;T&gt; {}"></div></div>
+<br>
+<p>We generate the following program clause:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="forall&lt;T&gt; { (Vec&lt;T&gt;: Clone) :- (T: Clone) }"></div></div>
+<br>
+<p>This rule dictates that <code>Vec&lt;T&gt;: Clone</code> is only satisfied if <code>T: Clone</code> is also
+satisfied (i.e. &quot;provable&quot;).</p>
+<br>
+<h3>Well-formedness checks</h3>
+<br>
+<p>As part of lowering from the AST to the internal IR, we also do some &quot;well
+formedness&quot; checks. See the <a href="#3well-formedness-checks">source code</a> for where
+those are done. The call to <code>record_specialization_priorities</code> checks
+&quot;coherence&quot; which means that it ensures that two impls of the same trait for the
+same type cannot exist.</p>
+<br>
+<h2>Intermediate Representation (IR)</h2>
+<br>
+<p>The second intermediate representation in chalk is called, well, the &quot;ir&quot;. :)
+The <a href="#3ir-code">IR source code</a> contains the complete definition. The
+<code>ir::Program</code> struct contains some &quot;rust things&quot; but indexed and accessible in
+a different way. This is sort of analogous to the <a class="notranslate" href="#4HIR">HIR</a> in Rust.</p>
+<br>
+<p>For example, if you have a type like <code>Foo&lt;Bar&gt;</code>, we would represent <code>Foo</code> as a
+string in the AST but in <code>ir::Program</code>, we use numeric indices (<code>ItemId</code>).</p>
+<br>
+<p>In addition to <code>ir::Program</code> which has &quot;rust-like things&quot;, there is also
+<code>ir::ProgramEnvironment</code> which is &quot;pure logic&quot;. The main field in that struct is
+<code>program_clauses</code> which contains the <code>ProgramClause</code>s that we generated
+previously.</p>
+<br>
+<h2>Rules</h2>
+<br>
+<p>The <code>rules</code> module works by iterating over every trait, impl, etc. and emitting
+the rules that come from each one. See <a href="#3lowering-rules">Lowering Rules</a> for the
+most up-to-date reference on that.</p>
+<br>
+<p>The <code>ir::ProgramEnvironment</code> is created <a href="#3rules-environment">in this module</a>.</p>
+<br>
+<h2>Testing</h2>
+<br>
+<p>TODO: Basically, <a href="#2https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/solve/test.rs#L112-L148">there is a macro</a>
+that will take chalk's Rust-like syntax and run it through the full pipeline
+described above.
+<a class="notranslate" href="#2https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/solve/test.rs#L83-L110">This</a>
+is the function that is ultimately called.</p>
+<br>
+<h2>Solver</h2>
+<br>
+<p>See <a href="#3slg">The SLG Solver</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/rustc-guide/issues">rustc-issues</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk">chalk</a>
+<a class="notranslate" href="#1traits/lowering-to-logic.html">lowering-to-logic</a>
+<a class="notranslate" href="#1traits/lowering-rules.html">lowering-rules</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Abstract_syntax_tree">ast</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/master/chalk-parse/src/ast.rs">chalk-ast</a>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Universal_quantification">universal quantification</a>
+<a class="notranslate" href="#1./traits/lowering-to-logic.html#type-checking-generic-functions-beyond-horn-clauses">lowering-forall</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/ir.rs#L721">programclause</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/master/GLOSSARY.md#clause">clause</a>
+<a class="notranslate" href="#1./traits/goals-and-clauses.html">goals-and-clauses</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/ir/lowering.rs#L230-L232">well-formedness-checks</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/master/src/ir.rs">ir-code</a>
+<a class="notranslate" href="#1hir.html">HIR</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/ir.rs#L661">binders-struct</a>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/chalk/blob/94a1941a021842a5fcb35cd043145c8faae59f08/src/rules.rs#L9">rules-environment</a>
+<a class="notranslate" href="#1./traits/slg.html">slg</a>

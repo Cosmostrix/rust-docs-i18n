@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<h2>Examine the date and time</h2>
+<br>
+<p><a href="#3chrono">!<a class="notranslate" href="#4chrono-badge">chrono-badge</a></a> <a href="#3cat-date-and-time">!<a class="notranslate" href="#4cat-date-and-time-badge">cat-date-and-time-badge</a></a></p>
+<br>
+<p>Gets the current UTC <a class="notranslate" href="#4`DateTime`">`DateTime`</a> and its hour/minute/second via <a class="notranslate" href="#4`Timelike`">`Timelike`</a>
+and its year/month/day/weekday via <a class="notranslate" href="#4`Datelike`">`Datelike`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate chrono;"></div><div data-l="use chrono::{Datelike, Timelike, Utc};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let now = Utc::now();"></div><div data-l=""></div><div data-l="    let (is_pm, hour) = now.hour12();"></div><div data-l="    println!("></div><div data-l="        &quot;The current UTC time is {:02}:{:02}:{:02} {}&quot;,"></div><div data-l="        hour,"></div><div data-l="        now.minute(),"></div><div data-l="        now.second(),"></div><div data-l="        if is_pm { &quot;PM&quot; } else { &quot;AM&quot; }"></div><div data-l="    );"></div><div data-l="    println!("></div><div data-l="        &quot;And there have been {} seconds since midnight&quot;,"></div><div data-l="        now.num_seconds_from_midnight()"></div><div data-l="    );"></div><div data-l=""></div><div data-l="    let (is_common_era, year) = now.year_ce();"></div><div data-l="    println!("></div><div data-l="        &quot;The current UTC date is {}-{:02}-{:02} {:?} ({})&quot;,"></div><div data-l="        year,"></div><div data-l="        now.month(),"></div><div data-l="        now.day(),"></div><div data-l="        now.weekday(),"></div><div data-l="        if is_common_era { &quot;CE&quot; } else { &quot;BCE&quot; }"></div><div data-l="    );"></div><div data-l="    println!("></div><div data-l="        &quot;And the Common Era began {} days ago&quot;,"></div><div data-l="        now.num_days_from_ce()"></div><div data-l="    );"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/trait.Datelike.html">`Datelike`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/struct.DateTime.html">`DateTime`</a>
+<a class="notranslate" href="#1https://docs.rs/chrono/*/chrono/trait.Timelike.html">`Timelike`</a>

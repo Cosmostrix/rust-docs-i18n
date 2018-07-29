@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<h1>Incremental compilation</h1>
+<br>
+<p>The incremental compilation scheme is, in essence, a surprisingly
+simple extension to the overall query system. We'll start by describing
+a slightly simplified variant of the real thing – the &quot;basic algorithm&quot; –
+and then describe some possible improvements.</p>
+<br>
+<h2>The basic algorithm</h2>
+<br>
+<p>The basic algorithm is
+called the <b>red-green</b> algorithm<a class="notranslate" href="#4^salsa">^salsa</a>. The high-level idea is
+that, after each run of the compiler, we will save the results of all
+the queries that we do, as well as the <b>query DAG</b>. The
+<b>query DAG</b> is a <a class="notranslate" href="#4DAG">DAG</a> that indexes which queries executed which
+other queries. So, for example, there would be an edge from a query Q1
+to another query Q2 if computing Q1 required computing Q2 (note that
+because queries cannot depend on themselves, this results in a DAG and
+not a general graph).</p>
+<br>
+<a class="notranslate" href="#1https://en.wikipedia.org/wiki/Directed_acyclic_graph">DAG</a>
+<br>
+<p>On the next run of the compiler, then, we can sometimes reuse these
+query results to avoid re-executing a query. We do this by assigning
+every query a <b>color</b>:</p>
+<br>
+<div data-b="-">If a query is colored <b>red</b>, that means that its result during
+this compilation has <b>changed</b> from the previous compilation.</div>
+<div data-b="-">If a query is colored <b>green</b>, that means that its result is
+the <b>same</b> as the previous compilation.</div>
+<br>
+<p>There are two key insights here:</p>
+<br>
+<div data-b="-">First, if all the inputs to query Q are colored green, then the
+query Q <b>must</b> result in the same value as last time and hence
+need not be re-executed (or else the compiler is not deterministic).</div>
+<div data-b="-">Second, even if some inputs to a query changes, it may be that it</div>
+<p>  <b>still</b> produces the same result as the previous compilation. In
+  particular, the query may only use part of its input.
+  - Therefore, after executing a query, we always check whether it
+    produced the same result as the previous time. <b>If it did,</b> we
+    can still mark the query as green, and hence avoid re-executing
+    dependent queries.</p>
+<br>
+<h3>The try-mark-green algorithm</h3>
+<br>
+<p>At the core of incremental compilation is an algorithm called
+&quot;try-mark-green&quot;. It has the job of determining the color of a given
+query Q (which must not have yet been executed). In cases where Q has
+red inputs, determining Q's color may involve re-executing Q so that
+we can compare its output, but if all of Q's inputs are green, then we
+can conclude that Q must be green without re-executing it or inspecting
+its value at all. In the compiler, this allows us to avoid
+deserializing the result from disk when we don't need it, and in fact
+enables us to sometimes skip <i>serializing</i> the result as well
+(see the refinements section below).</p>
+<br>
+<p>Try-mark-green works as follows:</p>
+<br>
+<div data-b="-">First check if the query Q was executed during the previous compilation.</div>
+<div data-b="  -">If not, we can just re-execute the query as normal, and assign it the
+color of red.</div>
+<div data-b="-">If yes, then load the 'dependent queries' of Q.</div>
+<div data-b="-">If there is a saved result, then we load the <code>reads(Q)</code> vector from the
+query DAG. The &quot;reads&quot; is the set of queries that Q executed during
+its execution.</div>
+<div data-b="  -">For each query R in <code>reads(Q)</code>, we recursively demand the color
+of R using try-mark-green.</div>
+<div data-b="    -">Note: it is important that we visit each node in <code>reads(Q)</code> in same order
+as they occurred in the original compilation. See <a href="#2#dag">the section on the
+      query DAG below</a>.</div>
+<div data-b="    -">If <b>any</b> of the nodes in <code>reads(Q)</code> wind up colored <b>red</b>, then Q is
+dirty.</div>
+<div data-b="      -">We re-execute Q and compare the hash of its result to the hash of the
+result from the previous compilation.</div>
+<div data-b="      -">If the hash has not changed, we can mark Q as <b>green</b> and return.</div>
+<div data-b="    -">Otherwise, <b>all</b> of the nodes in <code>reads(Q)</code> must be <b>green</b>. In that
+case, we can color Q as <b>green</b> and return.</div>
+<br>
+<p><a name="dag"></a></p>
+<br>
+<h3>The query DAG</h3>
+<br>
+<p>The query DAG code is stored in
+<a class="notranslate" href="#3dep_graph"><code>src/librustc/dep_graph</code></a>. Construction of the DAG is done
+by instrumenting the query execution.</p>
+<br>
+<p>One key point is that the query DAG also tracks ordering; that is, for
+each query Q, we not only track the queries that Q reads, we track the
+<b>order</b> in which they were read.  This allows try-mark-green to walk
+those queries back in the same order. This is important because once a
+subquery comes back as red, we can no longer be sure that Q will continue
+along the same path as before. That is, imagine a query like this:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn main_query(tcx) {"></div><div data-l="    if tcx.subquery1() {"></div><div data-l="        tcx.subquery2()"></div><div data-l="    } else {"></div><div data-l="        tcx.subquery3()"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Now imagine that in the first compilation, <code>main_query</code> starts by
+executing <code>subquery1</code>, and this returns true. In that case, the next
+query <code>main_query</code> executes will be <code>subquery2</code>, and <code>subquery3</code> will
+not be executed at all.</p>
+<br>
+<p>But now imagine that in the <b>next</b> compilation, the input has
+changed such that <code>subquery1</code> returns <b>false</b>. In this case, <code>subquery2</code>
+would never execute. If try-mark-green were to visit <code>reads(main_query)</code> out
+of order, however, it might visit <code>subquery2</code> before <code>subquery1</code>, and hence
+execute it.
+This can lead to ICEs and other problems in the compiler.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/tree/master/src/librustc/dep_graph">dep_graph</a>
+<br>
+<h2>Improvements to the basic algorithm</h2>
+<br>
+<p>In the description of the basic algorithm, we said that at the end of
+compilation we would save the results of all the queries that were
+performed.  In practice, this can be quite wasteful – many of those
+results are very cheap to recompute, and serializing and deserializing
+them is not a particular win. In practice, what we would do is to save
+<b>the hashes</b> of all the subqueries that we performed. Then, in select cases,
+we <b>also</b> save the results.</p>
+<br>
+<p>This is why the incremental algorithm separates computing the
+<b>color</b> of a node, which often does not require its value, from
+computing the <b>result</b> of a node. Computing the result is done via a simple
+algorithm like so:</p>
+<br>
+<div data-b="-">Check if a saved result for Q is available. If so, compute the color of Q.
+If Q is green, deserialize and return the saved result.</div>
+<div data-b="-">Otherwise, execute Q.</div>
+<div data-b="  -">We can then compare the hash of the result and color Q as green if
+it did not change.</div>
+<br>
+<h1>Footnotes</h1>
+<br>
+<a class="notranslate" href="#1I have long wanted to rename it to the Salsa algorithm, but it never caught on. -@nikomatsakis">^salsa</a>

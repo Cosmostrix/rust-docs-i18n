@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<h2>Installing Binaries from Crates.io with <code>cargo install</code></h2>
+<br>
+<p>The <code>cargo install</code> command allows you to install and use binary crates
+locally. This isn’t intended to replace system packages; it’s meant to be a
+convenient way for Rust developers to install tools that others have shared on
+<a class="notranslate" href="#2https://crates.io">crates.io</a><!-- ignore -->. Note that you can only install
+packages that have binary targets. A <i>binary target</i> is the runnable program
+that is created if the crate has a <i>src/main.rs</i> file or another file specified
+as a binary, as opposed to a library target that isn’t runnable on its own but
+is suitable for including within other programs. Usually, crates have
+information in the <i>README</i> file about whether a crate is a library, has a
+binary target, or both.</p>
+<br>
+<p>All binaries installed with <code>cargo install</code> are stored in the installation
+root’s <i>bin</i> folder. If you installed Rust using <i>rustup.rs</i> and don’t have any
+custom configurations, this directory will be <i>$HOME/.cargo/bin</i>. Ensure that
+directory is in your <code>$PATH</code> to be able to run programs you’ve installed with
+<code>cargo install</code>.</p>
+<br>
+<p>For example, in Chapter 12 we mentioned that there’s a Rust implementation of
+the <code>grep</code> tool called <code>ripgrep</code> for searching files. If we want to install
+<code>ripgrep</code>, we can run the following:</p>
+<br>
+<div data-lang="text"><div data-l="$ cargo install ripgrep"></div><div data-l="Updating registry `https://github.com/rust-lang/crates.io-index`"></div><div data-l=" Downloading ripgrep v0.3.2"></div><div data-l=" --snip--"></div><div data-l="   Compiling ripgrep v0.3.2"></div><div data-l="    Finished release [optimized + debuginfo] target(s) in 97.91 secs"></div><div data-l="  Installing ~/.cargo/bin/rg"></div></div>
+<br>
+<p>The last line of the output shows the location and the name of the installed
+binary, which in the case of <code>ripgrep</code> is <code>rg</code>. As long as the installation
+directory is in your <code>$PATH</code>, as mentioned previously, you can then run <code>rg
+--help</code> and start using a faster, rustier tool for searching files!</p>

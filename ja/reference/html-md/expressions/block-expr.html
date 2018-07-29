@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<h1>Block expressions</h1>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>BlockExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>{</code>\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_InnerAttribute_">_InnerAttribute_</a><sup>\<i>&lt;/sup&gt;\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; [_Statement_]&lt;sup&gt;\</i></sup>\
+&amp;nbsp;&amp;nbsp; &amp;nbsp;&amp;nbsp; <a class="notranslate" href="#4_Expression_">_Expression_</a><sup>?</sup>\
+&amp;nbsp;&amp;nbsp; <code>}</code></p></blockquote>
+<br>
+<p>A <s>block expression</s> is similar to a module in terms of the declarations that
+are possible, but can also contain <a class="notranslate" href="#4statements">statements</a> and end with
+an <a class="notranslate" href="#4expression">expression</a>. Each block conceptually introduces a new namespace scope. Use
+items can bring new names into scopes and declared items are in scope for only
+the block itself.</p>
+<br>
+<p>A block will execute each statement sequentially, and then execute the
+expression, if given. If the block doesn't end in an expression, its value is
+<code>()</code>:</p>
+<br>
+<div data-lang="rust"><div data-l="let x: () = { println!(&quot;Hello.&quot;); };"></div></div>
+<br>
+<p>If it ends in an expression, its value and type are that of the expression:</p>
+<br>
+<div data-lang="rust"><div data-l="let x: i32 = { println!(&quot;Hello.&quot;); 5 };"></div><div data-l=""></div><div data-l="assert_eq!(5, x);"></div></div>
+<br>
+<p>Blocks are always <a class="notranslate" href="#4value expressions">value expressions</a> and evaluate the last expression in
+value expression context. This can be used to force moving a value if really
+needed.</p>
+<br>
+<h2><code>unsafe</code> blocks</h2>
+<br>
+<blockquote><p><b>&lt;sup&gt;Syntax&lt;/sup&gt;</b>\
+<s>UnsafeBlockExpression</s> :\
+&amp;nbsp;&amp;nbsp; <code>unsafe</code> <s>BlockExpression</s></p></blockquote>
+<br>
+<p><s>See [`unsafe` block](unsafe-blocks.html) for more information on when to use `unsafe`</s></p>
+<br>
+<p>A block of code can be prefixed with the <code>unsafe</code> keyword, to permit calling
+<code>unsafe</code> functions or dereferencing raw pointers within a safe function. Examples:</p>
+<br>
+<div data-lang="rust"><div data-l="unsafe {"></div><div data-l="    let b = [13u8, 17u8];"></div><div data-l="    let a = &amp;b[0] as *const u8;"></div><div data-l="    assert_eq!(*a, 13);"></div><div data-l="    assert_eq!(*a.offset(1), 17);"></div><div data-l="}"></div><div data-l=""></div><div data-l="# unsafe fn f() -&gt; i32 { 10 }"></div><div data-l="let a = unsafe { f() };"></div></div>
+<br>
+<h2>Attributes on block expressions</h2>
+<br>
+<p>Block expressions allow <a class="notranslate" href="#4outer attributes">outer attributes</a> and <a class="notranslate" href="#4inner attributes">inner attributes</a> directly after
+the opening brace when the block expression is the outer expression of an
+<a class="notranslate" href="#4expression statement">expression statement</a> or the final expression of another block expression. The
+attributes that have meaning on a block expression are <a class="notranslate" href="#4`cfg`">`cfg`</a>, and <a class="notranslate" href="#4the lint
+check attributes">the lint
+check attributes</a>.</p>
+<br>
+<p>For example, this function returns <code>true</code> on unix platforms and <code>false</code> on other
+platforms.</p>
+<br>
+<div data-lang="rust"><div data-l="fn is_unix_platform() -&gt; bool {"></div><div data-l="    #[cfg(unix)] { true }"></div><div data-l="    #[cfg(not(unix))] { false }"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1attributes.html">_InnerAttribute_</a>
+<a class="notranslate" href="#1statements.html">_Statement_</a>
+<a class="notranslate" href="#1expressions.html">_Expression_</a>
+<a class="notranslate" href="#1expressions.html">expression</a>
+<a class="notranslate" href="#1statements.html">statements</a>
+<a class="notranslate" href="#1expressions.html#place-expressions-and-value-expressions">value expressions</a>
+<a class="notranslate" href="#1attributes.html">outer attributes</a>
+<a class="notranslate" href="#1attributes.html">inner attributes</a>
+<a class="notranslate" href="#1statements.html#expression-statements">expression statement</a>
+<a class="notranslate" href="#1attributes.html#conditional-compilation">`cfg`</a>
+<a class="notranslate" href="#1attributes.html#lint-check-attributes">the lint check attributes</a>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<h2>Encode a string as application/x-www-form-urlencoded</h2>
+<br>
+<p><a href="#3url">!<a class="notranslate" href="#4url-badge">url-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>Encodes a string into <a class="notranslate" href="#4application/x-www-form-urlencoded">application/x-www-form-urlencoded</a> syntax
+using the <a class="notranslate" href="#4`form_urlencoded::byte_serialize`">`form_urlencoded::byte_serialize`</a> and subsequently
+decodes it with <a class="notranslate" href="#4`form_urlencoded::parse`">`form_urlencoded::parse`</a>. Both functions return iterators
+that collect into a <code>String</code>.</p>
+<br>
+<div data-lang="rust"><div data-l="extern crate url;"></div><div data-l="use url::form_urlencoded::{byte_serialize, parse};"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let urlencoded: String = byte_serialize(&quot;What is ❤?&quot;.as_bytes()).collect();"></div><div data-l="    assert_eq!(urlencoded, &quot;What+is+%E2%9D%A4%3F&quot;);"></div><div data-l="    println!(&quot;urlencoded:'{}'&quot;, urlencoded);"></div><div data-l=""></div><div data-l="    let decoded: String = parse(urlencoded.as_bytes())"></div><div data-l="        .map(|(key, val)| [key, val].concat())"></div><div data-l="        .collect();"></div><div data-l="    assert_eq!(decoded, &quot;What is ❤?&quot;);"></div><div data-l="    println!(&quot;decoded:'{}'&quot;, decoded);"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/form_urlencoded/fn.byte_serialize.html">`form_urlencoded::byte_serialize`</a>
+<a class="notranslate" href="#1https://docs.rs/url/*/url/form_urlencoded/fn.parse.html">`form_urlencoded::parse`</a>
+<br>
+<a class="notranslate" href="#1https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>

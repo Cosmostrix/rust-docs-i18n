@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<h1>Enums</h1>
+<br>
+<p>An <code>enum</code> in Rust is a type that represents data that is one of
+several possible variants. Each variant in the <code>enum</code> can optionally
+have data associated with it:</p>
+<br>
+<div data-lang="rust"><div data-l="enum Message {"></div><div data-l="    Quit,"></div><div data-l="    ChangeColor(i32, i32, i32),"></div><div data-l="    Move { x: i32, y: i32 },"></div><div data-l="    Write(String),"></div><div data-l="}"></div></div>
+<br>
+<p>The syntax for defining variants resembles the syntaxes used to define structs:
+you can have variants with no data (like unit-like structs), variants with named
+data, and variants with unnamed data (like tuple structs). Unlike
+separate struct definitions, however, an <code>enum</code> is a single type. A
+value of the enum can match any of the variants. For this reason, an
+enum is sometimes called a ‘sum type’: the set of possible values of the
+enum is the sum of the sets of possible values for each variant.</p>
+<br>
+<p>We use the <code>::</code> syntax to use the name of each variant: they’re scoped by the name
+of the <code>enum</code> itself. This allows both of these to work:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="#     Move { x: i32, y: i32 },"></div><div data-l="# }"></div><div data-l="let x: Message = Message::Move { x: 3, y: 4 };"></div><div data-l=""></div><div data-l="enum BoardGameTurn {"></div><div data-l="    Move { squares: i32 },"></div><div data-l="    Pass,"></div><div data-l="}"></div><div data-l=""></div><div data-l="let y: BoardGameTurn = BoardGameTurn::Move { squares: 1 };"></div></div>
+<br>
+<p>Both variants are named <code>Move</code>, but since they’re scoped to the name of
+the enum, they can both be used without conflict.</p>
+<br>
+<p>A value of an <code>enum</code> type contains information about which variant it is,
+in addition to any data associated with that variant. This is sometimes
+referred to as a ‘tagged union’, since the data includes a ‘tag’
+indicating what type it is. The compiler uses this information to
+enforce that you’re accessing the data in the enum safely. For instance,
+you can’t simply try to destructure a value as if it were one of the
+possible variants:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn process_color_change(msg: Message) {"></div><div data-l="#//    let Message::ChangeColor(r, g, b) = msg; // This causes a compile-time error."></div><div data-l="    let Message::ChangeColor(r, g, b) = msg; // ">This causes a compile-time error.</div><div data-l="}"></div></div>
+<br>
+<p>Not supporting these operations may seem rather limiting, but it’s a limitation
+which we can overcome. There are two ways: by implementing equality ourselves,
+or by pattern matching variants with <a class="notranslate" href="#3match"><code>match</code></a> expressions, which you’ll
+learn in the next section. We don’t know enough about Rust to implement
+equality yet, but we’ll find out in the <a class="notranslate" href="#3traits"><code>traits</code></a> section.</p>
+<br>
+<a class="notranslate" href="#1match.html">match</a>
+<a class="notranslate" href="#1traits.html">traits</a>
+<br>
+<h1>Constructors as functions</h1>
+<br>
+<p>An <code>enum</code> constructor can also be used like a function. For example:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="# Write(String),"></div><div data-l="# }"></div><div data-l="let m = Message::Write(&quot;Hello, world&quot;.to_string());"></div></div>
+<br>
+<p>is the same as</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="# Write(String),"></div><div data-l="# }"></div><div data-l="fn foo(x: String) -&gt; Message {"></div><div data-l="    Message::Write(x)"></div><div data-l="}"></div><div data-l=""></div><div data-l="let x = foo(&quot;Hello, world&quot;.to_string());"></div></div>
+<br>
+<p>This is not immediately useful to us, but when we get to
+<a class="notranslate" href="#3closures"><code>closures</code></a>, we’ll talk about passing functions as arguments to
+other functions. For example, with <a class="notranslate" href="#3iterators"><code>iterators</code></a>, we can do this
+to convert a vector of <code>String</code>s into a vector of <code>Message::Write</code>s:</p>
+<br>
+<div data-lang="rust"><div data-l="# enum Message {"></div><div data-l="# Write(String),"></div><div data-l="# }"></div><div data-l=""></div><div data-l="let v = vec![&quot;Hello&quot;.to_string(), &quot;World&quot;.to_string()];"></div><div data-l=""></div><div data-l="let v1: Vec&lt;Message&gt; = v.into_iter().map(Message::Write).collect();"></div></div>
+<br>
+<a class="notranslate" href="#1closures.html">closures</a>
+<a class="notranslate" href="#1iterators.html">iterators</a>

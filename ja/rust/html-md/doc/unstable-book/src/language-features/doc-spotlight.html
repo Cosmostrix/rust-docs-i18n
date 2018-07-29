@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<h1><code>doc_spotlight</code></h1>
+<br>
+<p>The tracking issue for this feature is: <a class="notranslate" href="#4#45040">#45040</a></p>
+<br>
+<p>The <code>doc_spotlight</code> feature allows the use of the <code>spotlight</code> parameter to the <code>#[doc]</code> attribute,
+to &quot;spotlight&quot; a specific trait on the return values of functions. Adding a <code>#[doc(spotlight)]</code>
+attribute to a trait definition will make rustdoc print extra information for functions which return
+a type that implements that trait. This attribute is applied to the <code>Iterator</code>, <code>io::Read</code>, and
+<code>io::Write</code> traits in the standard library.</p>
+<br>
+<p>You can do this on your own traits, like this:</p>
+<br>
+<div data-lang=""><div data-l="#![feature(doc_spotlight)]"></div><div data-l=""></div><div data-l="#[doc(spotlight)]"></div><div data-l="pub trait MyTrait {}"></div><div data-l=""></div><div data-l="pub struct MyStruct;"></div><div data-l="impl MyTrait for MyStruct {}"></div><div data-l=""></div><div data-l="#///// The docs for this function will have an extra line about `MyStruct` implementing `MyTrait`,"></div><div data-l="/// ">The docs for this function will have an extra line about <code>MyStruct</code> implementing <code>MyTrait</code>,</div><div data-l="#///// without having to write that yourself!"></div><div data-l="/// ">without having to write that yourself!</div><div data-l="pub fn my_fn() -&gt; MyStruct { MyStruct }"></div></div>
+<br>
+<p>This feature was originally implemented in PR <a class="notranslate" href="#4#45039">#45039</a>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/issues/45040">#45040</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rust/pull/45039">#45039</a>

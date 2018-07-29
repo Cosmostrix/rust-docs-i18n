@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<h2>Encode and decode base64</h2>
+<br>
+<p><a href="#3base64">!<a class="notranslate" href="#4base64-badge">base64-badge</a></a> <a href="#3cat-encoding">!<a class="notranslate" href="#4cat-encoding-badge">cat-encoding-badge</a></a></p>
+<br>
+<p>Encodes byte slice into <code>base64</code> String using <a class="notranslate" href="#4`encode`">`encode`</a>
+and decodes it with <a class="notranslate" href="#4`decode`">`decode`</a>.</p>
+<br>
+<div data-lang="rust"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="extern crate base64;"></div><div data-l=""></div><div data-l="use std::str;"></div><div data-l="use base64::{encode, decode};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Base64(base64::DecodeError);"></div><div data-l="#         Utf8Error(str::Utf8Error);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let hello = b&quot;hello rustaceans&quot;;"></div><div data-l="    let encoded = encode(hello);"></div><div data-l="    let decoded = decode(&amp;encoded)?;"></div><div data-l=""></div><div data-l="    println!(&quot;origin: {}&quot;, str::from_utf8(hello)?);"></div><div data-l="    println!(&quot;base64 encoded: {}&quot;, encoded);"></div><div data-l="    println!(&quot;back to origin: {}&quot;, str::from_utf8(&amp;decoded)?);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/base64/*/base64/fn.decode.html">`decode`</a>
+<a class="notranslate" href="#1https://docs.rs/base64/*/base64/fn.encode.html">`encode`</a>

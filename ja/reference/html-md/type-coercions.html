@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<h1>Type coercions</h1>
+<br>
+<p>Coercions are defined in <a class="notranslate" href="#4RFC 401">RFC 401</a>. <a class="notranslate" href="#4RFC 1558">RFC 1558</a> then expanded on that.
+A coercion is implicit and has no syntax.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/0401-coercions.md">RFC 401</a>
+<a class="notranslate" href="#1https://github.com/rust-lang/rfcs/blob/master/text/1558-closure-to-fn-coercion.md">RFC 1558</a>
+<br>
+<h2>Coercion sites</h2>
+<br>
+<p>A coercion can only occur at certain coercion sites in a program; these are
+typically places where the desired type is explicit or can be derived by
+propagation from explicit types (without type inference). Possible coercion
+sites are:</p>
+<br>
+<div data-b="*"><code>let</code> statements where an explicit type is given.</div>
+<br>
+<p>   For example, <code>42</code> is coerced to have type <code>i8</code> in the following:</p>
+<br>
+<p>   `<code class=2>rust
+   let _: i8 = 42;
+   </code>`</p>
+<br>
+<div data-b="*"><code>static</code> and <code>const</code> statements (similar to <code>let</code> statements).</div>
+<br>
+<div data-b="*">Arguments for function calls</div>
+<br>
+<p>  The value being coerced is the actual parameter, and it is coerced to
+  the type of the formal parameter.</p>
+<br>
+<p>  For example, <code>42</code> is coerced to have type <code>i8</code> in the following:</p>
+<br>
+<p>  `<code class=2>rust
+  fn bar(_: i8) { }
+
+  fn main() {
+      bar(42);
+  }
+  </code>`</p>
+<br>
+<p>  For method calls, the receiver (<code>self</code> parameter) can only take advantage
+  of <a href="#2#unsized-coercions">unsized coercions</a>.</p>
+<br>
+<div data-b="*">Instantiations of struct or variant fields</div>
+<br>
+<p>  For example, <code>42</code> is coerced to have type <code>i8</code> in the following:</p>
+<br>
+<p>  `<code class=2>rust
+  struct Foo { x: i8 }
+
+  fn main() {
+      Foo { x: 42 };
+  }
+  </code>`</p>
+<br>
+<div data-b="*">Function results, either the final line of a block if it is not
+semicolon-terminated or any expression in a <code>return</code> statement</div>
+<br>
+<p>  For example, <code>42</code> is coerced to have type <code>i8</code> in the following:</p>
+<br>
+<p>  `<code class=2>rust
+  fn foo() -&gt; i8 {
+      42
+  }
+  </code>`</p>
+<br>
+<p>If the expression in one of these coercion sites is a coercion-propagating
+expression, then the relevant sub-expressions in that expression are also
+coercion sites. Propagation recurses from these new coercion sites.
+Propagating expressions and their relevant sub-expressions are:</p>
+<br>
+<div data-b="*">Array literals, where the array has type <code>[U; n]</code>. Each sub-expression in</div>
+<p>the array literal is a coercion site for coercion to type <code>U</code>.</p>
+<br>
+<div data-b="*">Array literals with repeating syntax, where the array has type <code>[U; n]</code>. The</div>
+<p>repeated sub-expression is a coercion site for coercion to type <code>U</code>.</p>
+<br>
+<div data-b="*">Tuples, where a tuple is a coercion site to type <code>(U_0, U_1, ..., U_n)</code>.</div>
+<p>Each sub-expression is a coercion site to the respective type, e.g. the
+zeroth sub-expression is a coercion site to type <code>U_0</code>.</p>
+<br>
+<div data-b="*">Parenthesized sub-expressions (<code>(e)</code>): if the expression has type <code>U</code>, then</div>
+<p>the sub-expression is a coercion site to <code>U</code>.</p>
+<br>
+<div data-b="*">Blocks: if a block has type <code>U</code>, then the last expression in the block (if</div>
+<p>it is not semicolon-terminated) is a coercion site to <code>U</code>. This includes
+blocks which are part of control flow statements, such as <code>if</code>/<code>else</code>, if
+the block has a known type.</p>
+<br>
+<h2>Coercion types</h2>
+<br>
+<p>Coercion is allowed between the following types:</p>
+<br>
+<div data-b="*"><code>T</code> to <code>U</code> if <code>T</code> is a subtype of <code>U</code> (<i>reflexive case</i>)</div>
+<br>
+<div data-b="*"><code>T_1</code> to <code>T_3</code> where <code>T_1</code> coerces to <code>T_2</code> and <code>T_2</code> coerces to <code>T_3</code></div>
+<p>(<i>transitive case</i>)</p>
+<br>
+<p>    Note that this is not fully supported yet</p>
+<br>
+<div data-b="*"><code>&amp;mut T</code> to <code>&amp;T</code></div>
+<br>
+<div data-b="*"><code>*mut T</code> to <code>*const T</code></div>
+<br>
+<div data-b="*"><code>&amp;T</code> to <code>*const T</code></div>
+<br>
+<div data-b="*"><code>&amp;mut T</code> to <code>*mut T</code></div>
+<br>
+<div data-b="*"><code>&amp;T</code> or <code>&amp;mut T</code> to <code>&amp;U</code> if <code>T</code> implements <code>Deref&lt;Target = U&gt;</code>. For example:</div>
+<br>
+<p>  `<code class=2>rust
+  use std::ops::Deref;
+
+  struct CharContainer {
+      value: char,
+  }
+
+  impl Deref for CharContainer {
+      type Target = char;
+
+      fn deref&lt;'a&gt;(&amp;'a self) -&gt; &amp;'a char {
+          &amp;self.value
+      }
+  }
+
+  fn foo(arg: &amp;char) {}
+
+  fn main() {
+      let x = &amp;mut CharContainer { value: 'y' };
+      foo(x); //&amp;mut CharContainer is coerced to &amp;char.
+  }
+  </code>`</p>
+<br>
+<div data-b="*"><code>&amp;mut T</code> to <code>&amp;mut U</code> if <code>T</code> implements <code>DerefMut&lt;Target = U&gt;</code>.</div>
+<br>
+<div data-b="*">TyCtor(<code>T</code>) to TyCtor(<code>U</code>), where TyCtor(<code>T</code>) is one of</div>
+<div data-b="    -"><code>&amp;T</code></div>
+<div data-b="    -"><code>&amp;mut T</code></div>
+<div data-b="    -"><code>*const T</code></div>
+<div data-b="    -"><code>*mut T</code></div>
+<div data-b="    -"><code>Box&lt;T&gt;</code></div>
+<br>
+<p>    and where <code>T</code> can obtained from <code>U</code> by <a href="#2#unsized-coercions">unsized coercion</a>.</p>
+<br>
+<p>    <!--In the future, coerce_inner will be recursively extended to tuples and
+    structs. In addition, coercions from sub-traits to super-traits will be
+    added. See [RFC 401] for more details.--></p>
+<br>
+<div data-b="*">Non capturing closures to <code>fn</code> pointers</div>
+<br>
+<div data-b="*"><code>€</code> to any <code>T</code></div>
+<br>
+<h3>Unsized Coercions</h3>
+<br>
+<p>The following coercions are called <code>unsized coercions</code>, since they
+relate to converting sized types to unsized types, and are permitted in a few
+cases where other coercions are not, as described above. They can still happen
+anywhere else a coercion can occur.</p>
+<br>
+<p>Two traits, <a class="notranslate" href="#4`Unsize`">`Unsize`</a> and <a class="notranslate" href="#4`CoerceUnsized`">`CoerceUnsized`</a>, are used
+to assist in this process and expose it for library use. The compiler following
+coercions are built-in and, if <code>T</code> can be coerced to <code>U</code> with one of the, then
+the compiler will provide an implementation of <code>Unsize&lt;U&gt;</code> for <code>T</code>:</p>
+<br>
+<div data-b="*"><code>[T; n]</code> to <code>[T]</code>.</div>
+<br>
+<div data-b="*"><code>T</code> to <code>U</code>, when <code>U</code> is a trait object type and either <code>T</code> implements <code>U</code> or
+<code>T</code> is a trait object for a subtrait of <code>U</code>.</div>
+<br>
+<div data-b="*"><code>Foo&lt;..., T, ...&gt;</code> to <code>Foo&lt;..., U, ...&gt;</code>, when:</div>
+<div data-b="    *"><code>Foo</code> is a struct.</div>
+<div data-b="    *"><code>T</code> implements <code>Unsize&lt;U&gt;</code>.</div>
+<div data-b="    *">The last field of <code>Foo</code> has a type involving <code>T</code>.</div>
+<div data-b="    *">If that field has type <code>Bar&lt;T&gt;</code>, then <code>Bar&lt;T&gt;</code> implements <code>Unsized&lt;Bar&lt;U&gt;&gt;</code>.</div>
+<div data-b="    *">T is not part of the type of any other fields.</div>
+<br>
+<p>Additionally, a type <code>Foo&lt;T&gt;</code> can implement <code>CoerceUnsized&lt;Foo&lt;U&gt;&gt;</code> when <code>T</code>
+implements <code>Unsize&lt;U&gt;</code> or <code>CoerceUnsized&lt;Foo&lt;U&gt;&gt;</code>. This allows it to provide a
+unsized coercion to <code>Foo&lt;U&gt;</code>.</p>
+<br>
+<blockquote><p>Note: While the definition of the unsized coercions and their implementation
+has been stabilized, the traits themselves are not yet stable and therefore
+can't be used directly in stable Rust.</p></blockquote>
+<br>
+<a class="notranslate" href="#1../std/marker/trait.Unsize.html">Unsize</a>
+<a class="notranslate" href="#1../std/ops/trait.CoerceUnsized.html">CoerceUnsized</a>

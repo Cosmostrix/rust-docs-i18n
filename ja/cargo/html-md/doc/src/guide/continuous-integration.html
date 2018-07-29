@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<h2>Continuous Integration</h2>
+<br>
+<h3>Travis CI</h3>
+<br>
+<p>To test your project on Travis CI, here is a sample <code>.travis.yml</code> file:</p>
+<br>
+<div data-lang="yaml"><div data-l="language: rust"></div><div data-l="rust:"></div><div data-l="  - stable"></div><div data-l="  - beta"></div><div data-l="  - nightly"></div><div data-l="matrix:"></div><div data-l="  allow_failures:"></div><div data-l="    - rust: nightly"></div></div>
+<br>
+<p>This will test all three release channels, but any breakage in nightly
+will not fail your overall build. Please see the <a href="#2https://docs.travis-ci.com/user/languages/rust/">Travis CI Rust
+documentation</a> for more
+information.</p>
+<br>
+<h3>GitLab CI</h3>
+<br>
+<p>To test your project on GitLab CI, here is a sample <code>.gitlab-ci.yml</code> file:</p>
+<br>
+<div data-lang="yaml"><div data-l="stages:"></div><div data-l="  - build"></div><div data-l=""></div><div data-l="rust-latest:"></div><div data-l="  stage: build"></div><div data-l="  image: rust:latest"></div><div data-l="  script:"></div><div data-l="    - cargo build --verbose"></div><div data-l="    - cargo test --verbose"></div><div data-l=""></div><div data-l="rust-nightly:"></div><div data-l="  stage: build"></div><div data-l="  image: rustlang/rust:nightly"></div><div data-l="  script:"></div><div data-l="    - cargo build --verbose"></div><div data-l="    - cargo test --verbose"></div><div data-l="  allow_failure: true"></div></div>
+<br>
+<p>This will test on the stable channel and nightly channel, but any
+breakage in nightly will not fail your overall build. Please see the
+<a href="#2https://docs.gitlab.com/ce/ci/yaml/README.html">GitLab CI</a> for more
+information.</p>

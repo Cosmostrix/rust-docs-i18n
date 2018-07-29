@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<h1>To and from Strings</h1>
+<br>
+<h2><code>ToString</code></h2>
+<br>
+<p>To convert any type to a <code>String</code> it is as simple as implementing the <a class="notranslate" href="#4`ToString`">`ToString`</a>
+trait for the type.</p>
+<br>
+<div data-lang="rust,editable"><div data-l="use std::string::ToString;"></div><div data-l=""></div><div data-l="struct Circle {"></div><div data-l="    radius: i32"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl ToString for Circle {"></div><div data-l="    fn to_string(&amp;self) -&gt; String {"></div><div data-l="        format!(&quot;Circle of radius {:?}&quot;, self.radius)"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="fn main() {"></div><div data-l="    let circle = Circle { radius: 6 };"></div><div data-l="    println!(&quot;{}&quot;, circle.to_string());"></div><div data-l="}"></div></div>
+<br>
+<h2>Parsing a String</h2>
+<br>
+<p>One of the more common types to convert a string into is a number. The idiomatic
+approach to this is to use the <a class="notranslate" href="#4`parse`">`parse`</a> function and provide the type for the
+function to parse the string value into, this can be done either without type
+inference or using the 'turbofish' syntax.</p>
+<br>
+<p>This will convert the string into the type specified so long as the <a class="notranslate" href="#4`FromStr`">`FromStr`</a>
+trait is implemented for that type. This is implemented for numerous types
+within the standard library. To obtain this functionality on a user defined type
+simply implement the <a class="notranslate" href="#4`FromStr`">`FromStr`</a> trait for that type.</p>
+<br>
+<div data-lang="rust"><div data-l="fn main() {"></div><div data-l="    let parsed: i32 = &quot;5&quot;.parse().unwrap();"></div><div data-l="    let turbo_parsed = &quot;10&quot;.parse::&lt;i32&gt;().unwrap();"></div><div data-l=""></div><div data-l="    let sum = parsed + turbo_parsed;"></div><div data-l="    println!{&quot;Sum: {:?}&quot;, sum};"></div><div data-l="}"></div></div>
+<br>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/string/trait.ToString.html">`ToString`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/primitive.str.html#method.parse">`parse`</a>
+<a class="notranslate" href="#1https://doc.rust-lang.org/std/str/trait.FromStr.html">`FromStr`</a>

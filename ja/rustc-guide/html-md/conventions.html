@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<p>This file offers some tips on the coding conventions for rustc.  This
+chapter covers <a class="notranslate" href="#2#formatting">formatting</a>, <a href="#2#cc">coding for correctness</a>,
+<a href="#2#cio">using crates from crates.io</a>, and some tips on
+<a href="#2#er">structuring your PR for easy review</a>.</p>
+<br>
+<p><a name="formatting"></a></p>
+<br>
+<h1>Formatting and the tidy script</h1>
+<br>
+<p>rustc is slowly moving towards the <a href="#3fmt">Rust standard coding style</a>;
+at the moment, however, it follows a rather more <i>chaotic</i> style.  We
+do have some mandatory formatting conventions, which are automatically
+enforced by a script we affectionately call the &quot;tidy&quot; script.  The
+tidy script runs automatically when you do <code>./x.py test</code> and can be run 
+in isolation with <code>./x.py test src/tools/tidy</code>.</p>
+<br>
+<a class="notranslate" href="#1https://github.com/rust-lang-nursery/fmt-rfcs">fmt</a>
+<br>
+<p><a name="copyright"></a></p>
+<br>
+<h3>Copyright notice</h3>
+<br>
+<p>All files must begin with the following copyright notice:</p>
+<br>
+<div data-lang="rust"><div data-l="#// Copyright 2012-2013 The Rust Project Developers. See the COPYRIGHT"></div><div data-l="#// file at the top-level directory of this distribution and at"></div><div data-l="#// http://rust-lang.org/COPYRIGHT."></div><div data-l="// ">Copyright 2012-2013 The Rust Project Developers. See the COPYRIGHT file at the top-level directory of this distribution and at http://rust-lang.org/COPYRIGHT.</div><div data-l="//"></div><div data-l="#// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or"></div><div data-l="#// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license"></div><div data-l="#// &lt;LICENSE-MIT or http://opensource.org/licenses/MIT&gt;, at your"></div><div data-l="#// option. This file may not be copied, modified, or distributed"></div><div data-l="#// except according to those terms."></div><div data-l="// ">Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your option. This file may not be copied, modified, or distributed except according to those terms.</div></div>
+<br>
+<p>The year at the top is not meaningful: copyright protections are in
+fact automatic from the moment of authorship. We do not typically edit
+the years on existing files. When creating a new file, you can use the
+current year if you like, but you don't have to.</p>
+<br>
+<h2>Line length</h2>
+<br>
+<p>Lines should be at most 100 characters. It's even better if you can
+keep things to 80.</p>
+<br>
+<p><b>Ignoring the line length limit.</b> Sometimes – in particular for
+tests – it can be necessary to exempt yourself from this limit. In
+that case, you can add a comment towards the top of the file (after
+the copyright notice) like so:</p>
+<br>
+<div data-lang="rust"><div data-l="#// ignore-tidy-linelength"></div><div data-l="// ">ignore-tidy-linelength</div></div>
+<br>
+<h2>Tabs vs spaces</h2>
+<br>
+<p>Prefer 4-space indent.</p>
+<br>
+<p><a name="cc"></a></p>
+<br>
+<h1>Coding for correctness</h1>
+<br>
+<p>Beyond formatting, there are a few other tips that are worth
+following.</p>
+<br>
+<h2>Prefer exhaustive matches</h2>
+<br>
+<p>Using <code>_</code> in a match is convenient, but it means that when new
+variants are added to the enum, they may not get handled correctly.
+Ask yourself: if a new variant were added to this enum, what's the
+chance that it would want to use the <code>_</code> code, versus having some
+other treatment?  Unless the answer is &quot;low&quot;, then prefer an
+exhaustive match. (The same advice applies to <code>if let</code> and <code>while
+let</code>, which are effectively tests for a single variant.)</p>
+<br>
+<h2>Use &quot;TODO&quot; comments for things you don't want to forget</h2>
+<br>
+<p>As a useful tool to yourself, you can insert a <code>// TODO</code> comment
+for something that you want to get back to before you land your PR:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="fn do_something() {"></div><div data-l="    if something_else {"></div><div data-l="#//        unimplemented!(): // TODO write this"></div><div data-l="        unimplemented!(): // ">TODO write this</div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>The tidy script will report an error for a <code>// TODO</code> comment, so this
+code would not be able to land until the TODO is fixed (or removed).</p>
+<br>
+<p>This can also be useful in a PR as a way to signal from one commit that you are
+leaving a bug that a later commit will fix:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="if foo {"></div><div data-l="#//    return true; // TODO wrong, but will be fixed in a later commit"></div><div data-l="    return true; // ">TODO wrong, but will be fixed in a later commit</div><div data-l="}"></div></div>
+<br>
+<p><a name="cio"></a></p>
+<br>
+<h1>Using crates from crates.io</h1>
+<br>
+<p>It is allowed to use crates from crates.io, though external
+dependencies should not be added gratuitously. All such crates must
+have a suitably permissive license. There is an automatic check which
+inspects the Cargo metadata to ensure this.</p>
+<br>
+<p><a name="er"></a></p>
+<br>
+<h1>How to structure your PR</h1>
+<br>
+<p>How you prepare the commits in your PR can make a big difference for the
+reviewer.  Here are some tips.</p>
+<br>
+<p><b>Isolate &quot;pure refactorings&quot; into their own commit.</b> For example, if
+you rename a method, then put that rename into its own commit, along
+with the renames of all the uses.</p>
+<br>
+<p><b>More commits is usually better.</b> If you are doing a large change,
+it's almost always better to break it up into smaller steps that can
+be independently understood. The one thing to be aware of is that if
+you introduce some code following one strategy, then change it
+dramatically (versus adding to it) in a later commit, that
+'back-and-forth' can be confusing.</p>
+<br>
+<p><b>If you run rustfmt and the file was not already formatted, isolate
+that into its own commit.</b> This is really the same as the previous
+rule, but it's worth highlighting. It's ok to rustfmt files, but since
+we do not currently run rustfmt all the time, that can introduce a lot
+of noise into your commit. Please isolate that into its own
+commit. This also makes rebases a lot less painful, since rustfmt
+tends to cause a lot of merge conflicts, and having those isolated
+into their own commit makes them easier to resolve.</p>
+<br>
+<p><b>No merges.</b> We do not allow merge commits into our history, other
+than those by bors. If you get a merge conflict, rebase instead via a
+command like <code>git rebase -i rust-lang/master</code> (presuming you use the
+name <code>rust-lang</code> for your remote).</p>
+<br>
+<p><b>Individual commits do not have to build (but it's nice).</b> We do not
+require that every intermediate commit successfully builds – we only
+expect to be able to bisect at a PR level. However, if you <i>can</i> make
+individual commits build, that is always helpful.</p>
+<br>

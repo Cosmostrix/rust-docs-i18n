@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<h2>Log messages to a custom location</h2>
+<br>
+<p><a href="#3log">!<a class="notranslate" href="#4log-badge">log-badge</a></a> <a href="#3log4rs">!<a class="notranslate" href="#4log4rs-badge">log4rs-badge</a></a> <a href="#3cat-debugging">!<a class="notranslate" href="#4cat-debugging-badge">cat-debugging-badge</a></a></p>
+<br>
+<p><a class="notranslate" href="#4log4rs">log4rs</a> configures log output to a custom location. <a class="notranslate" href="#4log4rs">log4rs</a> can use either an
+external YAML file or a builder configuration.</p>
+<br>
+<p>Create the log configuration with <a class="notranslate" href="#4`log4rs::append::file::FileAppender`">`log4rs::append::file::FileAppender`</a>. An
+appender defines the logging destination.  The configuration continues with
+encoding using a custom pattern from <a class="notranslate" href="#4`log4rs::encode::pattern`">`log4rs::encode::pattern`</a>.
+Assigns the configuration to <a class="notranslate" href="#4`log4rs::config::Config`">`log4rs::config::Config`</a> and sets the default
+<a class="notranslate" href="#4`log::LevelFilter`">`log::LevelFilter`</a>.</p>
+<br>
+<div data-lang="rust,no_run"><div data-l="# #[macro_use]"></div><div data-l="# extern crate error_chain;"></div><div data-l="#[macro_use]"></div><div data-l="extern crate log;"></div><div data-l="extern crate log4rs;"></div><div data-l=""></div><div data-l="use log::LevelFilter;"></div><div data-l="use log4rs::append::file::FileAppender;"></div><div data-l="use log4rs::encode::pattern::PatternEncoder;"></div><div data-l="use log4rs::config::{Appender, Config, Root};"></div><div data-l="#"></div><div data-l="# error_chain! {"></div><div data-l="#     foreign_links {"></div><div data-l="#         Io(std::io::Error);"></div><div data-l="#         LogConfig(log4rs::config::Errors);"></div><div data-l="#         SetLogger(log::SetLoggerError);"></div><div data-l="#     }"></div><div data-l="# }"></div><div data-l=""></div><div data-l="fn run() -&gt; Result&lt;()&gt; {"></div><div data-l="    let logfile = FileAppender::builder()"></div><div data-l="        .encoder(Box::new(PatternEncoder::new(&quot;{l} - {m}\n&quot;)))"></div><div data-l="        .build(&quot;log/output.log&quot;)?;"></div><div data-l=""></div><div data-l="    let config = Config::builder()"></div><div data-l="        .appender(Appender::builder().build(&quot;logfile&quot;, Box::new(logfile)))"></div><div data-l="        .build(Root::builder()"></div><div data-l="                   .appender(&quot;logfile&quot;)"></div><div data-l="                   .build(LevelFilter::Info))?;"></div><div data-l=""></div><div data-l="    log4rs::init_config(config)?;"></div><div data-l=""></div><div data-l="    info!(&quot;Hello, world!&quot;);"></div><div data-l=""></div><div data-l="    Ok(())"></div><div data-l="}"></div><div data-l="#"></div><div data-l="# quick_main!(run);"></div></div>
+<br>
+<a class="notranslate" href="#1https://docs.rs/log4rs/*/log4rs/append/file/struct.FileAppender.html">`log4rs::append::file::FileAppender`</a>
+<a class="notranslate" href="#1https://docs.rs/log4rs/*/log4rs/config/struct.Config.html">`log4rs::config::Config`</a>
+<a class="notranslate" href="#1https://docs.rs/log4rs/*/log4rs/encode/pattern/index.html">`log4rs::encode::pattern`</a>
+<a class="notranslate" href="#1https://docs.rs/log/*/log/enum.LevelFilter.html">`log::LevelFilter`</a>

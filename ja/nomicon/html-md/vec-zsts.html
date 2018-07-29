@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<h1>Handling Zero-Sized Types</h1>
+<br>
+<p>It's time. We're going to fight the specter that is zero-sized types. Safe Rust
+<i>never</i> needs to care about this, but Vec is very intensive on raw pointers and
+raw allocations, which are exactly the two things that care about
+zero-sized types. We need to be careful of two things:</p>
+<br>
+<div data-b="*">The raw allocator API has undefined behavior if you pass in 0 for an
+allocation size.</div>
+<div data-b="*">raw pointer offsets are no-ops for zero-sized types, which will break our
+C-style pointer iterator.</div>
+<br>
+<p>Thankfully we abstracted out pointer-iterators and allocating handling into
+RawValIter and RawVec respectively. How mysteriously convenient.</p>
+<br>
+<br>
+<br>
+<br>
+<h2>Allocating Zero-Sized Types</h2>
+<br>
+<p>So if the allocator API doesn't support zero-sized allocations, what on earth
+do we store as our allocation? <code>Unique::empty()</code> of course! Almost every operation
+with a ZST is a no-op since ZSTs have exactly one value, and therefore no state needs
+to be considered to store or load them. This actually extends to <code>ptr::read</code> and
+<code>ptr::write</code>: they won't actually look at the pointer at all. As such we never need
+to change the pointer.</p>
+<br>
+<p>Note however that our previous reliance on running out of memory before overflow is
+no longer valid with zero-sized types. We must explicitly guard against capacity
+overflow for zero-sized types.</p>
+<br>
+<p>Due to our current architecture, all this means is writing 3 guards, one in each
+method of RawVec.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; RawVec&lt;T&gt; {"></div><div data-l="    fn new() -&gt; Self {"></div><div data-l="#        // !0 is usize::MAX. This branch should be stripped at compile time."></div><div data-l="        // ">!0 is usize::MAX. This branch should be stripped at compile time.</div><div data-l="        let cap = if mem::size_of::&lt;T&gt;() == 0 { !0 } else { 0 };"></div><div data-l=""></div><div data-l="#        // Unique::empty() doubles as &quot;unallocated&quot; and &quot;zero-sized allocation&quot;"></div><div data-l="        // ">Unique::empty() doubles as &quot;unallocated&quot; and &quot;zero-sized allocation&quot;</div><div data-l="        RawVec { ptr: Unique::empty(), cap: cap }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn grow(&amp;mut self) {"></div><div data-l="        unsafe {"></div><div data-l="            let elem_size = mem::size_of::&lt;T&gt;();"></div><div data-l=""></div><div data-l="#            // since we set the capacity to usize::MAX when elem_size is"></div><div data-l="#            // 0, getting to here necessarily means the Vec is overfull."></div><div data-l="            // ">since we set the capacity to usize::MAX when elem_size is 0, getting to here necessarily means the Vec is overfull.</div><div data-l="            assert!(elem_size != 0, &quot;capacity overflow&quot;);"></div><div data-l=""></div><div data-l="            let align = mem::align_of::&lt;T&gt;();"></div><div data-l=""></div><div data-l="            let (new_cap, ptr) = if self.cap == 0 {"></div><div data-l="                let ptr = heap::allocate(elem_size, align);"></div><div data-l="                (1, ptr)"></div><div data-l="            } else {"></div><div data-l="                let new_cap = 2 * self.cap;"></div><div data-l="                let ptr = heap::reallocate(self.ptr.as_ptr() as *mut _,"></div><div data-l="                                            self.cap * elem_size,"></div><div data-l="                                            new_cap * elem_size,"></div><div data-l="                                            align);"></div><div data-l="                (new_cap, ptr)"></div><div data-l="            };"></div><div data-l=""></div><div data-l="#            // If allocate or reallocate fail, we'll get `null` back"></div><div data-l="            // ">If allocate or reallocate fail, we'll get <code>null</code> back</div><div data-l="            if ptr.is_null() { oom() }"></div><div data-l=""></div><div data-l="            self.ptr = Unique::new(ptr as *mut _);"></div><div data-l="            self.cap = new_cap;"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; Drop for RawVec&lt;T&gt; {"></div><div data-l="    fn drop(&amp;mut self) {"></div><div data-l="        let elem_size = mem::size_of::&lt;T&gt;();"></div><div data-l=""></div><div data-l="#        // don't free zero-sized allocations, as they were never allocated."></div><div data-l="        // ">don't free zero-sized allocations, as they were never allocated.</div><div data-l="        if self.cap != 0 &amp;&amp; elem_size != 0 {"></div><div data-l="            let align = mem::align_of::&lt;T&gt;();"></div><div data-l=""></div><div data-l="            let num_bytes = elem_size * self.cap;"></div><div data-l="            unsafe {"></div><div data-l="                heap::deallocate(self.ptr.as_ptr() as *mut _, num_bytes, align);"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>That's it. We support pushing and popping zero-sized types now. Our iterators
+(that aren't provided by slice Deref) are still busted, though.</p>
+<br>
+<br>
+<br>
+<br>
+<h2>Iterating Zero-Sized Types</h2>
+<br>
+<p>Zero-sized offsets are no-ops. This means that our current design will always
+initialize <code>start</code> and <code>end</code> as the same value, and our iterators will yield
+nothing. The current solution to this is to cast the pointers to integers,
+increment, and then cast them back:</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; RawValIter&lt;T&gt; {"></div><div data-l="    unsafe fn new(slice: &amp;[T]) -&gt; Self {"></div><div data-l="        RawValIter {"></div><div data-l="            start: slice.as_ptr(),"></div><div data-l="            end: if mem::size_of::&lt;T&gt;() == 0 {"></div><div data-l="                ((slice.as_ptr() as usize) + slice.len()) as *const _"></div><div data-l="            } else if slice.len() == 0 {"></div><div data-l="                slice.as_ptr()"></div><div data-l="            } else {"></div><div data-l="                slice.as_ptr().offset(slice.len() as isize)"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>Now we have a different bug. Instead of our iterators not running at all, our
+iterators now run <i>forever</i>. We need to do the same trick in our iterator impls.
+Also, our size_hint computation code will divide by 0 for ZSTs. Since we'll
+basically be treating the two pointers as if they point to bytes, we'll just
+map size 0 to divide by 1.</p>
+<br>
+<div data-lang="rust,ignore"><div data-l="impl&lt;T&gt; Iterator for RawValIter&lt;T&gt; {"></div><div data-l="    type Item = T;"></div><div data-l="    fn next(&amp;mut self) -&gt; Option&lt;T&gt; {"></div><div data-l="        if self.start == self.end {"></div><div data-l="            None"></div><div data-l="        } else {"></div><div data-l="            unsafe {"></div><div data-l="                let result = ptr::read(self.start);"></div><div data-l="                self.start = if mem::size_of::&lt;T&gt;() == 0 {"></div><div data-l="                    (self.start as usize + 1) as *const _"></div><div data-l="                } else {"></div><div data-l="                    self.start.offset(1)"></div><div data-l="                };"></div><div data-l="                Some(result)"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l=""></div><div data-l="    fn size_hint(&amp;self) -&gt; (usize, Option&lt;usize&gt;) {"></div><div data-l="        let elem_size = mem::size_of::&lt;T&gt;();"></div><div data-l="        let len = (self.end as usize - self.start as usize)"></div><div data-l="                  / if elem_size == 0 { 1 } else { elem_size };"></div><div data-l="        (len, Some(len))"></div><div data-l="    }"></div><div data-l="}"></div><div data-l=""></div><div data-l="impl&lt;T&gt; DoubleEndedIterator for RawValIter&lt;T&gt; {"></div><div data-l="    fn next_back(&amp;mut self) -&gt; Option&lt;T&gt; {"></div><div data-l="        if self.start == self.end {"></div><div data-l="            None"></div><div data-l="        } else {"></div><div data-l="            unsafe {"></div><div data-l="                self.end = if mem::size_of::&lt;T&gt;() == 0 {"></div><div data-l="                    (self.end as usize - 1) as *const _"></div><div data-l="                } else {"></div><div data-l="                    self.end.offset(-1)"></div><div data-l="                };"></div><div data-l="                Some(ptr::read(self.end))"></div><div data-l="            }"></div><div data-l="        }"></div><div data-l="    }"></div><div data-l="}"></div></div>
+<br>
+<p>And that's it. Iteration works!</p>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<h1>Rust API Guidelines Checklist</h1>
+<br>
+<p><!-- Read CONTRIBUTING.md before writing new guidelines --></p>
+<br>
+<div data-b="-"><b>Naming</b> <i>(crate aligns with Rust naming conventions)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Casing conforms to RFC 430 (<a class="notranslate" href="#4C-CASE">C-CASE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Ad-hoc conversions follow <code>as_</code>, <code>to_</code>, <code>into_</code> conventions (<a class="notranslate" href="#4C-CONV">C-CONV</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Getter names follow Rust convention (<a class="notranslate" href="#4C-GETTER">C-GETTER</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Methods on collections that produce iterators follow <code>iter</code>, <code>iter_mut</code>, <code>into_iter</code> (<a class="notranslate" href="#4C-ITER">C-ITER</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Iterator type names match the methods that produce them (<a class="notranslate" href="#4C-ITER-TY">C-ITER-TY</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Feature names are free of placeholder words (<a class="notranslate" href="#4C-FEATURE">C-FEATURE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Names use a consistent word order (<a class="notranslate" href="#4C-WORD-ORDER">C-WORD-ORDER</a>)</div>
+<div data-b="-"><b>Interoperability</b> <i>(crate interacts nicely with other library functionality)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Types eagerly implement common traits (<a class="notranslate" href="#4C-COMMON-TRAITS">C-COMMON-TRAITS</a>)</div>
+<div data-b="    -"><code>Copy</code>, <code>Clone</code>, <code>Eq</code>, <code>PartialEq</code>, <code>Ord</code>, <code>PartialOrd</code>, <code>Hash</code>, <code>Debug</code>,
+<code>Display</code>, <code>Default</code></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Conversions use the standard traits <code>From</code>, <code>AsRef</code>, <code>AsMut</code> (<a class="notranslate" href="#4C-CONV-TRAITS">C-CONV-TRAITS</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Collections implement <code>FromIterator</code> and <code>Extend</code> (<a class="notranslate" href="#4C-COLLECT">C-COLLECT</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Data structures implement Serde's <code>Serialize</code>, <code>Deserialize</code> (<a class="notranslate" href="#4C-SERDE">C-SERDE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Types are <code>Send</code> and <code>Sync</code> where possible (<a class="notranslate" href="#4C-SEND-SYNC">C-SEND-SYNC</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Error types are meaningful and well-behaved (<a class="notranslate" href="#4C-GOOD-ERR">C-GOOD-ERR</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Binary number types provide <code>Hex</code>, <code>Octal</code>, <code>Binary</code> formatting (<a class="notranslate" href="#4C-NUM-FMT">C-NUM-FMT</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Generic reader/writer functions take <code>R: Read</code> and <code>W: Write</code> by value (<a class="notranslate" href="#4C-RW-VALUE">C-RW-VALUE</a>)</div>
+<div data-b="-"><b>Macros</b> <i>(crate presents well-behaved macros)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Input syntax is evocative of the output (<a class="notranslate" href="#4C-EVOCATIVE">C-EVOCATIVE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Macros compose well with attributes (<a class="notranslate" href="#4C-MACRO-ATTR">C-MACRO-ATTR</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Item macros work anywhere that items are allowed (<a class="notranslate" href="#4C-ANYWHERE">C-ANYWHERE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Item macros support visibility specifiers (<a class="notranslate" href="#4C-MACRO-VIS">C-MACRO-VIS</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Type fragments are flexible (<a class="notranslate" href="#4C-MACRO-TY">C-MACRO-TY</a>)</div>
+<div data-b="-"><b>Documentation</b> <i>(crate is abundantly documented)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Crate level docs are thorough and include examples (<a class="notranslate" href="#4C-CRATE-DOC">C-CRATE-DOC</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> All items have a rustdoc example (<a class="notranslate" href="#4C-EXAMPLE">C-EXAMPLE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Examples use <code>?</code>, not <code>try€</code>, not <code>unwrap</code> (<a class="notranslate" href="#4C-QUESTION-MARK">C-QUESTION-MARK</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Function docs include error, panic, and safety considerations (<a class="notranslate" href="#4C-FAILURE">C-FAILURE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Prose contains hyperlinks to relevant things (<a class="notranslate" href="#4C-LINK">C-LINK</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Cargo.toml includes all common metadata (<a class="notranslate" href="#4C-METADATA">C-METADATA</a>)</div>
+<div data-b="    -">authors, description, license, homepage, documentation, repository,
+readme, keywords, categories</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Crate sets html_root_url attribute &quot;https://docs.rs/CRATE/X.Y.Z&quot; (<a class="notranslate" href="#4C-HTML-ROOT">C-HTML-ROOT</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Release notes document all significant changes (<a class="notranslate" href="#4C-RELNOTES">C-RELNOTES</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Rustdoc does not show unhelpful implementation details (<a class="notranslate" href="#4C-HIDDEN">C-HIDDEN</a>)</div>
+<div data-b="-"><b>Predictability</b> <i>(crate enables legible code that acts how it looks)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Smart pointers do not add inherent methods (<a class="notranslate" href="#4C-SMART-PTR">C-SMART-PTR</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Conversions live on the most specific type involved (<a class="notranslate" href="#4C-CONV-SPECIFIC">C-CONV-SPECIFIC</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Functions with a clear receiver are methods (<a class="notranslate" href="#4C-METHOD">C-METHOD</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Functions do not take out-parameters (<a class="notranslate" href="#4C-NO-OUT">C-NO-OUT</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Operator overloads are unsurprising (<a class="notranslate" href="#4C-OVERLOAD">C-OVERLOAD</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Only smart pointers implement <code>Deref</code> and <code>DerefMut</code> (<a class="notranslate" href="#4C-DEREF">C-DEREF</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Constructors are static, inherent methods (<a class="notranslate" href="#4C-CTOR">C-CTOR</a>)</div>
+<div data-b="-"><b>Flexibility</b> <i>(crate supports diverse real-world use cases)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Functions expose intermediate results to avoid duplicate work (<a class="notranslate" href="#4C-INTERMEDIATE">C-INTERMEDIATE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Caller decides where to copy and place data (<a class="notranslate" href="#4C-CALLER-CONTROL">C-CALLER-CONTROL</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Functions minimize assumptions about parameters by using generics (<a class="notranslate" href="#4C-GENERIC">C-GENERIC</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Traits are object-safe if they may be useful as a trait object (<a class="notranslate" href="#4C-OBJECT">C-OBJECT</a>)</div>
+<div data-b="-"><b>Type safety</b> <i>(crate leverages the type system effectively)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Newtypes provide static distinctions (<a class="notranslate" href="#4C-NEWTYPE">C-NEWTYPE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Arguments convey meaning through types, not <code>bool</code> or <code>Option</code> (<a class="notranslate" href="#4C-CUSTOM-TYPE">C-CUSTOM-TYPE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Types for a set of flags are <code>bitflags</code>, not enums (<a class="notranslate" href="#4C-BITFLAG">C-BITFLAG</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Builders enable construction of complex values (<a class="notranslate" href="#4C-BUILDER">C-BUILDER</a>)</div>
+<div data-b="-"><b>Dependability</b> <i>(crate is unlikely to do the wrong thing)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Functions validate their arguments (<a class="notranslate" href="#4C-VALIDATE">C-VALIDATE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Destructors never fail (<a class="notranslate" href="#4C-DTOR-FAIL">C-DTOR-FAIL</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Destructors that may block have alternatives (<a class="notranslate" href="#4C-DTOR-BLOCK">C-DTOR-BLOCK</a>)</div>
+<div data-b="-"><b>Debuggability</b> <i>(crate is conducive to easy debugging)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> All public types implement <code>Debug</code> (<a class="notranslate" href="#4C-DEBUG">C-DEBUG</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> <code>Debug</code> representation is never empty (<a class="notranslate" href="#4C-DEBUG-NONEMPTY">C-DEBUG-NONEMPTY</a>)</div>
+<div data-b="-"><b>Future proofing</b> <i>(crate is free to improve without breaking users' code)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Sealed traits protect against downstream implementations (<a class="notranslate" href="#4C-SEALED">C-SEALED</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Structs have private fields (<a class="notranslate" href="#4C-STRUCT-PRIVATE">C-STRUCT-PRIVATE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Newtypes encapsulate implementation details (<a class="notranslate" href="#4C-NEWTYPE-HIDE">C-NEWTYPE-HIDE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Data structures do not duplicate derived trait bounds (<a class="notranslate" href="#4C-STRUCT-BOUNDS">C-STRUCT-BOUNDS</a>)</div>
+<div data-b="-"><b>Necessities</b> <i>(to whom they matter, they really matter)</i></div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Public dependencies of a stable crate are stable (<a class="notranslate" href="#4C-STABLE">C-STABLE</a>)</div>
+<div data-b="  -"><a class="notranslate" href="#4 "> </a> Crate and its dependencies have a permissive license (<a class="notranslate" href="#4C-PERMISSIVE">C-PERMISSIVE</a>)</div>
+<br>
+<br>
+<a class="notranslate" href="#1naming.html#c-case">C-CASE</a>
+<a class="notranslate" href="#1naming.html#c-conv">C-CONV</a>
+<a class="notranslate" href="#1naming.html#c-getter">C-GETTER</a>
+<a class="notranslate" href="#1naming.html#c-iter">C-ITER</a>
+<a class="notranslate" href="#1naming.html#c-iter-ty">C-ITER-TY</a>
+<a class="notranslate" href="#1naming.html#c-feature">C-FEATURE</a>
+<a class="notranslate" href="#1naming.html#c-word-order">C-WORD-ORDER</a>
+<br>
+<a class="notranslate" href="#1interoperability.html#c-common-traits">C-COMMON-TRAITS</a>
+<a class="notranslate" href="#1interoperability.html#c-conv-traits">C-CONV-TRAITS</a>
+<a class="notranslate" href="#1interoperability.html#c-collect">C-COLLECT</a>
+<a class="notranslate" href="#1interoperability.html#c-serde">C-SERDE</a>
+<a class="notranslate" href="#1interoperability.html#c-send-sync">C-SEND-SYNC</a>
+<a class="notranslate" href="#1interoperability.html#c-good-err">C-GOOD-ERR</a>
+<a class="notranslate" href="#1interoperability.html#c-num-fmt">C-NUM-FMT</a>
+<a class="notranslate" href="#1interoperability.html#c-rw-value">C-RW-VALUE</a>
+<br>
+<a class="notranslate" href="#1macros.html#c-evocative">C-EVOCATIVE</a>
+<a class="notranslate" href="#1macros.html#c-macro-attr">C-MACRO-ATTR</a>
+<a class="notranslate" href="#1macros.html#c-anywhere">C-ANYWHERE</a>
+<a class="notranslate" href="#1macros.html#c-macro-vis">C-MACRO-VIS</a>
+<a class="notranslate" href="#1macros.html#c-macro-ty">C-MACRO-TY</a>
+<br>
+<a class="notranslate" href="#1documentation.html#c-crate-doc">C-CRATE-DOC</a>
+<a class="notranslate" href="#1documentation.html#c-example">C-EXAMPLE</a>
+<a class="notranslate" href="#1documentation.html#c-question-mark">C-QUESTION-MARK</a>
+<a class="notranslate" href="#1documentation.html#c-failure">C-FAILURE</a>
+<a class="notranslate" href="#1documentation.html#c-link">C-LINK</a>
+<a class="notranslate" href="#1documentation.html#c-metadata">C-METADATA</a>
+<a class="notranslate" href="#1documentation.html#c-html-root">C-HTML-ROOT</a>
+<a class="notranslate" href="#1documentation.html#c-relnotes">C-RELNOTES</a>
+<a class="notranslate" href="#1documentation.html#c-hidden">C-HIDDEN</a>
+<br>
+<a class="notranslate" href="#1predictability.html#c-smart-ptr">C-SMART-PTR</a>
+<a class="notranslate" href="#1predictability.html#c-conv-specific">C-CONV-SPECIFIC</a>
+<a class="notranslate" href="#1predictability.html#c-method">C-METHOD</a>
+<a class="notranslate" href="#1predictability.html#c-no-out">C-NO-OUT</a>
+<a class="notranslate" href="#1predictability.html#c-overload">C-OVERLOAD</a>
+<a class="notranslate" href="#1predictability.html#c-deref">C-DEREF</a>
+<a class="notranslate" href="#1predictability.html#c-ctor">C-CTOR</a>
+<br>
+<a class="notranslate" href="#1flexibility.html#c-intermediate">C-INTERMEDIATE</a>
+<a class="notranslate" href="#1flexibility.html#c-caller-control">C-CALLER-CONTROL</a>
+<a class="notranslate" href="#1flexibility.html#c-generic">C-GENERIC</a>
+<a class="notranslate" href="#1flexibility.html#c-object">C-OBJECT</a>
+<br>
+<a class="notranslate" href="#1type-safety.html#c-newtype">C-NEWTYPE</a>
+<a class="notranslate" href="#1type-safety.html#c-custom-type">C-CUSTOM-TYPE</a>
+<a class="notranslate" href="#1type-safety.html#c-bitflag">C-BITFLAG</a>
+<a class="notranslate" href="#1type-safety.html#c-builder">C-BUILDER</a>
+<br>
+<a class="notranslate" href="#1dependability.html#c-validate">C-VALIDATE</a>
+<a class="notranslate" href="#1dependability.html#c-dtor-fail">C-DTOR-FAIL</a>
+<a class="notranslate" href="#1dependability.html#c-dtor-block">C-DTOR-BLOCK</a>
+<br>
+<a class="notranslate" href="#1debuggability.html#c-debug">C-DEBUG</a>
+<a class="notranslate" href="#1debuggability.html#c-debug-nonempty">C-DEBUG-NONEMPTY</a>
+<br>
+<a class="notranslate" href="#1future-proofing.html#c-sealed">C-SEALED</a>
+<a class="notranslate" href="#1future-proofing.html#c-struct-private">C-STRUCT-PRIVATE</a>
+<a class="notranslate" href="#1future-proofing.html#c-newtype-hide">C-NEWTYPE-HIDE</a>
+<a class="notranslate" href="#1future-proofing.html#c-struct-bounds">C-STRUCT-BOUNDS</a>
+<br>
+<a class="notranslate" href="#1necessities.html#c-stable">C-STABLE</a>
+<a class="notranslate" href="#1necessities.html#c-permissive">C-PERMISSIVE</a>
