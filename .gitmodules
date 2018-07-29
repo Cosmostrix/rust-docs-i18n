@@ -1,0 +1,30 @@
+[submodule "en/api-guidelines"]
+	path = en/api-guidelines
+	url = https://github.com/rust-lang-nursery/api-guidelines
+[submodule "en/cargo"]
+	path = en/cargo
+	url = https://github.com/rust-lang/cargo
+[submodule "en/nomicon"]
+	path = en/nomicon
+	url = https://github.com/rust-lang-nursery/nomicon
+[submodule "en/rust"]
+	path = en/rust
+	url = https://github.com/rust-lang/rust
+[submodule "en/rust-cookbook"]
+	path = en/rust-cookbook
+	url = https://github.com/rust-lang-nursery/rust-cookbook
+[submodule "en/book"]
+	path = en/book
+	url = https://github.com/rust-lang/book
+[submodule "en/edition-guide"]
+	path = en/edition-guide
+	url = https://github.com/rust-lang-nursery/edition-guide
+[submodule "en/reference"]
+	path = en/reference
+	url = https://github.com/rust-lang-nursery/reference
+[submodule "en/rust-by-example"]
+	path = en/rust-by-example
+	url = https://github.com/rust-lang/rust-by-example
+[submodule "en/rustc-guide"]
+	path = en/rustc-guide
+	url = https://github.com/rust-lang-nursery/rustc-guide
